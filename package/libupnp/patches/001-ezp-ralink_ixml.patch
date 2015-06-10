@@ -1,0 +1,114 @@
+--- libupnp-1.3.1.orig/ixml/src/ixmlparser.c	2010-06-06 16:41:45.559598022 +0800
++++ libupnp-1.3.1.new/ixml/src/ixmlparser.c	2010-06-06 16:37:39.982103815 +0800
+@@ -1712,10 +1712,12 @@
+         if( pCur->namespaceUri != NULL ) {
+             free( pCur->namespaceUri );
+         }
+-
+-        pCur->namespaceUri = strdup( newNode->nodeValue );
+-        if( pCur->namespaceUri == NULL ) {
+-            return IXML_INSUFFICIENT_MEMORY;
++///here it goes to segfault on "" when not copying
++        if(newNode->nodeValue){
++            pCur->namespaceUri = strdup( newNode->nodeValue );
++            if( pCur->namespaceUri == NULL ) {
++                return IXML_INSUFFICIENT_MEMORY;
++            }
+         }
+ 
+     } else if( strncmp( newNode->nodeName, "xmlns:", strlen( "xmlns:" ) ) == 0 ) {  // namespace definition
+@@ -1954,7 +1956,7 @@
+ 
+     pCDataStart = *pSrc + strlen( CDSTART );
+     pEnd = pCDataStart;
+-    while( ( Parser_isXmlChar( *pEnd ) == TRUE ) && ( *pEnd != '0' ) ) {
++    while( ( Parser_isXmlChar( *pEnd ) == TRUE ) && ( *pEnd != '\0' ) ) {
+         if( strncmp( pEnd, CDEND, strlen( CDEND ) ) == 0 ) {
+             break;
+         } else {
+@@ -1962,7 +1964,7 @@
+         }
+     }
+ 
+-    if( ( pEnd - pCDataStart > 0 ) && ( *pEnd != '0' ) ) {
++    if( ( pEnd - pCDataStart > 0 ) && ( *pEnd != '\0' ) ) {
+         tokenLength = pEnd - pCDataStart;
+         node->nodeValue = ( char * )malloc( tokenLength + 1 );
+         if( node->nodeValue == NULL ) {
+@@ -2371,8 +2373,12 @@
+         if( node->nodeValue == NULL ) {
+             return IXML_INSUFFICIENT_MEMORY;
+         }
++    }else{
++       // if attribute doesn't have value, like a=""
++        ///somewhere on other places is this copied
++       node->nodeValue = malloc(sizeof(char));
++       *(node->nodeValue) = '\0';
+     }
+-    // if attribute doesn't have value, like a="", fine
+     node->nodeType = eATTRIBUTE_NODE;
+ 
+     // check whether this is a new namespace definition
+@@ -2454,7 +2460,8 @@
+             *bETag = TRUE;
+ 
+             return IXML_SUCCESS;
+-        } else if( xmlParser->state == eATTRIBUTE ) {
++        } else if( (xmlParser->state == eATTRIBUTE) && 
++                   (xmlParser->pCurElement != NULL) ) {
+             if( Parser_processAttribute( xmlParser, node ) !=
+                 IXML_SUCCESS ) {
+                 return IXML_SYNTAX_ERR;
+--- libupnp-1.3.1.orig/ixml/src/node.c	2010-06-06 16:41:45.559598022 +0800
++++ libupnp-1.3.1.new/ixml/src/node.c	2010-06-06 16:37:39.982103815 +0800
+@@ -929,6 +929,7 @@
+     rc = ixmlElement_setTagName( newElement, nodeptr->tagName );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++	return NULL;
+     }
+ 
+     elementNode = ( IXML_Node * ) newElement;
+@@ -936,26 +937,31 @@
+     rc = ixmlNode_setNodeName( elementNode, srcNode->nodeName );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++        return NULL;
+     }
+ 
+     rc = ixmlNode_setNodeValue( elementNode, srcNode->nodeValue );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++        return NULL;
+     }
+ 
+     rc = ixmlNode_setNamespaceURI( elementNode, srcNode->namespaceURI );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++        return NULL;
+     }
+ 
+     rc = ixmlNode_setPrefix( elementNode, srcNode->prefix );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++        return NULL;
+     }
+ 
+     rc = ixmlNode_setLocalName( elementNode, srcNode->localName );
+     if( rc != IXML_SUCCESS ) {
+         ixmlElement_free( newElement );
++        return NULL;
+     }
+ 
+     elementNode->nodeType = eELEMENT_NODE;
+--- libupnp-1.3.1.orig/ixml/src/nodeList.c	2010-06-06 16:41:45.559598022 +0800
++++ libupnp-1.3.1.new/ixml/src/nodeList.c	2010-06-06 16:37:39.982103815 +0800
+@@ -75,6 +75,8 @@
+         next = next->next;
+     }
+ 
++    if( next == NULL ) return NULL;
++
+     return next->nodeItem;
+ 
+ }

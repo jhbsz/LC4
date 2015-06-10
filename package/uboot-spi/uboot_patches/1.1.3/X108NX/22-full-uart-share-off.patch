@@ -1,0 +1,17 @@
+--- Uboot-spi-1.1.3/drivers/spi_flash.c	2010-07-21 16:19:12.000000000 +0800
++++ Uboot-spi-1.1.3/drivers/spi_flash.c	2011-01-12 10:43:00.760952598 +0800
+@@ -584,10 +584,10 @@
+ 	int blockmask = blocksize - 1;
+ 
+ 	ra_dbg("%s: offs:%x, count:%x\n", __func__, offs, count);
+-
+-	if (count > (spi_chip_info->sector_size * spi_chip_info->n_sectors) -
+-			(CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE)) {
+-		printf("Abort: image size larger than %d!\n\n", (spi_chip_info->sector_size * spi_chip_info->n_sectors) -
++    /* We allow to write 8M flash*/
++	if ((count > (spi_chip_info->sector_size * spi_chip_info->n_sectors) -
++			(CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE)) && (count != 0x800000)) {
++		printf("Abort: image size %d larger than %d!\n\n", count, (spi_chip_info->sector_size * spi_chip_info->n_sectors) -
+ 				(CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE));
+ 		udelay(10*1000*1000);
+ 		return -1;

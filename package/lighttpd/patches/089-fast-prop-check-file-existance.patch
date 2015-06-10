@@ -1,0 +1,179 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-09-30 22:25:29.110665362 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-09-30 22:24:21.086663542 +0800
+@@ -1171,12 +1171,13 @@
+ 	return 0;
+ }
+ 
+-static int webdav_parse_prop(chunkqueue *cq) {
++static int webdav_parse_prop(chunkqueue *cq, char *prop_name) {
+ 	chunk *c;
+ 	char *prop_result;
++    char propbuf[50];
+ 	c = cq->first;
+-
+-	prop_result = strstr(c->mem->ptr + c->offset,"<D:prop><D:fastlist/></D:prop>");
++    snprintf(propbuf, sizeof(propbuf), "<D:prop><D:%s/></D:prop>", prop_name);
++	prop_result = strstr(c->mem->ptr + c->offset, propbuf);
+         if (prop_result != NULL)
+ 	        return 1;
+ 	else
+@@ -1405,6 +1406,21 @@
+ 	return has_lock;
+ }
+ 
++int check_file_existence(char *filename) {
++    FILE *tfp;
++    DIR *tfpd;
++    int len;
++
++    if(filename && *filename) {
++        len = strlen(filename);
++        if((filename[len - 1] != '\\') && (filename[len - 1] != '/') && (tfp = fopen(filename, "r"))) {
++            fclose(tfp);
++            return 1;
++        }
++    }
++    return 0;
++}
++
+ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
+ 	plugin_data *p = p_d;
+ 	buffer *b;
+@@ -1447,7 +1463,8 @@
+ 		}
+ 
+ #if defined (PLATFORM_AXA)
+-		int goto_fast_list = webdav_parse_prop(con->request_content_queue);
++		int goto_fast_list = webdav_parse_prop(con->request_content_queue, "fastlist");
++        int get_fast_check = webdav_parse_prop(con->request_content_queue, "fastcheck");
+ #endif
+ 
+ #ifdef USE_PROPPATCH
+@@ -1557,6 +1574,22 @@
+ 		switch(depth) {
+ 		case 0:
+ 			/* Depth: 0 */
++#if defined (PLATFORM_AXA)
++            if(get_fast_check && check_file_existence(con->physical.path->ptr)) {
++                buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
++                buffer_append_string_len(b,CONST_STR_LEN("<D:href>"));
++                buffer_append_string_buffer(b, con->uri.scheme);
++                buffer_append_string_len(b,CONST_STR_LEN("://"));
++                buffer_append_string_buffer(b, con->uri.authority);
++                buffer_append_string_encoded(b, CONST_BUF_LEN(con->uri.path), ENCODING_REL_URI);
++                buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
++                buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
++                buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 200 OK</D:status>\n"));
++                buffer_append_string_len(b,CONST_STR_LEN("</D:propstat>\n"));
++                buffer_append_string_len(b,CONST_STR_LEN("</D:response>\n"));
++                break;
++            } 
++#endif
+ 			webdav_get_props(srv, con, p, &(con->physical), req_props, prop_200, prop_404);
+ 
+ 			buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
+@@ -1642,56 +1675,56 @@
+ 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
+ #if defined(PLATFORM_AXA)
+ 			                /* MJ add for fast listing */
+-                        		if(goto_fast_list == 1) {
+-
+-                                                buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
+-                                                buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
++                    if(goto_fast_list == 1) {
+ 
+-						char ctime_buf[] = "2005-08-18T07:27:16Z";
+-						char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
+-						size_t k;
+-			                        if (de->d_type == 4) {
+-                                			buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+-                                			buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+-						} else if(de->d_type == 8) {
+-			                                for (k = 0; k < con->conf.mimetypes->used; k++) {
+-			                                        data_string *ds = (data_string *)con->conf.mimetypes->data[k];
+-
+-			                                        if (ds->key->used == 0) continue;
+-
+-			                                        if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
+-			                                                buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
+-			                                                buffer_append_string_buffer(b, ds->value);
+-			                                                buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
+-                        			                        break;
+-			                                        }
+-			                                }
+-			                        } else if(de->d_type == 0) { 
+-							/* check unknow type due to opendir can not recognize that file */
+-                                                        stat_cache_entry *sce = NULL;
+-							if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, d.path, &sce))) {
+-					                        if (S_ISDIR(sce->st.st_mode)) {
+-					                                buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+-					                                buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+-					                        } else if(S_ISREG(sce->st.st_mode)) {
+-					                                for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
+-					                                        data_string *ds = (data_string *)con->conf.mimetypes->data[k];
+-					                                        if (ds->key->used == 0) continue;
+-					                                        if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
+-					                                                buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
+-					                                                buffer_append_string_buffer(b, ds->value);
+-					                                                buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
+-					                                                break;
+-					                                        }
+-					                                }
+-					                        }
+-							}
+-                                                }
++                        buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
++                        buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
+ 
+-                        			buffer_append_string_len(b,CONST_STR_LEN("</D:prop>\n"));
+-			                        buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 200 OK</D:status>\n"));
+-			                        buffer_append_string_len(b,CONST_STR_LEN("</D:propstat>\n"));
+-		                        }
++                        char ctime_buf[] = "2005-08-18T07:27:16Z";
++                        char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
++                        size_t k;
++                        if (de->d_type == 4) {
++                            buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
++                            buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
++                        } else if(de->d_type == 8) {
++                            for (k = 0; k < con->conf.mimetypes->used; k++) {
++                                data_string *ds = (data_string *)con->conf.mimetypes->data[k];
++
++                                if (ds->key->used == 0) continue;
++
++                                if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
++                                    buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
++                                    buffer_append_string_buffer(b, ds->value);
++                                    buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
++                                    break;
++                                }
++                            }
++                        } else if(de->d_type == 0) { 
++                            /* check unknow type due to opendir can not recognize that file */
++                            stat_cache_entry *sce = NULL;
++                            if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, d.path, &sce))) {
++                                if (S_ISDIR(sce->st.st_mode)) {
++                                    buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
++                                    buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
++                                } else if(S_ISREG(sce->st.st_mode)) {
++                                    for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
++                                        data_string *ds = (data_string *)con->conf.mimetypes->data[k];
++                                        if (ds->key->used == 0) continue;
++                                        if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
++                                            buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
++                                            buffer_append_string_buffer(b, ds->value);
++                                            buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
++                                            break;
++                                        }
++                                    }
++                                }
++                            }
++                        }
++
++                        buffer_append_string_len(b,CONST_STR_LEN("</D:prop>\n"));
++                        buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 200 OK</D:status>\n"));
++                        buffer_append_string_len(b,CONST_STR_LEN("</D:propstat>\n"));
++                    }
+ #endif
+ 
+ 					if (!buffer_is_empty(prop_200)) {

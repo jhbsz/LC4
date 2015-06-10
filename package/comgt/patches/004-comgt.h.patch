@@ -1,0 +1,374 @@
+--- comgt.0.32/comgt.h	2006-10-20 22:49:46.000000000 +0800
++++ comgt.0.32.new/comgt.h	2009-09-23 10:16:28.081168263 +0800
+@@ -22,8 +22,8 @@
+ /***************************************************************************
+ * $Id: comgt.h,v 1.4 2006/10/20 14:30:19 pharscape Exp $
+ ****************************************************************************/
+-#define COMGT_VERSION "0.32"
+-#define YEARS "2005,2006"
++#define EZPCOM_VERSION "0.99"
++#define YEARS "2008,2009"
+ 
+ char _default_code[] =
+     "opengt\n\
+@@ -421,34 +421,35 @@
+     exit 1\n\
+   :getpin\n\
+     #handle case where original Vodafone 3G generates wrong response\n\
+-    let $x=$env(\"COMGTPIN\")\n\
++    let $x=$env(\"EZPCOMPIN\")\n\
+     let a=len($x)\n\
+     if a=0 goto pinenverr\n\
+-    if a<>4 goto pinerror\n\
++    if a<4 goto pinerror\n\
++    if a>8 goto pinerror\n\
+     let c=0\n\
+   :test\n\
+     let $c=$mid($x,c,1)\n\
++    if $c=\"\" goto testlen\n\
+     if $c<\"0\" goto pinerror\n\
+     if $c>\"9\" goto pinerror\n\
+     inc c\n\
+-    if c<4 goto test\n\
+-    let a=val($x)\n\
+-    if a<0 goto pinerror\n\
+-    if a>9999 goto pinerror\n\
+-    let $c=$left($x,4)\n\
++    goto test\n\
++  :testlen\n\
++    if c<4 goto pinerror\n\
++    if c>8 goto pinerror\n\
+   :enterpin\n\
+     send \"AT+CPIN=\\\"\"\n\
+-    send $c\n\
++    send $x\n\
+     send \"\\\"^m\"\n\
+     waitfor 20 \"OK\",\"ERR\"\n\
+     if % = -1 goto timeerror\n\
+     if % = 0 goto ready\n\
+     if % = 1 goto pinerror\n\
+   :pinenverr\n\
+-    print \"ERROR: The COMGTPIN env variable is not set\n\"\n\
++    print \"ERROR: The EZPCOMPIN env variable is not set\n\"\n\
+     exit 1\n\
+   :pinerror\n\
+-    print \"ERROR: PIN code must be 4 decimal digits only\n\"\n\
++    print \"ERROR: PIN code must be 4-8 decimal digits only\n\"\n\
+     print \"Caution! - entering the wrong PIN code three times will lock the SIM\n\"\n\
+     exit 1\n\
+   :timeerror\n\
+@@ -465,51 +466,268 @@
+   :start\n\
+     flash 0.1\n\
+   :getapn\n\
+-    let $x=$env(\"COMGTAPN\")\n\
++    let $x=$env(\"EZPCOMAPN\")\n\
+     let a=len($x)\n\
+     if a=0 goto apnerror\n\
+     if a>32 goto apnerror\n\
+   :enterapn\n\
+-    send \"AT+CGDCONT=1,\\\"IP\\\",\\\"\n\
+-    send $c\n\
++    send \"AT+CGDCONT=1,\\\"IP\\\",\\\"\"\n\
++    send $x\n\
+     send \"\\\"^m\"\n\
+     waitfor 20 \"OK\",\"ERR\"\n\
+     if % = -1 goto timeerror\n\
+     if % = 0 goto OK\n\
+-    if % = 1 goto apnerror\n\
++    if % = 1 goto apnseterror\n\
+   :apnerror\n\
+     print \"ERROR entering APN\n\"\n\
+-    print \"The COMGTAPN env variable is not set\n\"\n\
++    print \"The EZPCOMAPN env variable is not set\n\"\n\
++    exit 1\n\
++  :apnseterror\n\
++    print \"APN can not be set\n\"\n\
+     exit 1\n\
+   :timeerror\n\
+     print \"ERROR entering APN\n\"\n\
+     print \"The device timeout.\n\"\n\
+     exit 1\n\
+   :OK\n\
++    print \"APN ready\n\"\n\
+     exit 0\n";
+ 
++char _SETDIRECTIPON_code[]=
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    waitquiet 1 0.2\n\
++    let c=1\n\
++  :start\n\
++    flash 0.1\n\
++    let $c=$oct(c)\n\
++    send \"AT!SCACT=1,\"\n\
++    send $c\n\
++    send \"^m\"\n\
++    waitfor 20 \"OK\",\"ERR\"\n\
++    if % = -1 goto continue\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto continue\n\
++  :continue\n\
++    if c>=2 goto directipseterror\n\
++    inc c\n\
++    goto start\n\
++  :directipseterror\n\
++    print \"ERROR entering Direct IP mode\n\"\n\
++    exit 1\n\
++  :timeerror\n\
++    print \"ERROR entering Direct IP mode\n\"\n\
++    print \"The device timeout.\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"Direct IP mode ready\n\"\n\
++    exit 0\n";
++
++char _SETDIRECTIPOFF_code[]=
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    waitquiet 1 0.2\n\
++    let c=1\n\
++  :start\n\
++    flash 0.1\n\
++    let $c=$oct(c)\n\
++    send \"AT!SCACT=0,\"\n\
++    send $c\n\
++    send \"^m\"\n\
++    waitfor 20 \"OK\",\"ERR\"\n\
++    if % = -1 goto continue\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto continue\n\
++  :continue\n\
++    if c>=2 goto directipseterror\n\
++    inc c\n\
++    goto start\n\
++  :directipseterror\n\
++    print \"ERROR leaving Direct IP mode\n\"\n\
++    exit 1\n\
++  :timeerror\n\
++    print \"ERROR entering Direct IP mode\n\"\n\
++    print \"The device timeout.\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"Direct IP mode off\n\"\n\
++    exit 0\n";
++
++char _SETCDCON_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"AT$WANCALL=1^m\"\n\
++    waitfor 20 \"OK\",\"ERR\"\n\
++    if % = -1 goto error\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto error\n\
++  :error\n\
++    print \"error\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"CDC mode ready\n\"\n\
++    exit 0\n";
++
++char _SETCDCOFF_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"AT$WANCALL=0^m\"\n\
++    waitfor 20 \"OK\",\"ERR\"\n\
++    if % = -1 goto error\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto error\n\
++  :error\n\
++    print \"error\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"CDC mode off\n\"\n\
++    exit 0\n";
++
++char _SETLTEON_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"At$nwrssi^m\"\n\
++    send \"At$nwqmiconnect=,,^m\"\n\
++    waitfor 5 \"OK\",\"ERR\"\n\
++    if % = -1 goto error\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto error\n\
++  :error\n\
++    print \"error\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"LTE mode ready\n\"\n\
++    exit 0\n";
++
++char _SETLTEOFF_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"At$nwrssi^m\"\n\
++    send \"At$nwqmidisconnect=,,^m\"\n\
++    waitfor 5 \"OK\",\"ERR\"\n\
++    if % = -1 goto error\n\
++    if % = 0 goto OK\n\
++    if % = 1 goto error\n\
++  :error\n\
++    print \"error\n\"\n\
++    exit 1\n\
++  :OK\n\
++    print \"LTE mode off\n\"\n\
++    exit 0\n";
++
++char _radioon_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"AT+CFUN=1^m\"\n\
++    exit 0\n";
++
++char _radiooff_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"AT+CFUN=0^m\"\n\
++    exit 0\n";
++
++/* IMEI / Network / Signal strength */
++char _stats_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++    send \"AT+CFUN=1^m\"\n\
++  :imei_serial\n\
++    waitquiet 5 0.1\n\
++    print \"IMEI and Serial Number: \"\n\
++    send \"AT+GSN^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let x=len($s)\n\
++    dec x\n\
++    let $s=$right($s,x)\n\
++    print ,$s,\"\\n\"\n\
++    goto registered\n\
++  :regtimeout\n\
++    print \"Failed to register: Unknown\n\"\n\
++    goto signal\n\
++  :registered\n\
++    waitquiet 1 0.1\n\
++    send \"AT+COPS?^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let a=len($s)\n\
++    let b=a-12\n\
++    if b < 1 goto regtimeout\n\
++    let $c=$right($s,b)\n\
++    print \"Registered on Home network: \"\n\
++    print $c,\"\n\"\n\
++    let c=0\n\
++  :signal\n\
++    waitquiet 1 0.1\n\
++    send \"AT+CSQ^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let a=len($s)\n\
++    let a=a-1\n\
++    let $s=$right($s,a)\n\
++    if $s <> \"0,0\" goto sigcont\n\
++    if c > 3 goto sigexit\n\
++    let c=c+1\n\
++    pause 1\n\
++    goto signal\n\
++  :sigexit\n\
++    print \"Signal strength measure 0,0 too low!\"\n\
++    exit 1\n\
++  :sigcont\n\
++    print \"Signal Quality:\",$s,\"\\n\"\n\
++    waitquiet 1 0.1\n\
++  :firmware\n\
++    waitquiet 5 0.1\n\
++    print \"Manufacturer\'s Revision: \"\n\
++    send \"AT+GMR^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let x=len($s)\n\
++    dec x\n\
++    let $s=$right($s,x)\n\
++    print ,$s,\"\\n\"\n\
++  :apn\n\
++    waitquiet 5 0.1\n\
++    print \"APN:                    \"\n\
++    send \"AT+CGDCONT?^m\"\n\
++    get 2 \" ^m\" $s\n\
++    get 2 \" ^m\" $s\n\
++    get 2 \" ^m\" $s\n\
++    print $s,\"\\n\" \n\
++    waitquiet 5 0.1  \n\
++    exit 0\n";
+ 
+ char _help_code[]  =\
+-    "print \"comgt Usage: \"\n\
+-    print \"comgt [options] [built in script]'|[external script]\n\n\"\n\
++    "print \"ezpcom Usage: \"\n\
++    print \"ezpcom [options] [built in script]'|[external script]\n\n\"\n\
+     print \"Built in scripts -\n\"\n\
+-    print \"  comgt [default]           Checks SIM status (requests PIN if required),\n\"\n\
++    print \"  ezpcom [default]           Checks SIM status (requests PIN if required),\n\"\n\
+     print \"                           registration and signal strength reported by\n\"\n\
+     print \"                           datacard.\n\"\n\
+-    print \"  comgt info                Display configuration of datacard.\n\"\n\
+-    print \"  comgt sig                 Report Signal strength.\n\"\n\
+-    print \"  comgt reg                 Report Registration status.\n\"\n\
+-    print \"  comgt PIN                 Set PIN using COMGTPIN env variable.\n\"\n\
+-    print \"  comgt APN                 Set APN using COMGTAPN env variable.\n\"\n\
++    print \"  ezpcom info                Display configuration of datacard.\n\"\n\
++    print \"  ezpcom sig                 Report Signal strength.\n\"\n\
++    print \"  ezpcom reg                 Report Registration status.\n\"\n\
++    print \"  ezpcom PIN                 Set PIN using EZPCOMPIN env variable.\n\"\n\
++    print \"  ezpcom APN                 Set APN using EZPCOMAPN env variable.\n\"\n\
+     print \"\n  Valid for GlobeTrotter GPRS only:\n\"\n\
+-    print \"      comgt USA                 Switch to 900/1900 MHz band for USA operation.\n\"\n\
+-    print \"      comgt Europe              Switch to 900/1800 MHz band for Europen operation.\n\"\n\
++    print \"      ezpcom USA                 Switch to 900/1900 MHz band for USA operation.\n\"\n\
++    print \"      ezpcom Europe              Switch to 900/1800 MHz band for Europen operation.\n\"\n\
+     print \"\n  Valid for GlobeTrotter EDGE and Combo EDGE only:\n\"\n\
+-    print \"      comgt GTEDGE             Switch on radio interface.\n\"\n\
++    print \"      ezpcom GTEDGE             Switch on radio interface.\n\"\n\
+     print \"\n  Valid for Vodafone 3G, GlobeTrotter Fusion, GT Max :\n\"\n\
+-    print \"      comgt 2G             2G networks only.\n\"\n\
+-    print \"      comgt 3G             3G networks only\n\"\n\
+-    print \"      comgt 3G2G           3G network preferred\n\"\n\
++    print \"      ezpcom 2G             2G networks only.\n\"\n\
++    print \"      ezpcom 3G             3G networks only\n\"\n\
++    print \"      ezpcom 3G2G           3G network preferred\n\"\n\
+     print \"\nCommand line options (must be before script name) - \\n\"\n\
+     print \"  -d device                Use alternative device. e.g -d /dev/ttyUSB0\n\"\n\
+     print \"  -e                       Turn on communication echo.\n\"\n\
+@@ -521,8 +739,8 @@
+     print \"  -v                       Verbose mode. Print lots of trace info.\n\"\n\
+     print \"  -x                       Speed exchange. 115200 replaced by 57600.\n\"\n\
+     print \"                           ***used for GlobeTrotter EDGE and Combo EDGE***\n\"\n\
+-    print \"NOTES:\ncomgt assumes that the GlobeTrotter device is /dev/modem (create a logical link\n\"\n\
+-    print \"to actual device or use -d switch). Unless you use the '-s' switch comgt will\n\"\n\
++    print \"NOTES:\nezpcom assumes that the GlobeTrotter device is /dev/modem (create a logical link\n\"\n\
++    print \"to actual device or use -d switch). Unless you use the '-s' switch ezpcom will\n\"\n\
+     print \"run the internal 'default' script first before running an external script file.\n\"\n" ;
+ 
+ 
+@@ -543,6 +760,15 @@
+   if (strcmp(name,"3G2G")==0) return (_3G2G_mode_code);
+   if (strcmp(name,"PIN")==0) return (_SETPIN_code);
+   if (strcmp(name,"APN")==0) return (_SETAPN_code);
++  if (strcmp(name,"directipon")==0) return (_SETDIRECTIPON_code);
++  if (strcmp(name,"directipoff")==0) return (_SETDIRECTIPOFF_code);
++  if (strcmp(name,"stats")==0) return (_stats_code);
++  if (strcmp(name,"cdcon")==0) return (_SETCDCON_code);
++  if (strcmp(name,"cdcoff")==0) return (_SETCDCOFF_code);
++  if (strcmp(name,"lteon")==0) return (_SETLTEON_code);
++  if (strcmp(name,"lteoff")==0) return (_SETLTEOFF_code);
++  if (strcmp(name,"radioon")==0) return (_radioon_code);
++  if (strcmp(name,"radiooff")==0) return (_radiooff_code);
+   return(NULL);
+ }
+ 

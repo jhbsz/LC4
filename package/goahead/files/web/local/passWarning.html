@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<meta http-equiv="Pragma" content="no-cache">
+<head>
+	<link rel="stylesheet" title="Standard" href="../css.css" type="text/css" media="screen" />
+   <link href="../table.css" rel="stylesheet" type="text/css" />
+<title>.::Welcome to ZyXEL NBG4615::.</title>
+<link href="/local/advance/images/expert.css" rel="stylesheet" type="text/css" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
+<script type="text/javascript" src="/lang/b28n.js"></script>
+<script type="text/JavaScript">
+Butterlate.setTextDomain("main");
+function checkInput(str)
+{
+	for (var i=0; i<str.length; i++) {
+		if ((str.charAt(i) == '^' ) || (str.charAt(i) == '|' )  || (str.charAt(i) == '%' )  || (str.charAt(i) == '$' )  || (str.charAt(i) == ';' ))
+		return 1;
+	}
+	return 0;
+}
+
+function check_confirm()
+{
+	if (document.forms[0].admpass.value!=document.forms[0].admpass_confirm.value)
+	{
+		alert(_("Error: Confirm password not match!!"));
+	}
+	else
+	{
+		if(checkInput(document.forms[0].admpass.value)==1){
+    		alert(_("System do not support specific invalid characters"));
+    	}else{
+			document.forms[0].submit();
+		}
+	}
+}
+function initTranslation()
+{
+	var e = document.getElementById("passtitle");
+	e.innerHTML = _("pass title");
+		e = document.getElementById("passtitle1");
+	e.innerHTML = _("pass title1");
+		e = document.getElementById("passPassword");
+	e.innerHTML = _("pass Password");
+		e = document.getElementById("passRetype");
+	e.innerHTML = _("pass Retype");
+			e = document.getElementById("passIgnore");
+	e.innerHTML = _("pass Ignore");
+			e = document.getElementById("passApply");
+	e.innerHTML = _("pass Apply");
+  e = document.getElementById("changepassword");
+	e.innerHTML = _("change_password");
+
+
+}
+</script>
+<body onLoad="initTranslation()">
+<form method="post" action="/goform/setSysPassLogin">
+<div id="popup5_table">
+<table width="600" border="0" align="center" cellpadding="0" cellspacing="0">
+<tr>
+<td><table width="100%" height="37" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td width="19" height="37"><img src="../popup_top_left.gif" width="19" height="45" /></td>
+<td background="../popup_top_center.gif" class="table_title"><a id="changepassword">Use this screen to change the password.</a></td>
+<td width="15" background="../popup_top_center.gif">&nbsp;</td>
+<td width="19" height="45"><img src="../popup_top_right.gif" width="19" height="45" /></td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td><table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td width="19" background="../popup_main_left.gif">&nbsp;</td>
+<td bgcolor="#FFFFFF"><span class="popupcontent"> 
+<table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+<tr>
+<td colspan="3" id="passtitle">The Wizard setup walks you through the most common configuration settings. We   suggest you use this mode if it is the first time you are setting up your router   or if you need to make basic configuration changes.</td>
+            
+</tr>
+<tr><td>&nbsp</td></tr>
+<tr>
+<td colspan="3" id="passtitle1">Use Advanced mode if you need access to more advanced features not included in   Wizard mode.</td>
+</tr>
+<tr>
+<td height="28" colspan="3"><span class="space3"></span></td>
+</tr>
+<tr>
+<td width="15%" rowspan="2"><center>
+<img src="../i_login.gif" width="34" height="41" />
+</center></td>
+<td><span class="password_word" id="passPassword">New Password:</span></td>
+<td><input name="admpass" size="30" maxlength="30" value="1234" type="password" /></td>
+</tr>
+<tr>
+<td width="29%"><span class="password_word" id="passRetype">Retype to Confirm:</span></td>
+<td width="56%"><input name="admpass_confirm" size="30" maxlength="30" value="1234" type="password" />                </td>
+</tr>
+<tr>
+<td height="28" colspan="3"><span class="space3"></span></td>
+</tr>
+            
+<tr>
+<td height="20" colspan="3"><center>
+</center>              </td>
+</tr>
+</table>
+         
+</span></td>
+<td width="19" background="../popup_main_right.gif">&nbsp;</td>
+</tr>
+</table></td>
+</tr>
+<tr>
+<td><table width="100%" height="37" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td width="19" height="48"><img src="../popup_down_left.gif" width="19" height="48" /></td>
+<td background="../popup_down_center.gif"><div class="button2"><ul><li><a href="networkmap.asp" title="Ignore"><span id="passIgnore">Ignore</span></a></li>
+<li><a href="javascript: check_confirm();" title="Apply"><span id="passApply">Apply</span></a></li>
+</ul>
+</div></td>
+<td width="19" height="37"><img src="../popup_down_right.gif" width="19" height="48" /></td>
+</tr>
+</table></td>
+ </tr>
+</table></div>
+</form>        
+</body>
+</html>

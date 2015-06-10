@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-nvram/Makefile
+Package: ezp-nvram
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: NVRAM application for EZ Packet configuration
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains an utility for EZ Packet configuration subsystem.
+@@
+

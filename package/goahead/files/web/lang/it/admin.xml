@@ -1,0 +1,259 @@
+﻿<po>
+	<message msgid="upload title" msgstr="Aggiorna firmware"/>
+	<message msgid="upload titleOnLine" msgstr="Aggiornamento firmware online"/>
+	<message msgid="upload introduction1" msgstr="Per aggiornare il firmware del dispositivo interno, selezionare la posizione del file di aggiornamento binario (.BIN) e fare clic su Carica. I file di aggiornamento possono essere scaricati dal sito Web. Se il file di aggiornamento è compresso (file .ZIP), è dapprima necessario estrarre il file binario (.BIN). In alcuni casi è necessario riconfigurare il dispositivo."/>
+	<message msgid="upload Path" msgstr="Percorso file: "/>
+	<message msgid="admin Upload" msgstr="Carica"/>
+	<message msgid="check latest Upload" msgstr="Verifica presenza di firmware più recente"/>
+	<message msgid="upload current FW version" msgstr="Si sta utilizzando la versione del firmware:"/>
+	<message msgid="upload latest FW version" msgstr="Versione del firmware più recente"/>
+	<message msgid="upload release date" msgstr="Data di rilascio"/>
+	<message msgid="upload release note" msgstr="Nota sulla versione"/>
+	<message msgid="upload size" msgstr="Dimensione"/>
+	<message msgid="do FW upgrade" msgstr="Esegui_Aggiornamento_Firmware"/>
+	<message msgid="Retrieve Failed. Please check your Internet connection or try again later." msgstr="Ripetizione non riuscita. Controllare la connessione a Internet o riprovare più tardi."/>
+	<message msgid="Not a valid firmware." msgstr="Firmware non valido."/>
+	<message msgid="Firmware download has stopped. Please check your Internet connection or try again later." msgstr="Download del firmware interrotta. Controllare la connessione a Internet o riprovare più tardi."/>
+	
+	<message msgid="reset title" msgstr="Riavvio sistema"/>
+	<message msgid="reset introduction" msgstr="Fare clic su Riavvia per consentire al dispositivo di eseguire un riavvio software. Il LED SYS (o PWR) lampeggia durante il riavvio del dispositivo, quindi si accende fisso quando il riavvio è terminato con successo. Attendere un minuto prima di accedere nuovamente al dispositivo."/>
+	<message msgid="reset Restart" msgstr="Riavvia"/>
+	<message msgid="logsystem title" msgstr="Registri"/>
+	<message msgid="logsystem display" msgstr="Visualizzazione:"/>
+	<message msgid="logsystem op1" msgstr="Tutti i registri "/>
+	<message msgid="logsystem table_title" msgstr=" Riepilogo "/>
+	<message msgid="logsystem time" msgstr="Orario"/>
+	<message msgid="logsystem msg" msgstr="Messaggio"/>
+	<message msgid="logsystem logAll" msgstr="tutto il registro"/>
+	<message msgid="logsystem logWebmgt" msgstr="Gestione Web"/>
+	<message msgid="logsystem logDNS" msgstr="DNS"/>
+	<message msgid="logsystem logPPP" msgstr="PPP"/>
+	<message msgid="logsystem logUPnP" msgstr="UPnP"/>
+	<message msgid="logsystem logWireless" msgstr="Wireless"/>
+	<message msgid="logsystem logNTPClient" msgstr="ClientNTP"/>
+	<message msgid="logsystem logSysWarn" msgstr="Avviso di sistema"/>
+	<message msgid="logsystem logDhcpSrv" msgstr="Server DHCP"/>
+	<message msgid="logsystem logDhcpCli" msgstr="Client DHCP"/>
+	<message msgid="logsystem logDDNS" msgstr="DDNS"/>
+	<message msgid="logsystem logFirewall" msgstr="Firewall"/>
+	<message msgid="active log" msgstr="Registro attivo"/>
+	<message msgid="logsystem refresh" msgstr="Aggiorna"/>
+	<message msgid="logsystem clear" msgstr="Cancella"/>
+	<message msgid="syssettings title" msgstr="Configurazione backup "/>
+	<message msgid="syssettings introduction" msgstr="Fare clic su Backup per salvare sul computer la configurazione corrente del sistema."/>
+	<message msgid="syssettings title_1" msgstr="Ripristino della configurazione"/>
+	<message msgid="syssettings introduction_1" msgstr="Per ripristinare il file di una configurazione salvata precedentemente sul sistema, selezionare il file di configurazione e scegliere Carica."/>
+	<message msgid="syssettings path" msgstr="Percorso file:"/>
+	<message msgid="syssettings upload" msgstr="Carica"/>
+	<message msgid="syssettings title_2" msgstr="Ritorno alle impostazioni predefinite di fabbrica "/>
+	<message msgid="syssettings introduction_2" msgstr="Fare clic su Reimposta per cancellare tutte le informazioni di configurazione immesse dall'utente e per tornare alle impostazioni predefinite di fabbrica.  Dopo la reimpostazione,"/>
+	<message msgid="syssettings introduction_3" msgstr="- La password sarà 1234"/>
+	<message msgid="syssettings introduction_4" msgstr="- L'indirizzo IP LAN sarà 192.168.1.1"/>
+	<message msgid="syssettings introduction_5" msgstr="- Il DHCP sarà reimpostato al server"/>
+	<message msgid="syssettings Reset" msgstr="Reimposta"/>
+	<message msgid="syssettings Backup" msgstr="Backup"/>
+	<message msgid="management title" msgstr="Data e ora correnti"/>
+	<message msgid="management CurrentTime" msgstr="Ora corrente: "/>
+	<message msgid="management CurrentDate" msgstr="Data corrente: "/>
+	<message msgid="management title_1" msgstr="Data e ora correnti"/>
+	<message msgid="management Manual" msgstr="Manuale"/>
+	<message msgid="management NewTime" msgstr="Nuovo orario (oo:mm:ss): "/>
+	<message msgid="management NewDate" msgstr="Nuova data (aaaa/mm/gg): "/>
+	<message msgid="management TimeServer" msgstr="Ottieni da time server"/>
+	<message msgid="management Auto" msgstr="Automatico"/>
+	<message msgid="management UserDefined" msgstr="Indirizzo del Time Server definito dall'utente: "/>
+	<message msgid="management title_2" msgstr="Configurazione fuso orario"/>
+	<message msgid="management TimeZone" msgstr="Fuso orario:                      "/>
+	<message msgid="management manNTPMidIsland" msgstr="(GMT-11:00) Isola Midway, Samoa"/>
+	<message msgid="management manNTPHawaii" msgstr="(GMT-10:00) Hawaii"/>
+	<message msgid="management manNTPAlaska" msgstr="(GMT-09:00) Alaska"/>
+	<message msgid="management manNTPPacific" msgstr="(GMT-08:00) Pacifico (USA e Canada), Tijuana"/>
+	<message msgid="management manNTPArizona" msgstr="(GMT-07:00) Arizona"/>
+	<message msgid="management manNTPMountain" msgstr="(GMT-07:00) Mountain (USA e Canada)"/>
+	<message msgid="management manNTPCentralAmerica" msgstr="(GMT-06:00) America centrale"/>
+	<message msgid="management manNTPCentralTime" msgstr="(GMT-06:00) Centrale (USA e Canada)"/>
+	<message msgid="management manNTPBogota" msgstr="(GMT-05:00) Bogota, Lima, Quito"/>
+	<message msgid="management manNTPEasternTime" msgstr="(GMT-05:00) Fuso occidentale (USA e Canada)"/>
+	<message msgid="management manNTPAltlantic" msgstr="(GMT-04:00) Atlantico (Canada)"/>
+	<message msgid="management manNTPCaracas" msgstr="(GMT-04:00) Caracas, La Poz, Santiago"/>
+	<message msgid="management manNTPBrasilia" msgstr="(GMT-03:00) Brasilia, Groenlandia"/>
+	<message msgid="management manNTPBuenos" msgstr="(GMT-03:00) Buenos Aires, Georgetown"/>
+	<message msgid="management manNTPMid-Atlantic" msgstr="(GMT-02:00) Medioatlantico"/>
+	<message msgid="management manNTPAzores" msgstr="(GMT-01:00) Azorre, Isola di Capo Verde"/>
+	<message msgid="management manNTPCasablanca" msgstr="(GMT) Casablanca, Monrovia"/>
+	<message msgid="management manNTPGreenwich" msgstr="(GMT) Ora di Greenwich: Dublino, Edimburgo, Lisbona, Londra"/>
+	<message msgid="management manNTPAmsterdam" msgstr="(GMT+01:00) Amsterdam, Berlino, Berna, Roma, Stoccolma, Vienna"/>
+	<message msgid="management manNTPBelgrade" msgstr="(GMT+01:00) Belgrado, Bratislava, Budapest, Ljubljana, Praga"/>
+	<message msgid="management manNTPBrussels" msgstr="(GMT+01:00) Bruxelles, Copenhagen, Madrid, Parigi"/>
+	<message msgid="management manNTPAthens" msgstr="(GMT+02:00) Atene, Beirut, Istanbul, Minsk"/>
+	<message msgid="management manNTPBucharest" msgstr="(GMT+02:00) Bucarest, Cairo, Harare, Pretoria"/>
+	<message msgid="management manNTPBaghdad" msgstr="(GMT+03:00) Baghdad, Kuwait, Riyadh, Nairobi"/>
+	<message msgid="management manNTPMoscow" msgstr="(GMT+03:00) Mosca, San Pietroburgo, Volgograd"/>
+	<message msgid="management manNTPMuscat" msgstr="(GMT+04:00) Abu Dhabi, Muscat"/>
+	<message msgid="management manNTPEkaterinburg" msgstr="(GMT+05:00) Ekaterinburg"/>
+	<message msgid="management manNTPAlmaty" msgstr="(GMT+06:00) Almaty, Novosibirsk"/>
+	<message msgid="management manNTPBangkok" msgstr="(GMT+07:00) Bangkok, Hanoi, Giacarta"/>
+	<message msgid="management manNTPBeijing" msgstr="(GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi"/>
+	<message msgid="management manNTPIrkutsk" msgstr="(GMT+08:00) Irkutsk, Ulaan Bataar"/>
+	<message msgid="management manNTPSingapore" msgstr="(GMT+08:00) Kuala Lumpur, Singapore"/>
+	<message msgid="management manNTPTaipei" msgstr="(GMT+08:00) Perth, Taipei"/>
+	<message msgid="management manNTPTokyo" msgstr="(GMT+09:00) Osaka, Sapporo, Tokyo"/>
+	<message msgid="management manNTPYakutsk" msgstr="(GMT+09:00) Seoul, Yakutsk"/>
+	<message msgid="management manNTPVladivostok" msgstr="(GMT+10:00) Brisbane, Vladivostok"/>
+	<message msgid="management manNTPCanberra" msgstr="(GMT+10:00) Canberra, Melbourne, Sydney"/>
+	<message msgid="management manNTPMagadan" msgstr="(GMT+11:00) Magadan, Is. Solomon, New Caledonia"/>
+	<message msgid="management manNTPAuckland" msgstr="(GMT+12:00) Auckland, Wellington"/>
+	<message msgid="management manNTPFiji" msgstr="(GMT+12:00) Fiji, Kamchatka, Is. Marshall"/>
+	<message msgid="management Apply" msgstr="Applica"/>
+	<message msgid="management Reset" msgstr="Reimposta"/>
+	<message msgid="management Daylight" msgstr="Ore legali"/>
+	<message msgid="management DaylightStart" msgstr="Data iniziale (mm/gg)"/>
+	<message msgid="management DaylightStartat" msgstr="a"/>
+	<message msgid="management DaylightStartclock" msgstr="esatte"/>
+	<message msgid="management DaylightEnd" msgstr="Data finale"/>
+	<message msgid="management Daylightendat" msgstr="a"/>
+	<message msgid="management Daylightendclock" msgstr="esatte"/>
+	<message msgid="man select language" msgstr="Lingua"/>
+	<message msgid="man admin passwd" msgstr="Password"/>
+	<message msgid="man title" msgstr="Benvenuti nell'interfaccia di configurazione del router. Fare clic su &quot;VIA&quot; e passare alla modalità Base."/>
+	<message msgid="login loginmsg" msgstr="Benvenuti nell'interfaccia di configurazione del router. Immettere la password e fare clic su &quot;Login&quot;."/>
+	<message msgid="login passmsg" msgstr="(max. 30 caratteri alfanumerici stampabili, senza spazi)"/>
+	<message msgid="login login" msgstr="Login"/>
+	<message msgid="man GO" msgstr="VIA"/>
+	<message msgid="city1" msgstr="Austria  - Vienna"/>
+	<message msgid="city2" msgstr="Cina - Beijing"/>
+	<message msgid="city3" msgstr="Costa Rica - San Jose"/>
+	<message msgid="city4" msgstr="Repubblica Ceca - Praga"/>
+	<message msgid="city5" msgstr="Danimarca - Copenhagen"/>
+	<message msgid="city6" msgstr="Finlandia - Helsinki"/>
+	<message msgid="city7" msgstr="Francia - Parigi"/>
+	<message msgid="city8" msgstr="Germania - Berlino"/>
+	<message msgid="city9" msgstr="Grecia - Atene"/>
+	<message msgid="city10" msgstr="India - New Delhi"/>
+	<message msgid="city11" msgstr="Indonesia - Giacarta"/>
+	<message msgid="city12" msgstr="Italia - Roma"/>
+	<message msgid="city13" msgstr="Giappone - Tokyo"/>
+	<message msgid="city14" msgstr="Malaysia - Kuala Lumpur"/>
+	<message msgid="city15" msgstr="Olanda - Amsterdam"/>
+	<message msgid="city16" msgstr="Norvegia - Oslo"/>
+	<message msgid="city17" msgstr="Russia - Mosca"/>
+	<message msgid="city18" msgstr="Singapore - Singapore"/>
+	<message msgid="city19" msgstr="Spagna - Madrid"/>
+	<message msgid="city20" msgstr="Svezia - Stoccolma"/>
+	<message msgid="city21" msgstr="Svizzera - Berna"/>
+	<message msgid="city22" msgstr="Taiwan - Taipei"/>
+	<message msgid="city23" msgstr="Thailandia - Bangkok"/>
+	<message msgid="city24" msgstr="Turchia - Ankara"/>
+	<message msgid="city25" msgstr="Regno Unito - Londra"/>
+	<message msgid="city26" msgstr="Regno Unito - Greenwich"/>
+	<message msgid="city27" msgstr="USA - New York"/>
+	<message msgid="city28" msgstr="USA - Washington D.C."/>
+	<message msgid="city29" msgstr="USA - Los Angeles"/>
+	<message msgid="city30" msgstr="Vietnam - Hanoi"/>
+	<message msgid="c1" msgstr="Vienna"/>
+	<message msgid="c2" msgstr="Beijing"/>
+	<message msgid="c3" msgstr="San Jose"/>
+	<message msgid="c4" msgstr="Praga"/>
+	<message msgid="c5" msgstr="Copenhagen"/>
+	<message msgid="c6" msgstr="Helsinki"/>
+	<message msgid="c7" msgstr="Parigi"/>
+	<message msgid="c8" msgstr="Berlino"/>
+	<message msgid="c9" msgstr="Atene"/>
+	<message msgid="c10" msgstr="New Delhi"/>
+	<message msgid="c11" msgstr="Giacarta"/>
+	<message msgid="c12" msgstr="Roma"/>
+	<message msgid="c13" msgstr="Tokyo"/>
+	<message msgid="c14" msgstr="Kuala Lumpur"/>
+	<message msgid="c15" msgstr="Amsterdam"/>
+	<message msgid="c16" msgstr="Oslo"/>
+	<message msgid="c17" msgstr="Mosca"/>
+	<message msgid="c18" msgstr="Singapore"/>
+	<message msgid="c19" msgstr="Madrid"/>
+	<message msgid="c20" msgstr="Stoccolma"/>
+	<message msgid="c21" msgstr="Berna"/>
+	<message msgid="c22" msgstr="Taipei"/>
+	<message msgid="c23" msgstr="Bangkok"/>
+	<message msgid="c24" msgstr="Ankara"/>
+	<message msgid="c25" msgstr="Londra"/>
+	<message msgid="c26" msgstr="Greenwich"/>
+	<message msgid="c27" msgstr="New York"/>
+	<message msgid="c28" msgstr="Washington D.C."/>
+	<message msgid="c29" msgstr="Los Angeles"/>
+	<message msgid="c30" msgstr="Hanoi"/>
+	<message msgid="You must input 0~23 hours!!" msgstr="È necessario immettere da 0 a 23 ore"/>
+	<message msgid="You must input 0~59 minutes!!" msgstr="È necessario immettere da 0 a 59 minuti"/>
+	<message msgid="You must input 0~60 seconds!!" msgstr="È necessario immettere da 0 a 60 secondi"/>
+	<message msgid="You must input 1970~2037 years!!" msgstr="È necessario immettere l'anno dal 1970 al 2037"/>
+	<message msgid="You must input 1~12 month!!" msgstr="È necessario immettere il mese da 1 a 12"/>
+	<message msgid="You must input 1~31 days!" msgstr="È necessario immettere il giorno da 1 a 31"/>
+	<message msgid="You must input 1~30 days!" msgstr="È necessario immettere il giorno da 1 a 30"/>
+	<message msgid="You must input 1~29 days!" msgstr="È necessario immettere il giorno da 1 a 29"/>
+	<message msgid="You must input 1~28 days!" msgstr="È necessario immettere il giorno da 1 a 28"/>
+	<message msgid="Please specify the file name." msgstr="Specificare il nome file."/>
+	<message msgid="Firmware Upgrade: Please specify a file." msgstr="Aggiornamento del firmware: Specificare un file."/>
+	<message msgid="Giving up :( Cannot create an XMLHTTP instance" msgstr="Rilascio: (impossibile creare un'istanza XMLHTTP"/>
+	<message msgid="There was a problem with the request." msgstr="Si è verificato un problema con la richiesta."/>
+<message msgid="main Ready" msgstr="Pronto"/>
+<message msgid="main ConfigurationSuccess" msgstr="Aggiornamento della configurazione eseguito con successo"/>
+<message msgid="main ConfigurationProceeding" msgstr="Aggiornamento della configurazione in corso.  Attendere prego..."/>
+<message msgid="main firmware download in progress" msgstr="Download del firmware in corso. Attendere prego . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Aggiornamento del firmware in corso. Attendere e fare attenzione a NON spegnere il dispositivo."/>
+<!-- index.asp 0624 added -->
+<message msgid="no_internet" msgstr="Per favore collegarsi ad Internet per vedere il meteo"/>
+<message msgid="check_password" msgstr="Errore: Password errata! Riprova"/>
+<message msgid="login_err" msgstr="L'amministratore WEB sta configurando il dispositivo"/>
+<message msgid="time_zone" msgstr="Cambio fuso orario"/>
+<message msgid="Change_Unit" msgstr="Cambiare l'Unità"/>
+<message msgid="Change_location" msgstr="Cambiare Locazione"/>
+<message msgid="finish" msgstr="Fine"/>
+<message msgid="Do you wish to continue with the upgrade process ?" msgstr="Vuoi continuare con il processo di aggiornamento?"/>
+<message msgid="Do you really want to restart the device ?" msgstr="Vuoi riavviare il dispositivo?"/>
+<message msgid="Not a valid firmware." msgstr="Firmware non valido"/>
+
+<message msgid="Do you wish to continue with this process ?" msgstr="Vuoi continuare con questo processo?" />
+
+<message msgid="management manNTPUTC-11Samoa" msgstr="UTC-11:00 Isola Midway, Samoa" />
+<message msgid="management manNTPUTC-10Hawaii" msgstr="UTC-10:00 Hawaii" />
+<message msgid="management manNTPUTC-09Alaska" msgstr="UTC-09:00 Alaska" />
+<message msgid="management manNTPUTC-08Pacific" msgstr="UTC-08:00 Pacifico" />
+<message msgid="management manNTPUTC-07Arizona" msgstr="UTC-07:00 Arizona" />
+<message msgid="management manNTPUTC-07Mountain" msgstr="UTC-07:00 Mountain" />
+<message msgid="management manNTPUTC-06Central" msgstr="UTC-06:00 Centrale" />
+<message msgid="management manNTPUTC-05Eastern" msgstr="UTC-05:00 Fuso occidentale" />
+<message msgid="management manNTPUTC-03Greenland" msgstr="UTC-03:00 Groenlandia" />
+<message msgid="management manNTPUTC-02Mid-Atlantic" msgstr="UTC-02:00 Medioatlantico" />
+<message msgid="management manNTPUTC-01Azores" msgstr="UTC-01:00 Azorre" />
+<message msgid="management manNTPUTCFrance" msgstr="UTC+01:00 Francia, Germania, Italia" />
+<message msgid="management manNTPUTCThailand" msgstr="UTC+07:00 Thailandia, Russia" />
+<message msgid="management manNTPUTCSolomonIslands" msgstr="UTC+11:00 Is. Solomon" />
+<message msgid="management manNTPUTCFiji" msgstr="UTC+12:00 Fiji" />
+
+<!--NBG4615 NTP Time Zone-->
+	<message msgid="management manNTPUTC-12Kwajalein" msgstr="UTC-12:00 Kwajalein"/>
+	<message msgid="management manNTPUTC-06Mexico" msgstr="UTC-06:00 Messico"/>
+	<message msgid="management manNTPUTC-05Colombia" msgstr="UTC-05:00 Colombia, Panama"/>
+	<message msgid="management manNTPUTC-04Bolivia" msgstr="UTC-04:00 Bolivia, Venezuela"/>
+	<message msgid="management manNTPUTC-04Atlantic" msgstr="UTC-04:00 Orario Atlantico"/>
+	<message msgid="management manNTPUTC-04Brazil" msgstr="UTC-04:00 Brasile Occidentale"/>
+	<message msgid="management manNTPUTC-03Newfoundland" msgstr="UTC-03:30 Terranova"/>
+	<message msgid="management manNTPUTC-03Brazil" msgstr="UTC-03:00 Brasile Orientale"/>
+	<message msgid="management manNTPUTC-03Guyana" msgstr="UTC-03:00 Guyana"/>
+	<message msgid="management manNTPUTCGambia" msgstr="UTC+00:00 Gambia, Liberia, Marocco"/>
+	<message msgid="management manNTPUTCEngland" msgstr="UTC+00:00 Inghilterra"/>
+	<message msgid="management manNTPUTCTunisia" msgstr="UTC+01:00 Tunisia"/>
+	<message msgid="management manNTPUTCSouthAfrica" msgstr="UTC+02:00 Sud Africa"/>
+	<message msgid="management manNTPUTCGreece" msgstr="UTC+02:00 Grecia, Ucraina, Romania, Turchia"/>
+	<message msgid="management manNTPUTCIraq" msgstr="UTC+03:00 Iraq, Giordania, Kuwait"/>
+	<message msgid="management manNTPUTCArmenia" msgstr="UTC+04:00 Armenia"/>
+	<message msgid="management manNTPUTCPakistan" msgstr="UTC+05:00 Pakistan, Russia"/>
+	<message msgid="management manNTPUTCBombay" msgstr="UTC+05:30 Bombay, Calcutta, Madras, Nuova Delhi"/>
+	<message msgid="management manNTPUTCBangladesh" msgstr="UTC+06:00 Bangladesh, Russia"/>
+	<message msgid="management manNTPUTCTaiwan" msgstr="UTC+08:00 Taiwan, Cina, Hong Kong, Australia Occidentale, Singapore"/>
+	<message msgid="management manNTPUTCJapan" msgstr="UTC+09:00 Giappone, Corea"/>
+	<message msgid="management manNTPUTCSouthAustralia" msgstr="UTC+09:30 Australia Meridionale"/>
+	<message msgid="management manNTPUTCGuam" msgstr="UTC+10:00 Guam, Russia"/>
+	<message msgid="management manNTPUTCAustralia" msgstr="UTC+10:00 Australia"/>
+	<message msgid="management manNTPUTCNewZealand" msgstr="UTC+12:00 Nuova Zelanda"/>
+	<message msgid="Retrieve new firmware information now. Please wait . . ." msgstr="Recupero di nuove informazioni sul firmware. Attendere prego . . ."/>
+	<message msgid="No newer firmware exists. The firmware on your device is already the latest version." msgstr="Il firmware del dispositivo è già quello di versione più recente."/>
+</po>

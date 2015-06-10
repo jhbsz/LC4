@@ -1,0 +1,24 @@
+--- miniupnpd-1.1/minissdp.c	2008-02-21 18:20:55.000000000 +0800
++++ mini1/minissdp.c	2010-06-07 21:01:28.054324055 +0800
+@@ -50,6 +50,7 @@
+ 	int s;
+ 	int i;
+ 	struct sockaddr_in sockname;
++    int onOff = 1;
+ 	
+ 	if( (s = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
+ 	{
+@@ -65,6 +66,13 @@
+     sockname.sin_addr.s_addr = htonl(INADDR_ANY);
+     /*sockname.sin_addr.s_addr = inet_addr(ifaddr);*/
+ 
++    if( setsockopt( s, SOL_SOCKET, SO_REUSEADDR,( char * )&onOff, sizeof( onOff ) ) != 0 ) {
++		syslog(LOG_ERR, "bind(udp): %m");
++        shutdown( s, SHUT_RDWR );
++        close(s);
++        return -1;
++    }
++
+     if(bind(s, (struct sockaddr *)&sockname, sizeof(struct sockaddr_in)) < 0)
+ 	{
+ 		syslog(LOG_ERR, "bind(udp): %m");

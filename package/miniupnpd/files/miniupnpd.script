@@ -1,0 +1,60 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. 
+BIN=/usr/bin/miniupnpd
+PID_FILE=/var/run/miniupnpd.pid
+. /etc/network.sh
+START=60
+TRIGGER=90
+log_msg="UPnP-server"
+
+stop () {
+    /sbin/ezp-iptables upnp stop
+    ip route del 239.0.0.0/8 dev $(nvram get lan0_ifname)
+    iptables -t nat -F MINIUPNPD 2> /dev/null > /dev/null || err=1
+    iptables -t filter -F MINIUPNPD 2> /dev/null > /dev/null || err=1
+    killall miniupnpd
+}
+
+start () {
+    stop
+    {
+#        [ "$TYPE" != "wan" -o "$NUM" != "0" ] && exit 1;
+        port=$(nvram show upnp_rule 0 port)
+        pmp_enable=$(nvram show upnp_rule 0 pmp_enable)
+        enable=$(nvram show upnp_rule 0 enable)
+        uuid_opt=""
+        [ "$enable" = "0" ] && exit
+
+        if [ "$pmp_enable" = "1" ] ; then
+            pmp_enable="-N"
+        else
+            pmp_enable=""
+        fi
+        /sbin/ezp-iptables upnp start
+        ip route add 239.0.0.0/8 dev $(nvram get lan0_ifname)
+        [ "$(nvram get brand)" = "ZYUS" -o "$(nvram get brand)" = "SONY" ] && {
+            iwpriv ra0 e2p 4
+            iwpriv_flag=$?
+            [ "$iwpriv_flag" != "0" ] && ifconfig ra0 up
+            mac1=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+            mac2=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+            mac3=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+            mac4=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+            mac5=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+            mac6=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+            [ "$iwpriv_flag" != "0" ] && ifconfig ra0 down
+            [ "$(nvram get brand)" = "ZYUS" ] && \
+            uuid_opt="-u 75802409-bccb-40e7-8e6c-$mac1$mac2$mac3$mac4$mac5$mac6"
+            [ "$(nvram get brand)" = "SONY" ] && \
+            uuid_opt="-u 000000000000-1010-8000-$mac1$mac2$mac3-$mac4$mac5$mac6"
+        }
+        $BIN -B 100000000 100000000 $pmp_enable \
+             -i $(nvram get wan0_ifname) \
+             -a $(nvram get lan0_ipaddr) \
+             -p $port \
+             -w http://$(nvram get lan0_ipaddr):$(nvram show http_rule 0 port) \
+             -m "$(nvram get model)" \
+             $uuid_opt
+    } || err=1 
+}
+

@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-usb-testrw/Makefile
+Package: ezp-usb-testrw
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: test - EZ Packet test usb read write sleep
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

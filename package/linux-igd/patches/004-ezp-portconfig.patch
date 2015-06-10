@@ -1,0 +1,61 @@
+--- linux-igd-1.0.0/config.c	2010-09-07 20:02:06.000000000 +0800
++++ linux-igd-1.0.0/config.c	2011-03-02 16:54:54.849492109 +0800
+@@ -195,6 +195,7 @@
+     {
+ 	snprintf(vars->xmlPath, PATH_LEN, XML_PATH_DEFAULT);
+     }
++    vars->port = DEFAULT_PORT;
+     if (strnlen(vars->iptables, PATH_LEN) == 0) {
+ 	// Can't find the iptables executable, return -1 to 
+ 	// indicate en error
+--- linux-igd-1.0.0/globals.h	2010-09-08 20:09:23.000000000 +0800
++++ linux-igd-1.0.0/globals.h	2011-03-02 16:54:54.849492109 +0800
+@@ -33,6 +33,7 @@
+                           // <0 - expiration time 
+   char descDocName[PATH_LEN];
+   char xmlPath[PATH_LEN];
++  int  port;
+ };
+ 
+ typedef struct GLOBALS* globals_p;
+@@ -47,5 +48,6 @@
+ #define DEFAULT_DOWNSTREAM_BITRATE "0"
+ #define DESC_DOC_DEFAULT "gatedesc.xml"
+ #define XML_PATH_DEFAULT "/etc/linuxigd"
++#define DEFAULT_PORT 49156
+ 
+ #endif // _GLOBALS_H_
+--- linux-igd-1.0.0/main.c	2011-03-02 17:10:04.180743860 +0800
++++ linux-igd-1.0.0/main.c	2011-03-02 17:09:34.724662273 +0800
+@@ -29,8 +29,8 @@
+ 	//(Aaron patch 2009/8/20 move to here!)
+ 	struct sysinfo info;  //aron modify to fix Internet Connection update time issue 2009.03.26
+ 
+-	if (argc < 3 || argc > 4) {
+-	  printf("Usage: upnpd [-f] <external ifname> <internal ifname>\n");
++	if (argc < 4 || argc > 5) {
++	  printf("Usage: upnpd [-f] <external ifname> <internal ifname> <port>\n");
+ 	  printf("  -f\tdon't daemonize\n");
+ 	  printf("Example: upnpd ppp0 eth0\n");
+ 	  exit(0);
+@@ -47,6 +47,8 @@
+ 	// Save interface names for later use
+ 	strncpy(g_vars.extInterfaceName, argv[arg++], IFNAMSIZ);
+ 	strncpy(g_vars.intInterfaceName, argv[arg++], IFNAMSIZ);
++	g_vars.port = atoi(argv[arg++]);
++
+ 
+ 	// Get the internal ip address to start the daemon on
+ 	if (GetIpAddressStr(intIpAddress, g_vars.intInterfaceName) == 0) {
+@@ -116,9 +118,9 @@
+ 	openlog("upnpd", LOG_CONS | LOG_NDELAY | LOG_PID | (foreground ? LOG_PERROR : 0), LOG_LOCAL6);
+ 
+ 	// Initialize UPnP SDK on the internal Interface
+-	trace(3, "Initializing UPnP SDK ... using port 49156 ");
++	trace(3, "Initializing UPnP SDK ... using port %d ", g_vars.port);
+     /* EZP : Using port 49156 for win7 xbox testing */
+-	if ( (ret = UpnpInit(intIpAddress,49156) ) != UPNP_E_SUCCESS)
++	if ( (ret = UpnpInit(intIpAddress, g_vars.port) ) != UPNP_E_SUCCESS)
+ 	{
+ 		syslog (LOG_ERR, "Error Initializing UPnP SDK on IP %s ",intIpAddress);
+ 		syslog (LOG_ERR, "  UpnpInit returned %d", ret);

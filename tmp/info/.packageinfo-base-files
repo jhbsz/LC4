@@ -1,0 +1,155 @@
+Source-Makefile: package/base-files/Makefile
+Package: base-files
+Version: 13-r282
+Depends: 
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: Base filesystem for OpenWrt
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a base filesystem and system scripts for OpenWrt.
+
+http://openwrt.org/
+@@
+Preconfig: network.lan.proto
+Preconfig-Type: string
+Preconfig-Default: static
+Preconfig-Label: LAN Protocol
+Preconfig: network.lan.ipaddr
+Preconfig-Type: ip
+Preconfig-Default: 192.168.1.1
+Preconfig-Label: LAN IP Address
+Preconfig: network.lan.netmask
+Preconfig-Type: netmask
+Preconfig-Default: 255.255.255.0
+Preconfig-Label: LAN Network Mask
+Preconfig: network.lan.gateway
+Preconfig-Type: ip
+Preconfig-Default: 
+Preconfig-Label: LAN Gateway
+Preconfig: network.lan.dns
+Preconfig-Type: ip
+Preconfig-Default: 
+Preconfig-Label: LAN DNS server
+Preconfig: network.lan.proto
+Preconfig-Type: string
+Preconfig-Default: static
+Preconfig-Label: LAN Protocol
+Preconfig: network.lan.ipaddr
+Preconfig-Type: ip
+Preconfig-Default: 192.168.1.1
+Preconfig-Label: LAN IP Address
+Preconfig: network.lan.netmask
+Preconfig-Type: netmask
+Preconfig-Default: 255.255.255.0
+Preconfig-Label: LAN Network Mask
+Preconfig: network.lan.gateway
+Preconfig-Type: ip
+Preconfig-Default: 
+Preconfig-Label: LAN Gateway
+Preconfig: network.lan.dns
+Preconfig-Type: ip
+Preconfig-Default: 
+Preconfig-Label: LAN DNS server
+
+Package: libgcc
+Version: <LIBGCC_VERSION>-13
+Depends: @!TARGET_avr32 @!NATIVE_TOOLCHAIN
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: GCC support library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	GCC support library
+
+http://gcc.gnu.org/
+@@
+Package: libssp
+Version: <LIBGCC_VERSION>-13
+Depends: @SSP_SUPPORT
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: GCC support library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	GCC support library
+
+http://gcc.gnu.org/
+@@
+Package: libstdcpp
+Version: <LIBGCC_VERSION>-13
+Depends: @!NATIVE_TOOLCHAIN&&@INSTALL_LIBSTDCPP
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: GNU Standard C++ Library v3
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	GNU Standard C++ Library v3
+
+http://gcc.gnu.org/
+@@
+Package: libpthread
+Version: <UCLIBC_VERSION>-13
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: POSIX thread library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	POSIX thread library
+
+http://uclibc.org/
+@@
+Package: uclibc
+Version: <UCLIBC_VERSION>-13
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: C library embedded systems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	C library embedded systems
+
+http://uclibc.org/
+@@
+Package: ldd
+Version: <UCLIBC_VERSION>-13
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: LDD trace utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	LDD trace utility
+
+http://uclibc.org/
+@@
+Package: ldconfig
+Version: <UCLIBC_VERSION>-13
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Base system
+Title: Shared library path configuration
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Shared library path configuration
+
+http://uclibc.org/
+@@
+

@@ -1,0 +1,217 @@
+--- Uboot-spi-4.1.2.0/drivers/Makefile	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/drivers/Makefile	2014-09-24 18:29:02.888291024 +0800
+@@ -70,6 +70,8 @@
+ OBJS	+= msdc/mmc_core.o msdc/mmc_test.o msdc/msdc.o msdc/msdc_cust.o msdc/ts_msdc.o
+ endif
+ 
++OBJS   += i2c_drv.o 
++
+ all:	$(LIB)
+ 
+ $(LIB): $(OBJS)
+--- Uboot-spi-4.1.2.0/drivers/i2c_drv.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/drivers/i2c_drv.c	2014-09-23 19:00:54.636532396 +0800
+@@ -21,20 +21,31 @@
+ #include <common.h>
+ #include <command.h>
+ #include <rt_mmap.h>
++#define CONFIG_COMMANDS 1
++#define CFG_CMD_I2C 1
+ 
+ #if (CONFIG_COMMANDS & CFG_CMD_I2C) 
+-
+ #if defined (RT6855A_ASIC_BOARD) || defined (RT6855A_FPGA_BOARD)
+ #define BBU_I2C
+ #endif
+ #define	RT2880_I2C_DUMP_STR		"dump"	/* Dump Content Command Prompt    */
+ #define	RT2880_I2C_READ_STR		"read"	/* I2C read operation */
+ #define	RT2880_I2C_WRITE_STR		"write"	/* I2C read operation */
++#define	RT2880_I2C_LED_STR		"oled"	/* I2C read operation */
+ 
+-#define RT2880_I2C_DUMP        2
+-#define RT2880_I2C_READ        3
+-#define RT2880_I2C_WRITE       5
+-
++#define RT2880_I2C_DUMP             2
++#define RT2880_I2C_READ             3
++#define RT2880_I2C_WRITE            5
++#define RT2880_I2C_GAUGE_READ       10
++#define RT2880_I2C_GAUGE_WRITE      11
++#define RT2880_I2C_LED_ON           12
++#define RT2880_I2C_LED_OFF          13
++#define RT2880_I2C_RESUME           14
++
++#define CHK_STATUS_REG_BUSY(__ST__)     (__ST__ & 0x01)
++#define CHK_STATUS_REG_SDOEMPTY(__ST__) (__ST__ & 0x02)
++#define CHK_STATUS_REG_DATADRY(__ST__)  (__ST__ & 0x04)
++#define CHK_STATUS_REG_ACKERR(__ST__)   (__ST__ & 0x08)
+ /*---------------------------------------------------------------------*/
+ /* Symbol & Macro Definitions                                          */
+ /*---------------------------------------------------------------------*/
+@@ -415,17 +426,124 @@
+ 	}
+ }
+ 
++int get_command(char *argv[])
++{
++    if (!strcmp(argv[1], RT2880_I2C_DUMP_STR))
++        return 2;
++    else if (!strcmp(argv[1], RT2880_I2C_READ_STR))
++        return 10;
++    else if (!strcmp(argv[1], RT2880_I2C_WRITE_STR))
++        return 11;
++    else if (!strcmp(argv[1], RT2880_I2C_LED_STR))
++    {    
++        if (!strcmp(argv[2], "on"))
++            return 12;
++        else if (!strcmp(argv[2], "off"))
++            return 13;
++        else if (!strcmp(argv[3], "resume") && !strcmp(argv[2], "led"))
++            return 14;
++    }else
++        return -1;
++}
++
++int i2c_write_bytes(unsigned long dev_addr, unsigned char *wbuf[]) 
++{
++    int i,j;
++    int val = wbuf[2][0] - '0';
++    i2c_master_init();
++
++    RT2880_REG(RT2880_I2C_DEVADDR_REG) = dev_addr ;
++    RT2880_REG(RT2880_I2C_BYTECNT_REG) = val - 1;
++
++    //RT2880_REG(RT2880_I2C_DATAOUT_REG) = wbuf[1];
++    RT2880_REG(RT2880_I2C_DATAOUT_REG) = wbuf[3];
++    RT2880_REG(RT2880_I2C_STARTXFR_REG) = WRITE_CMD;
++
++    for (i=1; i<val; i++) {
++        j = 0; 
++        do {
++            if (IS_SDOEMPTY) {
++                RT2880_REG(RT2880_I2C_DATAOUT_REG) = wbuf[4];
++                break;
++            }
++        } while (++j<max_ee_busy_loop);
++        if(j >= max_ee_busy_loop) {
++            printf("i2c write %d byte timeout, status 0x%02x\n", i + 1, RT2880_REG(RT2880_I2C_STATUS_REG));
++            return -5;
++        }
++    }
++    if(CHK_STATUS_REG_ACKERR(RT2880_REG(RT2880_I2C_STATUS_REG))) {
++        printf("i2c write failed with ack error, status 0x%02x\n", RT2880_REG(RT2880_I2C_STATUS_REG));
++        return -5;
++    }
++    return 0;
++
++}
++
++int i2c_read_bytes(unsigned long dev_addr, unsigned char *rbuf[]) 
++{
++    int i,j;
++    unsigned char status_reg;
++    unsigned char readlen = 0;
++    int val = rbuf[2][0] - '0';
++    int retv;
++    i2c_master_init();
++
++    RT2880_REG(RT2880_I2C_DEVADDR_REG) = dev_addr;
++    RT2880_REG(RT2880_I2C_BYTECNT_REG) = val - 1 + ADDRESS_BYTES;
++    RT2880_REG(RT2880_I2C_STARTXFR_REG) = READ_CMD;
++
++    readlen = val;
++
++    for (i=0; i<val; i++) {
++        j = 0;
++        do {
++            status_reg = RT2880_REG(RT2880_I2C_STATUS_REG);
++            if (CHK_STATUS_REG_DATADRY(status_reg)) {
++                if(!i && CHK_STATUS_REG_ACKERR(status_reg)) {
++                    printf("i2c read %d failed with ack error, status 0x%02x\n", i + 1, status_reg);
++                    return -5;
++                } else {
++                    // rbuf[i+1] = RT2880_REG(RT2880_I2C_DATAIN_REG);
++                    retv = RT2880_REG(RT2880_I2C_DATAIN_REG);
++                    if(retv == 0xa5) {
++                        readlen --;
++                        printf("Hit one count:%d\n", readlen);
++                    } else {
++                        printf("success %d\n", retv);
++                    }
++                    break;
++                }
++            }
++        } while(++j<max_ee_busy_loop);
++        if(j >= max_ee_busy_loop) {
++            printf("i2c read %d byte timeout, status 0x%02x\n", i + 1, RT2880_REG(RT2880_I2C_STATUS_REG));
++            return -5;
++        }
++    }
++    if(readlen <= 0) {
++        /* All read back values are 0xA5, means mcu busy */
++        printf("i2c read 0xa5, mcu busy\n");
++        return -16;
++    }
++    return 0;
++
++}
++
+ int rt2880_i2c_toolkit(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+ {
+-	int chk_match, size;
+-	ulong addr, value;
+-	u16 address;
++    int chk_match, size;
++    ulong addr, value;
++    u16 address;
++    int result = 0;
+ 
+ #ifndef BBU_I2C
+ 	/* configure i2c to normal mode */
+ 	RT2880_REG(RT2880_GPIOMODE_REG) &= ~1;
+ #endif
+ 
++    argc = get_command(argv);
++
+ 	switch (argc) {
+ 		case RT2880_I2C_DUMP:
+ 			chk_match = strcmp(argv[1], RT2880_I2C_DUMP_STR);
+@@ -435,6 +553,29 @@
+ 			}
+ 			i2c_eeprom_dump();
+ 			break;
++		case RT2880_I2C_LED_ON:
++            argv[2][0] = '2';
++            argv[3] = 0x12;
++            argv[4] = 0x01;
++            result = i2c_write_bytes(0x58, argv);
++            break;
++		case RT2880_I2C_LED_OFF:
++            argv[2][0] = '2';
++            argv[3] = 0x12;
++            argv[4] = 0x00;
++            result = i2c_write_bytes(0x58, argv);
++            break;
++		case RT2880_I2C_RESUME:
++            argv[2][0] = '1';
++            argv[3] = 0x10;
++            result = i2c_write_bytes(0x58, argv);
++            break;
++		case RT2880_I2C_GAUGE_READ:
++            result = i2c_read_bytes(0x58, argv);
++            break;
++		case RT2880_I2C_GAUGE_WRITE:
++            result = i2c_write_bytes(0x58, argv);
++            break;
+ 		case RT2880_I2C_READ:
+ 			chk_match = strcmp(argv[1], RT2880_I2C_READ_STR);
+ 			if (chk_match != 0) {
+@@ -468,7 +609,7 @@
+ }
+ 
+ U_BOOT_CMD(
+-	i2ccmd,	5,	1, 	rt2880_i2c_toolkit,
++    ezpi2c,	5,	1, 	rt2880_i2c_toolkit,
+ 	"i2ccmd	- read/write data to eeprom via I2C Interface\n",
+ 	"i2ccmd read/write eeprom_address data(if write)\n"
+ 	"i2ccmd format:\n"

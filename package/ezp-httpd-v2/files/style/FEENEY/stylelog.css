@@ -1,0 +1,181 @@
+@charset "utf-8";
+
+#wrapper11 {
+	background-image:url url(images/bg_image.jpg)
+	background-repeat: repeat-y;background-position:center;
+	margin-left: 0px;
+}
+
+
+body {
+	margin-left: 0px;
+	margin-right: 0px;
+	background-color: #000;
+}
+
+#layer01_holder {
+	width:563px;
+	height:157px;
+	margin:auto;
+}
+#layer01_holder #left {
+	background-image:url(images/loginpage_02.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	width:145px;
+	height:157px;
+	float:left;
+	display:block;
+}
+#layer01_holder #center {
+	background-image:url(images/loginpage_03.jpg);
+	background-repeat:no-repeat;
+	width:220px;
+	height:157px;
+	float:left;
+	display:block;
+}
+#layer01_holder #right {
+	background-image:url(images/loginpage_04.jpg);
+	background-repeat:no-repeat;
+	background-position:buttom right;
+	width:180px;
+	height:157px;
+	float:left;
+	display:block;
+}
+#layer02_holder {
+	width:563px;
+	height:164px;
+	margin:auto;
+}
+#layer02_holder #left {
+	background-image:url(images/loginpage_06.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	width:145px;
+	height:164px;
+	float:left;
+	display:block;
+}
+#layer02_holder #center {
+	background-image:url(images/loginpage_07.jpg);
+	background-repeat:no-repeat;
+	width:220px;
+	height:164px;
+	float:left;
+	display:block;
+}
+#layer02_holder #right {
+	background-image:url(images/loginpage_08.jpg);
+	background-repeat:no-repeat;
+	width:180px;
+	height:164px;
+	float:left;
+	display:block;
+}
+#layer03_holder {
+	width:563px;
+	height:124px;
+	margin:auto;
+}
+#layer03_holder #left {
+	background-image:url(images/loginpage_09.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	width:145px;
+	height:124px;
+	float:left;
+	display:block;
+}
+#layer03_holder #center {
+	background-image:url(images/loginpage_10.jpg);
+	background-repeat:no-repeat;
+	width:220px;
+	height:124px;
+	float:left;
+	display:block;
+	font-family: Verdana;
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: bold;
+}
+#layer03_holder #right {
+	background-image:url(images/loginpage_11.jpg);
+	background-repeat:no-repeat;
+	width:180px;
+	height:124px;
+	float:left;
+	display:block;
+}
+#layer04_holder {
+	width:563px;
+	height:115px;
+	margin:auto;
+}
+#layer04_holder #left {
+	background-image:url(images/loginpage_12.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	width:145px;
+	height:115px;
+	float:left;
+	display:block;
+}
+#layer04_holder #center {
+	background-image:url(images/loginpage_13.jpg);
+	background-repeat:no-repeat;
+	width:220px;
+	height:115px;
+	float:left;
+	display:block;
+	text-align:left;
+	padding-top:35px;
+	margin-bottom:-35px;
+	color: #FFFFFF;
+	font-size: 11px;
+	font-family: Arial;
+}
+#layer04_holder #center a:link, a:visited {
+	color: #FFFF00;
+	text-decoration:none;
+}
+#layer04_holder #center a:hover {
+	color: #FF9900;
+	text-decoration:underline;
+}
+#layer04_holder #right {
+	background-image:url(images/loginpage_14.jpg);
+	background-repeat:no-repeat;
+	width:180px;
+	height:115px;
+	float:left;
+	display:block;
+}
+
+#layer03_holder #center form {
+	text-align:justify;
+	
+}
+#layer03_holder #center label {
+	font-size:11px;
+	font-style:bold;
+	color: #666666;
+	margin-left:50px;
+	margin-top:50px;
+}
+#layer03_holder #center input {
+	background-color:#4f5153;
+	border:solid 1px #d2d0b5;
+	color: #FFFFFF;
+	margin-left:50px;
+}
+#layer03_holder #center #button {
+	margin-top:5px;
+	background-color: #ffffff;
+	border: 5px thick #454544;
+	color: #454544;
+	margin-left: 50px;
+	right: 0px;
+	width: 45px;
+}

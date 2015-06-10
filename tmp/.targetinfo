@@ -1,0 +1,1721 @@
+Source-Makefile: target/linux/ox810/Makefile
+Target: ox810
+Target-Board: ox810
+Target-Kernel: 2.6
+Target-Name: Oxford NAS 810 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: arm
+Target-Features: pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+	Build firmware images for Oxford NAS 810 based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+
+Source-Makefile: target/linux/ar7/Makefile
+Target: ar7
+Target-Board: ar7
+Target-Kernel: 2.6
+Target-Name: TI AR7 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: atm gpio jffs2 squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for TI AR7 based routers
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+Target-Profile: Texas
+Target-Profile-Name: Texas Instruments WiFi (default)
+Target-Profile-Packages: kmod-acx-mac80211
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Texas Instruments WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+
+Source-Makefile: target/linux/ralink/Makefile
+Target: ralink
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d16-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d32-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d32-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M 2T2R
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABC
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-ar8316
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R with AR8316 Giga Switch
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-4615g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R ABOCOM 4615
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABF
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M 2T2R with AR8316 Giga Switch
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABE
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-5205g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f16d64-2t2r-5205g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-amit
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-amit-cdw531ac
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 1T1R AMIT CDW531AC board
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAA
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316-amit-cde550
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M AMIT CDE550
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMC
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316-spi-amit-cde570
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: SPI FLASH 8M DRAM 64M 2T2R AMIT CDE570
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R1H-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R1H 1 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4G-4l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4H-4l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4H 4 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAC
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-poray-R50E
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AME
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f16d64-2t2r-ar8316-spi-amit-cde570-prox
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: SPI FLASH 16M DRAM 64M 2T2R AMIT CDE570 PROX
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-m1
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W M1
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXA
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-bee
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W Bee
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-sony
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W SONY
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: LIS
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt3352-f8d32-2t2r-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 16M DRAM 32M RT3352 1T1R 1L1W
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8328
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4G-4l1w-mac-sense
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan mac sense
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAD_m
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt3352-f16d64-2t2r-3l1w-gma
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 16M DRAM 64M RT3352 2T2R 3L1W for Garmin project(GMA)
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: GMA
+Target-EZP-SWType: ar8328
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-music
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W Music
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXM
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+
+Source-Makefile: target/linux/magicbox/Makefile
+Target: magicbox
+Target-Board: magicbox
+Target-Kernel: 2.6
+Target-Name: Magicbox [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: powerpc
+Target-Features: pci squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: ppc
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+
+Source-Makefile: target/linux/uml/Makefile
+Target: uml
+Target-Board: uml
+Target-Kernel: 2.6
+Target-Name: User Mode Linux [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: x86_64
+Target-Features: ext2
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: um
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+
+Source-Makefile: target/linux/ralink-7620/Makefile
+Target: ralink-7620
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: Ralink MT7620 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-evb
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 evb 20131114
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: M2E
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-als
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 als 20140415
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: ALS
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-x2
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 x2 20140424
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: X2MT7620
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+
+Source-Makefile: target/linux/ppc40x/Makefile
+Target: ppc40x
+Target-Board: ppc40x
+Target-Kernel: 2.6
+Target-Name: AMCC/IBM PPC40x [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: powerpc
+Target-Features: broken pci squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: powerpc
+Target-Description:
+	Build firmware images for the AMCC Kilauea evaluation board
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+
+Source-Makefile: target/linux/ppc44x/Makefile
+Target: ppc44x
+Target-Board: ppc44x
+Target-Kernel: 2.6
+Target-Name: AMCC/IBM PPC44x [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: powerpc
+Target-Features: broken pci squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: powerpc
+Target-Description:
+	Build firmware images for the AMCC Taishan evaluation board
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+
+Source-Makefile: target/linux/rdc/Makefile
+Target: rdc
+Target-Board: rdc
+Target-Kernel: 2.6
+Target-Name: RDC 321x [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: i386
+Target-Features: gpio jffs2 pci pcmcia squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.24.7
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+        Build firmware images for RDC321x based routers
+        (e.g. Airlink101 AR525W, Linksys WRT54R, Sitecom WL-153)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+Target-Profile: ar525w
+Target-Profile-Name: AirLink101 AR525W
+Target-Profile-Packages: kmod-rt61-pci kmod-r6040
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: dir450
+Target-Profile-Name: D-Link DIR-450
+Target-Profile-Packages: kmod-madwifi kmod-pcmcia-core kmod-nozomi
+Target-Profile-Kconfig: yes
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: wl153
+Target-Profile-Name: Sitecom WL-153
+Target-Profile-Packages: kmod-rt61-pci kmod-r6040
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+
+Source-Makefile: target/linux/rb532/Makefile
+Target: rb532
+Target-Board: rb532
+Target-Kernel: 2.6
+Target-Name: Mikrotik RouterBoard 532 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio jffs2 pci tgz usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.24.7
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi
+
+Source-Makefile: target/linux/au1000/Makefile
+Target: au1000
+Target-Board: au1000
+Target-Kernel: 2.6
+Target-Name: RMI/AMD AU1x00 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio jffs2 pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware for AMD Alchemy 1500 boards
+	(e.g. 4G-Systems Mesh/Access Cube ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall yamonenv
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi (default)
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: Broadcom
+Target-Profile-Name: Broadcom BCM43xx WiFi
+Target-Profile-Packages: kmod-net-bcm43xx
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: Intel
+Target-Profile-Name: Intel IPW2200 WiFi
+Target-Profile-Packages: kmod-net-ipw2200
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: InternetBox
+Target-Profile-Name: T-Mobile InternetBox
+Target-Profile-Packages: kmod-madwifi ldconfig ldd hostapd hostapd-utils ip tc wpa-supplicant wpa-cli
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set for the T-Mobile "InternetBox" (TMD SB1-S)
+@@
+
+Target-Profile: MeshCube
+Target-Profile-Name: MeshCube MTX-1
+Target-Profile-Packages: kmod-madwifi kmod-hostap kmod-hostap-pci kmod-net-prism54 kmod-usb-core kmod-usb-ohci kmod-usb-storage kmod-fs-ext3 kmod-fs-vfat ldconfig ldd hostap-utils hostapd hostapd-utils ip tc wpa-supplicant wpa-cli
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set for the 4G MeshCube (MTX-1)
+@@
+
+
+Source-Makefile: target/linux/atheros/Makefile
+Target: atheros
+Target-Board: atheros
+Target-Kernel: 2.6
+Target-Name: Atheros 231x/5312 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio jffs2 pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Atheros SoC boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi gpioctl
+
+Source-Makefile: target/linux/brcm-2.4/Makefile
+Target: brcm-2.4
+Target-Board: brcm-2.4
+Target-Kernel: 2.4
+Target-Name: Broadcom BCM947xx/953xx [2.4]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: pci pcmcia squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.4.35.4
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom based routers
+	(e.g. Linksys WRT54G(S), Asus WL-500g, Motorola WR850G)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-switch kmod-diag nvram 
+Target-Profile: Broadcom
+Target-Profile-Name: Generic, Broadcom WiFi (default)
+Target-Profile-Packages: kmod-brcm-wl wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Default package set compatible with most BCM947xx hardware
+@@
+
+Target-Profile: BroadcomMimo
+Target-Profile-Name: Generic, Broadcom WiFi (MIMO)
+Target-Profile-Packages: kmod-brcm-wl-mimo wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Default package set compatible with 802.11n (draft) hardware
+@@
+
+Target-Profile: Atheros
+Target-Profile-Name: Generic, Atheros WiFi
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: Generic, No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+Target-Profile: USBGeneric
+Target-Profile-Name: Generic USB
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Package set with for Broadcom routers with USB/USB2 (OHCI/EHCI) support.
+ Includes the WRTSL54GS, WL-520gU, WL-500gP v2, any other BCM5354 routers
+ with USB.
+@@
+
+Target-Profile: WL500G
+Target-Profile-Name: ASUS WL-500g
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-lp wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g with USB and parallel port support
+@@
+
+Target-Profile: WL500GD
+Target-Profile-Name: ASUS WL-500g Deluxe
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-uhci kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Deluxe with USB support
+@@
+
+Target-Profile: WL500GP
+Target-Profile-Name: ASUS WL-500g Premium
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-uhci-iv kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Premium with USB support
+@@
+
+Target-Profile: WL700GE
+Target-Profile-Name: WL-700gE
+Target-Profile-Packages: -ppp -ppp-mod-pppoe -kmod-ipt-nathelper -iptables -dnsmasq -bridge kmod-ide-core kmod-ide-aec62xx kmod-fs-ext3 fdisk e2fsprogs
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Minimal package set optimized for booting the WL-700gE from flash with a writable filesystem
+	and the utilities to create a new filesystem on the HDD
+@@
+
+Target-Profile: WLHDD
+Target-Profile-Name: WL-HDD
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-ide-core kmod-ide-pdc202xx wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-HDD with USB and IDE support
+@@
+
+Target-Profile: WRT54G3G
+Target-Profile-Name: Linksys WRT54G3G
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-pcmcia-core kmod-pcmcia-serial kmod-nozomi comgt wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WRT54G3G with UMTS support
+@@
+
+
+Source-Makefile: target/linux/ifxmips/Makefile
+Target: ifxmips
+Target-Board: ifxmips
+Target-Kernel: 2.6
+Target-Name: Infineon Mips [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio jffs2 pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Infineon Mips Controllers
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall uboot-ifxmips
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi (default)
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: Ralink
+Target-Profile-Name: Ralink RT61 Wifi (ARV452)
+Target-Profile-Packages: kmod-rt61-pci
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Ralink WiFi cards
+@@
+
+
+Source-Makefile: target/linux/brcm47xx/Makefile
+Target: brcm47xx
+Target-Board: brcm47xx
+Target-Kernel: 2.6
+Target-Name: Broadcom BCM947xx/953xx [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom based routers
+	(e.g. Netgear WGT634U)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-switch kmod-diag
+Target-Profile: Broadcom-b43
+Target-Profile-Name: Broadcom BCM43xx WiFi (default)
+Target-Profile-Packages: kmod-b43
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Broadcom BCM43xx cards
+@@
+
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: Atheros-ath5k
+Target-Profile-Name: Atheros WiFi (atk5k)
+Target-Profile-Packages: kmod-ath5k
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+Target-Profile: WGT634U
+Target-Profile-Name: Netgear WGT634U
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-ohci kmod-usb2
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the Netgear WGT634U. Contains USB support
+@@
+
+Target-Profile: WL500GPv1
+Target-Profile-Name: ASUS WL-500g Premium v1 (Atheros WiFi)
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-uhci kmod-usb2
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Premium v1 with USB and Atheros WiFi card support
+@@
+
+Target-Profile: WRTSL54GS
+Target-Profile-Name: Linksys WRTSL54GS
+Target-Profile-Packages: kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-storage kmod-scsi-core kmod-fs-ext3 e2fsprogs kmod-b43
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the Linksys WRTSL54GS. Contains USB support
+@@
+
+
+Source-Makefile: target/linux/as500/Makefile
+Target: as500
+Target-Board: as500
+Target-Kernel: 2.6
+Target-Name: Acrospeed AS500 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: 
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Acrospeed AS500 based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+
+Source-Makefile: target/linux/avr32/Makefile
+Target: avr32
+Target-Board: avr32
+Target-Kernel: 2.6
+Target-Name: Atmel AVR32 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: avr32
+Target-Features: gpio squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: avr32
+Target-Description:
+  Build firmware images for ATNGW100 board
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+
+Source-Makefile: target/linux/ar71xx/Makefile
+Target: ar71xx
+Target-Board: ar71xx
+Target-Kernel: 2.6
+Target-Name: Atheros AR71xx [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio pci squashfs tgz usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Atheros AR71xx based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi
+
+Source-Makefile: target/linux/x86/Makefile
+Target: x86
+Target-Board: x86
+Target-Kernel: 2.6
+Target-Name: x86 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: i386
+Target-Features: display ext2 jffs2 pci pcmcia squashfs usb vdi
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-natsemi kmod-ne2k-pci
+Target: x86/generic
+Target-Board: x86
+Target-Kernel: 2.6
+Target-Name: Generic
+Target-Path: target/linux/x86
+Target-Arch: i386
+Target-Features: display ext2 jffs2 pci pcmcia squashfs usb vdi
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+	Build firmware images for x86 based boards 
+	(e.g : Soekris, ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-natsemi kmod-ne2k-pci
+Target-Profile: Generic
+Target-Profile-Name: Generic
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Generic Profile
+@@
+
+Target-Profile: Alix
+Target-Profile-Name: PCEngines Alix
+Target-Profile-Packages: kmod-via-rhine kmod-leds-alix
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+        Package set compatible with the PCEngines Alix. Contains VIA Rhine III VT6105M and LED support
+@@
+
+Target-Profile: Pcengines
+Target-Profile-Name: PCEngines WRAP
+Target-Profile-Packages: kmod-i2c-scx200 kmod-natsemi kmod-leds-wrap kmod-scx200-gpio kmod-scx200-wdt kmod-hwmon-pc87360
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the PCEngines WRAP. Contains I2C/LEDS/GPIO/Sensors support
+@@
+
+Target-Profile: Soekris
+Target-Profile-Name: Soekris Net4801
+Target-Profile-Packages: kmod-i2c-scx200 kmod-natsemi kmod-leds-net48xx kmod-scx200-gpio kmod-scx200-wdt kmod-hwmon-pc87360
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+        Package set compatible with the Soekris Net4801. Contains I2C/LEDS/GPIO/Sensors support
+@@
+
+
+Source-Makefile: target/linux/adm5120/Makefile
+Target: adm5120
+Target-Board: adm5120
+Target-Kernel: 2.6
+Target-Name: Infineon/ADMtek ADM5120 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: 
+Target-Features: 
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: 
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall admswconfig kmod-input-core kmod-input-polldev kmod-input-gpio-buttons kmod-button-hotplug
+Target: adm5120/router_le
+Target-Board: adm5120
+Target-Kernel: 2.6
+Target-Name: Little Endian
+Target-Path: target/linux/adm5120
+Target-Arch: mipsel
+Target-Features: gpio jffs2 pci squashfs tgz usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Infineon/ADMtek ADM5120 based boards
+	running in little-endian mode (e.g: RouterBoard RB1xx, Compex WP54x ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall admswconfig kmod-input-core kmod-input-polldev kmod-input-gpio-buttons kmod-button-hotplug
+Target-Profile: Generic
+Target-Profile-Name: Generic (default)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Generic package set compatible with most boards.
+@@
+
+Target-Profile: CAS630
+Target-Profile-Name: Cellvision CAS-630 IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-630 device.
+@@
+
+Target-Profile: CAS630W
+Target-Profile-Name: Cellvision CAS-630W IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-630W device.
+@@
+
+Target-Profile: CAS670
+Target-Profile-Name: Cellvision CAS-670 IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-670 device.
+@@
+
+Target-Profile: CAS670W
+Target-Profile-Name: Cellvision CAS-670W IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-670 device.
+@@
+
+Target-Profile: CAS700
+Target-Profile-Name: Cellvision CAS-700 IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-700 device.
+@@
+
+Target-Profile: CAS700W
+Target-Profile-Name: Cellvision CAS-700W IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-700W device.
+@@
+
+Target-Profile: CAS771
+Target-Profile-Name: Cellvision CAS-771 IP camera (Experimental)
+Target-Profile-Packages: kmod-video-cpia2 kmod-usb-ohci kmod-usb2 kmod-usb-audio
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-771 device.
+@@
+
+Target-Profile: CAS771W
+Target-Profile-Name: Cellvision CAS-771W IP camera (Experimental)
+Target-Profile-Packages: kmod-video-cpia2 kmod-usb-ohci kmod-usb2 kmod-usb-audio kmod-rt2500-pci
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-771W device.
+@@
+
+Target-Profile: CAS790
+Target-Profile-Name: Cellvision CAS-790 IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-790 device.
+@@
+
+Target-Profile: CAS861
+Target-Profile-Name: Cellvision CAS-861 IP camera (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-861 device.
+@@
+
+Target-Profile: CAS861W
+Target-Profile-Name: Cellvision CAS-861W IP camera (Experimental)
+Target-Profile-Packages: kmod-rt2500-pci
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision CAS-861W device.
+@@
+
+Target-Profile: NFS101U
+Target-Profile-Name: Cellvision NFS-101U Network File Server (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision NFS-101U device.
+@@
+
+Target-Profile: NFS101WU
+Target-Profile-Name: Cellvision NFS-101WU Network File Server (Experimental)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Cellvision NFS-101WU device.
+@@
+
+Target-Profile: NP27G
+Target-Profile-Name: Compex NP27G
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-adm5120
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Compex NP27G.
+@@
+
+Target-Profile: NP28G
+Target-Profile-Name: Compex NP28G
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-uhci kmod-usb2
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Compex NP28G.
+@@
+
+Target-Profile: WP54
+Target-Profile-Name: Compex WP54 family
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Compex WP54 family.
+@@
+
+Target-Profile: BR6104K
+Target-Profile-Name: Edimax BR-6104K (Unofficial)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Edimax BR-6104K
+@@
+
+Target-Profile: BR6104KP
+Target-Profile-Name: Edimax BR-6104KP (Unofficial)
+Target-Profile-Packages: kmod-usb-core kmod-usb-adm5120
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Edimax BR-6104KP
+@@
+
+Target-Profile: BR6104WG
+Target-Profile-Name: Edimax BR-6104Wg (Unofficial, No WiFi)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Edimax BR-6104Wg
+@@
+
+Target-Profile: BR6114WG
+Target-Profile-Name: Edimax BR-6114WG (Unofficial, No WiFi)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Edimax BR-6114WG
+@@
+
+Target-Profile: EASY5120RT
+Target-Profile-Name: Infineon EASY 5120-RT Reference Board
+Target-Profile-Packages: kmod-usb-core kmod-usb-adm5120
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Infineon EASY 5120P-ATA Reference Board
+@@
+
+Target-Profile: EASY5120PATA
+Target-Profile-Name: Infineon EASY 5120P-ATA Reference Board
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: PMUGW
+Target-Profile-Name: Motorola Powerline MU Gateway (EXPERIMENTAL)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Motorola Powerline MU Gateway board
+@@
+
+Target-Profile: RouterBoard
+Target-Profile-Name: Mikrotik RouterBoard 1xx family
+Target-Profile-Packages: kmod-madwifi kmod-pata-rb153-cf
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the RouterBoard RB1xx devices. Contains RouterOS to OpenWrt\ installation scripts.
+@@
+
+Target: adm5120/router_be
+Target-Board: adm5120
+Target-Kernel: 2.6
+Target-Name: Big Endian
+Target-Path: target/linux/adm5120
+Target-Arch: mips
+Target-Features: gpio jffs2 pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Infineon/ADMTek ADM5120 based boards
+	running in big-endian mode (e.g : ZyXEL Prestige 335WT ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall admswconfig kmod-input-core kmod-input-polldev kmod-input-gpio-buttons kmod-button-hotplug
+Target-Profile: Generic
+Target-Profile-Name: Generic (default)
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Generic package set compatible with most boards.
+@@
+
+Target-Profile: P334WT
+Target-Profile-Name: ZyXEL Prestige 334WT
+Target-Profile-Packages: kmod-acx
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the ZyXEL Prestige 334WT board.
+@@
+
+Target-Profile: P335WT
+Target-Profile-Name: ZyXEL Prestige 335WT
+Target-Profile-Packages: kmod-acx kmod-usb-core kmod-usb-adm5120
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the ZyXEL Prestige 335WT board.
+@@
+
+
+Source-Makefile: target/linux/ixp4xx/Makefile
+Target: ixp4xx
+Target-Board: ixp4xx
+Target-Kernel: 2.6
+Target-Name: Intel IXP4xx [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: armeb
+Target-Features: gpio pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall ixp4xx-microcode fconfig
+Target: ixp4xx/generic
+Target-Board: ixp4xx
+Target-Kernel: 2.6
+Target-Name: Generic
+Target-Path: target/linux/ixp4xx
+Target-Arch: armeb
+Target-Features: gpio pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+	Build firmware images for ixp4xx based boards that boot from internal flash
+	(e.g : Linksys NSLU2, ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall ixp4xx-microcode fconfig
+Target-Profile: Default
+Target-Profile-Name: Default Profile
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Default IXP4xx Profile
+@@
+
+Target-Profile: Atheros-ath5k
+Target-Profile-Name: Atheros WiFi (atk5k)
+Target-Profile-Packages: kmod-ath5k
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: NSLU2
+Target-Profile-Name: Linksys NSLU2
+Target-Profile-Packages: kmod-ixp4xx-npe kmod-scsi-core kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-storage kmod-fs-ext2 kmod-fs-ext3
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Linksys NSLU2
+@@
+
+Target-Profile: NAS100d
+Target-Profile-Name: Iomega NAS 100d
+Target-Profile-Packages: kmod-ixp4xx-npe kmod-madwifi wireless-tools kmod-scsi-core kmod-ata-core kmod-ata-artop kmod-usb-core kmod-usb2 kmod-usb-storage kmod-fs-ext2 kmod-fs-ext3
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Iomega NAS 100d
+@@
+
+Target-Profile: DSMG600RevA
+Target-Profile-Name: DSM-G600 Rev A
+Target-Profile-Packages: kmod-via-velocity kmod-madwifi wireless-tools kmod-scsi-core kmod-ata-core kmod-ata-artop kmod-usb-core kmod-usb-uhci kmod-usb2 kmod-usb-storage kmod-fs-ext2 kmod-fs-ext3
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the DSM-G600 Rev A
+@@
+
+Target: ixp4xx/harddisk
+Target-Board: ixp4xx
+Target-Kernel: 2.6
+Target-Name: Internal Hard-Disk
+Target-Path: target/linux/ixp4xx
+Target-Arch: armeb
+Target-Features: gpio pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+	Build firmware images for ixp4xx based boards that boot directly from internal disk storage
+	(e.g : Freecom FSG-3, ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall ixp4xx-microcode fconfig
+Target-Profile: FSG3
+Target-Profile-Name: Freecom FSG-3
+Target-Profile-Packages: kmod-madwifi wireless-tools kmod-usb-core kmod-usb-uhci kmod-usb2 kmod-usb-storage kmod-fs-ext2 kmod-fs-ext3 kmod-fs-reiserfs
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the Freecom FSG-3
+@@
+
+

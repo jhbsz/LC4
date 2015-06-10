@@ -1,0 +1,27 @@
+diff -Nur linux-2.6.27.official/include/asm-mips/cpu.h linux-2.6.27/include/asm-mips/cpu.h
+--- linux-2.6.27.official/include/asm-mips/cpu.h	2008-10-10 06:13:53.000000000 +0800
++++ linux-2.6.27/include/asm-mips/cpu.h	2009-04-29 22:10:48.000000000 +0800
+@@ -71,6 +71,8 @@
+ #define PRID_IMP_R5432		0x5400
+ #define PRID_IMP_R5500		0x5500
+ 
++#define PRID_IMP_CAMELOT	0xcd00
++
+ #define PRID_IMP_UNKNOWN	0xff00
+ 
+ /*
+diff -Nur linux-2.6.27.official/include/asm-mips/mipsregs.h linux-2.6.27/include/asm-mips/mipsregs.h
+--- linux-2.6.27.official/include/asm-mips/mipsregs.h	2008-10-10 06:13:53.000000000 +0800
++++ linux-2.6.27/include/asm-mips/mipsregs.h	2009-04-29 22:10:48.000000000 +0800
+@@ -936,6 +936,11 @@
+ #define read_c0_depc()		__read_ulong_c0_register($24, 0)
+ #define write_c0_depc(val)	__write_ulong_c0_register($24, 0, val)
+ 
++#if defined(CONFIG_MIPS_CAMELOT)
++#define read_c0_cctl()		__read_ulong_c0_register($20, 0)
++#define write_c0_cctl(val)	__write_ulong_c0_register($20, 0, val)
++#endif
++
+ /*
+  * MIPS32 / MIPS64 performance counters
+  */

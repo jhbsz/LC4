@@ -1,0 +1,14 @@
+Source-Makefile: package/bpalogin/Makefile
+Package: bpalogin
+Version: 2.0.2
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: BPA Login
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	BPA Login: For Bigpond use
+@@
+

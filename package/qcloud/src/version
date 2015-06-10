@@ -1,0 +1,3 @@
+REVISION = 0
+#major.minor.x, x for the build number
+LIB_VERSION = 1.0

@@ -1,0 +1,16 @@
+Source-Makefile: package/spi-ks8995/Makefile
+Package: kmod-spi-ks8995
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Micrel/Kendin KS8995 Ethernet switch control
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SPI=y CONFIG_SPI_MASTER=y
+Description:   Kernel module for Micrel/Kendin KS8995 ethernet switch
+@@
+

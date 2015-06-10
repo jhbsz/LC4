@@ -1,0 +1,14 @@
+Source-Makefile: package/ezpcom-mode/Makefile
+Package: ezpcom-mode
+Version: 1.0-2
+Depends: +libusb +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: EZPacket USB mode tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  ezpcom-mode is EZ Packet USB mode tool.
+@@
+

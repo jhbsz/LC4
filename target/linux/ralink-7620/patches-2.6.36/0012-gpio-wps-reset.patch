@@ -1,0 +1,100 @@
+--- old/drivers/char/ralink_gpio.h	2013-12-24 13:57:29.471529602 +0800
++++ new/drivers/char/ralink_gpio.h	2013-12-24 11:07:37.000000000 +0800
+@@ -567,5 +567,7 @@
+ #define RALINK_GPIO(x)          (1 << x)
+ 
+ #define BUTTON_SD_CARD      21
++#define BUTTON_WPS	    14
++#define BUTTON_RESET        10
+ #define BUTTON_FUNC         0x60
+ 
+--- old/drivers/char/ralink_gpio.c	2013-12-24 13:57:29.471529602 +0800
++++ new/drivers/char/ralink_gpio.c	2013-12-24 11:06:35.000000000 +0800
+@@ -55,11 +55,16 @@
+ #ifdef CONFIG_RALINK_MT7620
+     #warning "MT7620"
+     #define RALINK_GPIO_BUTTON_SD_CARD RALINK_GPIO_21
++    #define RALINK_GPIO_BUTTON_WPS RALINK_GPIO_14
++    #define RALINK_GPIO_BUTTON_RESET RALINK_GPIO_10
+ #endif
+ 
+ /* EZP: set button GPIO definitions */
+ int ezp_gpio_start=0;
+ int sd_card = 1, sd_count = 0, sd_done = 1;
++int reset_count = 0, reset_push = 0;
++int wps_count = 0, wps_push = 0;
++int combo_push = 0;
+ 
+ #define NAME			"ralink_gpio"
+ #define RALINK_GPIO_DEVNAME	"gpio"
+@@ -936,12 +941,23 @@
+ 
+     gpio_argv[0] = "/sbin/ezp-gpio";
+     if (button_data->button_helper_data == BUTTON_SD_CARD) {
+-        gpio_argv[1] = "sdcard";
+-        gpio_argv[2] = NULL;
+-    } else {
+-        printk("no action!\n");
+-        return;
++	    gpio_argv[1] = "sdcard";
++	    gpio_argv[2] = NULL;
++    }else if (button_data->button_helper_data == BUTTON_WPS) {
++	    printk("WPS button\n");
++	    gpio_argv[1] = "usb-remove";
++	    gpio_argv[2] = NULL;
++    } else if (button_data->button_helper_data == BUTTON_RESET) {
++	    printk("Reset button\n");
++	    gpio_argv[1] = "default";
++	    gpio_argv[2] = NULL;
++    }
++    else {
++	    printk("no action!\n");
++	    return;
+     }
++
++
+     retval = call_usermodehelper(gpio_argv[0], gpio_argv, gpio_envp, 0);
+     if (retval) {
+         printk("call_usermodehelper retval %d\n", retval);
+@@ -2195,6 +2211,41 @@
+         button_data.button_helper_data = BUTTON_SD_CARD;
+         schedule_work(&button_data.button_helper);
+     }
++
++    if ((tmp & RALINK_GPIO_BUTTON_WPS) == 0)
++    {
++	    wps_count++;
++    }
++    else
++    {
++	    wps_push = 0;
++	    wps_count = 0;
++	    combo_push = 0;
++    }
++    if((wps_count >= 10) && (reset_count == 0) && !wps_push) {
++	    /* Do WPS button things */
++	    button_data.button_helper_data = BUTTON_WPS;
++	    schedule_work(&button_data.button_helper);
++	    wps_count = 0;
++	    wps_push = 1;
++    }
++
++    if ((tmp & RALINK_GPIO_BUTTON_RESET) == 0)
++    {
++        reset_count++;
++    }
++    else
++    {
++        reset_count = 0;
++        reset_push = 0;
++        combo_push = 0;
++    }
++    if((reset_count >= 100)) {
++	    button_data.button_helper_data = BUTTON_RESET;
++	    schedule_work(&button_data.button_helper);
++	    reset_count = 0;
++    }
++
+ #ifdef RALINK_GPIO_BUTTON_FUNC
+     ezp_gpio_handle_func_button(tmp,RALINK_GPIO_BUTTON_FUNC_MASK);
+ #endif /* RALINK_GPIO_BUTTON_FUNC */

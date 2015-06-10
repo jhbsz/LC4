@@ -1,0 +1,59 @@
+diff -Nur xl2tpd-1.1.11/call.c xl2tpd-1.1.11.new/call.c
+--- xl2tpd-1.1.11/call.c	2007-06-27 01:53:07.000000000 +0800
++++ xl2tpd-1.1.11.new/call.c	2008-07-28 08:49:26.000000000 +0800
+@@ -27,6 +27,7 @@
+ #include "l2tp.h"
+ 
+ #include "ipsecmast.h"
++#include "nvram_ezpacket.h"
+ 
+ struct buffer *new_payload (struct sockaddr_in peer)
+ {
+@@ -666,6 +667,14 @@
+          * Well, nothing appropriate...  Let's add a new tunnel, if
+          * we are not at capacity.
+          */
++        /* EZP: check the tunnels.count. */
++        if (tunnels.count >= L2TPD_SESSION_MAX)
++        {
++            l2tp_log (LOG_DEBUG,
++                 "%s: unable to allocate new tunnel for host %s, port %d.\n",
++                 __FUNCTION__, IPADDY (addr), ntohs (port));
++            return NULL;
++        }
+         if (gconfig.debug_tunnel)
+         {
+             l2tp_log (LOG_DEBUG,
+diff -Nur xl2tpd-1.1.11/control.c xl2tpd-1.1.11.new/control.c
+--- xl2tpd-1.1.11/control.c	2007-06-27 01:53:07.000000000 +0800
++++ xl2tpd-1.1.11.new/control.c	2008-07-28 08:49:44.000000000 +0800
+@@ -21,6 +21,7 @@
+ #include <unistd.h>
+ #include <stdlib.h>
+ #include "l2tp.h"
++#include "nvram_ezpacket.h"
+ 
+ _u16 ppp_crc16_table[256] = {
+     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
+@@ -959,6 +960,10 @@
+             po = add_opt (po, "file");
+             po = add_opt (po, c->lns->pppoptfile);
+         }
++        /* EZP: specify which pppX interface should be used. */
++        po = add_opt (po, "unit");
++        po = add_opt (po, "%d", WAN_NUM + PPTPD_SESSION_MAX - 1);
++
+         start_pppd (c, po);
+         opt_destroy (po);
+         l2tp_log (LOG_NOTICE,
+diff -Nur xl2tpd-1.1.11/md5.h xl2tpd-1.1.11.new/md5.h
+--- xl2tpd-1.1.11/md5.h	2007-06-27 01:53:07.000000000 +0800
++++ xl2tpd-1.1.11.new/md5.h	2008-07-28 09:05:18.000000000 +0800
+@@ -5,6 +5,7 @@
+ typedef unsigned int uint32;
+ #else
+ typedef unsigned long uint32;
++#define TYPEDEF_UINT32 1
+ #endif
+ 
+ struct MD5Context

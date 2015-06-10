@@ -1,0 +1,17 @@
+Source-Makefile: package/acx/Makefile
+Package: kmod-acx
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+20080210--1
+Depends: @LINUX_2_6 @CONFIG_PCI||TARGET_ar7 +wireless-tools
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Driver for TI ACX1xx chipset
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a driver for TI ACX1xx 802.11a/b/g chipsets.
+
+http://acx100.sourceforge.net/
+@@
+

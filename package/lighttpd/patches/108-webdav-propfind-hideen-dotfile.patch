@@ -1,0 +1,22 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-10-21 12:24:04.433943405 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-10-21 12:26:44.633945300 +0800
+@@ -1649,7 +1649,11 @@
+ 					buffer_copy_string_buffer(d.rel_path, dst->rel_path);
+ 					BUFFER_APPEND_SLASH(d.rel_path);
+ 
++#if defined (PLATFORM_M2E)
++					if (de->d_name[0] == '.') {
++#else
+ 					if (de->d_name[0] == '.' && de->d_name[1] == '\0') {
++#endif
+ 						/* don't append the . */
+ 					} else {
+ 						buffer_append_string(d.path, de->d_name);
+@@ -1663,7 +1667,6 @@
+ 					if(goto_fast_list !=1)
+ #endif
+ 						webdav_get_props(srv, con, p, &d, req_props, prop_200, prop_404);
+-
+ 					iFile_Amount_Counter++;
+ 					buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
+ 					buffer_append_string_len(b,CONST_STR_LEN("<D:href>"));

@@ -1,0 +1,70 @@
+Source-Makefile: target/linux/ralink-7620/Makefile
+Target: ralink-7620
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: Ralink MT7620 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-evb
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 evb 20131114
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: M2E
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-als
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 als 20140415
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: ALS
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink-7620/mt7620-x2
+Target-Board: ralink-7620
+Target-Kernel: 2.6
+Target-Name: mt7620 x2 20140424
+Target-Path: target/linux/ralink-7620
+Target-Arch: mipsel
+Target-Features: pci squash4fs usb
+Target-Depends: 
+Target-EZP-Platform: X2MT7620
+Target-EZP-SWType: esw
+Linux-Version: 2.6.36
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+

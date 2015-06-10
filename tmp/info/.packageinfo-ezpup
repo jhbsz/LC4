@@ -1,0 +1,14 @@
+Source-Makefile: package/ezpup/Makefile
+Package: ezpup
+Version: 0.1.0
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: EZPacket firmware upgrade tools.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:       A set of tools that encrypt, decrypt and upgrade EZPacket firmware.
+@@
+

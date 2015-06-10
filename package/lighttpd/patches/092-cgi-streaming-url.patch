@@ -1,0 +1,25 @@
+--- lighttpd-1.4.30/src/response.c	2014-02-10 14:22:18.741126502 +0800
++++ lighttpd-1.4.30/src/response.c	2014-02-10 15:41:10.218477072 +0800
+@@ -207,6 +207,22 @@
+ handler_t http_response_prepare(server *srv, connection *con) {
+ 	handler_t r;
+ 
++    /* Change request uri if it has .cgi/ format */
++    char *pch;
++    pch = strstr(con->request.uri->ptr, ".cgi/");
++    if (pch != NULL) {
++        // If url contains ".cgi/" -> remove this string to filename
++        char questionmark = '?';
++        char *remain;
++        remain = strchr(pch, questionmark);
++        pch = pch + strlen(".cgi/") - 1;
++        if ( remain == NULL) {
++            strcpy(pch, "");
++        } else {
++            strcpy(pch, remain);
++        }
++    }
++
+ 	/* looks like someone has already done a decision */
+ 	if (con->mode == DIRECT &&
+ 	    (con->http_status != 0 && con->http_status != 200)) {

@@ -1,0 +1,484 @@
+<po>
+<!-- bandwidth.asp -->
+<message msgid="band title" msgstr="Drag the sliders to adjust the bandwidth for each network application." />
+<message msgid="band Apply" msgstr="Apply" />
+<message msgid="band Cancel" msgstr="Cancel" />
+<!-- game.html -->
+<message msgid="game title" msgstr="Whenever you turn the Game Engine on, the router is designated to offer a better gaming experience. The Game Console option in Bandwidth Management will be prioritized to the highest level and cannot be re-arranged until the Game Engine is turned off." />
+<message msgid="game ok" msgstr="OK" />
+<!-- genie2-1.asp-->
+<message msgid="g2-1 easy123" msgstr="eaZy 123" />
+<message msgid="g2-1 Internet" msgstr="Connect to Internet " />
+<message msgid="g2-1 Password" msgstr="Router Password " />
+<message msgid="g2-1 Security" msgstr="Wireless Security" />
+<message msgid="g2-1 InternetType" msgstr="Internet Connection Type:" />
+<message msgid="g2-1 InternetType1" msgstr="Static IP" />
+<message msgid="g2-1 InternetType2" msgstr="DHCP" />
+<message msgid="g2-1 InternetType3" msgstr="PPPoE" />
+<message msgid="g2-1 InternetType4" msgstr="PPTP" />
+<message msgid="g2-1 InternetType5" msgstr="L2TP" />
+<message msgid="g2-1 title" msgstr="Please refer to the information provided by your Internet Service Provider (ISP) and complete the following blanks." />
+<message msgid="g2-1 Dynamic" msgstr="Dynamic IP" />
+<message msgid="g2-1 Static" msgstr="Static IP " />
+<message msgid="g2-1 IP" msgstr="IP Address:" />
+<message msgid="g2-1 User" msgstr="User Name:" />
+<message msgid="g2-1 Password1" msgstr="Password:" />
+<message msgid="g2-1 Next" msgstr="Next" />
+<message msgid="g2-1 Back" msgstr="Back" />
+<message msgid="g2-1 Exit" msgstr="Exit" />
+<message msgid="g2-1 No" msgstr="No" />
+<message msgid="g2-1 Yes" msgstr="Yes" />
+<message msgid="g2-1 msg" msgstr="Are you sure you want to Exit?" />
+<!-- genie2-2.asp-->
+<message msgid="g2-2 easy123" msgstr="eaZy 123" />
+<message msgid="g2-2 Internet" msgstr="Connect to Internet " />
+<message msgid="g2-2 Password" msgstr="Router Password " />
+<message msgid="g2-2 Security" msgstr="Wireless Security" />
+<message msgid="g2-2 InternetType" msgstr="Internet Connection Type:" />
+<message msgid="g2-2 InternetType1" msgstr="Static IP" />
+<message msgid="g2-2 InternetType2" msgstr="DHCP" />
+<message msgid="g2-2 InternetType3" msgstr="PPPoE" />
+<message msgid="g2-2 InternetType4" msgstr="PPTP" />
+<message msgid="g2-2 InternetType5" msgstr="L2TP" />
+<message msgid="g2-2 title" msgstr="Please refer to the information provided by your Internet Service Provider (ISP) and complete the following blanks." />
+<message msgid="g2-2 IP" msgstr="IP Address:" />
+<message msgid="g2-2 Subnet" msgstr="Subnet Mask:" />
+<message msgid="g2-2 Gateway" msgstr="Default Gateway:" />
+<message msgid="g2-2 DNS1" msgstr="Primary DNS:" />
+<message msgid="g2-2 DNS2" msgstr="Secondary DNS:" />
+<message msgid="g2-2 Gateway1" msgstr="Default Gateway" />
+<message msgid="g2-2 Next" msgstr="Next" />
+<message msgid="g2-2 Back" msgstr="Back" />
+<message msgid="g2-2 Exit" msgstr="Exit" />
+<message msgid="g2-2 No" msgstr="No" />
+<message msgid="g2-2 Yes" msgstr="Yes" />
+<message msgid="g2-2 msg" msgstr="Are you sure you want to Exit?" />
+<!-- genie2-3.html--> 
+<message msgid="g2-3 title" msgstr="Generally, when your connection type is DHCP, it means the Internet service is available while you open your computer. " />
+<message msgid="g2-3 title1" msgstr="Please click Next to continue. " />
+<!-- genie2-4.asp--> 
+<message msgid="g2-4 Dynamic" msgstr="Dynamic IP" />
+<message msgid="g2-4 Static" msgstr="Static IP " />
+<message msgid="g2-4 Address" msgstr="PPTP Address:" />
+<message msgid="g2-4 Subnet" msgstr="PPTP Subnet Mask:" />
+<message msgid="g2-4 Gateway" msgstr="PPTP Gateway IP Address:" />
+<message msgid="g2-4 Server" msgstr="PPTP Server IP Address:" />
+<message msgid="g2-4 User" msgstr="User Name:" />
+<message msgid="g2-4 Password" msgstr="Password:" />
+<!-- genie2-5.asp-->
+<message msgid="g2-5 Dynamic" msgstr="Dynamic IP" />
+<message msgid="g2-5 Static" msgstr="Static IP " />
+<message msgid="g2-5 Address" msgstr="L2TP Address:" />
+<message msgid="g2-5 Subnet" msgstr="L2TP Subnet Mask:" />
+<message msgid="g2-5 Gateway" msgstr="L2TP Gateway IP Address:" />
+<message msgid="g2-5 Server" msgstr="L2TP Server IP Address:" />
+<message msgid="g2-5 User" msgstr="User Name:" />
+<message msgid="g2-5 Password" msgstr="Password:" />
+<!-- genie2-4.html-->
+<message msgid="g2-44 easy123" msgstr="eaZy 123 is connecting to the Internet." />
+<message msgid="g2-44 Connect" msgstr="Connecting..." />
+<!-- genie2.html-->
+<message msgid="g2h easy123" msgstr="eaZy 123 is detecting your Internet connection type. " />
+<message msgid="g2h Detecting" msgstr="Detecting..." />
+<!-- genie2_error2.html-->
+<message msgid="g2-e2 msg1" msgstr="Incorrect Information" />
+<message msgid="g2-e2 msg2" msgstr="Sorry! The router is unable to connect to the Internet with the information you just provided.  Please enter it again." />
+<!-- genie2_error.html-->
+<message msgid="g2-e msg1" msgstr="No Internet service detected" />
+<message msgid="g2-e msg2" msgstr="Please manually check the following items:" />
+<message msgid="g2-e msg3" msgstr="1. The computer, router, and modem are properly connect to each other." />
+<message msgid="g2-e msg4" msgstr="2. A valid Internet service." />
+<message msgid="g2-e msg5" msgstr="You may click Try Again to run detection again." />
+<message msgid="g2-e msg6" msgstr="Try Again" />
+<!-- genie3.html-->
+<message msgid="g3 title" msgstr="Change router password" />
+<message msgid="g3 msg" msgstr="It is highly recommended to have a new administrator password instead of the factory default  one (1234)."/>
+<message msgid="g3 Password" msgstr="Password:" />
+<message msgid="g3 VPassword" msgstr="Verify Password:" />
+<!-- genie4.asp-->
+<message msgid="g41 title" msgstr="Wireless Security" />
+<message msgid="g41 msg" msgstr="A protected wireless network secures the data transferring when you are doing any network  activities wirelessly. Guard it with one of the following security modes and a password."/>
+<message msgid="g41 SSID" msgstr="Wireless Network Name (SSID):" />
+<message msgid="g41 Security" msgstr="Security mode:" />
+<message msgid="g41 password" msgstr="Wireless password :" />
+<message msgid="g41 Vpassword" msgstr="Verify Password:" />
+<message msgid="g41 Security0" msgstr="No Security" />
+<message msgid="g41 Security1" msgstr="WPA-PSK"/>
+<message msgid="g41 Security2" msgstr="WPA2-PSK" />
+<!-- genie5.html -->
+<message msgid="g5 title" msgstr="Congratulations!" />
+<message msgid="g5 msg" msgstr="You  are connected to the Internet. And now, why not try {GO}, an easy router  management tool ever!"/>
+<message msgid="g5 GO" msgstr="GO" />
+<!-- genie.asp -->
+<message msgid="Welcome" msgstr="Welcome" />
+<message msgid="g5 msg" msgstr="You  are connected to the Internet. And now, why not try {GO}, an easy router  management tool ever!"/>
+<message msgid="g5 GO" msgstr="GO" />
+<!-- passWarning.html -->
+<message msgid="pass title" msgstr="The Wizard setup walks you through the most common configuration settings. We   suggest you use this mode if it is the first time you are setting up your router   or if you need to make basic configuration changes." />
+<message msgid="pass title1" msgstr="Use Advanced mode if you need access to more advanced features not included in   Wizard mode." />
+<message msgid="pass Password" msgstr="New Password:" />
+<message msgid="pass Retype" msgstr="Retype to Confirm:" />
+<message msgid="pass Ignore" msgstr="Ignore" />
+<message msgid="pass Apply" msgstr="Apply" />
+<!-- wireless_security.asp -->
+<message msgid="ws title" msgstr="Data transmitted wirelessly without encryption is not safe. Guard your wireless network with a security mode and the password you setup. And then, you can use WPS to connect your computers to your wireless network with just one single click." />
+<message msgid="ws SSID" msgstr="Wireless Network Name (SSID) :" />
+<message msgid="ws Security" msgstr="Security mode :" />
+<message msgid="ws Security1" msgstr="No Security" />
+<message msgid="ws Security2" msgstr="WPA-PSK" />
+<message msgid="ws Security3" msgstr="WPA2-PSK" />
+<message msgid="ws password" msgstr="Wireless password :" />
+<message msgid="ws vpassword" msgstr="Verify password :" />
+<message msgid="ws WPS" msgstr="WPS" />
+<message msgid="ws Cancel" msgstr="Cancel" />
+<message msgid="ws Apply" msgstr="Apply" />
+<message msgid="ws title1" msgstr="WiFi Protected Setup (WPS) provides you a easier and faster way to connect your computers/device to your wireless network. Use one of the following approaches to get connected." />
+<message msgid="ws title2" msgstr="Click the Wi-Fi Protected Setup button of your wireless client, and then click the button on the bottom." />
+<message msgid="ws title3" msgstr="Register the PIN number of your wireless client." />
+<message msgid="ws title4" msgstr="If your wireless client requires the Router's PIN number, enter " />
+<message msgid="ws title5" msgstr="in it." />
+<message msgid="ws Confirm" msgstr="Confirm" />
+<message msgid="ws OK" msgstr="OK" />
+<message msgid="ws ws" msgstr="Wireless Security" />
+<message msgid="ws Exit" msgstr="Exit" />
+<message msgid="ws WPS1" msgstr="WPS" />
+<message msgid="ws Register" msgstr="Register" />
+<!-- power_saving.asp -->
+<message msgid="ps title" msgstr="Please schedule the wireless service with the table below." />
+<message msgid="ps status" msgstr="WLAN status" />
+<message msgid="ps Day" msgstr="Day" />
+<message msgid="ps times" msgstr="Except for the following times   (24-Hour Format)" />
+<message msgid="ps Cancel" msgstr="Cancel" />
+<message msgid="ps Apply" msgstr="Apply" />
+<!-- parental_control.asp -->
+<message msgid="pc title" msgstr="Any URLs that contains any of the following keywords will be blocked and cannot be browsed." />
+<message msgid="pc Delete" msgstr="Delete" />
+<message msgid="pc Add" msgstr="Add" />
+<message msgid="pc Cancel" msgstr="Cancel" />
+<message msgid="pc Apply" msgstr="Apply" />
+<!-- firewall.html -->
+<message msgid="Firewall title" msgstr="Enabling Firewall protects your computers against malicious attacks from the Internet." />
+<message msgid="Firewall ok" msgstr="OK" />
+<!-- genie.asp -->
+<message msgid="g Welcome" msgstr="Welcome" />
+<message msgid="g title" msgstr="The coming steps will guide you through the setup of your router and connecting to the Internet. Please click one of the language icons below to continue." />
+<message msgid="g Connect" msgstr="Connect to Internet" />
+<message msgid="g Language" msgstr="Language" />
+<!-- maintainance.asp-->
+<message msgid="maintain title" msgstr="System Setup" />
+<message msgid="maintain sys name" msgstr="System Name" />
+<message msgid="maintain dom name" msgstr="Domain Name" />
+<message msgid="maintain adm in timer" msgstr="Administrator Inactivity Timer" />
+<message msgid="maintain minutes" msgstr="minutes, 0 means no timeout" />
+<message msgid="maintain apply" msgstr="Apply" />
+<message msgid="maintain reset" msgstr="Cancel" />
+<!-- password.asp-->
+<message msgid="pw title" msgstr="Password Setup" />
+<message msgid="pw old pw" msgstr="Old Password" />
+<message msgid="pw new pw" msgstr="New Password" />
+<message msgid="pw confirm" msgstr="Retype to Confirm" />
+<message msgid="pw apply" msgstr="Apply" />
+<message msgid="pw reset" msgstr="Cancel" />
+<!-- dashboard.asp-->
+<message msgid="dash ezmode" msgstr="Easy Mode" />
+<message msgid="dash about"	msgstr="About" />
+<message msgid="dash home" msgstr="Home" />
+<message msgid="dash logout" msgstr="Logout" />
+<message msgid="dash welcome" msgstr="Welcome: Admin" />
+<message msgid="dash title"	msgstr="Status" />
+<message msgid="dash ref interval" msgstr="Refresh Interval" />
+<message msgid="dash ref none" msgstr="None" />
+<message msgid="dash ref 5s" msgstr="60 seconds" />
+<message msgid="dash ref 10s"	msgstr="120 seconds" />
+<message msgid="dash ref 15s"	msgstr="180 seconds" />
+<message msgid="dash ref 20s"	msgstr="240 seconds" />
+<message msgid="dash ref 25s"	msgstr="300 seconds" />
+<message msgid="dash ref 30s"	msgstr="30 seconds" />
+<message msgid="dash ref apply"	msgstr="Refresh Now" />
+<message msgid="dash logout title" msgstr="Log Out" />
+<message msgid="dash logout mes" msgstr="Are you sure you want to log out?" />
+<message msgid="dash logout no" msgstr="No" />
+<message msgid="dash logout yes" msgstr="Yes" />
+<message msgid="dash about title"	msgstr="About" />
+<message msgid="dash about check1" msgstr="To upgrade your NBG4615 with the latest firmware, please visit us on the web at " />
+<message msgid="dash about check2" msgstr="." />
+<message msgid="dash about close"	msgstr="Close" />
+<!-- dashboard_info.asp-->
+<message msgid="dash_info title" msgstr="Device Information" />
+<message msgid="dash_info item"	msgstr="Item" />
+<message msgid="dash_info data"	msgstr="Data" />
+<message msgid="dash_info hostname" msgstr="Host Name" />
+<message msgid="dash_info fwver" msgstr="Firmware Version" />
+<message msgid="dash_info sys opmode"	msgstr="Sys OP Mode" />
+<message msgid="dash_info sys router"	msgstr="Router Mode" />
+<message msgid="dash_info sys ap"	msgstr="Access Point Mode" />
+<message msgid="dash_info sys clinet"	msgstr="Client Mode" />
+<message msgid="dash_info sys wds" msgstr="Bridge Mode (WDS)" />
+<message msgid="dash_info sys apwds" msgstr="AP + Repeater Mode (AP +WDS)" />
+<message msgid="dash_info sys apcli" msgstr="Universal Repeater Mode" />
+<message msgid="dash_info sys wisp"	msgstr="WISP Mode" />
+<message msgid="dash_info wan info"	msgstr="WAN Information" />
+<message msgid="dash_info wan mac" msgstr="MAC Address" />
+<message msgid="dash_info wan ip"	msgstr="IP Address" />
+<message msgid="dash_info wan mask"	msgstr="IP Subnet Mask" />
+<message msgid="dash_info wan contype" msgstr="Connected Type" />
+<message msgid="dash_info lan info"	msgstr="LAN Information" />
+<message msgid="dash_info lan mac" msgstr="MAC Address" />
+<message msgid="dash_info lan ip"	msgstr="IP Address" />
+<message msgid="dash_info lan mask"	msgstr="IP Subnet Mask" />
+<message msgid="dash_info lan dhcp"	msgstr="DHCP" />
+<message msgid="dash_info lan dhcp srv" msgstr="Server" />
+<message msgid="dash_info lan dhcp dis" msgstr="Disable" />
+<message msgid="dash_info wlan info" msgstr="WLAN Information" />
+<message msgid="dash_info wlan opmode" msgstr="WLAN OP Mode" />
+<message msgid="dash_info wlan ap0"	msgstr="Access Point Mode" />
+<message msgid="dash_info wlan ap1"	msgstr="Access Point Mode" />
+<message msgid="dash_info wlan cli"	msgstr="Client Mode" />
+<message msgid="dash_info wlan wds"	msgstr="Bridge Mode (WDS)" />
+<message msgid="dash_info wlan apwds"	msgstr="AP + Repeater Mode (AP +WDS)" />
+<message msgid="dash_info wlan apcli"	msgstr="Universal Repeater Mode" />
+<message msgid="dash_info wlan wisp" msgstr="WISP Mode" />
+<message msgid="dash_info wlan mac"	msgstr="MAC Address" />
+<message msgid="dash_info wlan status" msgstr="Status" />
+<message msgid="dash_info wlan status off" msgstr="OFF" />
+<message msgid="dash_info wlan status on"	msgstr="ON" />
+<message msgid="dash_info wlan status essid" msgstr="ESSID" />
+<message msgid="dash_info wlan status namessid"	msgstr="Name(SSID)" />
+<message msgid="dash_info wlan chan" msgstr="Channel" />
+<message msgid="dash_info wlan chan auto"	msgstr="Auto Channel" />
+<message msgid="dash_info wlan opchan" msgstr="Operating Channel" />
+<message msgid="dash_info wlan sec"	msgstr="Security Mode" />
+<message msgid="dash_info wlan sec nosec"	msgstr="No Security" />
+<message msgid="dash_info wlan 80211mode"	msgstr="802.11 Mode" />
+<message msgid="dash_info wlan 80211mode config" 	msgstr="Configured" />
+<message msgid="dash_info ifstat title"	msgstr="Interface Status" />
+<message msgid="dash_info ifstat if" msgstr="Interface" />
+<message msgid="dash_info ifstat stat" msgstr="Status" />
+<message msgid="dash_info ifstat rate" msgstr="Rate" />
+<message msgid="dash_info ifstat wan"	msgstr="WAN" />
+<message msgid="dash_info ifstat wan down" 	msgstr="Down" />
+<message msgid="dash_info ifstat wan up" msgstr="Up" />
+<message msgid="dash_info ifstat lan"	msgstr="LAN" />
+<message msgid="dash_info ifstat lan up" msgstr="Up" />
+<message msgid="dash_info ifstat wlan" msgstr="WLAN" />
+<message msgid="dash_info ifstat wlan down"	msgstr="Down" />
+<message msgid="dash_info ifstat wlan up"	msgstr="Up" />
+<message msgid="dash_info systat title" msgstr="System Status" />
+<message msgid="dash_info systat item" msgstr="Item" />
+<message msgid="dash_info systat data" msgstr="Data" />
+<message msgid="dash_info systat sysuptime" msgstr="System Up Time" />
+<message msgid="dash_info systat currtime" msgstr="Current Date/Time" />
+<message msgid="dash_info systat sysres" msgstr="System Resource" />
+<message msgid="dash_info systat cpu" msgstr="CPU Usage" />
+<message msgid="dash_info systat mem" msgstr="Memory Usage" />
+<message msgid="dash_info systat setting" msgstr="System Setting" />
+<message msgid="dash_info systat setting fw" msgstr="Firewall" />
+<message msgid="dash_info systat setting en" msgstr="Enabled" />
+<message msgid="dash_info systat setting dis" msgstr="Disabled" />
+<message msgid="dash_info systat bm" msgstr="Bandwidth Management" />
+<message msgid="dash_info systat bm en" msgstr="Enabled" />
+<message msgid="dash_info systat bm dis" msgstr="Disabled" />
+<message msgid="dash_info systat upnp en" msgstr="Enabled" />
+<message msgid="dash_info systat upnp dis" msgstr="Disabled" />
+<message msgid="dash_info systat confmode" msgstr="Configuration Mode" />
+<message msgid="dash_info systat confmode exp" msgstr="Expert" />
+<message msgid="dash_info sum title" msgstr="Summary" />
+<message msgid="dash_info sum bw"	msgstr="BW MGMT Monitor" />
+<message msgid="dash_info sum bw det"	msgstr="Details" />
+<message msgid="dash_info sum dhcp"	msgstr="DHCP Table" />
+<message msgid="dash_info sum dhcp det"	msgstr="Details" />
+<message msgid="dash_info sum pktstat" msgstr="Packet Statistics" />
+<message msgid="dash_info sum pktstat det" 	msgstr="Details" />
+<message msgid="dash_info sum wlan"	msgstr="WLAN Station Status" />
+<message msgid="dash_info sum wlan det"	msgstr="Details" />
+<!-- networkmap.asp -->
+<message msgid="networkmap Home" msgstr="Home" />
+<message msgid="networkmap ExpertMode" msgstr="Expert Mode" />
+<message msgid="networkmap Logout" msgstr="Logout" />
+<message msgid="networkmap Modem" msgstr="Modem" />
+<message msgid="networkmap Status" msgstr="Status" />
+<message msgid="networkmap Name" msgstr="System Name :" />
+<message msgid="networkmap Time" msgstr="Time :" />
+<message msgid="networkmap WANIP" msgstr="WAN IP :" />
+<message msgid="networkmap MACAddress" msgstr="MAC Address :" />
+<message msgid="networkmap FirmwareVersion" msgstr="Firmware Version :" />
+<message msgid="networkmap WirelessNetworkNameSSID" msgstr="Wireless Network Name (SSID) :" />
+<message msgid="networkmap Security" msgstr="Security :" />
+<message msgid="networkmap NetworkMAP" msgstr="Network MAP" />
+<message msgid="networkmap GameEngine" msgstr="Game Engine" />
+<message msgid="networkmap ParenetalControl" msgstr="Content Filter" />
+<message msgid="networkmap BandwidthMGMT" msgstr="Bandwidth MGMT" />
+<message msgid="networkmap Firewall" msgstr="Firewall" />
+<message msgid="networkmap WirelessSecurity" msgstr="Wireless Security" />
+<message msgid="networkmap PowerSaving" msgstr="Power Saving" />
+<message msgid="networkmap ScanningyourNetwork" msgstr="Scanning your Network . . ." />
+<!-- main_config_frame.asp -->
+<message msgid="Logout" msgstr="Logout" />
+<message msgid="Home" msgstr="Home" />
+<message msgid="About" msgstr="About" />
+<message msgid="EasyMode" msgstr="Easy Mode" />
+<message msgid="WelcomeAdmin" msgstr="Welcome: Admin" />
+<message msgid="openall" msgstr="open all" />
+<message msgid="closeall" msgstr="close all" />
+<message msgid="CONFIGURATION" msgstr="Configuration" />
+<message msgid="CONFIGURATION_TITLE" msgstr="CONFIGURATION" />
+<message msgid="Network" msgstr="Network" />
+<message msgid="Wireless LAN" msgstr="Wireless LAN" />
+<message msgid="General" msgstr="General" />
+<message msgid="WAN" msgstr="WAN" />
+<message msgid="Internet Connection" msgstr="Internet Connection" />
+<message msgid="LAN" msgstr="LAN" />
+<message msgid="DHCP Server" msgstr="DHCP Server" />
+<message msgid="Static Route" msgstr="Static Route" />
+<message msgid="IP Static Route" msgstr="IP Static Route" />
+<message msgid="Security" msgstr="Security" />
+<message msgid="Firewall" msgstr="Firewall" />
+<message msgid="Content Filter" msgstr="Content Filter" />
+<message msgid="Utility" msgstr="Utility" />
+<message msgid="Bandwidth Management" msgstr="Bandwidth Management" />
+<message msgid="IGMP Snooping" msgstr="IGMP Snooping" />
+<message msgid="IP Alias" msgstr="IP Alias" />
+<message msgid="MAC Filter" msgstr="MAC Filter" />
+<message msgid="Advanced" msgstr="Advanced" />
+<message msgid="WPS Station" msgstr="WPS Station" />
+<message msgid="Scheduling" msgstr="Scheduling" />
+<message msgid="AP Client" msgstr="AP Client" />
+<message msgid="WDS" msgstr="WDS" />
+<message msgid="Client" msgstr="Client" />
+<message msgid="Application" msgstr="Application" />
+<message msgid="Services" msgstr="Services" />
+<message msgid="SPI" msgstr="SPI" />
+<message msgid="RIP" msgstr="RIP" />
+<message msgid="Routing" msgstr="Routing" />
+<message msgid="Monitor" msgstr="Monitor" />
+<message msgid="Parental Control" msgstr="Content Filter" />
+<!-- main_maintenance_frame.asp -->
+<message msgid="MAINTENANCE" msgstr="MAINTENANCE" />
+<message msgid="Maintenance" msgstr="Maintenance" />
+<message msgid="Password" msgstr="Password" />
+<message msgid="Time" msgstr="Time" />
+<message msgid="Time Setting" msgstr="Time Setting" />
+<message msgid="Remote Management" msgstr="Remote Management" />
+<message msgid="Firmware Upgrade" msgstr="Firmware Upgrade" />
+<message msgid="Backup Restore" msgstr="Backup / Restore" />
+<message msgid="Reset Restart" msgstr="Reset/Restart" />
+<message msgid="Sys OP Mode" msgstr="Sys OP Mode" />
+<message msgid="Password Setup" msgstr="Password Setup" />
+<message msgid="Restart" msgstr="Restart" />
+<!-- main_monitor_frame.asp -->
+<message msgid="MONITOR" msgstr="MONITOR" />
+<message msgid="Monitor" msgstr="Monitor" />
+<message msgid="Log" msgstr="Log" />
+<message msgid="View Log" msgstr="View Log" />
+<message msgid="Log Settings" msgstr="Log Settings" />
+<message msgid="BW MGMT Monitor" msgstr="BW MGMT Monitor" />
+<message msgid="DHCP Table" msgstr="DHCP Table" />
+<message msgid="Packet Statistics" msgstr="Packet Statistics" />
+<message msgid="WLAN Station Status" msgstr="WLAN Station Status" />
+<message msgid="Association List" msgstr="Association List" />
+<message msgid="Sys OP Mode" msgstr="Sys OP Mode" />
+<message msgid="Password Setup" msgstr="Password Setup" />
+<message msgid="Restart" msgstr="Restart" />
+<message msgid="message_header" msgstr="Message" />
+<message msgid="Unconfigured" msgstr="Unconfigured" />
+<message msgid="Configured" msgstr="Configured" />
+<!-- alert message -->
+<message msgid="System Name cannot be empty." msgstr="System Name cannot be empty." />
+<message msgid="Domain Name cannot be empty." msgstr="Domain Name cannot be empty." />
+<message msgid="Please specify Administrator Inactivity Timer." msgstr="Please specify Administrator Inactivity Timer." />
+<message msgid="Invalid Administrator Inactivity Timer" msgstr="Invalid Administrator Inactivity Timer" />
+<message msgid="Error: Confirm password not match!!" msgstr="Error: Confirm password not match!!" />
+<!-- alert message -->
+<!-- loading.asp -->
+<message msgid="proceeding message 1" msgstr="Configuration Update is proceeding.  Please Wait ..."/>
+<!-- loading.asp -->
+<!-- proceeding.asp -->
+<message msgid="proceeding message 2" msgstr="The device will now reboot.As there will be no indication of when the process is complete, please wait for one minute before attempting to access the router again. "/>
+<message msgid="proceeding Restart" msgstr="Device Is Restart Now."/>
+<!-- proceeding.asp -->
+<!-- upload_process.html -->
+<message msgid="proceeding message 3" msgstr="Firmware Upgrade is proceeding...  Please Wait ...  "/>
+<message msgid="proceeding message 4" msgstr="Device Is Restart Now. Please Wait ... "/>
+<message msgid="proceeding message 5" msgstr="Do NOT power off your device."/>
+<!-- upload_process.html -->
+<message msgid="main Ready" msgstr="Ready"/>
+<message msgid="main ConfigurationSuccess" msgstr="Configuration updated successfully."/>
+<message msgid="main ConfigurationProceeding" msgstr="Configuration Update is proceeding. Please Wait..."/>
+<message msgid="main firmware download in progress" msgstr="Firmware download in progress. Please wait . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Firmware upgrade is proceeding. Please wait and do NOT power off your device."/>
+<message msgid="Management" msgstr="Management"/>
+<!-- parental_control.asp 20090624 add-->
+<message msgid="Key_Word" msgstr="Add Key Word"/>
+<message msgid="change_password" msgstr="Use this screen to change the password."/>
+<message msgid="Disassociated" msgstr="Disassociated"/>
+<message msgid="Associated" msgstr="Associated"/>
+<message msgid="Connect Status" msgstr="Connect Status"/>
+<!-- added by NBG4615 -->
+<message msgid="g41 msg2" msgstr="It is strongly recommended to set WPA or WPA2 encryption for better wireless security."/>
+<message msgid="g5 msg2" msgstr="To upgrade your device with the latest firmware, please visit us on the web at www.ZyXEL.com."/>
+<message msgid="g5 msg3" msgstr="Or you go to Expert mode > Maintenance > Firmware Upgrade to upgrade the firmware on-line."/>
+<!-- Added for dashboard_info.asp -->
+<message msgid="dash_info wlan sec wep"	msgstr="Static WEP" />
+<message msgid="dash_info wlan sec wpapsk"	msgstr="WPA-PSK" />
+<message msgid="dash_info wlan sec wpa2psk"	msgstr="WPA2-PSK" />
+<message msgid="dash_info wlan sec wpapskwpa2psk" msgstr="WPA-PSK/WPA2-PSK" />
+<message msgid="dash_info wlan sec wpawpa2"	msgstr="WPA/WPA2" />
+<!-- Add for main_config_frame.asp -->
+<message msgid="IPv6" msgstr="IPv6"/>
+<message msgid="NAT" msgstr="NAT"/>
+<message msgid="DDNS" msgstr="DDNS"/>
+<message msgid="UPnP" msgstr="UPnP"/>
+<!-- added by 3G for NBG4615 -->
+<message msgid="dash_info wan3G simstatus" msgstr="SIM Card Status"/>
+<message msgid="dash_info ifstat wan3G" msgstr="3G Modem"/>
+<message msgid="dash_info ifstat wan3G up" msgstr="Up"/>
+<message msgid="dash_info ifstat wan3G down" msgstr="Down"/>
+<message msgid="dash_info sum3G title" msgstr="3G Status"/>
+<message msgid="dash_info systat item" msgstr="Item"/>
+<message msgid="dash_info systat data" msgstr="Data"/>
+<message msgid="dash_info conn3G status" msgstr="3G Connection Status"/>
+<message msgid="dash_info wan3G ISP" msgstr="Service Provider"/>
+<message msgid="dash_info wan3G SSI" msgstr="Signal Strength"/>
+<message msgid="dash_info wan3G uptime" msgstr="Last Connection Up Time"/>
+<message msgid="dash_info wan3G Manufacturer" msgstr="3G Card manufacturer"/>
+<message msgid="dash_info wan3G Model" msgstr="3G Card Model"/>
+<message msgid="dash_info wan3G firmware" msgstr="3G Card Firmware Revision"/>
+<message msgid="dash_info wan3G IMEI" msgstr="3G Card IMEI"/>
+<message msgid="dash_info wan3G SIM_IMEI" msgstr="SIM Card IMEI"/>
+<message msgid="dash_info wan3G ready" msgstr="Ready"/>
+<message msgid="dash_info wan3G not_ready" msgstr="Not Ready"/>
+<message msgid="dash_info wan3G SSIunit" msgstr=" dBm"/>
+<!-- add by service name at wizard for 4615 -->
+<message msgid="g2-1 ServiceName" msgstr="Service Name :" />
+<!-- wisp site survey for 4615 -->
+<message msgid="Site Survey" msgstr="Site Survey" />
+<!-- alert message for 4615 -->
+<message msgid="System do not support specific invalid characters" msgstr="System do not support specific invalid characters" />
+<!-- alert message  genie4.asp for 4615 -->
+<message msgid="It is strongly recommended to set WPA or WPA2 encryption for better wireless security." msgstr="It is strongly recommended to set WPA-PSK or WPA2-PSK encryption for better wireless security."/>
+<message msgid="Please enter SSID!" msgstr="Please enter SSID!"/>
+<message msgid="Please enter Password!" msgstr="Please enter Password!"/>
+<message msgid="Password should be with length 8~64" msgstr="Password should be with length 8~64"/>
+<message msgid="Please enter Verify Password correctly!" msgstr="Please enter Verify Password correctly!"/>
+<!-- alert message  genie2-1.asp for 4615 -->
+<message msgid="Error. IP address is empty." msgstr="Error. IP address is empty."/>
+<message msgid="It should be a [0-9] number." msgstr="It should be a [0-9] number."/>
+<message msgid="IP adress format error." msgstr="IP adress format error."/>
+<message msgid="PPPoE user name should not be empty!" msgstr="PPPoE user name should not be empty!"/>
+<message msgid="PPPoE password should not be empty!" msgstr="PPPoE password should not be empty!"/>
+<!-- alert message  genie2-2.asp for 4615 -->
+<message msgid="First DNS Server should not be empty with User-Defined." msgstr="First DNS Server should not be empty with User-Defined."/>
+<message msgid="First DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="First DNS Server should not be 0.0.0.0, please give DNS IP Address."/>
+<message msgid="Second DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Second DNS Server should not be 0.0.0.0, please give DNS IP Address."/>
+<!-- alert message  genie2-4.asp for 4615 -->
+<message msgid="PPTP user name should not be empty!" msgstr="PPTP user name should not be empty!"/>
+<message msgid="PPTP password should not be empty!" msgstr="PPTP password should not be empty!"/>
+<!-- alert message  genie2-5asp for 4615 -->
+<message msgid="L2TP user name should not be empty!" msgstr="L2TP user name should not be empty!"/>
+<message msgid="L2TP password should not be empty!" msgstr="L2TP password should not be empty!"/>
+<!-- Add for main_config_frame.asp 4615 -->
+<message msgid="WWW" msgstr="WWW"/>
+<message msgid="QoS" msgstr="QoS"/>
+<message msgid="WPS" msgstr="WPS"/>
+<message msgid="Universal Repeater" msgstr="Universal Repeater" />
+</po>

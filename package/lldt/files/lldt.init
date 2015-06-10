@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=91
+
+log_msg="wl-prog"
+
+start() {
+    [ "$(nvram get license_invalid)" = "0" ] && exit
+    lld2d br0 &
+} 
+
+stop() {
+    killall lld2d
+}

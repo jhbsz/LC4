@@ -1,0 +1,13 @@
+--- lighttpd-1.4.30/src/request.c	2011-12-01 04:42:19.000000000 +0800
++++ lighttpd-1.4.30/src/request.c	2013-05-13 14:25:39.890270910 +0800
+@@ -1155,8 +1155,8 @@
+ 
+ 	/* check if we have read post data */
+ 	if (con_length_set) {
+-		/* don't handle more the SSIZE_MAX bytes in content-length */
+-		if (con->request.content_length > SSIZE_MAX) {
++		/* don't limit content-length */
++		if (con->request.content_length < 0) {
+ 			con->http_status = 413;
+ 			con->keep_alive = 0;
+ 

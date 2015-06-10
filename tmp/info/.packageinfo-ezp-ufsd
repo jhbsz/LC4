@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-ufsd/Makefile
+Package: ezp-ufsd
+Version: 1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Package for paragon ntfs/hfsplus driver 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

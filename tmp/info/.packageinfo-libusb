@@ -1,0 +1,16 @@
+Source-Makefile: package/libusb/Makefile
+Package: libusb
+Version: 0.1.12-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: A library for accessing Linux USB devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A library for accessing Linux USB devices
+
+http://libusb.sourceforge.net/
+@@
+

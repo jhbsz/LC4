@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+# MAC_SENSE.
+TRIGGER=60
+TRIGGER_STOP=60
+START=66
+log_msg="SENSE"
+start () {
+	stop
+	local ip="$(nvram show mac_sense_rule 0 server_ip)"
+	local port="$(nvram show mac_sense_rule 0 server_port)"
+	local time="$(nvram show mac_sense_rule 0 server_time)"
+	local timeout="$(nvram show mac_sense_rule 0 server_timeout)"
+	local mac="$(nvram get wan_hwaddr_rule_default)"
+    	/usr/sbin/mac-sense $ip $port $mac $time $timeout &
+	
+	local wds_enable=$(nvram show mac_sense_rule 0 wds_enable)
+	[ $wds_enable = "1" ] && {
+	    local new_ip="$(nvram show mac_sense_rule 0 remote_ip)"
+	    ip route add default via $new_ip dev br0
+	}
+}
+stop () {
+    killall -9 mac-sense
+}

@@ -1,0 +1,108 @@
+Source-Makefile: package/broadcom-wl/Makefile
+Package: kmod-brcm-wl
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: <LINUX_VERSION>+4.150.10.5.2--1
+Depends: @TARGET_brcm_2_4 +wireless-tools
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for BCM43xx chipsets (normal version)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains the proprietary wireless driver for the Broadcom 
+ BCM43xx chipset.
+@@
+Package: kmod-brcm-wl-mimo
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: <LINUX_VERSION>+4.150.10.5.2--1
+Depends: @TARGET_brcm_2_4 +wireless-tools
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for BCM43xx chipsets (MIMO version)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains the proprietary wireless driver for the Broadcom 
+ BCM43xx chipset.
+@@
+Package: kmod-wlcompat
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: <LINUX_VERSION>+4.150.10.5.2--1
+Depends: @TARGET_brcm_2_4 +wireless-tools
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for BCM43xx chipsets
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a wrapper module, that provides Wireless Extension 
+ support for the proprietary Broadcom wl module.
+@@
+Package: kmod-wlcompat-debug
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: <LINUX_VERSION>+4.150.10.5.2--1
+Depends: @TARGET_brcm_2_4 +wireless-tools
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for BCM43xx chipsets (debug)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a wrapper module, that provides Wireless Extension 
+ support for the proprietary Broadcom wl module.
+ This is the debugging version.
+@@
+Package: wlc
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: 4.150.10.5.2-1
+Depends: @PACKAGE_kmod-brcm-wl||PACKAGE_kmod-brcm-wl-mimo
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: wl driver setup utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains an utility for initializing the proprietary Broadcom 
+ wl driver.
+@@
+Package: wl
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: 4.150.10.5.2-1
+Depends: @PACKAGE_kmod-brcm-wl||PACKAGE_kmod-brcm-wl-mimo +nvram
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Proprietary Broadcom wl driver config utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains the proprietary utility (wl) for configuring the 
+ proprietary Broadcom wl driver.
+@@
+Package: nas
+Submenu: Proprietary BCM43xx WiFi driver
+Submenu-Depends: @TARGET_brcm_2_4
+Version: 4.150.10.5.2-1
+Depends: @PACKAGE_kmod-brcm-wl||PACKAGE_kmod-brcm-wl-mimo +nvram 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Proprietary Broadcom WPA/WPA2 authenticator
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains the proprietary WPA/WPA2 authenticator (nas) for the 
+ proprietary Broadcom wl driver.
+@@
+

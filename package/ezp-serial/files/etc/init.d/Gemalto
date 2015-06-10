@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# MAC_SENSE.
+START=50
+log_msg="gemalto"
+start () {
+    ACM_MODE="$(dmesg |grep ttyACM)"
+
+    [ -n $ACM_MODE ] && {
+        SCRIPT='At^SDPORT=6' ezpcom -d /dev/ttyACM0 -s /etc/chatscripts/script.gcom
+    }
+}
+stop () {
+
+}

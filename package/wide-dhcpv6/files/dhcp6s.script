@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common 
+START=60
+TRIGGER=60
+TRIGGER_STOP=50
+
+DHCP6S_CONFIG_FILE="/tmp/wdhcp6s.conf"
+DHCP6S_CONFIG_RFILE="/etc/wdhcp6s.conf"
+
+start() {
+    [ "$(nvram show lan_dhcpsv6_rule 0 enable)" = "1" ] || return 1
+    dhcptype="$(nvram show lan_dhcpsv6_rule 0 type)"
+    # Check stateful configuration
+    [ "$dhcptype" = "1" -o "$dhcptype" = "stateful" ] || return 1
+    proto="$(nvram get wan0_protov6)"
+    [ "${proto}" = "link-local" ] && return 1
+    prefix="$(nvram show lan_staticv6_rule 0 ${proto}_prefix)"
+    suffix="$(nvram show lan_staticv6_rule 0 ${proto}_suffix)"
+    prefixlength="$(nvram show lan_staticv6_rule 0 mask)"
+    ipstart="$(nvram show lan_dhcpsv6_rule 0 start)"
+    ipend="$(nvram show lan_dhcpsv6_rule 0 end)"
+    domain="$(nvram show lan_dhcpsv6_rule 0 domain)"
+    dns1="$(nvram show lan_dhcpsv6_rule 0 dnsaddr1)"
+    dns2="$(nvram show lan_dhcpsv6_rule 0 dnsaddr2)"
+    ifname="$(nvram get lan0_ifname)"
+    [ -n "$dns1" -o -n "$dns2" ] && dns1="option domain-name-servers ${dns1} ${dns2};"
+    [ -n "$domain" ] && domain="option domain-name \"${domain}\";"
+echo "${dns1}
+${domain}
+
+interface ${ifname} {
+    address-pool pool${ifname} 3600;
+};
+
+pool pool${ifname} {
+    range ${prefix}${ipstart} to ${prefix}${ipend};
+};
+" > ${DHCP6S_CONFIG_RFILE} 
+	/usr/sbin/dhcp6s -c ${DHCP6S_CONFIG_RFILE} $ifname
+	return 0
+}
+
+stop() {
+	logger stopping dhcp6s
+	kill -TERM `cat /var/run/dhcp6s.pid`
+	return 0
+}
+

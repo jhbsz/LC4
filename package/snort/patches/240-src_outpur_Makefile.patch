@@ -1,0 +1,10 @@
+--- snort-2.9.2.2/src/output-plugins/Makefile.in	2012-03-20 06:55:57.000000000 +0800
++++ nort-2.9.2.2/src/output-plugins/Makefile.in	2014-04-08 14:27:58.699398385 +0800
+@@ -67,6 +67,7 @@
+ 	spo_database.$(OBJEXT) spo_log_null.$(OBJEXT) \
+ 	spo_log_tcpdump.$(OBJEXT) spo_unified.$(OBJEXT) \
+ 	spo_unified2.$(OBJEXT) spo_log_ascii.$(OBJEXT) \
++	spo_alert_fwsam.$(OBJEXT) \
+ 	spo_alert_sf_socket.$(OBJEXT) $(am__objects_1) \
+ 	spo_alert_arubaaction.$(OBJEXT) spo_alert_test.$(OBJEXT)
+ libspo_a_OBJECTS = $(am_libspo_a_OBJECTS)

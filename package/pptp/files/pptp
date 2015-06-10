@@ -1,0 +1,101 @@
+#!/bin/sh /etc/rc.common
+#START=55
+log_msg="VPN-pptp"
+TRIGGER=55
+TRIGGER_STOP=55
+
+wait_for_ppp() {
+    local pppid=$1
+    local localtimeout=10
+    while [ -z "$(ifconfig ppp$pppid)" -a "$localtimeout" -gt 0 ]; do
+        sleep 1
+        localtimeout=$(($localtimeout - 1))
+    done
+}
+
+wait_for_ppp_pid() {
+    local pppid=$1
+    local localtimeout=10
+    while [ -f "/var/run/ppp$pppid.pid" -a "$localtimeout" -gt 0 ]; do
+        sleep 1
+        localtimeout=$(($localtimeout - 1))
+    done
+}
+
+set_pptp_status() {
+    local st=$1
+    nvram set wan_pptp_l2tp_status=$st
+}
+
+start () {
+    [ -z "$NUM" ] && NUM=0
+    local iface="pptp$NUM"
+    local type=0
+    local ifname=0
+    local num=0
+    local wan_num="$(nvram get wan_num)"
+    local unitid="$(expr $wan_num + $NUM \* 2)"
+    local timeout=20
+    local pptpen=$(nvram show wan_pptp_l2tp_global_rule 0 enable)
+
+    lock /tmp/.vpn_client.lock
+    [ -n "$(ifconfig ppp$unitid | grep "inet addr")" -o "$pptpen" != "1" ] && {
+        [ "$pptpen" = "0" ] && set_pptp_status "Disabled"
+        lock -u /tmp/.vpn_client.lock
+        return
+    }
+    
+    while [ ! -z "$(nvram show wan_pptp_l2tp_rule $num)" ];
+    do
+        if [ "$(nvram show wan_pptp_l2tp_rule $num enable)" = "1" ];then
+            set_pptp_status "Connecting"
+            ifup.pptp.M2 $iface $type $NUM $num
+            wait_for_ppp $unitid
+            while [ "$timeout" -gt 0 ]; do
+                if [ -n "$(ifconfig ppp$unitid)" ]; then
+                    [ -n "$(ifconfig ppp$unitid | grep "inet addr")" ] && break
+                    sleep 1
+                    timeout=$(($timeout - 1))
+                else
+                    break
+                fi
+            done
+
+            [ -n "$(ifconfig ppp$unitid | grep "inet addr")" ] && break
+
+            [ $timeout -eq 0 ] && killall pptp
+            wait_for_ppp_pid $unitid
+            [ -f "/var/run/ppp$unitid.pid" ] && rm /var/run/ppp$unitid.pid
+
+            timeout=10
+
+            set_pptp_status "Connecting"
+            ifup.pptp.pap.M2 $iface $type $NUM $num
+            wait_for_ppp $unitid
+            while [ "$timeout" -gt 0 ]; do
+                if [ -n "$(ifconfig ppp$unitid)" ]; then
+                    [ -n "$(ifconfig ppp$unitid | grep "inet addr")" ] && break
+                    sleep 1
+                    timeout=$(($timeout - 1))
+                else
+                    break
+                fi
+            done
+            [ -n "$(ifconfig ppp$unitid | grep "inet addr")" ] && break
+            [ $timeout -eq 0 ] && killall pptp
+            timeout=10
+            if [ -f "/etc/ppp/pap-secrets" ];then
+                rm /etc/ppp/pap-secrets
+            fi
+        fi
+        num=$(($num + 1))
+    done
+    lock -u /tmp/.vpn_client.lock
+}
+stop () {
+    [ -n "$(pidof pptp)" ] && set_pptp_status "Disconnecting" || set_pptp_status "Disconnected"
+    killall pptp
+    nvram set vpn${NUM}_ifname=""
+    nvram set vpn${NUM}_ipaddr=""
+    nvram set vpn${NUM}_gateway=""
+}

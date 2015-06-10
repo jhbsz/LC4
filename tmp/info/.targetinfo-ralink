@@ -1,0 +1,512 @@
+Source-Makefile: target/linux/ralink/Makefile
+Target: ralink
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d16-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d32-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f4d32-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M 2T2R
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABC
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-ar8316
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R with AR8316 Giga Switch
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-4615g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R ABOCOM 4615
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABF
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M 2T2R with AR8316 Giga Switch
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: ABE
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-5205g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f16d64-2t2r-5205g
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-amit
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-amit-cdw531ac
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 1T1R AMIT CDW531AC board
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAA
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316-amit-cde550
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 64M AMIT CDE550
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMC
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d64-2t2r-ar8316-spi-amit-cde570
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: SPI FLASH 8M DRAM 64M 2T2R AMIT CDE570
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R1H-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R1H 1 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4G-4l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4H-4l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4H 4 Lan 1 Wan
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAC
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-1t1r-poray-R50E
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: Ralink RT305X
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AME
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f16d64-2t2r-ar8316-spi-amit-cde570-prox
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: SPI FLASH 16M DRAM 64M 2T2R AMIT CDE570 PROX
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-m1
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W M1
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXA
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-bee
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W Bee
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXB
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-sony
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W SONY
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: LIS
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt3352-f8d32-2t2r-1l1w
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 16M DRAM 32M RT3352 1T1R 1L1W
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AMD
+Target-EZP-SWType: ar8328
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/f8d32-2t2r-baudtec-RA300R4G-4l1w-mac-sense
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan mac sense
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: BAD_m
+Target-EZP-SWType: ar8316
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt3352-f16d64-2t2r-3l1w-gma
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 16M DRAM 64M RT3352 2T2R 3L1W for Garmin project(GMA)
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: GMA
+Target-EZP-SWType: ar8328
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+Target: ralink/rt5350-f8d32-1t1r-1l1w-music
+Target-Board: ralink
+Target-Kernel: 2.6
+Target-Name: FLASH 8M DRAM 32M RT5350 1T1R 1L1W Music
+Target-Path: target/linux/ralink
+Target-Arch: mipsel
+Target-Features: squashfs usb
+Target-Depends: 
+Target-EZP-Platform: AXM
+Target-EZP-SWType: esw
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Ralink RT305X based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+

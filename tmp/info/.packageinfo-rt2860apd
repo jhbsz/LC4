@@ -1,0 +1,14 @@
+Source-Makefile: package/rt2860apd/Makefile
+Package: rt2860apd
+Version: 2.3.0.0-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: uitls
+Category: Network
+Title: Ralink wireless management daemon
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	  A wireless management daemon for Ralink RT2860 11n wireless card.
+@@
+

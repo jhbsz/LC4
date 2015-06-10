@@ -1,0 +1,14 @@
+#!/bin/sh
+
+. /etc/arch.sh
+
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+# If product isn't APPLE exit this function
+[ "$product" != "5ac" ] && exit
+
+case "$ACTION" in
+        add)
+             /usr/sbin/ipad_charge
+        ;;
+esac
+

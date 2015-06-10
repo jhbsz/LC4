@@ -1,0 +1,41 @@
+--- lighttpd-1.4.30/src/stat_cache.c	2010-08-17 17:04:38.000000000 +0800
++++ lighttpd-1.4.30/src/stat_cache.c	2013-07-16 14:20:16.753141947 +0800
+@@ -13,6 +13,7 @@
+ #include <stdio.h>
+ #include <fcntl.h>
+ #include <assert.h>
++#include <ctype.h>
+ 
+ #ifdef HAVE_ATTR_ATTRIBUTES_H
+ # include <attr/attributes.h>
+@@ -481,7 +483,20 @@
+ 	 * - stat() if regular file + open() to see if we can read from it is better
+ 	 *
+ 	 * */
+-	if (-1 == stat(name->ptr, &st)) {
++    char tmpfile[512];
++    char *dotpos = strchr(name->ptr, '.');
++    int main_name_len, idx;
++
++    /* Handling dos 8.3 file name format
++     * Assume file name is test.fil, the dotpos points to ., so 
++     * dotpos - name->ptr = 4 and strlen(dotpos) = 4 */
++    if(dotpos && ((dotpos - name->ptr) < 9) && (strlen(dotpos) < 5)) {
++        main_name_len = strlen(name->ptr) + 1;
++        for(idx = 0;idx < main_name_len; idx ++) {
++            tmpfile[idx] = tolower(name->ptr[idx]);
++        }
++    }
++	if ((-1 == stat(name->ptr, &st)) && (-1 == stat(tmpfile, &st))) {
+ 		return HANDLER_ERROR;
+ 	}
+ 
+@@ -494,7 +509,7 @@
+ 		}
+ 
+ 		/* try to open the file to check if we can read it */
+-		if (-1 == (fd = open(name->ptr, O_RDONLY))) {
++		if ((-1 == (fd = open(name->ptr, O_RDONLY))) && (-1 == (fd = open(tmpfile, O_RDONLY)))){
+ 			return HANDLER_ERROR;
+ 		}
+ 		close(fd);

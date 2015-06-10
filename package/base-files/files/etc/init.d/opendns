@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. $IFNAME is given by hotplug.
+BIN=/usr/bin/curl
+. /etc/network.sh
+TRIGGER=50
+log_msg="OpenDNS-client"
+start () {
+    [ "$TYPE" != "wan" -o -z "$NUM" ] && exit 1;
+    [ "$(nvram show wan_opendns_rule $NUM enable)" = "1" ] && {
+        {
+            dns_username=$(nvram show wan_opendns_rule $NUM username)
+            dns_userpasswd=$(nvram show wan_opendns_rule $NUM passwd)
+            dns_redirect=$(nvram show wan_opendns_rule $NUM redirect)
+            dns_label=$(nvram show wan_opendns_rule $NUM label)
+            [ -n "${dns_label}" ] && dns_label="hostname=${dns_label}"
+            /usr/bin/curl -i -m 60 -k -u $dns_username:$dns_userpasswd 'https://updates.opendns.com/account/ddns.php?'"${dns_label}"
+
+        } || err=1 
+
+        # Redirect all DNS traffic to 208.67.222.222 and 208.67.220.220.
+        [ "$(nvram show wan_opendns_rule $NUM redirect)" = "1" ] && {
+            /usr/sbin/iptables -t nat -A PREROUTING -p udp -i $(nvram get lan0_ifname) --dport 53 -j DNAT --to 208.67.222.222 || err=1
+            /usr/sbin/iptables -t nat -A PREROUTING -p tcp -i $(nvram get lan0_ifname) --dport 53 -j DNAT --to 208.67.222.222 || err=1
+
+        }
+    }
+}
+stop () {
+    # Redirect all DNS traffic to 208.67.222.222 and 208.67.220.220.
+    [ "$(nvram show wan_opendns_rule $NUM enable)" = "1" -a \
+    "$(nvram show wan_opendns_rule $NUM redirect)" = "1" ] && {
+            /usr/sbin/iptables -t nat -D PREROUTING -p udp -i $(nvram get lan0_ifname) --dport 53 -j DNAT --to 208.67.222.222 || err=1
+            /usr/sbin/iptables -t nat -D PREROUTING -p tcp -i $(nvram get lan0_ifname) --dport 53 -j DNAT --to 208.67.222.222 || err=1
+    }
+}
+

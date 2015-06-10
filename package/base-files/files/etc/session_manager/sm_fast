@@ -1,0 +1,24 @@
+net.ipv4.route.gc_timeout=180
+
+# net.ipv4.tcp_syncookies=1
+net.ipv4.tcp_ecn=1 
+net.ipv4.tcp_fin_timeout=30
+net.ipv4.tcp_keepalive_time=120
+net.ipv4.tcp_timestamps=0
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_syn_sent=60
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_syn_recv=30
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_established=180
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_fin_wait=60
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_close_wait=60
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_last_ack=30
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_time_wait=60
+net.ipv4.netfilter.ip_conntrack_tcp_timeout_close=10
+
+net.ipv4.netfilter.ip_conntrack_udp_timeout=30
+net.ipv4.netfilter.ip_conntrack_udp_timeout_stream=180
+
+# net.ipv6.conf.all.forwarding=1
+
+net.netfilter.nf_conntrack_generic_timeout=60
+net.netfilter.nf_conntrack_udp_timeout=30
+net.netfilter.nf_conntrack_icmp_timeout=30

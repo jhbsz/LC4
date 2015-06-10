@@ -1,0 +1,44 @@
+#!/bin/sh
+
+. /etc/arch.sh
+
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+# If product is usb hub exit this function
+[ "$product" = "1d6b" ] && exit
+[ "$product" = "fca" ] && exit
+
+case "$ACTION" in
+        add)
+            PROD_CAT=$(nvram get prod_cat)
+            [ "$PROD_CAT" != "M" -a "$PROD_CAT" != "N" -a \
+              "$PROD_CAT" != "P" -a "$PROD_CAT" != "U" -a \
+              "$PROD_CAT" != "I" -a "$PROD_CAT" != "A" -a \
+               "$PROD_CAT" != "W" ] && exit
+            times=0
+            while [ -z "$(pidof ezpcom-mode)" ]
+            do 
+                [ "$times" -gt "5" ] && {
+
+                    local toblink=0
+                    WAN_NUM=$(nvram get wan_num)
+                    for i in $(seq 0 $WAN_NUM)
+                    do
+                        [ "$(nvram get wan${i}_proto)" = "wwan" -o "$(nvram get wan${i}_proto)" = "directip"  ] && [ -z "$(nvram get wan${i}_ipaddr)" ] && toblink=1
+                    done
+                    [ $toblink -ne 0 ] && {
+                        arch_led_start wwan
+                    }
+                    lock /tmp/.ezpcom-mode
+                    EZPHOTPLUG=usb /usr/sbin/ezpcom-mode 2>&1 > /dev/null
+                    lock -u /tmp/.ezpcom-mode
+                    break;
+                }
+                times=$(($times+1))
+                sleep 1
+            done
+            # If we probe finished and do not find a 3g/4g dongle, 
+            # stop led indication
+            [ -z "$(nvram show wan_wwan_probe_rule 0 datatty)" -a -z "$(nvram show wan_wwan_probe_rule 0 ctrltty)" ] && arch_led_stop wwan
+        ;;
+esac
+

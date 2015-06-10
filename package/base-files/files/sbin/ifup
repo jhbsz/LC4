@@ -1,0 +1,101 @@
+#!/bin/sh
+
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh
+
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+lock_file=/tmp/.iface.changestate.${iface}.lock
+
+[ "$(nvram get platform)" = "ALS" ] && {
+    gpioctl led 67 0 0 1 0 0
+}
+
+# Exit if an interface is disabled.
+[ "$(nvram show ${type}_main_rule $num enable)" != "1" ] && exit
+
+proto=$(nvram get ${iface}_proto)
+
+if_serialize_check $lock_file
+# If we are to up wan, we should check wan status first
+[ "$type" = "wan" ] && {
+    state=$(nvram show wan_status_rule $num state)
+    case $state in
+	    3)
+            to_log "ifup $1 route"
+            iface_up $proto $iface
+            exit
+    	;;
+	    4)
+            [ "$(nvram show wan_pptp_l2tp_rule $num enable)" = "1" ] || exit
+	    ;;
+    	1|2)
+            exit
+    	;;
+    esac
+    vpn_state=$(nvram show vpn_status_rule $num state)
+    case $vpn_state in
+	    3)
+            to_log "ifup $1 route"
+            iface_up $proto $iface
+            exit
+    	;;
+	    1|2|4)
+            exit
+    	;;
+    esac
+}
+to_log "ifup $1 device"
+if_proto=$(nvram get ${iface}_proto)
+[ "$state" = "4" -a "$vpn_state" = "0" ] && {
+# VPN Client state is 0 now
+    nvram replace attr vpn_status_rule $num state 1
+} || { 
+# wan state is 0 now
+    nvram replace attr ${type}_status_rule $num state 1
+
+# Get the physical interface.
+ifname=$(nvram get ${iface}_ifname)
+[ "${ifname%%[0-9]*}" = "ppp" ] && ifname=$(nvram get ${iface}_device)
+
+# Exit if PPTP is used.
+[ "$if_proto" != "wwan" ] && {
+    if_valid $ifname || [ "$if_proto" = "pptp" ] || exit 
+}
+
+# Exit if license is invalid! 
+[ "$type" = "wan" -a "$(nvram get license_invalid)" = "2" ] && {
+    [ "$(nvram show prod_cat 0)" = "W" ] && echo "0" > /proc/sys/net/ipv4/conf/all/forwarding || exit
+}
+
+# See if hwaddr clone is required
+if [ "$(nvram show ${type}_hwaddr_clone_rule $num enable)" = "1" ]; then
+    hwaddr=$(nvram show ${type}_hwaddr_clone_rule $num hwaddr)
+else
+    hwaddr=$(nvram show ${type}_hwaddr_rule_default $num hwaddr)
+fi
+
+[ "$type" != "lan" ] && {
+    $DEBUG ip link set dev $ifname down 2>&-
+    $DEBUG ip addr flush dev $ifname 2>&-
+}
+
+if [ "${ifname%%[0-9]*}" = "br" ]; then
+	ifbr_valid $ifname $(nvram show lan_main_rule $num stp)
+	${hwaddr:+$DEBUG ip link set dev vlan1 address $hwaddr}
+elif [ "${ifname%%[0-9]*}" = "usb" ]; then
+    echo "no hwaddr for $ifname"
+elif [  "${ifname%%[0-9]*}" = "apcli" ]; then
+    echo "apcli"
+elif [  "${ifname%%[0-9]*}" = "wimax" ]; then
+    echo "WiMAX"
+else
+    ${hwaddr:+$DEBUG ip link set dev $ifname address $hwaddr}
+fi
+}
+#[ "$(nvram get platform)" = "AXA" ] && {
+#    [ "$if_proto" = "dhcp" -o "$if_proto" = "static" -o "$if_proto" = "pppoe" ] && ezp-vlan esw config_p1_port wan || ezp-vlan esw config_p1_port lan
+#}
+do_ifup $if_proto $iface $type $num $ifname

@@ -1,0 +1,31 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-06-14 13:23:35.049690500 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-06-14 13:25:49.360895040 +0800
+@@ -1665,7 +1665,27 @@
+                         			                        break;
+ 			                                        }
+ 			                                }
+-			                        }
++			                        } else if(de->d_type == 0) { 
++							/* check unknow type due to opendir can not recognize that file */
++                                                        stat_cache_entry *sce = NULL;
++							if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, d.path, &sce))) {
++					                        if (S_ISDIR(sce->st.st_mode)) {
++					                                buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
++					                                buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
++					                        } else if(S_ISREG(sce->st.st_mode)) {
++					                                for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
++					                                        data_string *ds = (data_string *)con->conf.mimetypes->data[k];
++					                                        if (ds->key->used == 0) continue;
++					                                        if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
++					                                                buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
++					                                                buffer_append_string_buffer(b, ds->value);
++					                                                buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
++					                                                break;
++					                                        }
++					                                }
++					                        }
++							}
++                                                }
+ 
+                         			buffer_append_string_len(b,CONST_STR_LEN("</D:prop>\n"));
+ 			                        buffer_append_string_len(b,CONST_STR_LEN("<D:status>HTTP/1.1 200 OK</D:status>\n"));

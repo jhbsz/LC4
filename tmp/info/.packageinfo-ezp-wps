@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-wps/Makefile
+Package: ezp-wps
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: WPS tool - EZ Packet WPS tool.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A wps tool for EZ Packet Products.
+@@
+

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+[ "$ACTION" = "ifup" -o "$ACTION" = "start" ] && {
+    sh /etc/rc.common /etc/init.d/radvd restart
+}

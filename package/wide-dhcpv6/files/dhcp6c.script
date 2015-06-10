@@ -1,0 +1,44 @@
+#!/bin/sh /etc/rc.common 
+
+DHCP6C_CONFIG_FILE="/tmp/wdhcp6c.conf"
+DHCP6C_CONFIG_RFILE="/etc/wdhcp6c.conf"
+DEBUG=1
+
+start() {
+    [ "$(nvram get wan0_protov6)" = "dhcp" ] || return 1
+    local ifname=$(nvram get wan0_ifname)
+    local dhcptype="$(nvram show wan_dhcpv6_rule 0 type)"
+    local dhcpreqip=""
+    # If we are using stateful dhcp, we need to get ia-na
+    [ "$dhcptype" = "stateful" -o "$dhcptype" = "1" ] && dhcpreqip="send ia-na 15;"
+    echo "interface ${ifname}
+{
+request domain-name-servers ;
+request domain-name ;
+request ntp-servers ;
+send rapid-commit;
+${dhcpreqip}
+script \"/etc/dhcp6c/dhcp6c-script\";
+};
+
+# The id-assoc (identity association) stanza may be empty, but unfortunately
+# it cannot be omitted. 
+id-assoc na 15 { #
+};
+" > ${DHCP6C_CONFIG_RFILE}
+    [ "$DEBUG" = "1" ] && debug_option=" -Dd "
+	/usr/sbin/dhcp6c -c ${DHCP6C_CONFIG_RFILE} $debug_option ${ifname}
+	sleep 3
+	ACTION=start /sbin/hotplug-call dhcp6c
+	return 0
+}
+
+stop() {
+	logger stopping dhcp6c
+	rm -f /var/etc/dhcp6c.conf
+	kill -TERM `cat /var/run/dhcp6c.pid`
+	ACTION=stop /sbin/hotplug-call dhcp6c
+	return 0
+}
+
+

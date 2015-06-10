@@ -1,0 +1,16 @@
+--- a/src/fw_iptables.c	2013-05-17 16:34:09.192248078 +0800
++++ b/src/fw_iptables.c	2013-05-17 16:30:44.522146230 +0800
+@@ -343,9 +343,10 @@
+   rc |= iptables_do_command("-t mangle -N " CHAIN_OUTGOING); /* for marking authenticated packets, and for counting outgoing packets */
+ 
+   /* Assign jumps to these new chains */
+-  rc |= iptables_do_command("-t mangle -I PREROUTING 1 -i %s -s %s -j " CHAIN_OUTGOING, gw_interface, gw_iprange);
+-  rc |= iptables_do_command("-t mangle -I PREROUTING 2 -i %s -s %s -j " CHAIN_BLOCKED, gw_interface, gw_iprange);
+-  rc |= iptables_do_command("-t mangle -I PREROUTING 3 -i %s -s %s -j " CHAIN_TRUSTED, gw_interface, gw_iprange);
++  /* EZP: */
++  rc |= iptables_do_command("-t mangle -I PREROUTING 2 -i %s -s %s -j " CHAIN_OUTGOING, gw_interface, gw_iprange);
++  rc |= iptables_do_command("-t mangle -I PREROUTING 3 -i %s -s %s -j " CHAIN_BLOCKED, gw_interface, gw_iprange);
++  rc |= iptables_do_command("-t mangle -I PREROUTING 4 -i %s -s %s -j " CHAIN_TRUSTED, gw_interface, gw_iprange);
+   rc |= iptables_do_command("-t mangle -I POSTROUTING 1 -o %s -d %s -j " CHAIN_INCOMING, gw_interface, gw_iprange);
+ 
+   /* Rules to mark as trusted MAC address packets in mangle PREROUTING */

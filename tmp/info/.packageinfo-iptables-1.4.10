@@ -1,0 +1,465 @@
+Source-Makefile: package/iptables-1.4.10/Makefile
+Package: iptables-1.4.10
+Menu: 1
+Submenu: Firewall
+Version: 5
+Depends:  +kmod-ipt-core +libip4tc +libxtables
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IPv4 firewall administration tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: IPv4 firewall administration tool.
+
+ Matches:
+  - icmp
+  - tcp
+  - udp
+  - comment
+  - limit
+  - mac
+  - multiport
+
+ Targets:
+  - ACCEPT
+  - DROP
+  - REJECT
+  - LOG
+  - TCPMSS
+
+ Tables:
+  - filter
+  - mangle
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-conntrack-extra
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-conntrack-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Extra connection tracking extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: Extra iptables-1.4.10 extensions for connection tracking.
+
+ Matches:
+  - connbytes
+  - connmark
+  - recent
+  - helper
+
+ Targets:
+  - CONNMARK
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-extra
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Other extra iptables-1.4.10 extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: Other extra iptables-1.4.10 extensions.
+
+ Matches:
+  - condition
+  - owner
+  - physdev (if ebtables is enabled)
+  - pkttype
+  - quota
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-filter
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-filter
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Content inspection extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for packet content inspection.
+Includes support for:
+
+ Matches:
+  - layer7
+  - string
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-imq
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-imq
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Content inspection extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables-1.4.10 extension for IMQ support.
+ Includes:
+ - libipt_IMQ
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-ipopt
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-ipopt
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IP/Packet option extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for matching/changing IP packet options.
+
+ Matches:
+  - dscp
+  - ecn
+  - length
+  - mark
+  - statistic
+  - tcpmss
+  - time
+  - unclean
+  - hl
+
+ Targets:
+  - DSCP
+  - CLASSIFY
+  - ECN
+  - MARK
+  - HL
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-ipsec
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-ipsec
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IPsec extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for matching ipsec traffic.
+
+ Matches:
+  - ah
+  - esp
+  - policy
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-ipset
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IPset iptables-1.4.10 extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: IPset iptables-1.4.10 extensions.
+
+ Matches:
+  - set
+
+ Targets:
+  - SET
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-nat-extra
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-nat-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Extra NAT extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for extra NAT targets.
+
+ Targets:
+  - MIRROR
+  - NETMAP
+  - REDIRECT
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-iprange
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-iprange
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IP range extension
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for matching ip ranges.
+
+ Matches:
+  - iprange
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-ulog
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-ulog
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: user-space packet logging
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for user-space packet logging.
+
+ Targets:
+  - ULOG
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-hashlimit
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-hashlimit
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: hashlimit matching
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extensions for hashlimit matching
+
+ Matches:
+  - hashlimit
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-led
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-led
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: LED trigger iptables-1.4.10 extension
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: iptables-1.4.10 extension for triggering a LED.
+
+ Targets:
+  - LED
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-tproxy
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-tproxy
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Transparent proxy iptables-1.4.10 extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: Transparent proxy iptables-1.4.10 extensions.
+
+ Matches:
+  - socket
+
+ Targets:
+  - TPROXY
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-tee
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-tee
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: TEE iptables-1.4.10 extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: TEE iptables-1.4.10 extensions.
+
+ Targets:
+  - TEE
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-u32
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-u32
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: U32 iptables-1.4.10 extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: U32 iptables-1.4.10 extensions.
+
+ Matches:
+  - u32
+
+
+http://netfilter.org/
+@@
+Package: iptables-1.4.10-mod-webstr
+Submenu: Firewall
+Version: 5
+Depends: iptables-1.4.10  +kmod-ipt-webstr
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: user-space url string matching
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: support for http header and content string filter 
+
+
+http://netfilter.org/
+@@
+Package: ip6tables
+Menu: 1
+Submenu: Firewall
+Version: 5
+Depends: +kmod-ip6tables +libip6tc +libxtables
+Provides: 
+Build-Depends: 
+Section: net
+Category: IPv6
+Title: IPv6 firewall administration tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv6 firewall administration tool
+
+http://netfilter.org/
+@@
+Package: libiptc
+Submenu: Firewall
+Version: 5
+Depends: +libip4tc +libip6tc
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: IPv4/IPv6 firewall - shared libiptc library (compatibility stub)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv4/IPv6 firewall - shared libiptc library (compatibility stub)
+
+http://netfilter.org/
+@@
+Package: libip4tc
+Submenu: Firewall
+Version: 5
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: IPv4 firewall - shared libiptc library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv4 firewall - shared libiptc library
+
+http://netfilter.org/
+@@
+Package: libip6tc
+Submenu: Firewall
+Version: 5
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: IPv6 firewall - shared libiptc library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv6 firewall - shared libiptc library
+
+http://netfilter.org/
+@@
+Package: libxtables
+Submenu: Firewall
+Version: 5
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: IPv4/IPv6 firewall - shared xtables library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv4/IPv6 firewall - shared xtables library
+
+http://netfilter.org/
+@@
+Package: libipq
+Submenu: Firewall
+Version: 5
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: IPv4/IPv6 firewall - shared libipq library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv4/IPv6 firewall - shared libipq library
+
+http://netfilter.org/
+@@
+

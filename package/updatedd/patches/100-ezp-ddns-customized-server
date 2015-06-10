@@ -1,0 +1,68 @@
+--- updatedd-2.6.orig/src/plugins/libdyndns.h	2011-07-21 19:04:45.431152582 +0800
++++ updatedd-2.6/src/plugins/libdyndns.h	2011-07-21 19:04:15.927259603 +0800
+@@ -43,6 +43,7 @@
+ 	const char *system;
+ 	char *login;
+ 	const char *wildcard;
++	char *server;
+ };
+ 
+ static struct yesno {
+--- updatedd-2.6.orig/src/plugins/libdyndns.c	2011-07-21 17:42:23.860417894 +0800
++++ updatedd-2.6/src/plugins/libdyndns.c	2011-07-21 19:07:03.476163700 +0800
+@@ -53,6 +53,7 @@
+ 		      "   -s    --system <system>       specify the system\n"
+ 		      "                                 (dyndns [default], statdns, custom)\n"
+ 		      "   -w    --wildcard <on|off>     switch wildcard on or off\n"
++		      "   -p    --server <host>         customized dyndns server\n"
+ 		      "         --help                  print help and exit\n"
+ 		      "         --version               display version information and exit\n\n"
+ 		      "Report bugs to <"EMAIL">.\n\n");
+@@ -106,7 +107,11 @@
+ 		return RET_WRONG_USAGE;
+ 	}
+         
+-	s = get_connection(DYNDNSHOST, PORT, &ptr);
++    /* EZP: connect to customized server */
++    if (!args.server) {
++        args.server = DYNDNSHOST;
++    }
++	s = get_connection(args.server, PORT, &ptr);
+ 	if(s == -1) {
+ 		ret_msg(HERR, "%s: %s", ptr, DYNDNSHOST);
+ 		ret = RET_WARNING;
+@@ -148,6 +154,8 @@
+ 	args->wildcard = "NOCHG";
+ 	args->offline = yn.no;
+ 	args->system = dd_system[0];
++    /* EZP: customized ddns server */
++    args->server = NULL;
+         
+ 	for(;;) {
+                 
+@@ -158,13 +165,14 @@
+ 			{ "mx",			1, 0, 'm' },
+ 			{ "offline",		0, 0, 'o' },
+ 			{ "system",		1, 0, 's' },
++			{ "server",		1, 0, 'p' },
+ 			{ "wildcard",		1, 0, 'w' },
+ 			{ "with-backmx",	0, 0, 'b' },
+ 			{ "version",		0, 0, 'v' },
+ 			{ NULL,			0, 0, 0   }
+ 		};
+                 
+-		c = getopt_long(argc, argv, "4:bm:os:w:",
++		c = getopt_long(argc, argv, "4:bm:os:w:p:",
+ 				long_options, &option_index);
+                 
+ 		if(c == -1) break;
+@@ -185,6 +193,9 @@
+ 		case 'o':
+ 			args->offline = yn.yes;
+ 			break;
++		case 'p':
++			args->server = optarg;
++			break;
+ 		case 's':
+ 			stolower(optarg, buf, BUFSIZE);
+ 			for(n = 0;; n++) {

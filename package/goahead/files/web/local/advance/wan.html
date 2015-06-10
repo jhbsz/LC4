@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"  />
+<title>.::Welcome to ZyXEL NBG417N::.</title>
+<link href="images/inside.css" rel="stylesheet" type="text/css" />
+    <link href="images/table.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div id="table">
+      <ul>
+        <li class="table_content">
+            <div class="data">
+              <ul>
+                <li class="title">ISP Parameters for Internet Access </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Encapsulation : </td>
+                      <td><select onchange="doWANChange(this.selectedIndex)" size="1" name="WAN_Encap">
+                          <option value="00000000" selected="selected">Ethernet</option>
+                          <option value="00000001">PPP over Ethernet</option>
+                          <option value="00000002">PPTP</option>
+                        </select>                      </td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Service Type :</td>
+                      <td><select onchange="doWAN1Change(this.selectedIndex)" size="1" name="WAN_ServiceType">
+                        <option value="00000000"  selected="selected">Standard</option>
+                        <option value="00000001">RR-Toshiba</option>
+                        <option value="00000002">RR-Manager</option>
+                        <option value="00000003">RR-Telstra</option>
+                        <option value="00000004">Telia  Login</option>
+                      </select></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="space3"></li>
+                <li class="title">WAN IP Address Assignment </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><input type="radio" checked="checked" value="0"  name="WAN_IP_Auto" />Get automatically from ISP (Default) </td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><input type="radio" value="1" 
+                        name="WAN_IP_Auto" />
+Use Fixed IP Address </td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="92%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">IP Address : </td>
+                      <td><span class="cfig_word">
+                        <input 
+                        onblur="if (this.form.WAN_IP_Auto[1].checked) {getDefaultNetmask(WAN_IPAddr,WAN_IPSubnetMask); checkIPRange(this);}" 
+                        onfocus="if (this.form.WAN_IP_Auto[0].checked) this.form.WAN_IP_Auto[0].focus();" 
+                        maxlength="15" size="15" value="0.0.0.0" name="WAN_IPAddr" />
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="92%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">IP Subnet Mask : </td>
+                      <td><span class="cfig_word">
+                        <input 
+                        onblur="if (this.form.WAN_IP_Auto[1].checked) {getDefaultNetmask(WAN_IPAddr,WAN_IPSubnetMask); checkIPRange(this);}" 
+                        onfocus="if (this.form.WAN_IP_Auto[0].checked) this.form.WAN_IP_Auto[0].focus();" 
+                        maxlength="15" size="15" value="0.0.0.0" name="WAN_IPAddr2" />
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="92%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Gateway IP Address : </td>
+                      <td><span class="cfig_word">
+                        <input 
+                        onblur="if (this.form.WAN_IP_Auto[1].checked) {getDefaultNetmask(WAN_IPAddr,WAN_IPSubnetMask); checkIPRange(this);}" 
+                        onfocus="if (this.form.WAN_IP_Auto[0].checked) this.form.WAN_IP_Auto[0].focus();" 
+                        maxlength="15" size="15" value="0.0.0.0" name="WAN_IPAddr3" />
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="space3"></li>
+                <li class="title">WAN IP Address Assignment </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">First DNS Server : </td>
+                      <td><select onchange="doFirDNSType(this.form);" size="1"  name="General_FirstDNS">
+                          <option value="00000000"  selected="selected">From ISP</option>
+                          <option value="00000001">User-Defined</option>
+                          <option value="00000002">None</option>
+                        </select>
+                          <input 
+                        onblur="checkIPFormat(this)" maxlength="15" size="15" 
+                        value="172.23.5.1" name="GeneralFirDNSAddr" /></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Second DNS Server : </td>
+                      <td><select onchange="doFirDNSType(this.form);" size="1"  name="select">
+                          <option value="00000000"  selected="selected">From ISP</option>
+                          <option value="00000001">User-Defined</option>
+                          <option value="00000002">None</option>
+                        </select>
+                          <input 
+                        onblur="checkIPFormat(this)" maxlength="15" size="15" 
+                        value="172.23.5.1" name="GeneralFirDNSAddr2" /></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Third DNS Server : </td>
+                      <td><select onchange="doFirDNSType(this.form);" size="1"  name="select2">
+                          <option value="00000000"  selected="selected">From ISP</option>
+                          <option value="00000001">User-Defined</option>
+                          <option value="00000002">None</option>
+                        </select>
+                      <input 
+                        onblur="checkIPFormat(this)" maxlength="15" size="15" 
+                        value="0.0.0.0" name="GeneralThirdDNSAddr" /></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="space3"></li>
+                <li class="title">WAN MAC Address</li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><input onclick="doMAC(this.form);" 
+                        type="radio" checked="checked" value="0" name="WAN_Setup_Check_WANMAC" />
+Factory default </td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><input onclick="doMAC(this.form);" 
+                        type="radio" value="1" name="WAN_Setup_Check_WANMAC" />
+Clone 
+                        the computer's MAC address - IP Address
+  <input 
+                        onblur="checkIPRange(this)" maxlength="15" size="15" 
+                        value="192.168.1.33" name="SpoofIPAddr" /></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><input onclick="doMAC(this.form);" 
+                        type="radio" value="2" name="WAN_Setup_Check_WANMAC" />
+Set WAN 
+                        MAC Address
+  <input maxlength="17" 
+                        onchange="doMACcheck(this);" size="17" 
+                        value="00:13:49:84:82:15" name="SpoofMacAddr" /></td>
+                    </tr>
+                  </table>
+                </li>
+                <li></li>
+				<li></li>
+              </ul>
+            </div>
+        </li>
+        <li class="table_button"><div class="button"><ul>
+           <li><a title="Apply"><span>Apply</span></a></li>
+    <li><a title="Reset"><span>Reset</span></a></li>
+        </ul>
+</div>
+</body>
+</html>

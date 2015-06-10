@@ -1,0 +1,53 @@
+--- Uboot-1.1.3/drivers/rt2880_eth.c	2010-05-04 17:21:50.609597998 +0800
++++ Uboot-1.1.3.new/drivers/rt2880_eth.c	2010-05-04 10:49:44.000000000 +0800
+@@ -416,7 +416,7 @@
+ int   mii_mgr_read(u32 phy_addr, u32 phy_register, u32 *read_data);
+ int   mii_mgr_write(u32 phy_addr, u32 phy_register, u32 write_data);
+ 
+-#ifndef EZP
++#ifdef CONFIG_AR8316
+ void athrs16_init(void);
+ void athrs16_LAN_WAN_Par(void);
+ #endif
+@@ -1049,10 +1049,11 @@
+     *(unsigned long *)(0xb01100CC) = 0x00d6500c;
+     *(unsigned long *)(0xb011009C) = 0x0008a301; //hashing algorithm=XOR48, aging interval=300sec
+     *(unsigned long *)(0xb011008C) = 0x02404040;
+-#if defined (CONFIG_RT3052_ASIC)
++/* EZP : fit board setting */
++#if defined (RT3052_ASIC_BOARD)
+     *(unsigned long *)(0xb01100C8) = 0x3f502b28; //Change polling Ext PHY Addr=0x1F
+     *(unsigned long *)(0xb0110084) = 0x00000000;
+-#elif defined (CONFIG_RT3052_FPGA)
++#elif defined (RT3052_FPGA_BOARD)
+     *(unsigned long *)(0xb01100C8) = 0x20f02b28; //Change polling Ext PHY Addr=0x0
+     *(unsigned long *)(0xb0110084) = 0xffdf1f00;
+ 
+@@ -1071,12 +1072,27 @@
+         mii_mgr_write(i, 30, 0x0018);   //TX100 slew rate control
+     }
+     /* PHY IOT */
++#ifdef P5_MAC_TO_NONE_MODE
++    mii_mgr_write(0, 31, 0x0);   //select global register
++    mii_mgr_write(0, 1, 0x4a40); //enlarge agcsel threshold 3 and threshold 2
++    mii_mgr_write(0, 2, 0x6254); //enlarge agcsel threshold 5 and threshold 4
++    mii_mgr_write(0, 3, 0xa17f); //enlarge agcsel threshold 6
++    mii_mgr_write(0, 14, 0x65);   //longer TP_IDL tail length
++    mii_mgr_write(0, 17, 0x0fe0); //set TX10 signal amplitude threshold to minimum
++    mii_mgr_write(0, 18, 0x40ba); //set squelch amplitude to higher threshold
++    mii_mgr_write(0, 22, 0x052f); //tune TP_IDL tail and head waveform
++    mii_mgr_write(0, 27, 0x2fc3); //set PLL/Receive bias current are calibrated(RT3350)
++    mii_mgr_write(0, 28, 0xc410); //change PLL/Receive bias current to internal(RT3350)
++    mii_mgr_write(0, 29, 0x598b); //change PLL bias current to internal(RT3052_MP3)
++    mii_mgr_write(0, 31, 0x8000); //select local register
++#else
+     mii_mgr_write(0, 31, 0x0);      //select global register
+     mii_mgr_write(0, 22, 0x052f);   //tune TP_IDL tail and head waveform
+     mii_mgr_write(0, 17, 0x0fe0);   //set TX10 signal amplitude threshold to minimum
+     mii_mgr_write(0, 18, 0x40ba);   //set squelch amplitude to higher threshold
+     mii_mgr_write(0, 14, 0x65);     //longer TP_IDL tail length
+     mii_mgr_write(0, 31, 0x8000);   //select local register
++#endif
+ 
+     /* 
+      * set port 5 force to 1000M/Full when connecting to switch or iNIC

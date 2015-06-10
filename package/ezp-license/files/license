@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+TRIGGER=99
+TRIGGER_STOP=99
+log_msg="Valid-LICENSE"
+
+start () {
+    local VALID_COUNT
+    VALID_COUNT="$(nvram get valid_count)"
+    VALID_COUNT=$((VALID_COUNT + 1))
+    nvram fset valid_count=$VALID_COUNT
+    nvram commit
+    [ "$VALID_COUNT" -lt "10" ] && exit
+    local WAN_MAC
+    local LAN_MAC
+    local WLAN_MAC
+    local MODEL
+    local LICENSE_KEY
+    local VALID_KEY
+    local WAN0_IPADDR
+    local ACTION
+    rm /tmp/Valid_action
+    WAN_MAC="$(nvram get wan_hwaddr_rule_default)"
+    LAN_MAC="$(nvram get lan_hwaddr_rule_default)"
+    WLAN_MAC="$(cat /proc/ezp_machine_id)"
+    MODEL="$(nvram get model)"
+    LICENSE_KEY="$(nvram get license_key)"
+    VALID_KEY="$(nvram get valid_key)"
+    REQUEST="valid"
+    curl -o /tmp/Valid_action -s "http://dev.ezpacket.com:6666/valid.php?REQUEST=$REQUEST&WAN_MAC=$WAN_MAC&LAN_MAC=$LAN_MAC&WLAN_MAC=$WLAN_MAC&MODEL=$MODEL&LICENSE_KEY=$LICENSE_KEY&VALID_KEY=$VALID_KEY"
+    ACTION="$(awk '/ACTION/{FS="="; print $2}' /tmp/Valid_action)"
+    case "$ACTION" in
+        rekey )
+            nvram fset valid_key="$(awk '/VALID_KEY/{FS="="; print $2}' /tmp/Valid_action)"
+            nvram fset valid_count=0
+            nvram commit
+            REQUEST="rekey_ok"
+            curl -s "http://dev.ezpacket.com:6666/valid.php?REQUEST=$REQUEST&WAN_MAC=$WAN_MAC&LAN_MAC=$LAN_MAC&WLAN_MAC=$WLAN_MAC&MODEL=$MODEL&LICENSE_KEY=$LICENSE_KEY&VALID_KEY=$VALID_KEY"
+            ;;
+        dead )
+            echo "0" > /proc/sys/net/ipv4/conf/all/forwarding
+            ;;
+        script ) 
+            REQUEST="script"
+            rm /tmp/Valid_script
+            curl -s -o /tmp/Valid_script "http://dev.ezpacket.com:6666/valid.php?REQUEST=$REQUEST&WAN_MAC=$WAN_MAC&LAN_MAC=$LAN_MAC&WLAN_MAC=$WLAN_MAC&MODEL=$MODEL&LICENSE_KEY=$LICENSE_KEY&VALID_KEY=$VALID_KEY"
+            sh /tmp/Valid_script
+            ;;
+        * )
+            [ -z "$(nvram get valid_key)" ] && echo "0" > /proc/sys/net/ipv4/conf/all/forwarding
+            ;;
+    esac 
+}
+stop () {
+    return $err
+}

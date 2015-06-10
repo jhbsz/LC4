@@ -1,0 +1,149 @@
+--- transmission-2.03/libtransmission/session.h	2010-08-04 11:06:33.775012264 +0800
++++ transmission-2.03/libtransmission/session.h	2010-08-04 10:53:34.072510073 +0800
+@@ -146,6 +146,8 @@
+ 
+     int                          torrentCount;
+     tr_torrent *                 torrentList;
++    /* EZP max download torrent */
++    int                          max_torrent;
+ 
+     char *                       torrentDoneScript;
+ 
+--- transmission-2.03/libtransmission/session.c	2010-08-04 11:06:33.785011988 +0800
++++ transmission-2.03/libtransmission/session.c	2010-08-04 10:53:18.717125813 +0800
+@@ -311,6 +311,9 @@
+     tr_bencDictAddStr ( d, TR_PREFS_KEY_BIND_ADDRESS_IPV6,        TR_DEFAULT_BIND_ADDRESS_IPV6 );
+     tr_bencDictAddBool( d, TR_PREFS_KEY_START,                    TRUE );
+     tr_bencDictAddBool( d, TR_PREFS_KEY_TRASH_ORIGINAL,           FALSE );
++    /* EZP set default max download torrent, set 0 is unlimit download
++     * torrent   */
++    tr_bencDictAddInt ( d, TR_MAX_DOWNLOAD_TORRENT,               atoi( TR_MAX_DOWNLOAD_TORRENT ) );
+ }
+ 
+ void
+@@ -378,6 +381,8 @@
+     tr_bencDictAddStr ( d, TR_PREFS_KEY_BIND_ADDRESS_IPV6,        tr_ntop_non_ts( &s->public_ipv6->addr ) );
+     tr_bencDictAddBool( d, TR_PREFS_KEY_START,                    !tr_sessionGetPaused( s ) );
+     tr_bencDictAddBool( d, TR_PREFS_KEY_TRASH_ORIGINAL,           tr_sessionGetDeleteSource( s ) );
++    /* EZP max download torrent */
++    tr_bencDictAddInt ( d, TR_MAX_DOWNLOAD_TORRENT,               s->max_torrent   );
+ }
+ 
+ tr_bool
+@@ -939,6 +944,10 @@
+     if( tr_bencDictFindStr( settings, TR_PREFS_KEY_SCRIPT_TORRENT_DONE_FILENAME, &str ) )
+         tr_sessionSetTorrentDoneScript( session, str );
+ 
++    /* EZP read max download torrent setting */
++    if( tr_bencDictFindInt( settings, TR_MAX_DOWNLOAD_TORRENT, &i ) )
++        session->max_torrent = i;
++
+     data->done = TRUE;
+ }
+ 
+--- transmission-2.03/libtransmission/rpcimpl.c	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/rpcimpl.c	2010-08-04 10:53:42.078915681 +0800
+@@ -992,6 +992,10 @@
+     {
+         result = "invalid or corrupt torrent file";
+     }
++    else if( err == TR_PARSE_MAX ) /* EZP add new error msg */
++    {
++        result = "Reach at max torrent count";
++    }
+ 
+     tr_idle_function_done( data, result );
+ }
+--- transmission-2.03/libtransmission/torrent.c	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/torrent.c	2010-08-04 11:06:17.649101829 +0800
+@@ -793,9 +793,18 @@
+     tr_info tmpInfo;
+     tr_parse_result r;
+     tr_torrent * tor = NULL;
++    tr_session * session = tr_ctorGetSession( ctor );
+ 
+     assert( ctor != NULL );
+-    assert( tr_isSession( tr_ctorGetSession( ctor ) ) );
++    assert( tr_isSession( session ) );
++
++    /* EZP Check  torrent count over max download torrent */
++    if( session->max_torrent > 0  && 
++            session->torrentCount >= session->max_torrent )
++    {
++        *setmeError = TR_PARSE_MAX;
++        return tor;
++    }
+ 
+     r = torrentParseImpl( ctor, &tmpInfo, &hasInfo, &len );
+     if( r == TR_PARSE_OK )
+--- transmission-2.03/daemon/daemon.c	2010-07-21 12:13:48.000000000 +0800
++++ transmission-2.03/daemon/daemon.c	2010-08-04 10:52:58.512689369 +0800
+@@ -102,6 +102,9 @@
+     { 953, "global-seedratio", "All torrents, unless overridden by a per-torrent setting, should seed until a specific ratio", "gsr", 1, "ratio" },
+     { 954, "no-global-seedratio", "All torrents, unless overridden by a per-torrent setting, should seed regardless of ratio", "GSR", 0, NULL },
+     { 'x', "pid-file", "Enable PID file", "x", 1, "<pid-file>" },
++    { 'z', "max-download-torrent", "Max allow download torrents", "z", 1, NULL},
++    { 's', "speed-limit-up", "Set max upload speed", "s", 1,  "<KB/s>"},
++    { 'S', "speed-limit-down", "Set max download speed", "S", 1,  "<KB/s>"},
+     { 0, NULL, NULL, NULL, 0, NULL }
+ };
+ 
+@@ -408,6 +411,31 @@
+                       break;
+             case 'Y': tr_bencDictAddBool( &settings, TR_PREFS_KEY_LPD_ENABLED, FALSE );
+                       break;
++            case 'z': /* EZP set max download torrrent */
++                      tr_bencDictAddInt( &settings, TR_MAX_DOWNLOAD_TORRENT, atoi(optarg));
++                      break;
++            case 's': /* EZP upload speed limit */
++                      if (atoi(optarg)) {
++                          tr_bencDictAddInt( &settings,
++                                  TR_PREFS_KEY_USPEED_KBps, atoi(optarg));
++                          tr_bencDictAddBool( &settings,
++                                  TR_PREFS_KEY_USPEED_ENABLED, TRUE);
++                      } else {
++                          tr_bencDictAddBool( &settings,
++                                  TR_PREFS_KEY_USPEED_ENABLED, FALSE);
++                      }
++                      break;
++            case 'S': /* EZP download speed limit */
++                      if (atoi(optarg)) {
++                          tr_bencDictAddInt( &settings,
++                                  TR_PREFS_KEY_DSPEED_KBps, atoi(optarg));
++                          tr_bencDictAddBool( &settings,
++                                  TR_PREFS_KEY_DSPEED_ENABLED, TRUE);
++                      } else {
++                          tr_bencDictAddBool( &settings,
++                                  TR_PREFS_KEY_DSPEED_ENABLED, FALSE);
++                      }
++                      break;
+             default:  showUsage( );
+                       break;
+         }
+--- transmission-2.03/libtransmission/transmission.h	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/transmission.h	2010-08-04 10:53:08.113761272 +0800
+@@ -211,6 +211,9 @@
+ #define TR_PREFS_KEY_UPLOAD_SLOTS_PER_TORRENT      "upload-slots-per-torrent"
+ #define TR_PREFS_KEY_START                         "start-added-torrents"
+ #define TR_PREFS_KEY_TRASH_ORIGINAL                "trash-original-torrent-files"
++/* EZP */
++#define TR_MAX_DOWNLOAD_TORRENT                 "max-download-torrent"
++
+ 
+ 
+ /**
+@@ -991,11 +994,13 @@
+ /** @brief Get the .torrent file that this ctor's metainfo came from, or NULL if tr_ctorSetMetainfoFromFile() wasn't used */
+ const char* tr_ctorGetSourceFile( const tr_ctor * ctor );
+ 
++/* EZP Add a enum "TR_PARSE_MAX" for limit the max download torrent */
+ typedef enum
+ {
+     TR_PARSE_OK,
+     TR_PARSE_ERR,
+-    TR_PARSE_DUPLICATE
++    TR_PARSE_DUPLICATE,
++    TR_PARSE_MAX
+ }
+ tr_parse_result;
+ 

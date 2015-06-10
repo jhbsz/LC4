@@ -1,0 +1,83 @@
+#!/bin/sh
+
+OPTION=$1
+
+MAIL="$(nvram show mail_rule 0 mail)"
+
+[ -z $OPTION -o $MAIL = "0" ] && exit
+
+FORM="$(nvram show mail_rule 0 send_mail)"
+SERVER="$(nvram show mail_rule 0 server)"
+ACCOUNT=""$(nvram show mail_rule 0 act)""
+PASSWORD=""$(nvram show mail_rule 0 pwd)""
+ROOT="$(nvram show mail_rule 0 email)"
+MYNAME="$(nvram show wan_ddns_rule 0 hostname)"
+
+rm /etc/ssmtp/ssmtp.conf
+echo "root=$ROOT
+mailhub=$SERVER
+rewriteDomain=EXAMPLE.COM
+hostname=$FORM
+FromLineOverride=YES
+UseTLS=YES
+AuthUser=$ACCOUNT
+AuthPass=$PASSWORD" > /etc/ssmtp/ssmtp.conf
+
+[ ! -z "$(nvram show mail_rule 0 address_1)" ] && TO="-vvv $(nvram show mail_rule 0 address_1)"
+[ ! -z "$(nvram show mail_rule 0 address_2)" ] && TO="$TO -vvv $(nvram show mail_rule 0 address_2)"
+
+[ -z "$TO" ] && exit
+
+[ $OPTION = "battery" ] && {
+    after=$2
+    before=$3
+    SUBJECT="Battery Alert"
+    [ $before = "1" -a $after = "2" ] && {
+        BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME Adaptor mode -> Battery mode 80% "    
+    }
+    [ $before = "2" -a $after = "0" ] && {
+        BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME Battery mode 80% -> low battery 20% "    
+    }
+    [ $before = "0" -a $after = "2" ] && {
+        BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME low battery 20% -> Battery mode 80%"    
+    }
+    [ $before = "2" -a $after = "1" ] && {
+        BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME Battery mode 80% -> Adaptor mode"    
+    }
+}
+
+[ $OPTION = "relay" ] && {
+    NUM=$2
+    ACTIVE=$3
+    SUBJECT="Relay Alert"
+    BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME Relay $NUM $ACTIVE"    
+}
+
+[ $OPTION = "SD" ] && {
+    [ "$(nvram show mail_rule 0 sd)" = "1" -a "$(nvram show alert_rule 0 sd)" = "0" ] && {
+    ACTIVE=$2
+    SUBJECT="SD Card Event"
+    BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME SD Card $ACTIVE "    
+    nvram replace attr alert_rule 0 sd 1
+    }
+}
+
+[ $OPTION = "USB" ] && {
+    [ "$(nvram show mail_rule 0 usb)" = "1" -a "$(nvram show alert_rule 0 usb)" = "0" ] && {
+    ACTIVE=$2
+    SUBJECT="USB Storage Event"
+    BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME USB Storage $ACTIVE "    
+    nvram replace attr alert_rule 0 usb 1
+    }
+}
+
+[ $OPTION = "gpio" ] && {
+    NUM=$2
+    ACTIVE=$3
+    SUBJECT="GPIO Event"
+    BODYHERE="`date "+%Y %m %d %H:%M:%S"` $MYNAME GPIO $NUM $ACTIVE "    
+}
+
+[ ! -z "$BODYHERE" ] && {
+    echo -e "From: $FORM\nSubject: $SUBJECT\n\n$BODYHERE" | ssmtp $TO
+}

@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-i2c/Makefile
+Package: ezp-i2c
+Version: 1.0
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: I2C command
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	I2C command
+@@
+

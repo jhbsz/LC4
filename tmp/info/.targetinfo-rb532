@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/rb532/Makefile
+Target: rb532
+Target-Board: rb532
+Target-Kernel: 2.6
+Target-Name: Mikrotik RouterBoard 532 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio jffs2 pci tgz usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.24.7
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi
+

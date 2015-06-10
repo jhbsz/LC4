@@ -1,0 +1,128 @@
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/common/cmm_info.c	2014-04-07 12:06:22.850584661 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/common/cmm_info.c	2014-04-07 12:34:51.893213396 +0800
+@@ -3473,7 +3473,7 @@
+ 	NDIS_802_11_AUTHENTICATION_MODE	ap_auth_mode = Ndis802_11AuthModeOpen;
+ 
+ 		/*Channel*/
+-		sprintf(msg+strlen(msg),"%-4d", pBss->Channel);
++		sprintf(msg+strlen(msg),"%d$", pBss->Channel);
+ 
+ 
+ 		/*SSID*/
+@@ -3487,10 +3487,10 @@
+ 		for (idx = 0; (idx < 14) && (idx < pBss->SsidLen); idx++)
+ 			sprintf(Ssid + 2 + (idx*2), "%02X", (UCHAR)pBss->Ssid[idx]);
+ 	}
+-		sprintf(msg+strlen(msg),"%-33s", Ssid);      
++		sprintf(msg+strlen(msg),"%s$", Ssid);      
+ 		
+ 		/*BSSID*/
+-		sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x   ", 
++		sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x$", 
+ 			pBss->Bssid[0], 
+ 			pBss->Bssid[1],
+ 			pBss->Bssid[2], 
+@@ -3589,7 +3589,7 @@
+ 			sprintf(SecurityStr, "%s/%s", GetAuthMode((CHAR)ap_auth_mode), GetEncryptType((CHAR)ap_cipher));		
+ 	}
+ 	
+-	sprintf(msg+strlen(msg), "%-23s", SecurityStr);
++	sprintf(msg+strlen(msg), "%s$", SecurityStr);
+ 
+ 		/* Rssi*/
+ 		Rssi = (INT)pBss->Rssi;
+@@ -3601,44 +3601,44 @@
+ 			Rssi_Quality = (UINT)(((Rssi + 90) * 26)/10);
+ 		else    /* < -84 dbm*/
+ 			Rssi_Quality = 0;
+-		sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
++		sprintf(msg+strlen(msg),"%d$", Rssi_Quality);
+ 		
+ 		/* Wireless Mode*/
+ 		wireless_mode = NetworkTypeInUseSanity(pBss);
+ 		if (wireless_mode == Ndis802_11FH ||
+ 			wireless_mode == Ndis802_11DS)
+-			sprintf(msg+strlen(msg),"%-7s", "11b");
++			sprintf(msg+strlen(msg),"%s$", "11b");
+ 		else if (wireless_mode == Ndis802_11OFDM5)
+-			sprintf(msg+strlen(msg),"%-7s", "11a");
++			sprintf(msg+strlen(msg),"%s$", "11a");
+ 		else if (wireless_mode == Ndis802_11OFDM5_N)
+-			sprintf(msg+strlen(msg),"%-7s", "11a/n");
++			sprintf(msg+strlen(msg),"%s$", "11a/n");
+ 		else if (wireless_mode == Ndis802_11OFDM24)
+-			sprintf(msg+strlen(msg),"%-7s", "11b/g");
++			sprintf(msg+strlen(msg),"%s$", "11b/g");
+ 		else if (wireless_mode == Ndis802_11OFDM24_N)
+-			sprintf(msg+strlen(msg),"%-7s", "11b/g/n");
++			sprintf(msg+strlen(msg),"%s$", "11b/g/n");
+ 		else
+-			sprintf(msg+strlen(msg),"%-7s", "unknow");
++			sprintf(msg+strlen(msg),"%s$", "unknow");
+ 
+ 		/* Ext Channel*/
+ 		if (pBss->AddHtInfoLen > 0)
+ 		{
+ 			if (pBss->AddHtInfo.AddHtInfo.ExtChanOffset == EXTCHA_ABOVE)
+-				sprintf(msg+strlen(msg),"%-7s", " ABOVE");
++				sprintf(msg+strlen(msg),"%s$", "ABOVE");
+ 			else if (pBss->AddHtInfo.AddHtInfo.ExtChanOffset == EXTCHA_BELOW)
+-				sprintf(msg+strlen(msg),"%-7s", " BELOW");
++				sprintf(msg+strlen(msg),"%s$", "BELOW");
+ 			else
+-				sprintf(msg+strlen(msg),"%-7s", " NONE");
++				sprintf(msg+strlen(msg),"%s$", "NONE");
+ 		}
+ 		else
+ 		{
+-			sprintf(msg+strlen(msg),"%-7s", " NONE");
++			sprintf(msg+strlen(msg),"%s$", "NONE");
+ 		}
+ 		
+ 		/*Network Type		*/
+ 		if (pBss->BssType == BSS_ADHOC)
+-			sprintf(msg+strlen(msg),"%-3s", " Ad");
++			sprintf(msg+strlen(msg),"%s$", "Ad");
+ 		else
+-			sprintf(msg+strlen(msg),"%-3s", " In");
++			sprintf(msg+strlen(msg),"%s$", "In");
+ 
+         sprintf(msg+strlen(msg),"\n");
+ 	
+@@ -3676,11 +3676,11 @@
+ 	memset(msg, 0 , TotalLen);
+ 	sprintf(msg,"%s","\n");
+ 
+-	sprintf(msg+strlen(msg),"%-4s%-33s%-20s%-23s%-9s%-7s%-7s%-3s\n",
+-	    "Ch", "SSID", "BSSID", "Security", "Siganl(%)", "W-Mode", " ExtCH"," NT");	
++	sprintf(msg+strlen(msg),"%s$%s$%s$%s$%s$%s$%s$%s\n",
++	    "Ch", "SSID", "BSSID", "Security", "Siganl(%)", "W-Mode", "ExtCH", "NT");	
+ 
+ #ifdef WSC_INCLUDED
+-	sprintf(msg+strlen(msg)-1,"%-4s%-5s\n", " WPS", " DPID");
++	sprintf(msg+strlen(msg)-1,"$%s$%s\n", "WPS", "DPID");
+ #endif /* WSC_INCLUDED */
+ 
+ #ifdef CONFIG_STA_SUPPORT
+@@ -3710,16 +3710,16 @@
+ #ifdef WSC_INCLUDED
+         /*WPS*/
+         if (pBss->WpsAP & 0x01)
+-			sprintf(msg+strlen(msg)-1,"%-4s", " YES");
++			sprintf(msg+strlen(msg)-1,"%s$", "YES");
+ 		else
+-			sprintf(msg+strlen(msg)-1,"%-4s", "  NO");
++			sprintf(msg+strlen(msg)-1,"%s$", "NO");
+ 
+ 		if (pBss->WscDPIDFromWpsAP == DEV_PASS_ID_PIN)
+-			sprintf(msg+strlen(msg),"%-5s\n", " PIN");
++			sprintf(msg+strlen(msg),"%s\n", "PIN");
+ 		else if (pBss->WscDPIDFromWpsAP == DEV_PASS_ID_PBC)
+-			sprintf(msg+strlen(msg),"%-5s\n", " PBC");
++			sprintf(msg+strlen(msg),"%s\n", "PBC");
+ 		else
+-			sprintf(msg+strlen(msg),"%-5s\n", " ");
++			sprintf(msg+strlen(msg),"%s\n", " ");
+ #endif /* WSC_INCLUDED */
+ 
+ #ifdef CONFIG_STA_SUPPORT

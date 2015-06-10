@@ -1,0 +1,253 @@
+#!/bin/sh 
+
+. /etc/arch.sh
+. /etc/functions.sh
+
+lock_file=/tmp/ezp-gpio.lock
+#########
+dev_name0="USB"
+dev_name1="SD"
+dev_name2="Qsync"
+diff_count="1000"
+if_serialize_check "$lock_file"
+
+while [ ! -e "/dev/nvram" ]; do
+    echo "$(sleep 1)"
+done
+
+change_xmode() {
+    local newmode="$(nvram show x_mode_data $1 prod_cat)"
+    # X-series can do the mode switching
+    [ "$(nvram get prod_supercat)" == "X" ] && {
+        [ "$(nvram get prod_cat)" = "$newmode" ] || {
+            nvram fset prod_cat="$newmode"
+            nvram commit
+            echo "1"
+            return "1"
+        }
+    }
+    echo "0"
+}
+
+local gp_action=$1
+local PLATFORM="$(nvram get platform)"
+mountpath="/tmp/mnt"
+[ "$PLATFORM" = "M2E" ] && mountpath="/tmp/mnt/fslite"
+case "$gp_action" in
+    usb-remove)
+        [ "$(nvram get brand)" != "ZYUS" ] && /sbin/usb-remove
+    ;;
+    default)
+#        [ "$(nvram get platform)" = "LIS" ] &&  {
+#            gpioctl led 13 1 0 0 0 0 > /dev/null
+#        }
+        [ "$PLATFORM" = "AXA" -o  "$PLATFORM" = "M2E" ] && {
+            ezp-i2c gauge host booting 
+        }
+        arch_led_start factory
+        /usr/sbin/nvram factory
+    ;;
+    reboot)
+#        [ "$(nvram get platform)" = "LIS" ] &&  {
+#            gpioctl led 13 1 0 0 0 0 > /dev/null
+#        }
+        [ "$PLATFORM" = "M2E" ] && {
+            ezp-i2c gauge host booting 
+        }
+        arch_led_start boot
+        /sbin/reboot
+    ;;
+    wifi)
+        [ "$(nvram get brand)" != "ZYUS" ] && /sbin/ezp-wifionoff
+    ;;
+    sdcard)
+        local brand="$(nvram get brand)"
+        local timeout_count=0
+        while [ -n "$(pidof sdparm)" ]; do
+            sleep 1
+            timeout_count=$((${timeout_count} + 1))
+            [ "${timeout_count}" -gt "5" ] && exit
+        done
+        [ "$PLATFORM" = "AXA" -o "$PLATFORM" = "LIS" -o "$PLATFORM" = "M2E" ] &&  {
+            local readernum="$(nvram get card_reader_hardware_rule_num)"
+            local idx=0
+            local devnode
+            [ -z "$readernum" ] && readernum="1"
+            arch_storage_insert_state
+#            [ "$PLATFORM" = "AXA" -a -z "$(mount |grep /tmp/mnt/SD)" -a "$(nvram show storage_state_rule 1 insert_state)" = "1" ] && {
+            local sdinserted="$(nvram show storage_state_rule 1 insert_state)"
+            [ "$PLATFORM" = "AXA" -o "$PLATFORM" = "M2E" ] && {
+                local pathmount="$(mount |grep $mountpath/SD)"
+                # We start blinking if card insert and path not mount or card
+                # remove and path is mounted
+                [ -z "$pathmount" -a "$sdinserted" = "1" -o -n "$pathmount" -a "$sdinserted" = "0" ] && {
+                    /etc/led_control.sh turn_up_mounting_led 35 &
+                }
+            }
+            while [ "$idx" -lt "$readernum" ]; do
+                devnode="$(nvram show card_reader_hardware_rule $idx dev)"
+                sdparm --command=ready /dev/$devnode
+                sleep 1
+                # We do umount here because
+                # 1. card is mounted previously and not umounted
+                # 2. card is not present now
+                # we only do this on sd card, not usb
+                local checkloop="1"
+                local checkcount="5"
+                if [ "$sdinserted" = "1" ]; then
+                    #if we found sdcard is inserted, we should get sdcard ready on device port
+                    while [ "$checkloop" = "1" ]; do
+                        [ -z "$(sdparm --command=ready /dev/$devnode | grep Not)" ] && checkloop="0" || sleep 1
+                        [ "$checkcount" -eq "0" ] && checkloop="0"
+                        checkcount=$(($checkcount - 1))
+                    done
+                else
+                    # the device is still mounted, we unmount it first
+                    sdparm --command=ready /dev/$devnode
+                    [ -n "$(mount | grep $mountpath/SD)" ] && umount -l $mountpath/SD
+                    while [ "$checkloop" = "1" ]; do
+                        [ -n "$(sdparm --command=ready /dev/$devnode | grep Not)" ] && checkloop="0" || sleep 1
+                        [ "$checkcount" -eq "0" ] && checkloop="0"
+                        checkcount=$(($checkcount - 1))
+                    done
+                fi
+                idx="$(($idx + 1))"
+            done
+            USBSTORAGE_SERVICE
+        }
+    ;;
+    func)
+        local res
+        case "$2" in
+        17)
+            res="$(/sbin/ezp-wl-mode lrouter)"
+        ;;
+        18)
+            res="$(/sbin/ezp-wl-mode bridge)"
+        ;;
+        19)
+            res="$(/sbin/ezp-wl-mode gateway)"
+        ;;
+        *)
+            res="$(/sbin/ezp-wl-mode gateway)"
+        ;;
+        esac
+        [ "$res" = "success" ] && reboot
+    ;;
+    showoled)
+        [ "$PLATFORM" = "M2E" -a "$(nvram get sysstat)" = "ready" ] && {
+             init_0_state="$(nvram show storage_used_state_rule 0 dev_name)"
+             init_1_state="$(nvram show storage_used_state_rule 1 dev_name)"
+             init_2_state="$(nvram show storage_used_state_rule 2 dev_name)"
+            [ -n "$(mount | grep $mountpath/$dev_name0)" -a "$init_0_state" = "mnt" ] && {
+                    init_usb_total_size="$(df | grep $dev_name0 | awk '{print $2}')"
+                    init_usb_free_size="$(df | grep $dev_name0 | awk '{print $4}')"
+                    nvram replace attr storage_used_state_rule 0 dev_name "$dev_name0"
+                    nvram replace attr storage_used_state_rule 0 mount_state "1"
+                    nvram replace attr storage_used_state_rule 0 free_state $init_usb_free_size
+                    nvram replace attr storage_used_state_rule 0 total_state $init_usb_total_size
+                    nvram replace attr storage_used_state_rule 0 diff_state 1
+            } 
+           [ -z "$(mount | grep $mountpath/$dev_name0)" -a "$init_0_state" = "$dev_name0" ] && { 
+                    nvram replace attr storage_used_state_rule 0 dev_name "mnt"
+                    nvram replace attr storage_used_state_rule 0 mount_state 0
+                    nvram replace attr storage_used_state_rule 0 free_state 0
+                    nvram replace attr storage_used_state_rule 0 total_state 0
+                    nvram replace attr storage_used_state_rule 0 diff_state 0
+            }
+
+            [ -n "$(mount | grep $mountpath/$dev_name1)" -a "$init_1_state" = "mnt" ] && {
+                    init_1_total_size="$(df | grep $dev_name1 | awk '{print $2}')"
+                    init_1_free_size="$(df | grep $dev_name1 | awk '{print $4}')"
+                    nvram replace attr storage_used_state_rule 1 dev_name "$dev_name1"
+                    nvram replace attr storage_used_state_rule 1 mount_state "1"
+                    nvram replace attr storage_used_state_rule 1 free_state $init_1_free_size
+                    nvram replace attr storage_used_state_rule 1 total_state $init_1_total_size
+                    nvram replace attr storage_used_state_rule 1 diff_state 1
+            } 
+          [ -z "$(mount | grep $mountpath/$dev_name1)" -a "$init_1_state" = "$dev_name1" ] && { 
+                    nvram replace attr storage_used_state_rule 1 dev_name "mnt"
+                    nvram replace attr storage_used_state_rule 1 mount_state 0
+                    nvram replace attr storage_used_state_rule 1 free_state 0
+                    nvram replace attr storage_used_state_rule 1 total_state 0
+                    nvram replace attr storage_used_state_rule 1 diff_state 0
+            }
+
+            [ -n "$(mount | grep $mountpath/$dev_name2)" -a "$init_2_state" = "mnt" ] && {
+                    init_2_total_size="$(df | grep "$dev_name2" | awk '{print $2}')"
+                    init_2_free_size="$(df | grep "$dev_name2" | awk '{print $4}')"
+                    nvram replace attr storage_used_state_rule 2 dev_name "$dev_name2"
+                    nvram replace attr storage_used_state_rule 2 mount_state "1"
+                    nvram replace attr storage_used_state_rule 2 free_state $init_2_free_size
+                    nvram replace attr storage_used_state_rule 2 total_state $init_2_total_size 
+                    nvram replace attr storage_used_state_rule 2 diff_state 1
+            } 
+          [ -z "$(mount | grep $mountpath/$dev_name2)" -a "$init_2_state" = "$dev_name2" ] && { 
+                    nvram replace attr storage_used_state_rule 2 dev_name "mnt"
+                    nvram replace attr storage_used_state_rule 2 mount_state 0
+                    nvram replace attr storage_used_state_rule 2 free_state 0
+                   nvram replace attr storage_used_state_rule 2 total_state 0
+                   nvram replace attr storage_used_state_rule 2 diff_state 0
+            }
+            init_0_free_size="$(nvram show storage_used_state_rule 0 free_state)"
+            init_0_total_size="$(nvram show storage_used_state_rule 0 total_state)"
+            dev0_state="$(nvram show storage_used_state_rule 0 diff_state)"
+
+            init_1_free_size="$(nvram show storage_used_state_rule 1 free_state)"
+            init_1_total_size="$(nvram show storage_used_state_rule 1 total_state)"
+            dev1_state="$(nvram show storage_used_state_rule 1 diff_state)"
+
+           init_2_free_size="$(nvram show storage_used_state_rule 2 free_state)"
+            init_2_total_size="$(nvram show storage_used_state_rule 2 total_state)"
+            dev2_state="$(nvram show storage_used_state_rule 2 diff_state)"
+            
+            [ "$dev0_state" = "1" ] && {
+                    total_0_size="$(df | grep $dev_name0 | awk '{print $2}')"
+                    free_0_size="$(df | grep $dev_name0 | awk '{print $4}')"
+                    diff_0_size=$(($free_0_size-$init_0_free_size))
+            }
+           [ "$diff_0_size" -gt "1000" -o "$diff_0_size" -lt "-1000" ] && {
+                ezp-i2c wifi usb_1
+                nvram replace attr storage_used_state_rule 0 free_state  "$free_0_size"
+                nvram replace attr storage_used_state_rule 0 total_state "$total_0_size"
+                init_0_free_size="$(nvram show storage_used_state_rule 0 free_state)"
+                init_0_total_size="$(nvram show storage_used_state_rule 0 total_state)"
+                #nvram replace attr storage_used_state_rule 0 diff_state 0
+            }
+
+            [ "$dev1_state" = "1" ] && {
+                    total_1_size="$(df | grep $dev_name1 | awk '{print $2}')"
+                    free_1_size="$(df | grep $dev_name1 | awk '{print $4}')"
+                    diff_1_size=$(($free_1_size-$init_1_free_size))
+            }
+           [ "$diff_1_size" -gt "1000" -o "$diff_1_size" -lt "-1000" ] && {
+                ezp-i2c wifi sd
+                nvram replace attr storage_used_state_rule 1 free_state  "$free_1_size"
+                nvram replace attr storage_used_state_rule 1 total_state "$total_1_size"
+                init_1_free_size="$(nvram show storage_used_state_rule 1 free_state)"
+                init_1_total_size="$(nvram show storage_used_state_rule 1 total_state)"
+                #nvram replace attr storage_used_state_rule 1 diff_state 0
+            }
+
+            [ "$dev2_state" = "1" ] && {
+                    total_2_size="$(df | grep $dev_name2 | awk '{print $2}')"
+                    free_2_size="$(df | grep $dev_name2 | awk '{print $4}')"
+                    diff_2_size=$(($free_2_size-$init_2_free_size))
+            }
+           [ "$diff_2_size" -gt "1000" -o "$diff_2_size" -lt "-1000" ] && {
+                ezp-i2c wifi usb_2
+                nvram replace attr storage_used_state_rule 2 free_state  "$free_2_size"
+                nvram replace attr storage_used_state_rule 2 total_state "$total_2_size"
+                init_2_free_size="$(nvram show storage_used_state_rule 2 free_state)"
+                init_2_total_size="$(nvram show storage_used_state_rule 2 total_state)"
+                #nvram replace attr storage_used_state_rule 2 diff_state 0
+            }
+            [ "$diff_2_size" -gt "1000" -o "$diff_2_size" -lt "-1000" -o \
+            "$diff_1_size" -gt "1000" -o "$diff_1_size" -lt "-1000" -o \
+            "$diff_0_size" -gt "1000" -o "$diff_0_size" -lt "-1000" ] && {
+                sleep 1
+                ezp-i2c wifi storage
+            }
+        }
+    ;;
+esac

@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+BIN=/usr/sbin/dropbear
+START=50
+# Copyright (C) 2006 Carlos Sobrinho
+log_msg="SSH-server"
+
+start() {
+    [ "$(nvram show ssh_rule 0 enable)" = "1" -o  \
+        "$(nvram get license_invalid)" != "0" ] && {
+        pidof dropbear > /dev/null && stop
+        port=$(nvram show ssh_rule 0 port)
+        $BIN ${port:+-p $port} || err=1
+        [ "$(nvram get license_invalid)" = "0" ] && return
+        local PLATFORM="$(nvram get platform)"
+        [ -n "$(echo "$PLATFORM" | sed -n '/^BA/p')" -o \
+          "$PLATFORM" = "AXB" -o "$PLATFORM" = "LIS" -o \
+          "$PLATFORM" = "AXM" ] && /usr/sbin/telnetd -l /usr/sbin/cli
+    }
+    return $err
+}
+
+stop() {
+	killall dropbear
+}

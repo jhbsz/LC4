@@ -1,0 +1,91 @@
+#!/bin/sh
+. /etc/network.sh
+
+LOCK=/tmp/wandetect.$1.lock
+local num=${1#wan}
+# detect wan interface connection status
+mkdir $LOCK
+local ret=$?
+[ "$ret" != "0" ] && {
+    return
+}
+to_log "detect $1"
+local state="$(nvram show wan_status_rule $num state)"
+case $state in
+    2)
+        [ "$(nvram get wan${num}_proto)" != "wisp" -o "$(nvram get platform)" = "GMA" ] && {
+            iface_detect $1
+            ret=$?
+            to_log "$1 detect reault is $ret"
+            [ "$ret" = "2" ] && {
+                nvram replace attr wan_status_rule $num trycount "9999"
+            } || {
+                [ "$state" = "2" ] && {
+                    nvram replace attr wan_status_rule $num state "3"
+                }
+            }
+        } || {		
+            local ifname;
+            local gateway=$(nvram get wan${num}_gateway)
+            local dns=$(nvram get wan${num}_dns)
+            ifname=$(nvram get wan${num}_ifname)
+	
+            echo "nameserver $dns" > /tmp/resolv.conf                
+            ip route append $dns via $gateway dev $ifname
+            ip route add default via $gateway dev $ifname
+            local captive=$(nvram show WISP_detect_portal_rule $num captive_portal)
+            local status
+            # For system without portal detection function or the portal
+            # detection function to be disabled, we ignore the dection.
+            # To determine captive not function not available,
+            # 1. nvram is empty 2. captive attribute is set "disabled"
+            [ -n "${captive}" -a "disabled" != "${captive}" ] && {
+                . check_wanportal MICROSOFT $num
+                ret=$?
+                captive=$(nvram show WISP_detect_portal_rule $num captive_portal)
+                status=$(nvram show WISP_detect_portal_rule $num status)
+            }
+            if [ "$ret" = "0" -o "$captive" = "0" -o -z "${captive}" -o "${captive}" = "disabled" ]; then 
+                iface_detect $1
+                ret=$?
+                to_log "$1 detect reault is $ret"
+                [ "$ret" = "2" ] && {
+                    nvram replace attr wan_status_rule $num trycount "9999"
+                } || {
+                    [ "$state" = "2" ] && {
+                        ip route del default via $gateway dev $ifname
+                        nvram replace attr wan_status_rule $num state "3"
+                    }
+                }    
+            else
+                if [ "$captive" = "2" -a "$status" = "1" ]; then
+                    ip route del default via $gateway dev $ifname
+                    logger EZP_USR "You are connecting to WAN now."
+                    nvram replace attr wan_status_rule $num state "3"
+                elif [ "$captive" = "1" -a "$status" = "0" ]; then
+                    logger EZP_USR "You are under captive portal control, please enter username and password."
+                fi
+            fi
+        }
+	;;
+    3|4)
+
+        # We done do ipsec 
+        [ "$(nvram get brand)" = "PROX" -a "$(nvram get ipsec_enable)" == 1 -a "$(nvram get ipsec_split_tunnel_state)" == "initiator" ] && {
+            [ "$state" = "2" ] && \
+                nvram replace attr wan_status_rule $num state "3"
+        } || {
+            iface_detect $1 
+            ret=$?
+            to_log "$1 detect reault is $ret"
+            [ "$ret" = "2" ] && {
+                nvram replace attr wan_status_rule $num trycount "9999"
+            } || {
+                [ "$state" = "2" ] && {
+	                nvram replace attr wan_status_rule $num state "3"
+                }
+            }
+        }
+    ;;
+esac
+rm -rf $LOCK

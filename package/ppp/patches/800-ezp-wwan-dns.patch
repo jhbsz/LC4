@@ -1,0 +1,22 @@
+--- ppp-2.4.3/pppd/ipcp.c	2009-02-19 23:56:03.000000000 +0800
++++ ppp-2.4.3.new/pppd/ipcp.c	2009-02-20 00:16:28.000000000 +0800
+@@ -1107,19 +1107,11 @@
+ 	      );
+ 
+     NAKCIDNS(CI_MS_DNS1, req_dns1,
+-	     if (treat_as_reject) {
+-		 try.req_dns1 = 0;
+-	     } else {
+ 		 try.dnsaddr[0] = cidnsaddr;
+-	     }
+ 	     );
+ 
+     NAKCIDNS(CI_MS_DNS2, req_dns2,
+-	     if (treat_as_reject) {
+-		 try.req_dns2 = 0;
+-	     } else {
+ 		 try.dnsaddr[1] = cidnsaddr;
+-	     }
+ 	     );
+ 
+     /*

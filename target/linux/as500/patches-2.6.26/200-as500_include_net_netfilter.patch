@@ -1,0 +1,12 @@
+diff -Nur linux-2.6.27.official/include/net/netfilter/nf_conntrack.h linux-2.6.27/include/net/netfilter/nf_conntrack.h
+--- linux-2.6.27.official/include/net/netfilter/nf_conntrack.h	2008-10-10 06:13:53.000000000 +0800
++++ linux-2.6.27/include/net/netfilter/nf_conntrack.h	2009-04-29 22:10:48.000000000 +0800
+@@ -125,6 +125,8 @@
+ 	struct nf_ct_ext *ext;
+ 
+ 	struct rcu_head rcu;
++	/* add for hnat */
++	void *hnat_cb;
+ };
+ 
+ static inline struct nf_conn *

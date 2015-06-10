@@ -1,0 +1,62 @@
+--- ffmpeg-0.11.2/libavutil/libm.h	2014-04-10 14:21:44.164244027 +0800
++++ ffmpeg-0.11.2/libavutil/libm.h	2014-04-10 14:23:53.527058492 +0800
+@@ -92,17 +92,11 @@
+ #endif /* HAVE_ROUNDF */
+ 
+ #if !HAVE_TRUNC
+-static av_always_inline av_const double trunc(double x)
+-{
+-    return (x > 0) ? floor(x) : ceil(x);
+-}
++av_always_inline av_const double trunc(double x);
+ #endif /* HAVE_TRUNC */
+ 
+ #if !HAVE_TRUNCF
+-static av_always_inline av_const float truncf(float x)
+-{
+-    return (x > 0) ? floor(x) : ceil(x);
+-}
++av_always_inline av_const float truncf(float x);
+ #endif /* HAVE_TRUNCF */
+ 
+ #endif /* AVUTIL_LIBM_H */
++
+--- ffmpeg-0.11.2/libavcodec/utils.c	2012-09-19 09:14:02.000000000 +0800
++++ ffmpeg-0.11.2/libavcodec/utils.c	2014-04-10 14:59:46.655116151 +0800
+@@ -2395,3 +2395,11 @@
+ {
+     return !!s->internal;
+ }
++
++#if !HAVE_TRUNCF
++av_always_inline av_const float truncf(float x)
++{
++    return (x > 0) ? floor(x) : ceil(x);
++}
++#endif /* HAVE_TRUNCF */
++
+--- ffmpeg-0.11.2/libavutil/utils.c	2012-09-19 09:14:03.000000000 +0800
++++ ffmpeg-0.11.2/libavutil/utils.c	2014-04-10 14:59:58.727116473 +0800
+@@ -20,7 +20,9 @@
+ #include "avutil.h"
+ #include "avassert.h"
+ #include "samplefmt.h"
+-
++#include <math.h>
++#include "attributes.h"
++#include "libm.h"
+ /**
+  * @file
+  * various utility functions
+@@ -73,3 +75,11 @@
+     default:                 return '?';
+     }
+ }
++
++#if !HAVE_TRUNC
++av_always_inline av_const double trunc(double x)
++{
++    return (x > 0) ? floor(x) : ceil(x);
++}
++#endif /* HAVE_TRUNC */
++

@@ -1,0 +1,203 @@
+.ih_style #ithit_interface_context_help_container {
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	width: 260px;
+	height: 88px;
+	background: #87c9fb;
+	z-index:4 !important;
+	border: 1px solid #abadb1;
+
+  -ms-transition:.5s;
+  -moz-transition:.5s;
+  -webkit-transition:.5s;
+  transition:.5s;
+  opacity:0;
+}
+.ih_style #ithit_interface_context_help_container.left {
+    left: 10px;
+    right: auto;
+}
+.ih_style #ithit_interface_context_help_content {
+    border-collapse: collapse;
+    display: block;
+    height: 72px !important;
+    overflow: hidden;
+    padding: 8px;
+    text-overflow: ellipsis;
+    vertical-align: top;
+    border: 1px solid transparent;	
+}
+
+.ih_style #ithit_interface_context_help_container div {
+    width: 244px;
+}
+
+.ih_style .thumbnailsContextHelpCntr{
+    border-collapse:collapse;
+    width: 100%;
+    height: 100%;
+    table-layout:fixed;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ih_style .thumbnailsContextHelpIcon {
+    width: 80px;
+    height: 72px;
+}
+
+.ih_style .thumbnailsContextHelpName {
+    width: 164px;
+    height: 18px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.ih_style .colContextHelpNames {
+    height: 54px;
+    vertical-align:top;
+}
+
+.ih_style .thumbnailsContextHelpInfo {
+    border-collapse:collapse;
+    width: 100%;
+    margin-top: 3px;
+}
+
+.ih_style .thumbnailsContextHelpInfoNames {
+    width: 55px;
+    padding-bottom:4px;
+}
+
+
+.ih_style #ithit_interface_context_help_content .resource,
+.ih_style #ithit_interface_context_help_content .folder
+{
+	width: 72px;
+	height: 72px;
+}
+
+.ih_style #ithit_interface_context_help_content .folder {
+	background-image: url('images/normal/72/_folder.png');
+}
+
+.ih_style #ithit_interface_context_help_content .resource {
+	background-image: url('images/normal/72/file.png');
+}
+
+.ih_style .contextIconArrowDown,
+.ih_style .contextIconArrowLeft,
+.ih_style .contextIconArrowRight,
+.ih_style .contextIconArrowUp,
+.ih_style .contextIconView,
+.ih_style .contextIconViewDetails,
+.ih_style .contextIconViewMedium,
+.ih_style .contextIconViewLarge,
+.ih_style .contextIconViewExtraLarge,
+.ih_style .contextIconFolders,
+.ih_style .contextIconUp,
+.ih_style .contextIconRefresh,
+.ih_style .contextIconUpload,
+.ih_style .contextIconNewFolder,
+.ih_style .contextIconDownload,
+.ih_style .contextIconEdit,
+.ih_style .contextIconFileManager,
+.ih_style .contextIconCustomProp,
+.ih_style .contextIconEditMode,
+.ih_style .contextIconUploadFolder,
+.ih_style .contextIconSearch,
+.ih_style .contextIconVersions,
+.ih_style .contextIconDelete,
+.ih_style .contextIconUndo,
+.ih_style .contextIconRedo,
+.ih_style .contextIconCopy,
+.ih_style .contextIconCut,
+.ih_style .contextIconPaste,
+.ih_style .contextIconLock,
+.ih_style .contextIconUnlock,
+.ih_style .contextIconInfo,
+.ih_style .contextIconLog,
+.ih_style .contextIconNewDocument,
+.ih_style .contextIconNewWord,
+.ih_style .contextIconNewExcel,
+.ih_style .contextIconNewPowerPoint,
+.ih_style .contextIconUpdateFile,
+.ih_style .contextIconRestartUpload,
+.ih_style .contextIconCancelUpload,
+.ih_style .contextIconPauseUpload,
+.ih_style .contextIconResumeUpload,
+.ih_style .contextIconViewError{
+	background-repeat: no-repeat;
+    width:72px;
+    height:72px;
+    float: left;
+    padding-right: 8px;
+}
+
+.ih_style .contextIconArrowDown      {background-image: url('images/normal/72/arrow_down.png');}
+.ih_style .contextIconArrowLeft      {background-image: url('images/normal/72/arrow_left.png');}
+.ih_style .contextIconArrowRight     {background-image: url('images/normal/72/arrow_right.png');}
+.ih_style .contextIconArrowUp        {background-image: url('images/normal/72/arrow_up.png');}
+.ih_style .contextIconView           {background-image: url('images/normal/72/view.png');}
+.ih_style .contextIconViewDetails    {background-image: url('images/normal/72/view_details.png');}
+.ih_style .contextIconViewMedium     {background-image: url('images/normal/72/view_medium.png');}
+.ih_style .contextIconViewLarge      {background-image: url('images/normal/72/view_large.png');}
+.ih_style .contextIconViewExtraLarge {background-image: url('images/normal/72/view_extra_large.png');}
+.ih_style .contextIconFolders   {background-image: url('images/normal/72/_folder.png');}
+.ih_style .contextIconUp        {background-image: url('images/normal/72/up.png');}
+.ih_style .contextIconRefresh   {background-image: url('images/normal/72/refresh.png');}
+.ih_style .contextIconUpload    {background-image: url('images/normal/72/upload.png');}
+.ih_style .contextIconNewFolder {background-image: url('images/normal/72/new_folder.png');}
+.ih_style .contextIconDownload  {background-image: url('images/normal/72/download.png');}
+.ih_style .contextIconEdit      {background-image: url('images/normal/72/edit.png');}
+.ih_style .contextIconFileManager{background-image: url('images/normal/72/file_manager_open.png');}
+.ih_style .contextIconCustomProp{background-image: url('images/normal/72/custom_prop.png');}
+.ih_style .contextIconEditMode{background-image: url('images/normal/72/edit_mode.png');}
+.ih_style .contextIconUploadFolder{background-image: url('images/normal/72/upload_folder.png');}
+.ih_style .contextIconSearch{background-image: url('images/normal/72/search.png');}
+.ih_style .contextIconVersions{background-image: url('images/normal/72/versions.png');}
+.ih_style .contextIconDelete    {background-image: url('images/normal/72/delete.png');}
+.ih_style .contextIconUndo      {background-image: url('images/normal/72/undo.png');}
+.ih_style .contextIconRedo      {background-image: url('images/normal/72/redo.png');}
+.ih_style .contextIconCopy      {background-image: url('images/normal/72/copy.png');}
+.ih_style .contextIconCut       {background-image: url('images/normal/72/cut.png');}
+.ih_style .contextIconPaste     {background-image: url('images/normal/72/paste.png');}
+.ih_style .contextIconLock      {background-image: url('images/normal/72/lock.png');}
+.ih_style .contextIconUnlock    {background-image: url('images/normal/72/unlock.png');}
+.ih_style .contextIconInfo      {background-image: url('images/normal/72/info.png');}
+.ih_style .contextIconLog       {background-image: url('images/normal/72/log.png');}
+.ih_style .contextIconNewDocument{background-image: url('images/normal/72/new_document.png');}
+.ih_style .contextIconNewWord   {background-image: url('images/normal/72/new_word.png');}
+.ih_style .contextIconNewExcel  {background-image: url('images/normal/72/new_excel.png');}
+.ih_style .contextIconNewPowerPoint{background-image: url('images/normal/72/new_powerpoint.png');}
+.ih_style .contextIconRestartUpload{background-image: url('images/normal/72/restart.png');}
+.ih_style .contextIconCancelUpload{background-image: url('images/normal/72/upload_failed.png');}
+.ih_style .contextIconPauseUpload{background-image: url('images/normal/72/pause.png');}
+.ih_style .contextIconResumeUpload{background-image: url('images/normal/72/resume.png');}
+.ih_style .contextIconViewError {background-image: url('images/normal/72/view_error.png');}
+.ih_style .contextIconUpdateFile {background-image: url('images/normal/72/update_file.png');}
+
+.ih_style #ithit_interface_context_help_container div div:first-child{
+	display: inline;
+    float: left;
+    width: 80px;
+}
+
+/*ie7 hack*/
+*:first-child+html .ih_style #ithit_interface_context_help_container div div{ 
+	display: inline;
+    float: left;
+    width: 84px;
+	height: 75px !important;
+}
+
+*:first-child+html .ih_style #ithit_interface_context_help_container  .contextHelpText{ 
+    width: 130px !important;
+}
+
+*:first-child+html .ih_style #ithit_interface_context_help_content .resource,
+*:first-child+html .ih_style #ithit_interface_context_help_content .folder
+{
+	height: 75px !important;
+}

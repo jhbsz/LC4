@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-networkmap/Makefile
+Package: ezp-networkmap
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: network map.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Network map for EZ Packet Products.
+@@
+

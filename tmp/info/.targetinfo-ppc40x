@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/ppc40x/Makefile
+Target: ppc40x
+Target-Board: ppc40x
+Target-Kernel: 2.6
+Target-Name: AMCC/IBM PPC40x [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: powerpc
+Target-Features: broken pci squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: powerpc
+Target-Description:
+	Build firmware images for the AMCC Kilauea evaluation board
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+

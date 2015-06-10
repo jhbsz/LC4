@@ -1,0 +1,195 @@
+--- linux-2.6.26/drivers/usb/drxvi314/Interface/usb/InterfaceMisc.c	2011-06-30 21:00:46.307917716 +0800
++++ linux-2.6.26/drivers/usb/drxvi314/Interface/usb/InterfaceMisc.c	2011-06-30 23:30:34.548327687 +0800
+@@ -19,63 +19,82 @@
+             INT len)
+ {
+ 	int retval = 0;
+-	USHORT usRetries = 0 ; 
++    /* EZP: */
++	USHORT usRetries = 0 ;
++    void *kbuff = NULL;
+ 	if(psIntfAdapter == NULL )
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_PRINTK, 0, 0,"Interface Adapter is NULL");
+-		return -EINVAL ;
++        retval = -EINVAL;
++		goto err; 
+ 	}
+ 
+ 	if(psIntfAdapter->psAdapter->device_removed == TRUE)
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_PRINTK, 0, 0,"Device got removed");
+-		return -ENODEV;
++        retval = -ENODEV;
++		goto err; 
+ 	}
+ 
+ 	if((psIntfAdapter->psAdapter->StopAllXaction == TRUE) && (psIntfAdapter->psAdapter->chip_id >= T3LPB))
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, RDM, DBG_LVL_ALL,"Currently Xaction is not allowed on the bus");
+-		return -EACCES;
++        retval = -EACCES;
++		goto err; 
+ 	}
+ 	
+ 	if(psIntfAdapter->bSuspended ==TRUE || psIntfAdapter->bPreparingForBusSuspend == TRUE)
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, RDM, DBG_LVL_ALL,"Bus is in suspended states hence RDM not allowed..");
+-		return -EACCES;		
++        retval = -EACCES;
++		goto err; 
+ 	}
+ 	psIntfAdapter->psAdapter->DeviceAccess = TRUE ;
+-	do {
++    kbuff = kmalloc(len, GFP_KERNEL);
++    if (!kbuff) {
++        printk("[%s][%d]rdm kmalloc error\n", __FILE__, __LINE__);
++        retval = -EINVAL;
++        goto err;
++    }
++	/* do { */
+ 		retval = usb_control_msg(psIntfAdapter->udev,
+ 				usb_rcvctrlpipe(psIntfAdapter->udev,0),
+ 	            0x02, 
+ 	            0xC2, 
+ 	            (addr & 0xFFFF), 
+ 	            ((addr >> 16) & 0xFFFF),
+-				buff,
++				kbuff,
+ 	            len, 
+-	            5000); 
++	            10000); 
+ 
+-		usRetries++ ;
++		/* usRetries++ ; */
+ 		if(-ENODEV == retval)
+ 		{
+ 			psIntfAdapter->psAdapter->device_removed =TRUE;
+-			break;
++			goto err;
+ 		}	
+ 		
+-	}while((retval < 0) && (usRetries < MAX_RDM_WRM_RETIRES ) );	
++	/* }while((retval < 0) && (usRetries < MAX_RDM_WRM_RETIRES ) );	*/
+ 
+ 	if(retval < 0)
+ 	{	
+-			BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, RDM, DBG_LVL_ALL, "RDM failed status :%d, retires :%d", retval,usRetries);
++			BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, RDM, DBG_LVL_ALL, "RDM failed status :%d, retires :%d", retval, usRetries);
+ 			psIntfAdapter->psAdapter->DeviceAccess = FALSE ;
+-			return retval;
++			goto err;
+ 	}
+ 	else
+ 	{	
+ 			BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, RDM, DBG_LVL_ALL, "RDM sent %d", retval);
+ 			psIntfAdapter->psAdapter->DeviceAccess = FALSE ;
+-			return STATUS_SUCCESS;
++            retval = STATUS_SUCCESS;
+ 	}
++
++    memcpy(buff, kbuff, len);
++err:
++    if (kbuff) {
++        kfree(kbuff);
++    }
++    return retval;
+ }
+ 
+ INT
+@@ -85,33 +104,47 @@
+             INT len)
+ {
+ 	int retval = 0;
++    /* EZP: */
+ 	USHORT usRetries = 0 ;
++    void *kbuff = NULL;
+ 	
+ 	if(psIntfAdapter == NULL )
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_PRINTK, 0, 0, "Interface Adapter  is NULL");
+-		return -EINVAL;
++        retval = -EINVAL;
++		goto err; 
+ 	}
+ 	if(psIntfAdapter->psAdapter->device_removed == TRUE)
+ 	{
+ 		
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_PRINTK, 0, 0,"Device got removed");
+-		return -ENODEV;
++        retval = -ENODEV;
++		goto err; 
+ 	}
+ 
+ 	if((psIntfAdapter->psAdapter->StopAllXaction == TRUE) && (psIntfAdapter->psAdapter->chip_id >= T3LPB))
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, WRM, DBG_LVL_ALL,"Currently Xaction is not allowed on the bus...");
+-		return EACCES;
++        retval = -EACCES;
++		goto err; 
+ 	}
+ 
+ 	if(psIntfAdapter->bSuspended ==TRUE || psIntfAdapter->bPreparingForBusSuspend == TRUE)
+ 	{
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, WRM, DBG_LVL_ALL,"Bus is in suspended states hence RDM not allowed..");
+-		return -EACCES; 
++        retval = -EACCES;
++		goto err; 
+ 	}
+ 	psIntfAdapter->psAdapter->DeviceAccess = TRUE ;
+-	do{
++    /* EZP: */
++    kbuff = kzalloc(len, GFP_KERNEL);
++    if (!kbuff) {
++        printk("[%s][%d]wrm kmalloc error\n", __FILE__, __LINE__);
++        retval = -EINVAL;
++        goto err;
++    }
++    memcpy(kbuff, buff, len);
++	/* do{ */
+ 		retval = usb_control_msg(psIntfAdapter->udev,
+ 				usb_sndctrlpipe(psIntfAdapter->udev,0),
+ 	            0x01, 
+@@ -120,31 +153,35 @@
+ 	            ((addr >> 16) & 0xFFFF),
+ 				buff,
+ 	            len, 
+-	            5000);
++	            10000);
+ 		
+-		usRetries++ ;
++		/* usRetries++ ; */
+ 		if(-ENODEV == retval)
+ 		{
+ 			psIntfAdapter->psAdapter->device_removed = TRUE ;
+-			break;
++			goto err;
+ 		}
+ 		
+-	}while((retval < 0) && ( usRetries < MAX_RDM_WRM_RETIRES));
++	/* }while((retval < 0) && ( usRetries < MAX_RDM_WRM_RETIRES)); */
+ 
+ 	if(retval < 0)
+ 	{	
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, WRM, DBG_LVL_ALL, "WRM failed status :%d, retires :%d", retval, usRetries);
+ 		psIntfAdapter->psAdapter->DeviceAccess = FALSE ;
+-		return retval;
++		goto err;
+ 	}
+ 	else
+ 	{
+ 		psIntfAdapter->psAdapter->DeviceAccess = FALSE ;
+ 		BCM_DEBUG_PRINT(psIntfAdapter->psAdapter,DBG_TYPE_OTHERS, WRM, DBG_LVL_ALL, "WRM sent %d", retval);
+-		return STATUS_SUCCESS;
++        retval = STATUS_SUCCESS;
+ 			
+ 	}
+-	
++err:
++    if (kbuff) {
++        kfree(kbuff);
++    }
++    return retval;
+ }
+ 
+ INT

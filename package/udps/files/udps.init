@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=90
+
+log_msg="wl-prog"
+
+start() {
+    [ "$(nvram get license_invalid)" = "0" ] && exit
+    udps &
+} 
+
+stop() {
+    killall udps
+}

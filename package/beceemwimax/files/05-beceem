@@ -1,0 +1,14 @@
+#!/bin/sh
+
+. /etc/arch.sh
+
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+# If product is usb hub exit this function
+[ "$product" != "198f" ] && exit
+
+case "$ACTION" in
+        add)
+            /usr/bin/switchmode
+        ;;
+esac
+

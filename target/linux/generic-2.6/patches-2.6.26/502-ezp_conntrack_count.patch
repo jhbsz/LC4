@@ -1,0 +1,356 @@
+--- linux.old/net/netfilter/nf_conntrack_core.c	2009-05-17 22:34:36.243679075 +0800
++++ linux.new/net/netfilter/nf_conntrack_core.c	2009-05-18 11:06:21.601746796 +0800
+@@ -50,6 +50,12 @@
+ atomic_t nf_conntrack_count = ATOMIC_INIT(0);
+ EXPORT_SYMBOL_GPL(nf_conntrack_count);
+ 
++int nf_conntrack_open_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_open_count);
++
++int nf_conntrack_close_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_close_count);
++
+ unsigned int nf_conntrack_htable_size __read_mostly;
+ EXPORT_SYMBOL_GPL(nf_conntrack_htable_size);
+ 
+@@ -502,12 +508,14 @@
+ 
+ 	/* We don't want any race condition at early drop stage */
+ 	atomic_inc(&nf_conntrack_count);
++    nf_conntrack_open_count++;
+ 
+ 	if (nf_conntrack_max &&
+ 	    unlikely(atomic_read(&nf_conntrack_count) > nf_conntrack_max)) {
+ 		unsigned int hash = hash_conntrack(orig);
+ 		if (!early_drop(hash)) {
+ 			atomic_dec(&nf_conntrack_count);
++            nf_conntrack_close_count++;
+ 			if (net_ratelimit())
+ 				printk(KERN_WARNING
+ 				       "nf_conntrack: table full, dropping"
+@@ -520,6 +528,7 @@
+ 	if (ct == NULL) {
+ 		pr_debug("nf_conntrack_alloc: Can't alloc conntrack.\n");
+ 		atomic_dec(&nf_conntrack_count);
++        nf_conntrack_close_count++;
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 
+@@ -541,6 +550,7 @@
+ 	nf_ct_ext_free(ct);
+ 	kmem_cache_free(nf_conntrack_cachep, ct);
+ 	atomic_dec(&nf_conntrack_count);
++    nf_conntrack_close_count++;
+ }
+ 
+ void nf_conntrack_free(struct nf_conn *ct)
+--- linux.old/net/netfilter/nf_conntrack_proto_generic.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/netfilter/nf_conntrack_proto_generic.c	2009-05-18 11:00:40.562731200 +0800
+@@ -14,6 +14,12 @@
+ 
+ static unsigned int nf_ct_generic_timeout __read_mostly = 600*HZ;
+ 
++int nf_conntrack_generic_open_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_generic_open_count);
++
++int nf_conntrack_generic_close_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_generic_close_count);
++
+ static bool generic_pkt_to_tuple(const struct sk_buff *skb,
+ 				 unsigned int dataoff,
+ 				 struct nf_conntrack_tuple *tuple)
+@@ -56,9 +62,17 @@
+ static bool new(struct nf_conn *ct, const struct sk_buff *skb,
+ 		unsigned int dataoff)
+ {
++    nf_conntrack_generic_open_count++;
+ 	return true;
+ }
+ 
++static bool destroy(struct nf_conn *ct, const struct sk_buff *skb,
++		    unsigned int dataoff)
++{
++    nf_conntrack_generic_close_count++;
++    return true;
++}
++
+ #ifdef CONFIG_SYSCTL
+ static struct ctl_table_header *generic_sysctl_header;
+ static struct ctl_table generic_sysctl_table[] = {
+@@ -99,6 +113,7 @@
+ 	.print_tuple		= generic_print_tuple,
+ 	.packet			= packet,
+ 	.new			= new,
++	.destroy        = destroy,
+ #ifdef CONFIG_SYSCTL
+ 	.ctl_table_header	= &generic_sysctl_header,
+ 	.ctl_table		= generic_sysctl_table,
+--- linux.old/net/ipv4/netfilter/nf_conntrack_proto_icmp.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/ipv4/netfilter/nf_conntrack_proto_icmp.c	2009-05-18 11:00:49.472686865 +0800
+@@ -21,6 +21,10 @@
+ #include <net/netfilter/nf_log.h>
+ 
+ static unsigned long nf_ct_icmp_timeout __read_mostly = 30*HZ;
++int nf_conntrack_icmp_open_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_icmp_open_count);
++int nf_conntrack_icmp_close_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_icmp_close_count);
+ 
+ static bool icmp_pkt_to_tuple(const struct sk_buff *skb, unsigned int dataoff,
+ 			      struct nf_conntrack_tuple *tuple)
+@@ -119,6 +123,14 @@
+ 		return false;
+ 	}
+ 	atomic_set(&ct->proto.icmp.count, 0);
++    nf_conntrack_icmp_open_count++;
++	return true;
++}
++
++static bool icmp_destroy(struct nf_conn *ct, const struct sk_buff *skb,
++		     unsigned int dataoff)
++{
++    nf_conntrack_icmp_close_count++;
+ 	return true;
+ }
+ 
+@@ -306,7 +318,7 @@
+ 	.packet			= icmp_packet,
+ 	.new			= icmp_new,
+ 	.error			= icmp_error,
+-	.destroy		= NULL,
++	.destroy		= icmp_destroy,
+ 	.me			= NULL,
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 	.tuple_to_nlattr	= icmp_tuple_to_nlattr,
+--- linux.old/net/netfilter/nf_conntrack_standalone.c	2009-05-17 22:34:36.103679223 +0800
++++ linux.new/net/netfilter/nf_conntrack_standalone.c	2009-05-18 12:12:57.143678093 +0800
+@@ -360,6 +360,86 @@
+ 		.proc_handler	= &proc_dointvec,
+ 	},
+ 	{
++		.ctl_name	= NET_NF_CONNTRACK_OPEN_COUNT,
++		.procname	= "nf_conntrack_open_count",
++		.data		= &nf_conntrack_open_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_CLOSE_COUNT,
++		.procname	= "nf_conntrack_close_count",
++		.data		= &nf_conntrack_close_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_TCP_OPEN_COUNT,
++		.procname	= "nf_conntrack_tcp_open_count",
++		.data		= &nf_conntrack_tcp_open_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++    {
++		.ctl_name	= NET_NF_CONNTRACK_TCP_CLOSE_COUNT,
++		.procname	= "nf_conntrack_tcp_close_count",
++		.data		= &nf_conntrack_tcp_close_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_UDP_OPEN_COUNT,
++		.procname	= "nf_conntrack_udp_open_count",
++		.data		= &nf_conntrack_udp_open_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_UDP_CLOSE_COUNT,
++		.procname	= "nf_conntrack_udp_close_count",
++		.data		= &nf_conntrack_udp_close_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_ICMP_OPEN_COUNT,
++		.procname	= "nf_conntrack_icmp_open_count",
++		.data		= &nf_conntrack_icmp_open_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_ICMP_CLOSE_COUNT,
++		.procname	= "nf_conntrack_icmp_close_count",
++		.data		= &nf_conntrack_icmp_close_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_GENERIC_OPEN_COUNT,
++		.procname	= "nf_conntrack_generic_open_count",
++		.data		= &nf_conntrack_generic_open_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
++		.ctl_name	= NET_NF_CONNTRACK_GENERIC_CLOSE_COUNT,
++		.procname	= "nf_conntrack_generic_close_count",
++		.data		= &nf_conntrack_generic_close_count,
++		.maxlen		= sizeof(int),
++		.mode		= 0444,
++		.proc_handler	= &proc_dointvec,
++	},
++	{
+ 		.ctl_name       = NET_NF_CONNTRACK_BUCKETS,
+ 		.procname       = "nf_conntrack_buckets",
+ 		.data           = &nf_conntrack_htable_size,
+--- linux.old/include/linux/sysctl.h	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/include/linux/sysctl.h	2009-05-18 14:23:27.565322904 +0800
+@@ -335,6 +335,16 @@
+ 	NET_NF_CONNTRACK_FRAG6_LOW_THRESH=30,
+ 	NET_NF_CONNTRACK_FRAG6_HIGH_THRESH=31,
+ 	NET_NF_CONNTRACK_CHECKSUM=32,
++    NET_NF_CONNTRACK_OPEN_COUNT=33,
++    NET_NF_CONNTRACK_CLOSE_COUNT=34,
++    NET_NF_CONNTRACK_TCP_OPEN_COUNT=35,
++    NET_NF_CONNTRACK_TCP_CLOSE_COUNT=36,
++    NET_NF_CONNTRACK_UDP_OPEN_COUNT=37,
++    NET_NF_CONNTRACK_UDP_CLOSE_COUNT=38,
++    NET_NF_CONNTRACK_ICMP_OPEN_COUNT=39,
++    NET_NF_CONNTRACK_ICMP_CLOSE_COUNT=40,
++    NET_NF_CONNTRACK_GENERIC_OPEN_COUNT=41,
++    NET_NF_CONNTRACK_GENERIC_CLOSE_COUNT=42,
+ };
+ 
+ /* /proc/sys/net/ipv4 */
+--- linux.old/net/netfilter/nf_conntrack_proto_tcp.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/netfilter/nf_conntrack_proto_tcp.c	2009-05-18 11:00:25.631526766 +0800
+@@ -43,6 +43,12 @@
+    will be started. */
+ static int nf_ct_tcp_max_retrans __read_mostly = 3;
+ 
++int nf_conntrack_tcp_open_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_tcp_open_count);
++
++int nf_conntrack_tcp_close_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_tcp_close_count);
++
+   /* FIXME: Examine ipfilter's timeouts and conntrack transitions more
+      closely.  They're more complex. --RR */
+ 
+@@ -1060,6 +1066,8 @@
+ 	ct->proto.tcp.state = TCP_CONNTRACK_NONE;
+ 	ct->proto.tcp.last_index = TCP_NONE_SET;
+ 
++    nf_conntrack_tcp_open_count++;
++
+ 	pr_debug("tcp_new: sender end=%u maxend=%u maxwin=%u scale=%i "
+ 		 "receiver end=%u maxend=%u maxwin=%u scale=%i\n",
+ 		 sender->td_end, sender->td_maxend, sender->td_maxwin,
+@@ -1069,6 +1077,13 @@
+ 	return true;
+ }
+ 
++static bool tcp_destroy(struct nf_conn *ct, const struct sk_buff *skb,
++		    unsigned int dataoff)
++{
++    nf_conntrack_tcp_close_count++;
++    return true;
++}
++
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 
+ #include <linux/netfilter/nfnetlink.h>
+@@ -1374,6 +1389,7 @@
+ 	.print_conntrack 	= tcp_print_conntrack,
+ 	.packet 		= tcp_packet,
+ 	.new 			= tcp_new,
++    .destroy        = tcp_destroy,
+ 	.error			= tcp_error,
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 	.to_nlattr		= tcp_to_nlattr,
+@@ -1404,6 +1420,7 @@
+ 	.print_conntrack 	= tcp_print_conntrack,
+ 	.packet 		= tcp_packet,
+ 	.new 			= tcp_new,
++    .destroy        = tcp_destroy,
+ 	.error			= tcp_error,
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 	.to_nlattr		= tcp_to_nlattr,
+--- linux.old/net/netfilter/nf_conntrack_proto_udp.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/netfilter/nf_conntrack_proto_udp.c	2009-05-18 11:01:15.852188292 +0800
+@@ -26,6 +26,13 @@
+ static unsigned int nf_ct_udp_timeout __read_mostly = 30*HZ;
+ static unsigned int nf_ct_udp_timeout_stream __read_mostly = 180*HZ;
+ 
++int nf_conntrack_udp_open_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_udp_open_count);
++
++int nf_conntrack_udp_close_count = 0;
++EXPORT_SYMBOL_GPL(nf_conntrack_udp_close_count);
++
++
+ static bool udp_pkt_to_tuple(const struct sk_buff *skb,
+ 			     unsigned int dataoff,
+ 			     struct nf_conntrack_tuple *tuple)
+@@ -86,9 +93,18 @@
+ static bool udp_new(struct nf_conn *ct, const struct sk_buff *skb,
+ 		    unsigned int dataoff)
+ {
++    nf_conntrack_udp_open_count++;
++
+ 	return true;
+ }
+ 
++static bool udp_destroy(struct nf_conn *ct, const struct sk_buff *skb,
++		    unsigned int dataoff)
++{
++    nf_conntrack_udp_close_count++;
++    return true;
++}
++
+ static int udp_error(struct sk_buff *skb, unsigned int dataoff,
+ 		     enum ip_conntrack_info *ctinfo,
+ 		     int pf,
+@@ -189,6 +205,7 @@
+ 	.print_tuple		= udp_print_tuple,
+ 	.packet			= udp_packet,
+ 	.new			= udp_new,
++	.destroy        = udp_destroy,
+ 	.error			= udp_error,
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 	.tuple_to_nlattr	= nf_ct_port_tuple_to_nlattr,
+@@ -216,6 +233,7 @@
+ 	.print_tuple		= udp_print_tuple,
+ 	.packet			= udp_packet,
+ 	.new			= udp_new,
++	.destroy        = udp_destroy,
+ 	.error			= udp_error,
+ #if defined(CONFIG_NF_CT_NETLINK) || defined(CONFIG_NF_CT_NETLINK_MODULE)
+ 	.tuple_to_nlattr	= nf_ct_port_tuple_to_nlattr,
+--- linux.old/include/net/netfilter/nf_conntrack.h	2009-05-17 22:34:36.243679075 +0800
++++ linux.new/include/net/netfilter/nf_conntrack.h	2009-05-18 16:01:53.192057644 +0800
+@@ -287,6 +287,16 @@
+ extern unsigned int nf_conntrack_htable_size;
+ extern int nf_conntrack_checksum;
+ extern atomic_t nf_conntrack_count;
++extern int nf_conntrack_open_count;
++extern int nf_conntrack_close_count;
++extern int nf_conntrack_tcp_open_count;
++extern int nf_conntrack_tcp_close_count;
++extern int nf_conntrack_udp_open_count;
++extern int nf_conntrack_udp_close_count;
++extern int nf_conntrack_icmp_open_count;
++extern int nf_conntrack_icmp_close_count;
++extern int nf_conntrack_generic_open_count;
++extern int nf_conntrack_generic_close_count;
+ extern int nf_conntrack_max;
+ 
+ DECLARE_PER_CPU(struct ip_conntrack_stat, nf_conntrack_stat);

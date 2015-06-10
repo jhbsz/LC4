@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-ddns/Makefile
+Package: ezp-ddns
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: DDNS 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface for AXIM DDNS register.
+@@
+

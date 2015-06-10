@@ -1,0 +1,96 @@
+#!/bin/sh /etc/rc.common
+#
+# Start the iSCSI EZPacket Target.
+#
+
+USBSTORAGE=91
+
+log_msg="iSCSI-server"
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+ietd_config()
+{
+ISCONF="/etc/ietd.conf"
+IS_RCONF="/tmp/ietd.conf"
+IS_ALLOW="/etc/initiators.allow"
+IS_RALLOW="/tmp/initiators.allow"
+IS_DENY="/etc/initiators.deny"
+IS_RDENY="/tmp/initiators.deny"
+
+ISSNS="$(nvram show is_rule 0 isns_serv)"
+ISID="$(nvram show is_rule 0 isid)"
+ISALIAS="$(nvram show is_rule 0 alias)"
+ISCONN="$(nvram show is_rule 0 max_conn)"
+ISTX="$(nvram show is_rule 0 max_tx)"
+ISRX="$(nvram show is_rule 0 max_rx)"
+USBSTORAGE="$(nvram show storage_state_rule 0 dev_name)"
+USBDEV="${USBSTORAGE%%[0-9]}"
+USBID="${USBSTORAGE#$USBDEV}"
+
+USERNUM="$(nvram get isuser_rule_num)"
+USERIDX=0
+rm -rf $IS_RCONF
+rm -rf $IS_RALLOW
+rm -rf $IS_RDENY
+echo "" >> $IS_ALLOW
+echo "" >> $IS_DENY
+
+echo "# EZPacket iSCSI Configuration"                   > $ISCONF
+#iSNS server as a name server for iscsi storage device
+[ -n "$ISSNS" ] && echo "iSNSServer $ISSNS"             >> $ISCONF
+
+echo "# Target settings"                                >> $ISCONF
+echo "Target ${ISID}"                                   >> $ISCONF
+echo "# Access user settings"                           >> $ISCONF
+while [ $USERIDX -lt $USERNUM ];
+do
+  [ "$(nvram show isuser_rule ${USERIDX} enable)" = "1" ] && {
+    NAME="$(nvram show isuser_rule ${USERIDX} username)"
+    PASS="$(nvram show isuser_rule ${USERIDX} password)"
+    echo "  IncomingUser ${NAME} ${PASS}"			>> $ISCONF
+  }
+  USERIDX=$(($USERIDX + 1))
+done
+echo "  Lun 0 Path=/dev/${USBDEV},Type=fileio"      >> $ISCONF
+[ -n "$ISALIAS" ] && echo "  Alias ${ISALIAS}"          >> $ISCONF
+[ -n "$ISCONN" ] && echo "  MaxConnections  ${ISCONN}"  >> $ISCONF
+echo "  InitialR2T      Yes"                            >> $ISCONF
+echo "  ImmediateData   Yes"                             >> $ISCONF
+[ -n "$ISTX" ] && echo "  MaxXmitDataSegmentLength        ${ISTX}" >> $ISCONF
+[ -n "$ISRX" ] && echo "  MaxRecvDataSegmentLength        ${ISRX}" >> $ISCONF
+echo ""         >> $ISCONF
+}
+
+start()
+{
+    local ext_enable=$(nvram show storage_rule 0 ext_enable)
+    # if use external storage, iscsi do not start.
+    [ "$ext_enable" = "1" ] && exit
+    [ -n "$(pidof ietd)" ] && exit
+	local ISENABLE="$(nvram show is_rule 0 enable)"
+	local USBSTORAGE="$(nvram show storage_state_rule 0 dev_name)"
+	[ "$ISENABLE" = "1" -a -n "$USBSTORAGE" ] || exit
+    ietd_config
+    insmod iscsi_trgt
+    /usr/sbin/ietd
+}
+
+stop()
+{
+    local pid=$(pidof ietd)
+    local count=0
+    [ -z "$pid" ] && exit
+	ietadm --op delete
+	killall ietd
+    while [ -d "/proc/$pid" ]
+    do
+       sleep 2
+       count=$(($count + 1))
+       [ "$count" -gt 10 ] && {
+            err=1
+            return
+       }
+    done
+	rmmod iscsi_trgt
+}
+

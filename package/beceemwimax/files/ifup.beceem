@@ -1,0 +1,50 @@
+#!/bin/sh -x
+TEMPLE_FILE="/etc/Sprint4G/wimaxd.conf.temple"
+CONF_FILE="/tmp/wimaxd.conf"
+SED_FILE="/tmp/wimaxd_script"
+TMP_SIG="/tmp/beceem_sig"
+TMP_SIG_NUM="/tmp/beceem_sig_num"
+TMP_STATUS="/tmp/beceem_status"
+TMP_FILE="/tmp/beceem_tmp"
+LINK_STATE=""
+killall wimaxd
+echo -n > $SED_FILE
+ISP="$(nvram show wan_beceem_rule $1 isp)"
+case $ISP in
+g1)
+    ISP_ID="guest@g1.com.tw"
+    echo "s/\\\$USERID\\\$/$(nvram show wan_beceem_rule $1 username)\@g1.com.tw/g;" >> $SED_FILE
+    ;;
+vmax)
+    ISP_ID="guest@vmax.net.tw"
+    echo "s/\\\$USERID\\\$/$(nvram show wan_beceem_rule $1 username)\@vmax.net.tw/g;" >> $SED_FILE
+    ;;
+esac
+echo "s/\\\$USERPW\\\$/$(nvram show wan_beceem_rule $1 password)/g;" >> $SED_FILE
+echo "s/\\\$ISPID\\\$/$ISP_ID/g;" >> $SED_FILE
+echo "s/\\\$CA\\\$/$ISP/g;" >> $SED_FILE
+echo "s/\\\$WAN_NUM\\\$/wan$1/g;" >> $SED_FILE
+echo "p;" >> $SED_FILE
+sed -n -f "$SED_FILE" < "$TEMPLE_FILE" > "$CONF_FILE"
+sleep 1
+/usr/bin/wimaxd -D -c $CONF_FILE & 
+sleep 5
+/usr/bin/wimaxc search > $TMP_SIG
+cat $TMP_SIG | awk '{ if (NR>3) print $0 }' > $TMP_FILE
+cat $TMP_FILE | sed '$d' > $TMP_SIG
+cat $TMP_SIG |awk '{a[$1]=$7}END{for(i in a)printf"%d %d\n",a[i],i}'|sort -r -n|awk '{print $2}' > $TMP_SIG_NUM
+rm $TMP_STATUS
+while [ -s "$TMP_SIG_NUM" -a "$LINK_STATE" != "1" ]; do
+/usr/bin/wimaxc connect $(cat $TMP_SIG_NUM | awk 'NR<2{print $1}')
+i=0;
+nvram replace attr wan_status_rule $1 trycount 0
+while [ "$i" -lt "15" ]; do
+sleep 1
+/usr/bin/wimaxc status > $TMP_STATUS
+[ "$(cat $TMP_STATUS | awk '/Link status/{print $3 $4}')" == "LINKUPACHIEVED" ] && LINK_STATE="1"
+[ "$LINK_STATE" == "1" ] && i="99"
+i=$(expr $i + 1)
+done
+cat $TMP_SIG_NUM > $TMP_FILE
+cat $TMP_FILE | sed '1d' > $TMP_SIG_NUM
+done

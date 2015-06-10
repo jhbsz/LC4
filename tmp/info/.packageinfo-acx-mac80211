@@ -1,0 +1,17 @@
+Source-Makefile: package/acx-mac80211/Makefile
+Package: kmod-acx-mac80211
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+20080805--1
+Depends: @LINUX_2_6 @PCI_SUPPORT||TARGET_ar7 +kmod-mac80211 @BROKEN
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ACX111 Mac80211 driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Driver for acx111 cards (Mac80211 version)
+
+http://ipkg.k1k2.de/files/
+@@
+

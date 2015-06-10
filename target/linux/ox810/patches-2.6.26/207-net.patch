@@ -1,0 +1,315 @@
+diff -Naur linux-2.6.24.4/net/core/skbuff.c linux-2.6.24.4-oxnas/net/core/skbuff.c
+--- linux-2.6.24.4/net/core/skbuff.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/net/core/skbuff.c	2009-05-08 16:22:22.000000000 +0800
+@@ -1042,6 +1043,7 @@
+ 	skb->tail     += delta;
+ 	skb->data_len -= delta;
+ 
++printk("__pskb_pull_tail() Did some work, delta = %d\n", delta);
+ 	return skb_tail_pointer(skb);
+ }
+ 
+diff -Naur linux-2.6.24.4/net/ipv4/ip_input.c linux-2.6.24.4-oxnas/net/ipv4/ip_input.c
+--- linux-2.6.24.4/net/ipv4/ip_input.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/net/ipv4/ip_input.c	2009-05-08 16:22:30.000000000 +0800
+@@ -420,7 +420,8 @@
+ 
+ 	iph = ip_hdr(skb);
+ 
+-	if (unlikely(ip_fast_csum((u8 *)iph, iph->ihl)))
++	/* No point doing checksum check if h/w has already indicated it's OK */
++	if ((skb->ip_summed != CHECKSUM_UNNECESSARY) && unlikely(ip_fast_csum((u8 *)iph, iph->ihl)))
+ 		goto inhdr_error;
+ 
+ 	len = ntohs(iph->tot_len);
+diff -Naur linux-2.6.24.4/net/ipv4/tcp.c linux-2.6.24.4-oxnas/net/ipv4/tcp.c
+--- linux-2.6.24.4/net/ipv4/tcp.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/net/ipv4/tcp.c	2009-05-08 16:22:29.000000000 +0800
+@@ -269,6 +269,8 @@
+ #include <asm/uaccess.h>
+ #include <asm/ioctls.h>
+ 
++#include <linux/pagemap.h>
++
+ int sysctl_tcp_fin_timeout __read_mostly = TCP_FIN_TIMEOUT;
+ 
+ DEFINE_SNMP_STAT(struct tcp_mib, tcp_statistics) __read_mostly;
+@@ -533,6 +535,12 @@
+ 		int size = min_t(size_t, psize, PAGE_SIZE - offset);
+ 
+ 		if (!tcp_send_head(sk) || (copy = size_goal - skb->len) <= 0) {
++// Seems to be a little slower if we do this
++// /* Push any skb languishing at the head of the send queue */
++// if (tcp_send_head(sk) && (skb == tcp_send_head(sk))) {
++// 	tcp_push_one(sk, mss_now);
++// }
++
+ new_segment:
+ 			if (!sk_stream_memory_free(sk))
+ 				goto wait_for_sndbuf;
+@@ -589,8 +597,7 @@
+ 		if (forced_push(tp)) {
+ 			tcp_mark_push(tp, skb);
+ 			__tcp_push_pending_frames(sk, mss_now, TCP_NAGLE_PUSH);
+-		} else if (skb == tcp_send_head(sk))
+-			tcp_push_one(sk, mss_now);
++		}
+ 		continue;
+ 
+ wait_for_sndbuf:
+@@ -636,6 +643,48 @@
+ 	return res;
+ }
+ 
++ssize_t tcp_sendpages(struct socket *sock, struct page **page, int offset,
++ 		     size_t size, int flags)
++{
++ 	ssize_t res;
++ 	struct sock *sk = sock->sk;
++ 
++#define TCP_ZC_CSUM_FLAGS (NETIF_F_IP_CSUM | NETIF_F_NO_CSUM | NETIF_F_HW_CSUM)
++
++	if (!(sk->sk_route_caps & NETIF_F_SG) ||
++	    !(sk->sk_route_caps & TCP_ZC_CSUM_FLAGS)) {
++        // Iterate through each page
++        ssize_t ret = 0;
++
++        while (size) {
++            unsigned long psize = PAGE_CACHE_SIZE - offset;
++            struct page *page_it;
++        
++            psize = PAGE_CACHE_SIZE - offset;
++            if (size <= psize) {
++                psize = size;                
++            }
++            page_it = *page;
++            ret += sock_no_sendpage(sock, page_it, offset, psize, flags);
++            size -= psize;            
++            page++;
++            offset += psize;
++            offset &= (PAGE_CACHE_SIZE - 1);
++        }
++		return ret;        
++    }
++    
++#undef TCP_ZC_CSUM_FLAGS
++
++ 	lock_sock(sk);
++ 	TCP_CHECK_TIMER(sk);
++ 	res = do_tcp_sendpages(sk, page, offset, size, flags);
++ 	TCP_CHECK_TIMER(sk);
++     
++ 	release_sock(sk);
++ 	return res;
++}
++
+ #define TCP_PAGE(sk)	(sk->sk_sndmsg_page)
+ #define TCP_OFF(sk)	(sk->sk_sndmsg_off)
+ 
+@@ -944,7 +993,6 @@
+ 
+ #if TCP_DEBUG
+ 	struct sk_buff *skb = skb_peek(&sk->sk_receive_queue);
+-
+ 	BUG_TRAP(!skb || before(tp->copied_seq, TCP_SKB_CB(skb)->end_seq));
+ #endif
+ 
+@@ -2524,6 +2572,128 @@
+ 	tcp_register_congestion_control(&tcp_reno);
+ }
+ 
++ssize_t oxnas_net_read_sock(
++	struct sock			 *sk,
++	read_descriptor_t	 *desc,
++	oxnas_net_rx_actor_t  actor,
++	int					  block)
++{
++	struct tcp_sock *tp;
++	u32 seq;
++	long timeo;
++	int copied = 0;
++
++	/* Check contract */
++	BUG_ON(!sk);
++	BUG_ON(!desc);
++	BUG_ON(!actor);
++
++	lock_sock(sk);
++
++	if (sk->sk_state == TCP_LISTEN) {
++		copied = -ENOTCONN;
++		goto unlock;
++	}
++
++	tp = tcp_sk(sk);
++	seq = tp->copied_seq;
++	timeo = sock_rcvtimeo(sk, 0);
++
++	/* Keep trying to receive data until the user's request is satisfied */
++	for (;;) {
++		struct sk_buff *skb;
++		u32 offset;
++
++		/* Try to get a skb from the input queue */
++		skb = tcp_recv_skb(sk, seq, &offset);
++		if (skb == NULL) {
++			if (copied > 0) {
++				/* We've had some data, so return to let the user of the data do
++				   something with it */
++				break;
++			} else if (!block) {
++				break;
++			} else {
++				/* Allow backlog processing? */
++				release_sock(sk);
++				lock_sock(sk);
++
++				/* No skb available just now, so wait for one to turn up */
++				if (!sk_wait_data(sk, &timeo)) {
++					/* Timeout expired, so finish */
++					break;
++				}
++	
++				/* Try again to get a skb */
++				continue;
++			}
++		}
++
++		if (offset < skb->len) {
++			size_t required, avail, used;
++
++			/* How much data is available in the skb? */
++			avail = skb->len - offset;
++
++			/* Stop reading if we hit a patch of urgent data */
++			if (tp->urg_data) {
++				u32 urg_offset = tp->urg_seq - seq;
++				if (urg_offset < avail) {
++					avail = urg_offset;
++				}
++
++				if (!avail) {
++					break;
++				}
++			}
++
++			/* Gather data ready for transfer to output device */
++			required = desc->count;
++
++			actor(desc, skb, offset);
++			used = required - desc->count;
++
++			/* Update record of where we are in the input stream */
++			seq += used;
++			offset += used;
++
++			/* Update record of how much data the actor has consumed */
++			copied += used;
++
++			/* If didn't gather all data in skb we must have finished */
++			if (offset != skb->len) {
++				break;
++			}
++		}
++
++		/* All data in skb used, so release it */
++		if (tcp_hdr(skb)->fin) {
++			sk_eat_skb(sk, skb, 0);
++			++seq;
++			break;
++		}
++		sk_eat_skb(sk, skb, 0);
++
++		/* If the actor has gathered all the data requested then finish */
++		if (!desc->count) {
++			break;
++		}
++	}
++
++	tp->copied_seq = seq;
++
++	tcp_rcv_space_adjust(sk);
++
++	if (copied > 0) {
++		tcp_cleanup_rbuf(sk, copied);
++	}
++
++unlock:
++	release_sock(sk);
++
++	return copied;
++}
++
+ EXPORT_SYMBOL(tcp_close);
+ EXPORT_SYMBOL(tcp_disconnect);
+ EXPORT_SYMBOL(tcp_getsockopt);
+@@ -2536,3 +2706,4 @@
+ EXPORT_SYMBOL(tcp_setsockopt);
+ EXPORT_SYMBOL(tcp_shutdown);
+ EXPORT_SYMBOL(tcp_statistics);
++EXPORT_SYMBOL(oxnas_net_read_sock);
+diff -Naur linux-2.6.24.4/net/socket.c linux-2.6.24.4-oxnas/net/socket.c
+--- linux-2.6.24.4/net/socket.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/net/socket.c	2009-05-08 16:22:35.000000000 +0800
+@@ -113,6 +113,9 @@
+ static ssize_t sock_sendpage(struct file *file, struct page *page,
+ 			     int offset, size_t size, loff_t *ppos, int more);
+ 
++static ssize_t sock_sendpages(struct file *file, struct page **page,
++			     int offset, size_t size, loff_t *ppos, int more);
++
+ /*
+  *	Socket files have a set of 'special' operations as well as the generic file ones. These don't appear
+  *	in the operation structures but are done directly via the socketcall() multiplexor.
+@@ -133,6 +136,7 @@
+ 	.release =	sock_close,
+ 	.fasync =	sock_fasync,
+ 	.sendpage =	sock_sendpage,
++	.sendpages =	sock_sendpages,
+ 	.splice_write = generic_splice_sendpage,
+ };
+ 
+@@ -691,6 +695,21 @@
+ 	return sock->ops->sendpage(sock, page, offset, size, flags);
+ }
+ 
++static ssize_t sock_sendpages(struct file *file, struct page **page,
++			     int offset, size_t size, loff_t *ppos, int more)
++{
++	struct socket *sock;
++	int flags;
++
++	sock = file->private_data;
++
++	flags = !(file->f_flags & O_NONBLOCK) ? 0 : MSG_DONTWAIT;
++	if (more)
++		flags |= MSG_MORE;
++
++	return sock->ops->sendpages(sock, page, offset, size, flags);
++}
++
+ static struct sock_iocb *alloc_sock_iocb(struct kiocb *iocb,
+ 					 struct sock_iocb *siocb)
+ {
+diff -Naur linux-2.6.24.4/net/ipv4/af_inet.c linux-2.6.24.4-oxnas/net/ipv4/af_inet.c
+--- linux-2.6.24.4/net/ipv4/af_inet.c	2009-12-01 10:22:02.000000000 +0800
++++ linux-2.6.24.4/net/ipv4/af_inet.c	2009-12-01 10:32:02.000000000 +0800
+@@ -863,6 +863,7 @@
+ 	.recvmsg	   = sock_common_recvmsg,
+ 	.mmap		   = sock_no_mmap,
+ 	.sendpage	   = tcp_sendpage,
++    .sendpages     = tcp_sendpages,
+ 	.splice_read	   = tcp_splice_read,
+ #ifdef CONFIG_COMPAT
+ 	.compat_setsockopt = compat_sock_common_setsockopt,
+diff -Naur linux-2.6.24.4/net/ipv6/af_inet6.c linux-2.6.24.4-oxnas/net/ipv6/af_inet6.c
+--- linux-2.6.24.4/net/ipv6/af_inet6.c	2009-12-01 10:44:25.000000000 +0800
++++ linux-2.6.24.4/net/ipv6/af_inet6.c	2009-12-01 10:48:10.000000000 +0800
+@@ -492,6 +492,7 @@
+ 	.recvmsg	   = sock_common_recvmsg,	/* ok		*/
+ 	.mmap		   = sock_no_mmap,
+ 	.sendpage	   = tcp_sendpage,
++    .sendpages     = tcp_sendpages,
+ 	.splice_read	   = tcp_splice_read,
+ #ifdef CONFIG_COMPAT
+ 	.compat_setsockopt = compat_sock_common_setsockopt,

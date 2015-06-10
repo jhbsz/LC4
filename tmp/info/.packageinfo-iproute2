@@ -1,0 +1,47 @@
+Source-Makefile: package/iproute2/Makefile
+Package: ip
+Prereq-Check: 1
+Version: 2.6.25-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Routing control utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Routing control utility
+
+http://linux-net.osdl.org/index.php/Iproute2
+@@
+Package: tc
+Prereq-Check: 1
+Version: 2.6.25-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Traffic control utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Traffic control utility
+
+http://linux-net.osdl.org/index.php/Iproute2
+@@
+Package: genl
+Prereq-Check: 1
+Version: 2.6.25-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: General netlink utility frontend
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	General netlink utility frontend
+
+http://linux-net.osdl.org/index.php/Iproute2
+@@
+

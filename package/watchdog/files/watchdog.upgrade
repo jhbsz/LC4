@@ -1,0 +1,11 @@
+watchdog-device	= /dev/watchdog
+
+# Defaults compiled into the binary
+admin			= root
+interval		= 10
+logtick                = 1
+
+# This greatly decreases the chance that watchdog won't be scheduled before
+# your machine is really loaded
+realtime		= yes
+priority		= 1

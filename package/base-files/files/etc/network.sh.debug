@@ -1,0 +1,226 @@
+#!/bin/sh
+
+. /etc/log.sh
+
+if_valid () (
+  ifconfig "$1" >&- 2>&- ||
+  [ "${1%%[0-9]*}" = "br" ] || [ "${1%%[0-9]*}" = "ppp" ] ||
+  {
+    [ "${1%%[0-9]*}" = "vlan" ] && ( 
+      i=${1#vlan}
+      vif=$(nvram get vlan${i}hwname)
+      [ -z "$vif" ] && {
+        # give another try
+        hwaddr=$(nvram get ${hwname}macaddr)
+        vif=$(ifconfig -a | awk '/^eth.*'$hwaddr'/ {print $1; exit}' IGNORECASE=1)
+      }
+
+      [ -z "$vif" ] && return 1
+      echo "# vlan$i => $vif"
+
+      $DEBUG ifconfig $vif promisc
+      $DEBUG ifconfig $vif up
+      $DEBUG vconfig add $vif $i 2>&-
+    )
+  } ||
+  { debug "# missing interface '$1' ignored"; false; }
+)
+
+# $1:proto, $2:iface, $3:type, $4:num, $5:ifname
+
+do_ifup() {
+
+	pidfile=/var/run/$2.pid
+	[ -f $pidfile ] && $DEBUG kill $(cat $pidfile)
+
+	case "$1" in
+	static)
+		ip=$(nvram show ${3}_static_rule $4 ipaddr)
+		mask=$(nvram show ${3}_static_rule $4 mask)
+		mtu=$(nvram show ${3}_main_rule $4 mtu)
+
+		$DEBUG ip addr flush dev $5
+		$DEBUG ip addr add $ip/$mask broadcast + dev $5
+		$DEBUG ip link set dev $5 ${mtu:+mtu $(($mtu))} up
+
+        gateway=$(nvram show ${3}_static_rule $4 gateway)
+        dns=$(nvram show ${3}_static_rule $4 dns1)
+
+        iface_up "$iface" "$ip" "$mask" "$gateway" "$dns"
+
+		env -i ACTION="ifup" INTERFACE="${2}" PROTO=static TYPE="${3}" \
+            NUM="${4}" IFNAME="${5}" /sbin/hotplug-call "iface" &
+	;;
+	dhcp*)
+		dhcp_ip=$(nvram get ${2}_ipaddr)
+		mtu=$(nvram show ${3}_main_rule $4 mtu)
+
+		$DEBUG ip link set dev $5 ${mtu:+mtu $(($mtu))} up
+
+		# FIXME! $DEBUG ifconfig $5 $DHCP_IP ${DHCP_NETMASK:+netmask $DHCP_NETMASK} ${mtu:+mtu $(($mtu))} broadcast + up
+
+		dhcp_args="-i $5 ${dhcp_ip:+-r $dhcp_ip} -b -p $pidfile"
+		dhcp_hostname=$(nvram show ${3}_dhcp_rule $4 hostname)
+		dhcp_hostname=${dhcp_hostname%%.*}
+
+		[ -z $dhcp_hostname ] || dhcp_args="$dhcp_args -H $dhcp_hostname"
+
+        # FIXME!
+		[ "$1" = "pptp" ] && dhcp_args="$dhcp_args -n -q" || dhcp_args="$dhcp_args -R &"
+
+		[ -r $pidfile ] && oldpid=$(cat $pidfile 2>&-)
+		${DEBUG:-eval} "udhcpc $dhcp_args"
+		[ -n "$oldpid" ] && pidof udhcpc | grep "$oldpid" >&- 2>&- && {
+			sleep 1
+			kill -9 $oldpid
+		}
+		# hotplug events are handled by /usr/share/udhcpc/default.script
+	;;
+	none|"")
+	;;
+	*)
+#		[ -x "/sbin/ifup.$1" ] && { $DEBUG /sbin/ifup.$1 ${2} ${3} ${4} ${5}; \
+		[ -x "/sbin/ifup.wwan.debug" ] && { $DEBUG /sbin/ifup.wwan.debug wan1 wan 1 vlan3; \
+            exit; }
+		echo "### ifup ${2}: ignored ${2}_proto=\"$1\" (not supported)"
+	;;
+	esac
+}
+
+iface_update_default_route_and_dns () {
+echo -n > /tmp/resolv.conf
+i=0
+limit=$(nvram get wan_num)
+while [ $i -lt $limit ];
+do
+    gateway=$(nvram get wan${i}_gateway)
+    
+    [ -n "$gateway" ] && {
+    ifname=$(nvram get wan${i}_ifname)
+    dns=$(nvram get wan${i}_dns)
+    weight=$(nvram show wan_weight_rule ${i} weight)
+
+    route_args="$route_args nexthop via $gateway dev $ifname weight ${weight:-1}"
+    echo "nameserver $dns" >> /tmp/resolv.conf
+    }
+    i=$(expr $i + 1)
+done
+[ -n "$route_args" ] && {
+        ip route replace default proto static $route_args
+	ip route flush cache
+    }
+}
+
+# Add/delete the routing tables for a individual interface.
+# $1:num  $2:ipaddr $3:mask $4:gateway $5:ifname
+iface_add_route () {
+    eval $(ipcalc $2 $3)
+    ip route add table 1${num} $NETWORK/$PREFIX dev $5 src $2 proto static
+    ip route add table 1${num} default via $4 dev $5 proto static
+    ip rule add prio 1${num} from $2 lookup 1$num
+    eval $(ipcalc $(nvram get lan0_ipaddr) $(nvram get lan0_mask))
+    ip route add table 1${num} $NETWORK/$PREFIX dev $(nvram get lan0_ifname) proto static
+    ip rule add from $NETWORK/$PREFIX fwmark $(nvram get wan${1}_rtmark)/$(nvram get rt_mask) lookup 1${num}
+}
+
+iface_del_route () {
+    eval $(ipcalc $(nvram get lan0_ipaddr) $(nvram get lan0_mask))
+    ip rule del from $NETWORK/$PREFIX fwmark $(nvram get wan${1}_rtmark)/$(nvram get rt_mask) lookup 1${num}
+    ip route del table 1${num} $NETWORK/$PREFIX dev $(nvram get lan0_ifname) proto static
+    eval $(ipcalc $2 $3)
+    ip rule del prio 1${num} from $2 lookup 1$num
+    ip route del table 1${num} default via $4 dev $5 proto static
+    ip route del table 1${num} $NETWORK/$PREFIX dev $5 src $2 proto static
+}
+
+iface_up () {
+    lock /tmp/.iface
+    nvram set ${1}_ipaddr=$2
+    nvram set ${1}_mask=$3
+    nvram set ${1}_gateway=$4
+    nvram set ${1}_dns=$5
+    nvram set ${1}_domain=$6
+    type="${1%%[0-9]*}"
+    num="${1#$type}"
+    [ "$type" = "wan" ] && {
+        ifname="$(nvram get ${1}_ifname)"
+        iface_add_route $num $2 $3 $4 $ifname
+        iface_update_default_route_and_dns
+    }
+    log_usr ${type}$(($num+1)) up OK [${2}]
+    lock -u /tmp/.iface
+}
+
+iface_down () {
+    lock /tmp/.iface
+    
+    type="${1%%[0-9]*}"
+    num="${1#$type}"
+    ipaddr="$(nvram get ${1}_ipaddr)"
+    
+    [ "$type" = "wan" ] && [ -n "$ipaddr" ] && {
+        gateway="$(nvram get ${1}_gateway)"
+        ifname="$(nvram get ${1}_ifname)"
+        mask="$(nvram get ${1}_mask)"
+        
+        iface_del_route $num $ipaddr $mask $gateway $ifname
+    }
+    [ -n $ipaddr ] && {
+        nvram unset ${1}_ipaddr
+        nvram unset ${1}_mask
+        nvram unset ${1}_gateway
+        nvram unset ${1}_dns
+        nvram unset ${1}_domain
+    }
+    
+    [ "$type" = "wan" ] && iface_update_default_route_and_dns 
+    
+    log_usr "${type}$(($num+1))" down OK [${ipaddr}]
+    lock -u /tmp/.iface
+}
+
+# 1:$iface 2:$type 3:$num 4:$ifname
+iface_detect() {
+    local err; err=0
+    local detect_type; detect_type=""
+    # PPP only uses ping.
+    [ "${4%%[0-9]*}" = "ppp" ] && detect_type="ping"
+    [ -z "$detect_type" ] && {
+        detect_type=$(nvram show wan_detect_rule $3 type)
+    }
+    # arping
+    [ "$detect_type" = "arping" ] &&
+    { 
+        arping -q -c 1 -w 5 -I $4 -s $(nvram get ${iface}_ipaddr) \
+            $(nvram get ${iface_gateway}) || err=1
+    }
+    # ping 
+    [ "$detect_type" = "ping" ] &&
+    { 
+	    ping -q -c 1 -I $(nvram get ${iface}_ipaddr) \
+	    $(nvram show wan_detect_rule $3 host) || err=1
+    }
+
+    [ -z "$(nvram get ${iface}_failcount)" ] && \
+        nvram set ${iface}_failcount="0"
+        
+    [ "$err" = "0" ] && {
+        [ "$(nvram get ${iface}_failcount)" -ge \
+            "$(nvram show wan_detect_rule $3 threshold)" ] && {
+            log_usr ${type}$(($num+1)) wan-detect OK 
+        }
+        nvram set ${iface}_failcount="0"
+    }
+    [ "$err" = "1" ] && {
+        nvram set ${iface}_failcount="$(($(nvram get ${iface}_failcount) + 1))"
+        [ "$(nvram get ${iface}_failcount)" -ge \
+            "$(nvram show wan_detect_rule $3 threshold)" ] && {
+            
+            [ "$(nvram get ${iface}_failcount)" = \
+                "$(nvram show wan_detect_rule $3 threshold)" ] && \
+                log_usr ${type}$(($num+1)) wan-detect Failed 
+            err=2
+        }
+    }
+    return $err
+}

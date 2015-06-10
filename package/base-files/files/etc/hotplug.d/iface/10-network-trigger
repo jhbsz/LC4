@@ -1,0 +1,28 @@
+#!/bin/sh
+lock /tmp/.network-trigger
+
+[ "$ACTION" = "ifup" -a "$TYPE" = "wan" ] && {
+for i in /etc/rc.d/T*; do
+    [ -x $i ] && WAN_TRIGGER=up /etc/rc.common $i start 2>&1
+done
+    if [ "$(nvram get platform)" = "AXA" -o "$(nvram get platform)" = "AXM" -o "$(nvram get platform)" = "M2E" ]; then
+        rm /tmp/dnsmasq.restart.lock
+        /etc/rc.common /etc/init.d/dnsmasq restart
+    fi
+}
+
+[ "$ACTION" = "ifdown" -a "$TYPE" = "wan" ] && {
+for i in /etc/rc.d/W*; do
+    [ -x $i ] && WAN_TRIGGER=down /etc/rc.common $i stop 2>&1
+done
+    if [ "$(nvram get platform)" = "AXA" -o "$(nvram get platform)" = "AXM" -o "$(nvram get platform)" = "M2E" ]; then
+        [ -e /tmp/dnsmasq.restart.lock  ] && {
+            echo "locking" > /tmp/dnsmasq.restart.lock
+        } || {
+            echo "acquired lock" > /tmp/dnsmasq.restart.lock
+            /etc/rc.common /etc/init.d/dnsmasq restart
+        }
+    fi
+}
+
+lock -u /tmp/.network-trigger

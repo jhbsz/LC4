@@ -1,0 +1,357 @@
+diff -Nurbp linux-2.6.26-orig/drivers/serial/8250.c linux-2.6.26-new/drivers/serial/8250.c
+--- linux-2.6.26-orig/drivers/serial/8250.c	2011-10-05 15:17:19.107915918 +0800
++++ linux-2.6.26-new/drivers/serial/8250.c	2011-10-17 13:38:56.014676563 +0800
+@@ -379,9 +379,18 @@ static unsigned int serial_in(struct uar
+ 			return (tmp >> 16) & 0xff; /* UART_IIR % 4 == 2 */
+ 		} else
+ 			return readb(up->port.membase + offset);
+-
+ 	default:
++#if defined (CONFIG_RALINK_RT2880) || \
++        defined (CONFIG_RALINK_RT2883) || \
++        defined (CONFIG_RALINK_RT3883) || \
++        defined (CONFIG_RALINK_RT3352) || \
++        defined (CONFIG_RALINK_RT5350) || \
++        defined (CONFIG_RALINK_RT6855) || \
++        defined (CONFIG_RALINK_RT3052)
++           return (*(int*)(up->port.iobase + offset));
++#else
+ 		return inb(up->port.iobase + offset);
++#endif
+ 	}
+ }
+ 
+@@ -430,7 +439,17 @@ serial_out(struct uart_8250_port *up, in
+ 		break;
+ 
+ 	default:
++#if defined (CONFIG_RALINK_RT2880) || \
++        defined (CONFIG_RALINK_RT2883) || \
++        defined (CONFIG_RALINK_RT3883) || \
++        defined (CONFIG_RALINK_RT3352) || \
++        defined (CONFIG_RALINK_RT5350) || \
++        defined (CONFIG_RALINK_RT6855) || \
++        defined (CONFIG_RALINK_RT3052)
++           *(int*)(up->port.iobase + offset) = value;
++#else
+ 		outb(value, up->port.iobase + offset);
++#endif
+ 	}
+ }
+ 
+@@ -474,7 +493,24 @@ static inline void _serial_dl_write(stru
+ 	serial_outp(up, UART_DLM, value >> 8 & 0xff);
+ }
+ 
+-#if defined(CONFIG_SERIAL_8250_AU1X00)
++#if defined (CONFIG_RALINK_RT2880) || \
++    defined (CONFIG_RALINK_RT2883) || \
++    defined (CONFIG_RALINK_RT3883) || \
++    defined (CONFIG_RALINK_RT3352) || \
++    defined (CONFIG_RALINK_RT5350) || \
++    defined (CONFIG_RALINK_RT6855) || \
++    defined (CONFIG_RALINK_RT3052)
++/* Ralink haven't got a standard divisor latch */
++static int serial_dl_read(struct uart_8250_port *up)
++{   
++    return serial_inp(up, UART_DLL);
++}
++
++static void serial_dl_write(struct uart_8250_port *up, int value)
++{   
++    serial_outp(up, UART_DLL, value);
++}
++#elif defined(CONFIG_SERIAL_8250_AU1X00)
+ /* Au1x00 haven't got a standard divisor latch */
+ static int serial_dl_read(struct uart_8250_port *up)
+ {
+@@ -682,11 +718,28 @@ static int size_fifo(struct uart_8250_po
+  */
+ static unsigned int autoconfig_read_divisor_id(struct uart_8250_port *p)
+ {
+-	unsigned char old_dll, old_dlm, old_lcr;
++	unsigned char old_lcr;
+ 	unsigned int id;
++#if defined (CONFIG_RALINK_RT2880) || \
++    defined (CONFIG_RALINK_RT2883) || \
++    defined (CONFIG_RALINK_RT3883) || \
++    defined (CONFIG_RALINK_RT3352) || \
++    defined (CONFIG_RALINK_RT5350) || \
++    defined (CONFIG_RALINK_RT6855) || \
++    defined (CONFIG_RALINK_RT3052)
++	unsigned short old_dl;
++
++	old_dl = serial_dl_read(p);
++	serial_dl_write(p, 0);
++	id = serial_dl_read(p);
++	serial_dl_write(p, old_dl);
+ 
+ 	old_lcr = serial_inp(p, UART_LCR);
+ 	serial_outp(p, UART_LCR, UART_LCR_DLAB);
++#else
++	unsigned char old_dll, old_dlm;
++	old_lcr = serial_inp(p, UART_LCR);
++	serial_outp(p, UART_LCR, UART_LCR_DLAB);
+ 
+ 	old_dll = serial_inp(p, UART_DLL);
+ 	old_dlm = serial_inp(p, UART_DLM);
+@@ -698,6 +751,7 @@ static unsigned int autoconfig_read_divi
+ 
+ 	serial_outp(p, UART_DLL, old_dll);
+ 	serial_outp(p, UART_DLM, old_dlm);
++#endif
+ 	serial_outp(p, UART_LCR, old_lcr);
+ 
+ 	return id;
+diff -Nurbp linux-2.6.26-orig/drivers/serial/8250_early.c linux-2.6.26-new/drivers/serial/8250_early.c
+--- linux-2.6.26-orig/drivers/serial/8250_early.c	2011-10-05 15:17:19.107915918 +0800
++++ linux-2.6.26-new/drivers/serial/8250_early.c	2011-08-13 09:34:11.000000000 +0800
+@@ -106,11 +106,21 @@ static unsigned int __init probe_baud(st
+ 
+ 	lcr = serial_in(port, UART_LCR);
+ 	serial_out(port, UART_LCR, lcr | UART_LCR_DLAB);
++#if defined (CONFIG_RALINK_RT2880) || \
++    defined (CONFIG_RALINK_RT2883) || \
++    defined (CONFIG_RALINK_RT3883) || \
++    defined (CONFIG_RALINK_RT3352) || \
++    defined (CONFIG_RALINK_RT5350) || \
++    defined (CONFIG_RALINK_RT6855) || \
++    defined (CONFIG_RALINK_RT3052)
++	quot= serial_in(port, UART_DLL);
++#else
+ 	dll = serial_in(port, UART_DLL);
+ 	dlm = serial_in(port, UART_DLM);
++	quot = (dlm << 8) | dll;
++#endif
+ 	serial_out(port, UART_LCR, lcr);
+ 
+-	quot = (dlm << 8) | dll;
+ 	return (port->uartclk / 16) / quot;
+ }
+ 
+diff -Nurbp linux-2.6.26-orig/drivers/serial/serial_core.c linux-2.6.26-new/drivers/serial/serial_core.c
+--- linux-2.6.26-orig/drivers/serial/serial_core.c	2011-10-05 15:17:19.107915918 +0800
++++ linux-2.6.26-new/drivers/serial/serial_core.c	2011-08-13 09:34:11.000000000 +0800
+@@ -416,6 +416,15 @@ uart_get_divisor(struct uart_port *port,
+ 		quot = port->custom_divisor;
+ 	else
+ 		quot = (port->uartclk + (8 * baud)) / (16 * baud);
++#if defined (CONFIG_RALINK_RT2880) || \
++	defined (CONFIG_RALINK_RT2883) || \
++	defined (CONFIG_RALINK_RT3883) || \
++	defined (CONFIG_RALINK_RT3352) || \
++	defined (CONFIG_RALINK_RT5350) || \
++	defined (CONFIG_RALINK_RT6855) || \
++	defined (CONFIG_RALINK_RT3052)
++	quot = port->custom_divisor;
++#endif
+ 
+ 	return quot;
+ }
+diff -Nurpb linux-2.6.26-orig/include/linux/serial.h linux-2.6.26-new/include/linux/serial.h
+--- linux-2.6.26-orig/include/linux/serial.h	2011-10-05 15:17:19.267915923 +0800
++++ linux-2.6.26-new/include/linux/serial.h	2011-08-04 23:42:31.000000000 +0800
+@@ -76,7 +76,8 @@ struct serial_struct {
+ #define PORT_16654	11
+ #define PORT_16850	12
+ #define PORT_RSA	13	/* RSA-DV II/S card */
+-#define PORT_MAX	13
++#define PORT_SB1250	14
++#define PORT_MAX	14
+ 
+ #define SERIAL_IO_PORT	0
+ #define SERIAL_IO_HUB6	1
+diff -Nurpb linux-2.6.26-orig/include/linux/serialP.h linux-2.6.26-new/include/linux/serialP.h
+--- linux-2.6.26-orig/include/linux/serialP.h	2011-10-05 15:17:19.307915550 +0800
++++ linux-2.6.26-new/include/linux/serialP.h	2011-08-04 23:42:31.000000000 +0800
+@@ -24,6 +24,7 @@
+ #include <linux/interrupt.h>
+ #include <linux/circ_buf.h>
+ #include <linux/wait.h>
++#include <linux/serial.h>
+ 
+ struct serial_state {
+ 	int	magic;
+diff -Nurpb linux-2.6.26-orig/include/linux/serial_reg.h linux-2.6.26-new/include/linux/serial_reg.h
+--- linux-2.6.26-orig/include/linux/serial_reg.h	2011-10-05 15:17:19.257915827 +0800
++++ linux-2.6.26-new/include/linux/serial_reg.h	2011-08-09 09:43:17.000000000 +0800
+@@ -14,13 +14,69 @@
+ #ifndef _LINUX_SERIAL_REG_H
+ #define _LINUX_SERIAL_REG_H
+ 
+-/*
+- * DLAB=0
++#if defined (CONFIG_RALINK_RT2880) || defined (CONFIG_RALINK_RT3052) || defined (CONFIG_RALINK_RT3352) || \
++    defined (CONFIG_RALINK_RT2883) || defined (CONFIG_RALINK_RT3883) || defined (CONFIG_RALINK_RT5350) || \
++    defined (CONFIG_RALINK_RT6855)
++
++#define UART_RX		0	/* In:  Receive buffer (DLAB=0) */
++
++#define UART_TX		1	/* Out: Transmit buffer (DLAB=0) */
++#define UART_TRG	1	/* (LCR=BF) FCTR bit 7 selects Rx or Tx
++				 * In: Fifo count
++				 * Out: Fifo custom trigger levels
++				 * XR16C85x only
++				 */
++
++#define UART_IER	2	/* Out: Interrupt Enable Register */
++#define UART_FCTR	2	/* (LCR=BF) Feature Control Register
++				 * XR16C85x only
++				 */
++
++#define UART_IIR	3	/* In:  Interrupt ID Register */
++#define UART_EFR	3	/* I/O: Extended Features Register */
++				/* (DLAB=1, 16C660 only) */
++
++#define UART_FCR	4 	/* Out: FIFO Control Register */
++#define UART_LCR	5	/* Out: Line Control Register */
++#define UART_MCR	6	/* Out: Modem Control Register */
++#define UART_LSR	7	/* In:  Line Status Register */
++#define UART_MSR	8	/* In:  Modem Status Register */
++#define UART_SCR	9	/* I/O: Scratch Register */
++#define UART_DLL	10	/* Out: Divisor Latch Low (DLAB=1) */
++/* Since surfboard uart cannot be accessed by byte, using UART_DLM will cause
++ * unpredictable values to be written to the Divisor Latch
+  */
++#define UART_DLM	11	/* Out: Divisor Latch High (DLAB=1) */
++
++#else
++
+ #define UART_RX		0	/* In:  Receive buffer */
+ #define UART_TX		0	/* Out: Transmit buffer */
++#define UART_DLL	0	/* Out: Divisor Latch Low */
++#define UART_TRG	0	/* FCTR bit 7 selects Rx or Tx
++				 * In: Fifo count
++				 * Out: Fifo custom trigger levels */
+ 
++#define UART_DLM	1	/* Out: Divisor Latch High */
+ #define UART_IER	1	/* Out: Interrupt Enable Register */
++#define UART_FCTR	1	/* Feature Control Register */
++
++#define UART_IIR	2	/* In:  Interrupt ID Register */
++#define UART_FCR	2	/* Out: FIFO Control Register */
++#define UART_EFR	2	/* I/O: Extended Features Register */
++
++#define UART_LCR	3	/* Out: Line Control Register */
++#define UART_MCR	4	/* Out: Modem Control Register */
++#define UART_LSR	5	/* In:  Line Status Register */
++#define UART_MSR	6	/* In:  Modem Status Register */
++#define UART_SCR	7	/* I/O: Scratch Register */
++#define UART_EMSR	7	/* Extended Mode Select Register */
++
++#endif
++/*
++ * DLAB=0
++ */
++//#define UART_IER	1	/* Out: Interrupt Enable Register */
+ #define UART_IER_MSI		0x08 /* Enable Modem status interrupt */
+ #define UART_IER_RLSI		0x04 /* Enable receiver line status interrupt */
+ #define UART_IER_THRI		0x02 /* Enable Transmitter holding register int. */
+@@ -30,7 +86,7 @@
+  */
+ #define UART_IERX_SLEEP		0x10 /* Enable sleep mode */
+ 
+-#define UART_IIR	2	/* In:  Interrupt ID Register */
++//#define UART_IIR	2	/* In:  Interrupt ID Register */
+ #define UART_IIR_NO_INT		0x01 /* No interrupts pending */
+ #define UART_IIR_ID		0x06 /* Mask for the interrupt ID */
+ #define UART_IIR_MSI		0x00 /* Modem status interrupt */
+@@ -40,7 +96,7 @@
+ 
+ #define UART_IIR_BUSY		0x07 /* DesignWare APB Busy Detect */
+ 
+-#define UART_FCR	2	/* Out: FIFO Control Register */
++//#define UART_FCR	2	/* Out: FIFO Control Register */
+ #define UART_FCR_ENABLE_FIFO	0x01 /* Enable the FIFO */
+ #define UART_FCR_CLEAR_RCVR	0x02 /* Clear the RCVR FIFO */
+ #define UART_FCR_CLEAR_XMIT	0x04 /* Clear the XMIT FIFO */
+@@ -83,7 +139,7 @@
+ #define UART_FCR6_T_TRIGGER_30	0x30 /* Mask for transmit trigger set at 30 */
+ #define UART_FCR7_64BYTE	0x20 /* Go into 64 byte mode (TI16C750) */
+ 
+-#define UART_LCR	3	/* Out: Line Control Register */
++//#define UART_LCR	3	/* Out: Line Control Register */
+ /*
+  * Note: if the word length is 5 bits (UART_LCR_WLEN5), then setting 
+  * UART_LCR_STOP will select 1.5 stop bits, not 2 stop bits.
+@@ -99,7 +155,7 @@
+ #define UART_LCR_WLEN7		0x02 /* Wordlength: 7 bits */
+ #define UART_LCR_WLEN8		0x03 /* Wordlength: 8 bits */
+ 
+-#define UART_MCR	4	/* Out: Modem Control Register */
++//#define UART_MCR	4	/* Out: Modem Control Register */
+ #define UART_MCR_CLKSEL		0x80 /* Divide clock by 4 (TI16C752, EFR[4]=1) */
+ #define UART_MCR_TCRTLR		0x40 /* Access TCR/TLR (TI16C752, EFR[4]=1) */
+ #define UART_MCR_XONANY		0x20 /* Enable Xon Any (TI16C752, EFR[4]=1) */
+@@ -110,7 +166,7 @@
+ #define UART_MCR_RTS		0x02 /* RTS complement */
+ #define UART_MCR_DTR		0x01 /* DTR complement */
+ 
+-#define UART_LSR	5	/* In:  Line Status Register */
++//#define UART_LSR	5	/* In:  Line Status Register */
+ #define UART_LSR_TEMT		0x40 /* Transmitter empty */
+ #define UART_LSR_THRE		0x20 /* Transmit-hold-register empty */
+ #define UART_LSR_BI		0x10 /* Break interrupt indicator */
+@@ -120,7 +176,7 @@
+ #define UART_LSR_DR		0x01 /* Receiver data ready */
+ #define UART_LSR_BRK_ERROR_BITS	0x1E /* BI, FE, PE, OE bits */
+ 
+-#define UART_MSR	6	/* In:  Modem Status Register */
++//#define UART_MSR	6	/* In:  Modem Status Register */
+ #define UART_MSR_DCD		0x80 /* Data Carrier Detect */
+ #define UART_MSR_RI		0x40 /* Ring Indicator */
+ #define UART_MSR_DSR		0x20 /* Data Set Ready */
+@@ -131,18 +187,18 @@
+ #define UART_MSR_DCTS		0x01 /* Delta CTS */
+ #define UART_MSR_ANY_DELTA	0x0F /* Any of the delta bits! */
+ 
+-#define UART_SCR	7	/* I/O: Scratch Register */
++//#define UART_SCR	7	/* I/O: Scratch Register */
+ 
+ /*
+  * DLAB=1
+  */
+-#define UART_DLL	0	/* Out: Divisor Latch Low */
+-#define UART_DLM	1	/* Out: Divisor Latch High */
++//#define UART_DLL	0	/* Out: Divisor Latch Low */
++//#define UART_DLM	1	/* Out: Divisor Latch High */
+ 
+ /*
+  * LCR=0xBF (or DLAB=1 for 16C660)
+  */
+-#define UART_EFR	2	/* I/O: Extended Features Register */
++//#define UART_EFR	2	/* I/O: Extended Features Register */
+ #define UART_EFR_CTS		0x80 /* CTS flow control */
+ #define UART_EFR_RTS		0x40 /* RTS flow control */
+ #define UART_EFR_SCD		0x20 /* Special character detect */
+@@ -168,9 +224,9 @@
+ /*
+  * LCR=0xBF, XR16C85x
+  */
+-#define UART_TRG	0	/* FCTR bit 7 selects Rx or Tx
+-				 * In: Fifo count
+-				 * Out: Fifo custom trigger levels */
++//#define UART_TRG	0	/* FCTR bit 7 selects Rx or Tx
++//				 * In: Fifo count
++//				 * Out: Fifo custom trigger levels */
+ /*
+  * These are the definitions for the Programmable Trigger Register
+  */
+@@ -184,7 +240,7 @@
+ #define UART_TRG_120		0x78
+ #define UART_TRG_128		0x80
+ 
+-#define UART_FCTR	1	/* Feature Control Register */
++//#define UART_FCTR	1	/* Feature Control Register */
+ #define UART_FCTR_RTS_NODELAY	0x00  /* RTS flow control delay */
+ #define UART_FCTR_RTS_4DELAY	0x01
+ #define UART_FCTR_RTS_6DELAY	0x02
+@@ -202,7 +258,7 @@
+ /*
+  * LCR=0xBF, FCTR[6]=1
+  */
+-#define UART_EMSR	7	/* Extended Mode Select Register */
++//#define UART_EMSR	7	/* Extended Mode Select Register */
+ #define UART_EMSR_FIFO_COUNT	0x01  /* Rx/Tx select */
+ #define UART_EMSR_ALT_COUNT	0x02  /* Alternating count select */
+ 

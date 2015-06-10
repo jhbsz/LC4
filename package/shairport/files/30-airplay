@@ -1,0 +1,18 @@
+#!/bin/sh
+. /etc/arch.sh
+. /etc/functions.sh
+# FIXME: use togo rule
+
+case "$ACTION" in
+	add)
+        arch_led_start storage 
+        togo_add "$(nvram get hostname)" "_raop._tcp." "$(nvram get lan0_ipaddr)" 5100 "$(nvram get lan_hwaddr_rule_default)" 0
+        sh /etc/rc.common /etc/init.d/shairport start
+        arch_led_stop storage
+    ;;
+    remove)
+        arch_led_start storage
+        togo_del "$(nvram get lan_hwaddr_rule_default)" "_raop._tcp."
+        sh /etc/rc.common /etc/init.d/shairport stop
+        arch_led_stop storage
+esac

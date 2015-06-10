@@ -1,0 +1,16 @@
+Source-Makefile: package/dansguardian/Makefile
+Package: dansguardian
+Version: 2.9.9.2-1
+Depends: 
+Provides: 
+Build-Depends: libtool
+Section: net
+Category: Network
+Title: DansGuardian
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	DansGuardian
+
+http://dansguardian.org
+@@
+

@@ -1,0 +1,13 @@
+[global]								; Global parameters:
+; port = 1701						 	; * Bind to port 1701
+auth file = /etc/ppp/chap-secrets 	; * Where our challenge secrets are
+[lac l2test]							; Example VPN LAC definition
+lns = 10.1.1.31					; * Who is our LNS?
+redial = yes							; * Redial if disconnected?
+length bit = yes						; * Use length bit in payload?
+refuse pap = yes						; * Refuse PAP authentication
+refuse chap = no						; * Refuse CHAP authentication
+require authentication = yes			; * Require peer to authenticate
+name = l2tp-client							; * Report this as our hostname
+ppp debug = yes						; * Turn on PPP debugging
+pppoptfile = /etc/ppp/options.l2tpd.client	; * ppp options file for this lac

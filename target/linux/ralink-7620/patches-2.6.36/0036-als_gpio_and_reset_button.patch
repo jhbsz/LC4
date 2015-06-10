@@ -1,0 +1,81 @@
+--- linux-2.6.36/drivers/char/ralink_gpio.c	2014-12-03 12:14:06.257351226 +0800
++++ linux-2.6.36/drivers/char/ralink_gpio.c	2014-12-03 12:21:47.549358705 +0800
+@@ -39,6 +39,9 @@
+ #include <linux/interrupt.h>
+ #include <linux/fs.h>
+ #include <linux/sched.h>
++
++#include <linux/reboot.h>
++
+ #ifdef CONFIG_RALINK_GPIO_LED
+ #include <linux/timer.h>
+ #endif
+@@ -60,7 +63,7 @@
+     #define RALINK_GPIO_SD_CARD_NUM  43
+     #define RALINK_GPIO_WPS_NUM      -1
+ #ifdef CONFIG_BOARD_ALS
+-    #define RALINK_GPIO_RESET_NUM    -1
++    #define RALINK_GPIO_RESET_NUM    60
+ #else
+     #define RALINK_GPIO_RESET_NUM    44
+ #endif
+@@ -75,7 +78,7 @@
+ /* EZP: set button GPIO definitions */
+ int ezp_gpio_start=0;
+ int sd_card = 1, sd_count = 0, sd_done = 1;
+-int reset_count = 0, reset_push = 0;
++int reset_count = 0, reset_push = 0, timer_count = 0;
+ int wps_count = 0, wps_push = 0;
+ int combo_push = 0;
+ int power_count = 0, power_push = 0;
+@@ -429,7 +432,7 @@
+     case EZP_GPIO_START:
+         ezp_gpio_start=1;
+         break;
+-#if defined (CONFIG_BOARD_AME) || defined (CONFIG_BOARD_AXA) || defined(CONFIG_BOARD_AXB) || defined(CONFIG_BOARD_AXM) || defined(CONFIG_BOARD_LIS) || defined (CONFIG_BOARD_GMA) || defined (CONFIG_BOARD_M2E)
++#if defined (CONFIG_BOARD_AME) || defined (CONFIG_BOARD_AXA) || defined(CONFIG_BOARD_AXB) || defined(CONFIG_BOARD_AXM) || defined(CONFIG_BOARD_LIS) || defined (CONFIG_BOARD_GMA) || defined (CONFIG_BOARD_M2E) || defined (CONFIG_BOARD_ALS)
+     case EZP_GPIO_SET_DIR:
+         tmp = cpu_to_le32(arg);
+         *(volatile u32 *)(RALINK_REG_PIODIR) = tmp & 0x3FFFFF;
+@@ -2475,20 +2478,29 @@
+         if ((tmp & (1 << gpio_num)) == 0)
+         {
+             reset_count++;
+-        }
+-        else
+-        {
+-            reset_count = 0;
+-            reset_push = 0;
+-            combo_push = 0;
+-        }
+-        if((reset_count >= 30)) {
+-            button_data.button_helper_data = BUTTON_RESET;
+-            schedule_work(&button_data.button_helper);
+-            reset_count = 0;
++        }else
++        { 
++            timer_count++;
++            if((reset_count >= 10)) {
++                printk("Machine Default !!\n");
++                button_data.button_helper_data = BUTTON_RESET;
++                schedule_work(&button_data.button_helper);
++                reset_count = 0;
++                timer_count = 0;
++            }else if((reset_count < 10) && (reset_count > 1)) {
++                printk("Machine Restart !!\n");
++                machine_restart("");
++                reset_count = 0;
++                timer_count = 0;
++            }else if((timer_count >= 2)) {
++                timer_count = 0;
++                reset_count = 0;
++                reset_push = 0;
++                combo_push = 0;
++            }
+         }
+     }
+-#if defined (CONFIG_BOARD_M2E)
++#if defined (CONFIG_BOARD_M2E) 
+     if(RALINK_GPIO_POWER_NUM != -1) {
+         ezp_gpio_wrapper(RALINK_GPIO_POWER_NUM, (u32*)(RALINK_REG_PIODATA), &gpio_reg, &gpio_num, &gpio_mask);
+         tmp = le32_to_cpu(*(volatile u32 *)(gpio_reg));

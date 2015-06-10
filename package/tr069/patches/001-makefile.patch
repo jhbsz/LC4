@@ -1,0 +1,45 @@
+--- tr069-1.0.0.old/Makefile	2008-12-23 16:14:50.000000000 +0800
++++ tr069-1.0.0.new/Makefile	2009-10-23 17:45:44.664462649 +0800
+@@ -1,19 +1,28 @@
+-CC = gcc 
+-CFLAGS = -O2 -s -Wall -Werror
++#CC = /opt/buildroot-gcc342/bin/mipsel-linux-gcc
++#CFLAGS = -O2 -s -Wall -Werror
+ #CFLAGS = -O2 -s 
+ #INCLUDES = -I./include  -I./conf -I./multi_platform
+ INCLUDES = -I./include -I./multi_platform
+ #OBJS = config.o device.o event.o file.o filetransfer.o http.o log.o main.o memory.o network.o object.o session.o soap.o transaction.o xml.o acs_method.o cpe_method.o agent_md5.o digest_basic.o auth.o soap_generate.o httparser.o  inform.o  buffer.o getrpcmeth.o conn_req_server.o sha.o udp_conn_req.o stun_client.o cookie.o scheduleinform.o get_param_attr.o set_param_attr.o get_param_name.o get_param_val.o set_param_val.o add_del_obj.o transfercomplete.o factory_reset.o cli.o download.o cpe_req.o upload.o reboot.o dynamic.o conf/dev_rw_file.o trigger.o multi_platform/linux.o
+ OBJS = config.o device.o event.o file.o filetransfer.o http.o log.o main.o memory.o network.o session.o soap.o transaction.o xml.o acs_method.o cpe_method.o agent_md5.o digest_basic.o auth.o soap_generate.o httparser.o  inform.o  buffer.o getrpcmeth.o conn_req_server.o sha.o udp_conn_req.o stun_client.o cookie.o scheduleinform.o get_param_attr.o set_param_attr.o get_param_name.o get_param_val.o set_param_val.o object.o add_del_obj.o transfercomplete.o factory_reset.o cli.o download.o cpe_req.o upload.o reboot.o trigger.o multi_platform/linux.o
+-LIBS = -lpthread -ldl -lssl
++#LIBS = -lpthread -ldl 
++#LIBS = -lpthread -ldl -lssl
+ #LIBS = -lpthread -lssl 
+-DEFS = -DCODE_DEBUG -DVT100_COMPAT -DUSE_DYNAMIC -DUSE_SSL -DVT100_COMPAT
++DEFS = -DCODE_DEBUG -DVT100_COMPAT -DUSE_DYNAMIC -DVT100_COMPAT -DUSE_SSL
++#DEFS = -DCODE_DEBUG -DVT100_COMPAT -DUSE_DYNAMIC -DUSE_SSL -DVT100_COMPAT
+ #DEFS = -DCODE_DEBUG -DVT100_COMPAT -DUSE_SSL
+ CUR_DIR = Agent4.0
+ 
+ agent: $(OBJS)
+ 	$(CC) -o $@ $(OBJS) -s $(LIBS)
+ 	@echo Build successufully...
++
++all: agent
++	cd conf; CC="$(CC)" CFLAG="$(CFLAGS)" INCLUDES="$(INCLUDES)" DEFS="$(DEFS)" $(MAKE)
++
++install:
++	install -m 0755 agent $(INSTALLDIR)/usr/sbin/agent
++
+ .c.o:
+ 	$(CC) $(CFLAGS) -c $< -o $@ $(INCLUDES) $(DEFS)
+ 
+--- tr069-1.0.0.old/conf/Makefile	2008-07-29 10:47:54.000000000 +0800
++++ tr069-1.0.0.new/conf/Makefile	2009-10-23 17:45:45.786572501 +0800
+@@ -1,5 +1,5 @@
+ all: lib.c dev_rw_file.c dev_rw_file.h
+-	gcc -c -Wall -fPIC lib.c dev_rw_file.c -I../include
+-	gcc -shared -o libdev.so  lib.o dev_rw_file.o
++	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c lib.c dev_rw_file.c -I../include
++	$(CC) -shared -o libdev.so  lib.o dev_rw_file.o
+ clean:
+ 	rm -f *.o *.so

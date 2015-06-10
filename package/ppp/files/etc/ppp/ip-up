@@ -1,0 +1,58 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# When the ppp link comes up, this script is called with the following
+# parameters
+#       $1      the interface name used by pppd (e.g. ppp3)
+#       $2      the tty device name
+#       $3      the tty device speed
+#       $4      the local IP address for the interface
+#       $5      the remote IP address
+#       $6      the parameter specified by the 'ipparam' option to pppd
+#       $7      get valid gateway or not, 1:yes 0:no
+
+. /etc/network.sh
+. /etc/arch.sh
+local lic_inv=$(nvram get license_invalid)
+nvram replace attr ppp_control_rule 0 gateway_valid $7
+[ -z "$6" ] || {
+    type="${6%%[0-9]}"
+    num="${6#$type}"
+    PPP_DEMAND_STATE_FILE="/tmp/ppp-${type}${num}-demand.tmp"
+    
+    [ "$type" = "wan" ] && {
+    	# Mask is 32 because this is a point-to-point protocol.
+    	iface_up "ppp" "$6" "$4" "32" "$5" "$DNS1 $DNS2" 2>&-
+
+        local proto=$(nvram get wan${num}_proto)
+        [ "$proto" = "wwan" -o "$proto" = "htc" -o "$ptoto" = "directip" \
+          -o  "$proto" = "iphone" -o "$proto" = "barry" -o "$proto" = "wimax" ] && {
+            arch_led_stop wwan
+        }
+    }
+    [ "$type" != "wan" ] && {
+        log_usr "PPTP Server" "client [$6] local [$5] connected" OK
+    }
+    [ -f "${PPP_DEMAND_STATE_FILE}" ] && {
+        [ "$(cat ${PPP_DEMAND_STATE_FILE})" = "demand-start" ] && {
+            echo -n "demand-connected" > ${PPP_DEMAND_STATE_FILE}
+        }
+    }
+}
+
+type="${6%%[0-9]}"
+[ "$type" = "pptp" -a ! -z "$6" ] && {
+    nvram set vpn0_ifname="$1"
+    nvram set vpn0_ipaddr="$4"
+    nvram set vpn0_gateway="$5"
+    nvram set wan_pptp_l2tp_status="Connected"
+    nvram replace attr wan_detect_rule 0 enable 0
+    ip route replace default via $5 dev $1 
+}
+
+[ -d /etc/ppp/ip-up.d ] && {
+	for SCRIPT in /etc/ppp/ip-up.d/*
+	do
+		[ -x "$SCRIPT" ] && "$SCRIPT" $@
+	done
+}

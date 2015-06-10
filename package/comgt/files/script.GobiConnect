@@ -1,0 +1,7 @@
+open com /dev/ttyUSB1
+set com 38400n81
+set senddelay 0.05
+set comecho on
+waitquiet 1 0.2
+send "at$qcrmcall=1,1^m"
+print "connected"

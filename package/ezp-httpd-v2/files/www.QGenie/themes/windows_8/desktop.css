@@ -1,0 +1,2757 @@
+.ih_style div, .ih_style span, .ih_style applet, .ih_style object, .ih_style iframe, .ih_style h1, .ih_style h2,
+.ih_style h3, .ih_style h4, .ih_style h5, .ih_style h6, .ih_style p, .ih_style blockquote, .ih_style pre,
+.ih_style a, .ih_style abbr, .ih_style acronym, .ih_style address, .ih_style big, .ih_style cite, .ih_style code,
+.ih_style del, .ih_style dfn, .ih_style em, .ih_style img, .ih_style ins, .ih_style kbd, .ih_style q, .ih_style s,
+.ih_style samp, .ih_style small, .ih_style strike, .ih_style strong, .ih_style sub, .ih_style sup, .ih_style tt,
+.ih_style var, .ih_style b, .ih_style u, .ih_style i, .ih_style center, .ih_style dl, .ih_style dt, .ih_style dd,
+.ih_style ol, .ih_style ul, .ih_style li, .ih_style fieldset, .ih_style form, .ih_style label, .ih_style legend,
+.ih_style table, .ih_style caption, .ih_style tbody, .ih_style tfoot, .ih_style thead, .ih_style tr, .ih_style th,
+.ih_style td, .ih_style article, .ih_style aside, .ih_style canvas, .ih_style details, .ih_style embed,
+.ih_style figure, .ih_style figcaption, .ih_style footer, .ih_style header, .ih_style hgroup, .ih_style menu,
+.ih_style nav, .ih_style output, .ih_style ruby, .ih_style section, .ih_style summary, .ih_style time, .ih_style mark,
+.ih_style audio, .ih_style video, .ih_style *, .ih_style *:before, .ih_style *:after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 11px;
+    font-family: Myriad,Arial,Helvetica,clean,sans-serif;
+    line-height: normal;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: none;
+    max-height: none;
+    min-width: none;
+    min-height: none;
+}
+.ih_style th, .ih_style td, .ih_style .table th, .ih_style .table td {
+    vertical-align: middle;
+}
+.ih_style article, .ih_style aside, .ih_style details, .ih_style figcaption, .ih_style figure, .ih_style footer,
+.ih_style header, .ih_style hgroup, .ih_style menu, .ih_style nav, .ih_style section {
+    display: block;
+}
+.ih_style body {
+    line-height: 1;
+}
+.ih_style ol,
+.ih_style ul {
+    list-style: none;
+}
+.ih_style blockquote,
+.ih_style q {
+    quotes: none;
+}
+.ih_style blockquote:before,
+.ih_style blockquote:after,
+.ih_style q:before,
+.ih_style q:after {
+    content: '';
+    content: none;
+}
+.ih_style table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.ih_style div, .ih_style form, .ih_style input, .ih_style textarea, .ih_style th, .ih_style td {
+	margin: 0px;
+	padding: 0px;
+	font-family: Myriad,Arial,Helvetica,clean,sans-serif;
+	font-size: 11px;
+}
+.dj_iequirks .ih_style input {
+	margin-top: -1px;
+}
+.ih_style span {
+	margin: 0;
+	padding: 0;
+	font: inherit;
+}
+.ih_style fieldset, .ih_style img {
+	border: 0 none;
+}
+.ih_style th {
+	font-style: normal; 
+	font-weight: normal;
+}
+.ih_style caption, .ih_style th {
+	text-align: left;
+}
+.ih_style {
+	font-size: 11px;
+}
+.ih_style h1 {
+	font-size: 1.5em; 
+	font-weight: normal;
+	line-height: 1em; 
+	margin-top: 1em;
+	margin-bottom:0;
+}
+.ih_style h2 { 
+	font-size: 1.1667em; 
+	font-weight: bold; 
+	line-height: 1.286em; 
+	margin-top: 1.929em; 
+	margin-bottom:0.643em;
+}
+.ih_style h3, .ih_style h4, .ih_style h5, .ih_style h6 {
+	font-size: 1em; 
+	font-weight: bold; 
+	line-height: 1.5em; 
+	margin-top: 1.5em; 
+	margin-bottom: 0;
+}
+.ih_style p { 
+	font-size: 1em; 
+	margin-top: 1.5em; 
+	margin-bottom: 1.5em; 
+	line-height: 1.5em;
+}
+.ih_style blockquote { 
+	font-size: 0.916em; 
+	margin-top: 3.272em; 
+	margin-bottom: 3.272em; 
+	line-height: 1.636em; 
+	padding: 1.636em; 
+	border-top: 1px solid #ccc; 
+	border-bottom: 1px solid #ccc;
+}
+.ih_style pre, .ih_style code { 
+	font-size:115%;
+	*font-size:100%;
+	font-family: Courier, "Courier New"; 
+	background-color: #efefef; 
+	border: 1px solid #ccc;
+}
+.ih_style pre { 
+	border-width: 1px 0; 
+	padding: 1.5em;
+}
+
+.ih_style .positionRelative {
+	position: relative;
+}
+
+.ih_style .dijitReset {
+	
+	margin:0;
+	border:0;
+	padding:0;
+	line-height:normal;
+	font: 11px Myriad,Arial,Helvetica,clean,sans-serif;
+}
+.ih_style .dijitInline {
+	
+	display:-moz-inline-box;
+	display:inline-block;
+	
+	
+	border:0;
+	padding:0;
+	vertical-align:middle;
+}
+
+.dj_ie .ih_style INPUT.dijitTextBox,
+.dj_ie .ih_style .dijitInputField INPUT {
+	font-size: 100%;
+	
+	behavior: expression(
+		function(self){
+			var cs, e;
+			try{
+				if(self.currentStyle.fontFamily=='inherit'){
+					cs = self.parentNode.currentStyle || document.documentElement.currentStyle;
+					self.style.fontFamily = cs.fontFamily;
+				}
+				self.style.behavior = null;
+			}catch(e){}
+		}(this)
+	);
+}
+
+ .dj_ie .ih_style .dijitInputField INPUT {
+	margin: -1px 0 !important;
+	
+}
+
+.dj_iequirks .ih_style .dijitInputField INPUT { 
+	margin-top: -3px !important;
+}
+
+.ih_style .dijitInputField .dijitInputInner{
+    background: #fff;
+    height: 19px;
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+.dj_ie .ih_style .dijitTextBox{
+	height: 17px;
+	padding-top:2px;
+	background:#fff;
+}
+
+.ih_style .dijitTextBox.uploadFileName{
+	height: 17px !important;
+	padding-top:1px;
+	background:#fff;
+}
+
+.ih_style .dijitOffScreen {
+	position: absolute;
+	visibility: hidden;
+	left: 50%;
+	top: -10000px;
+}
+.ih_style .dijitPopup {
+	position: absolute;
+	background-color: transparent;
+	margin: 0;
+	border: 0;
+	padding: 0;
+	text-align: left;
+}
+.ih_style .dijitInputField {
+	overflow:hidden;
+	
+}
+.ih_style .dijitBackgroundIframe {
+	
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	z-index: -1;
+	border: 0;
+	padding: 0;
+	margin: 0;
+}
+.ih_style .dijitDisplayNone {
+	
+	display:none !important;
+}
+.ih_style .dijitContainer {
+	
+	overflow: hidden;
+}
+.ih_style .dijitButtonNode * {
+	vertical-align: middle;
+}
+.ih_style .dijitButtonNode .dijitArrowButtonInner {
+	background:no-repeat center;
+	width: 16px;
+}
+	
+.ih_style .dijitLeft {
+	
+	background-position:left top;
+	background-repeat:no-repeat;
+}
+.ih_style .dijitStretch {
+	
+	white-space:nowrap;			
+	background-repeat:repeat-x;
+}
+.ih_style .dijitRight {
+	
+					
+	background-position:right top;
+	background-repeat:no-repeat;
+}
+.ih_style .dijitButton,
+.ih_style .dijitDropDownButton,
+.ih_style .dj_safari .dijitToolbar .dijitDropDownButton {
+	margin-left: 0.3em;
+}
+.ih_style .dijitButtonNode {
+	
+	border:1px solid gray;
+	margin: 0px;
+	padding:.2em .2em .1em;
+	line-height:normal;
+	cursor:pointer;
+	vertical-align:middle;	
+	text-align:center;
+	white-space: nowrap;
+}
+.ih_style .dijitSpinner .dijitInputLayoutContainer .dijitArrowButton {
+	position: absolute;
+	height: 50%;
+}
+.ih_style .dijitButtonContents {
+	background-color: transparent;
+}
+.ih_style .dijitTextBox {
+	border: solid black 1px;
+	
+	width: 15em;	
+}
+.ih_style .dijitTextBox input:focus,
+.ih_style .dijitComboBox input:focus,
+.ih_style .dijitSpinner input:focus {
+	outline: none;	
+}
+.ih_style .dijitTextBoxFocused {
+	
+	outline: auto 5px -webkit-focus-ring-color;
+}
+.ih_style .dijitTextBox INPUT,
+.ih_style .dijitComboBox INPUT,
+.ih_style .dijitSpinner INPUT {
+    padding: 0;
+    display: inline;
+    position: static;
+    border: 0;
+    margin: 0;
+    vertical-align: 0;
+    visibility: visible;
+    background-color: transparent;
+    background-image: none;
+    width: 100%;
+}
+.ih_style .dijitCheckBoxInput {
+	
+	opacity: 0.01;
+}
+.dj_ie .ih_style .dijitCheckBoxInput {
+	filter: alpha(opacity=0);
+}
+.ih_style .dijitTooltip {
+	position: absolute;
+	z-index: 2000;
+	display: block;
+	
+	left: 50%;
+	top: -10000px;
+	overflow: visible;
+}
+.ih_style .dijitTooltipContainer {
+	border: solid black 2px;
+	background: #b8b5b5;
+	color: black;
+	font-size: small;
+}
+.ih_style .dijitTooltipFocusNode {
+	padding: 2px 2px 2px 2px;
+}
+.ih_style .dijitTooltipConnector {
+	position: absolute;
+}
+.ih_style .dijitLayoutContainer{
+	position: relative;
+	display: block;
+	overflow: visible;
+}
+body .ih_style .dijitAlignTop,
+body .ih_style .dijitAlignBottom,
+body .ih_style .dijitAlignLeft,
+body .ih_style .dijitAlignRight {
+	position: absolute;
+	overflow: hidden;
+}
+body.ih_style .dijitAlignClient,
+body .ih_style .dijitAlignClient { position: absolute; }
+.ih_style .dijitSplitContainer{
+	position: relative;
+	overflow: hidden;
+	display: block;
+}
+.ih_style .dijitSplitPane{
+	position: absolute;
+}
+.ih_style .dijitSplitContainerSizerH,
+.ih_style .dijitSplitContainerSizerV {
+	position:absolute;
+	font-size: 1px;
+	cursor: move;
+	cursor: w-resize;
+	background-color: white;
+	margin: 0;
+	z-index: 0 !important;
+}
+.ih_style .dijitSplitContainerSizerH .thumb {
+	overflow:hidden;
+	position:absolute;
+	top:49%;
+}
+.ih_style .dijitSplitContainerSizerV .thumb {
+	position:absolute;
+	left:49%;
+}
+.ih_style .dijitSplitContainerVirtualSizerH,
+.ih_style .dijitSplitContainerVirtualSizerV {
+	font-size: 1px;
+	background-color: ThreeDShadow;
+	-moz-opacity: 0.5;
+	opacity: 0.5;
+	filter: Alpha(Opacity=50);
+	margin: 0;
+}
+.ih_style .dijitSplitContainerVirtualSizerH {
+	cursor: w-resize;
+}
+.ih_style .dijitSplitContainerSizerV,
+.ih_style .dijitSplitContainerVirtualSizerV {
+	cursor: n-resize;
+}
+.ih_style .dijitContentPane {
+	display: block;
+	overflow: auto;
+}
+.ih_style .dijitAccordionTitle:hover {
+	cursor: pointer;
+}
+.ih_style .dijitMenu {
+	border:1px solid black;
+	background-color:white;
+    border-collapse: separate;
+}
+.ih_style .dijitMenuTable {
+	background-color:white;
+}
+.ih_style .dijitMenuItem{
+	white-space: nowrap;
+	-moz-outline: none;
+	outline: none;
+}
+.ih_style .dijitMenuItemHover {
+	cursor:pointer;
+	cursor:hand;
+}
+.ih_style .dijitMenuItemIcon {
+	position: relative;
+	background-repeat: no-repeat;
+}
+.ih_style .dijitMenuItemDisabled * {
+	color: gray !important;
+	cursor:default;
+}
+.dj_ie .ih_style .dijitMenuItemDisabled *,
+.dj_ie .ih_style .dijitMenuItemDisabled td {
+	color: gray !important;
+}
+.ih_style .dijitMenuItemLabel {
+	position: relative;
+	vertical-align: middle;
+	outline: none;
+	-moz-outline: none;
+}
+.ih_style .dijitMenuSeparatorTop {
+	height: 50%;
+	margin: 0;
+	margin-top:3px;
+	font-size: 1px;
+}
+.ih_style .dijitMenuSeparatorBottom {
+	height: 50%;
+	margin: 0;
+	margin-bottom:3px;
+	font-size: 1px;
+}
+.ih_style .dijitTreeExpando {
+	clear:both;
+}
+
+.ih_style .dijitDialog {
+	position:absolute;
+    background:white !important;
+	border:0px solid white !important;
+	z-index:999;
+	-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	-o-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.75);
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5); 
+	filter: progid:DXImageTransform.Microsoft.shadow(direction=135, color=#999999, strength=7) !important;
+}
+.ih_style .dijitDialog hr {
+    margin: 0.5em 0;
+}
+.ih_style .dijitDialog table {
+    border-spacing: 2px;
+    border-collapse: separate;
+}
+
+.dijitDialogUnderlayWrapper {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 998;
+	display: none;
+	background: transparent;
+	overflow: hidden;
+}
+.dijitDialogUnderlay {
+	background: #eee;
+	opacity: 0.5;
+	overflow: hidden;
+}
+.dj_ie .dijitDialogUnderlay {
+	filter: alpha(opacity=50);
+}
+.ih_style .dijitDialog .closeText {
+	display:none;
+	
+	position:absolute;
+}
+.ih_style .dijitToolbarSeparator {
+	height: 18px;
+	width: 5px;
+	padding: 0 1px;
+	margin: 0;
+}
+.ih_style .dijitToggleButtonIconChar {
+	display:none !important;
+}
+.ih_style .dijitArrowButtonChar {
+	display:none !important;
+}
+.ih_style .dijitSpinner .dijitInputLayoutContainer .dijitArrowButton {
+	height: 50%;
+	width: 16px;
+	overflow: hidden;
+}
+.dj_ie .ih_style .dijitSpinner .dijitInputLayoutContainer .dijitArrowButton {
+	behavior: expression(
+		function(self){
+			var e; 
+			try{
+				var h = self.parentNode.offsetHeight/2;
+				if(h > 1){
+					self.style.height = h;
+					self.style.behavior = null; 
+				}
+			}catch(e){} 
+		}(this)
+	);
+}
+
+.ih_style #ithit_interface_context_help_container,
+.ih_style .dijitMenuBorder{
+    -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	-o-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.75);
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5); 
+	filter: progid:DXImageTransform.Microsoft.shadow(direction=135, color=#999999, strength=7);	
+}
+
+
+.ih_style table, .ih_style .table {
+    width: auto;
+    border-collapse: separate;
+}.ih_style {
+	color: black;
+}
+
+.ih_style hr {
+	height: 1px;
+	background-color: #ccc;
+	border: none;
+}
+
+.ih_style .ithitAjaxFileBrowser {
+	text-align: left !important;
+}
+.ih_style .dijitAlignLeft .dijitTabChecked {
+	margin-right: 0px !important;	
+} 
+.ih_style .dijitSplitContainerSizerH {
+	background: #c8cfd9;
+	width:1px !important;
+	padding:0 !important;
+	border: 1px solid #fff;
+}
+.ih_style .dijitSplitContainerSizerH .thumb {}
+.ih_style .dijitSplitContainerSizerV {
+	background: #c8cfd9;
+	height:1px !important;
+	padding:0 !important;
+	border: 1px solid #fff;
+}
+.ih_style .dijitSplitContainerSizerV .thumb {}
+.ih_style .dijitTextBox {
+	margin: 0em 0.1em;
+}
+.ih_style .dijitTextBox,
+.ih_style .dijitComboBox,
+.ih_style .dijitSpinner,
+.ih_style .dijitTextArea {
+	border: 1px solid #8ba0bd;
+	line-height: normal;
+}
+.ih_style .dijitComboBox .dijitButtonNode {
+	
+	border-color: #8ba0bd;
+	border-left: 1px solid #8ba0bd;
+}
+.ih_style .dijitTextBoxFocused {
+	border-color: #406b9b;
+}
+.ih_style .dijitButtonNode {
+	border: 1px solid #9bb4c6;
+	padding: 0.2em;
+	background:#a9d2f1;
+}
+.dj_ie .ih_style .dijitButtonNode {
+	zoom: 1;
+}
+.ih_style .dijitButtonText {
+	padding: 0 0.3em;
+}
+.ih_style .dijitComboBox .dijitButtonNode {
+	border-width: 0px 0px 0px 1px;
+}
+.ih_style .dijitButtonDisabled .dijitButtonNode {
+	cursor: default;
+}
+.ih_style .dijitButtonDisabled .dijitButtonNode,
+.ih_style .dijitDropDownButtonDisabled .dijitButtonNode {
+	border-color: #a6b8c5;
+	background: #cce3f5;
+	opacity: 0.60;
+    filter: alpha(opacity=60);/*IE6-9*/
+}
+
+.ih_style .dijitButtonHover .dijitButtonNode,
+.ih_style .dijitDropDownButtonHover .dijitButtonNode {
+	color: #000;
+	background: #7cc4fb;
+}
+.ih_style .dijitButtonActive .dijitButtonNode,
+.ih_style .dijitDropDownButtonActive .dijitButtonNode {
+	border-color: #657c9c;
+	background: #b6dbf6;
+}
+.ih_style .ihDialogButton .dijitButtonContents {
+	width: 70px !important;
+}
+.ih_style .dijitButtonNode .dijitArrowButtonInner {
+	background: url(images/spriteArrows.png) no-repeat left top;
+	width: 11px;
+	height: 11px;
+}
+.ih_style .dijitTextBox {
+	margin: 0em 0.1em;
+}
+.ih_style .dijitTextBox,
+.ih_style .dijitTextArea {
+	
+	border: 1px solid #c4c4c4;
+	line-height: normal;
+}
+
+.ih_style .dijitToolbar .dijitButtonNode {
+	background: none;
+	margin: 0px !important;
+	padding: 0px !important;	
+	border: none !important;
+	font-size: 12px;
+}
+.ih_style .dijitToolbar .dijitDropDownButton .dijitButtonContents {
+    margin: 1px;
+}
+.ih_style .dijitToolbar .dijitButton .dijitButtonContents,
+.ih_style .dijitToolbar .dijitDropDownButton .dijitButtonContents {
+	background: none;
+    margin: 1px !important;
+    
+    padding: 2px;
+	
+	border: 1px solid transparent;
+    display: block;
+}
+.ih_style .dijitToolbar .dijitButtonChecked .dijitButtonContents {
+	border: 1px solid #147ac8;
+	background:#7bc0f5;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+.ih_style .dijitToolbar .dijitButtonCheckedHover .dijitButtonContents {
+	border: 1px solid #316ac5;
+}
+.ih_style .dijitToolbar .dijitButtonHover .dijitButtonContents,
+.ih_style .dijitToolbar .dijitDropDownButtonHover .dijitButtonContents {
+	border: 1px solid #d8e4ec;
+	background-image: url(images/hover_gradient.png);
+	background-repeat: repeat-x;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.ih_style .dijitToolbar .dijitButtonText {
+	color: white;
+}
+.dj_ie .ih_style .dijitToolbar .dijitButton button,
+.dj_ie .ih_style .dijitToolbar .dijitDropDownButton button {
+	position: relative;
+	width: auto;
+	overflow: visible;
+	white-space: nowrap;
+	padding: 1px 3px;
+}
+.dj_chrome .ih_style .dijitToolbar .dijitButton button,
+.dj_chrome .ih_style .dijitToolbar .dijitDropDownButton button {
+	padding: 1px 3px;
+}
+.dj_ie6 .ih_style .dijitToolbar .dijitButton .dijitButtonContents,
+.dj_ie6 .ih_style .dijitToolbar .dijitDropDownButton .dijitButtonContents {
+	margin: 2px;
+	padding: 0px 2px;
+	border: 0px;
+}
+.dj_ie6 .ih_style .dijitToolbar .dijitButtonChecked .dijitButtonContents,
+.dj_ie6 .ih_style .dijitToolbar .dijitDropDownButtonChecked .dijitButtonContents {
+	background-color: #d8e5f8;
+	border: 1px solid #316ac5;
+	margin: 1px !important;
+	padding: 0px 2px !important;
+}
+.dj_ie6 .ih_style .dijitToolbar .dijitButtonCheckedHover .dijitButtonContents,
+.dj_ie6 .ih_style .dijitToolbar .dijitDropDownButtonCheckedHover .dijitButtonContents {
+	background-color: #9abbea;
+	border: 1px solid #316ac5;
+	margin: 1px !important;
+	padding: 0px 2px !important;
+}
+.dj_ie6 .ih_style .dijitToolbar .dijitButtonHover .dijitButtonContents,
+.dj_ie6 .ih_style .dijitToolbar .dijitDropDownButtonHover .dijitButtonContents {
+	border: 1px solid #d8e4ec;
+	margin: 1px !important;
+	background: none;
+	-border-radius: 3px;
+	padding: 0px 2px !important;
+}
+.ih_style .dijitDialog {
+	background: #fff;
+	border: 1px solid #cbcbcb;
+	-webkit-box-shadow: 0px 5px 10px #adadad;
+	padding: 0px;
+	font-family: Myriad,Arial,Helvetica,clean,sans-serif;
+	text-align: left;
+}
+.ih_style .dijitDialog .dijitDialogTitle {
+	border: none;
+	font-size: 1em;
+}
+.ih_style .dijitDialog .dijitDialogPaneContent {
+	background: #ecf6f9;
+	border: none;
+	border-left: 1px solid #bbc3cd; 
+	border-right: 1px solid #bbc3cd !important; 
+	border-bottom: 1px solid #bbc3cd; 
+	padding: 10px;
+}
+.ih_style .dijitDialog .dojoxGrid.table{
+	border:1px solid #bbc3cd !important;
+	padding-left:0 !important;
+}
+
+.ih_style .dijitDialog .dojoxGrid.table  .dojoxGridHeader{
+	border-top:none !important;
+	border-right:none !important;
+}
+
+
+.ih_style .dijitDialogTitleBar {
+	background: #a9d2f1;
+	height: 27px;
+	padding: 0px;
+	cursor: move;
+	outline: 0;
+	text-align: left;
+	line-height: 27px;
+	border: 1px solid #bbc3cd !important; 
+}
+.ih_style .dijitDialogTitle {
+	vertical-align: middle;
+	font-weight: bold;
+	color: #395974;
+	padding: 0px 12px;
+	outline: 0;
+}
+.ih_style .dijitDialogCloseIcon {
+	background-image: url('images/normal/16/dlg_close.png');
+	float: right;
+	position: absolute;
+	right: 6px;
+	top: 5px;
+	height: 16px;
+	width: 16px;
+	cursor: pointer;
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ih_style .dijitDialogContent {
+	padding: 8px;
+}
+.ih_style .dijitTooltip,
+.ih_style .dijitTooltipDialog {
+	opacity: 0.95;
+	background: transparent;	
+}
+.dijitTooltipBelow {
+	padding-top: 10px;
+}
+.dijitTooltipAbove {
+	padding-bottom: 10px;
+}
+.ih_style .dijitTooltipContainer {
+	background-color: #fff;
+	border: 1px solid #cbcbcb;
+	padding: 0.45em;
+	
+}
+.ih_style .dijitTooltipConnector {
+	border: 0px;
+	z-index: 2;
+}
+.ih_style .dijitTooltipABRight .dijitTooltipConnector {
+	left: auto !important;
+	right: 6px;
+}
+.ih_style .dijitTooltipBelow .dijitTooltipConnector {
+	top: 0px;
+	left: 6px;
+	background: url(images/tooltipConnectorUp.png) no-repeat top left;
+	width: 17px;
+	height: 11px;
+}
+.dj_ie6 .ih_style .dijitTooltipBelow .dijitTooltipConnector {
+	background-image: url(images/tooltipConnectorUp.gif);
+}
+.ih_style .dijitTooltipAbove .dijitTooltipConnector {
+	
+	bottom: 0px;
+	left: 6px;
+	background: url(images/tooltipConnectorDown.png) no-repeat top left;
+	width: 17px;
+	height: 11px;
+}
+.dj_ie6 .ih_style .dijitTooltipAbove .dijitTooltipConnector {
+	background-image: url(images/tooltipConnectorDown.gif);
+	bottom: -5px;
+}
+.ih_style .dijitTooltipLeft {
+	padding-right: 10px;
+}
+.dj_ie6 .ih_style .dijitTooltipLeft {
+	padding-left: 11px;
+}
+.ih_style .dijitTooltipLeft .dijitTooltipConnector {
+	
+	right: 0px;
+	bottom: 7px;
+	background: url(images/tooltipConnectorRight.png) no-repeat top left;
+	width: 11px;
+	height: 17px;
+}
+.dj_ie6 .ih_style .dijitTooltipLeft .dijitTooltipConnector {
+	background-image: url(images/tooltipConnectorRight.gif);
+}
+.ih_style .dijitTooltipRight {
+	padding-left: 10px;
+}
+.ih_style .dijitTooltipRight .dijitTooltipConnector {
+	left: 0px;
+	bottom: 7px;
+	background: url(images/tooltipConnectorLeft.png) no-repeat top left;
+	width: 11px;
+	height: 17px;
+}
+.dj_ie6 .ih_style .dijitTooltipRight .dijitTooltipConnector {
+	background-image: url(images/tooltipConnectorLeft.gif);
+}
+.ih_style .dijitMenuItemIcon {
+	display: none;
+}
+
+.ih_style .view_menu_container{
+	width:160px;
+	padding-bottom:10px!important;
+}
+
+.ih_style .dijitMenuBorder {
+    margin: 0;
+	border: 1px solid #979797;
+	background-color: #f1f1f1;
+	display: inline-block;
+    overflow: inherit;
+}
+.ih_style .dijitMenu {
+	font-size: 16px;
+	border: none;
+	margin: 0px;
+	padding: 0px;
+	background-color: #f1f1f1;
+}
+.ih_style .dijitMenuPreviousButton, .ih_style .dijitMenuNextButton {
+	font-style: italic;
+}
+.ih_style .dijitMenuItem TD {
+	border: 0px solid #f1f1f1;
+	border-width: 1px 0px;
+	color: black;
+	height: 20px !important;
+	margin: 0px;
+	padding: 1px;
+}
+html>body .ih_style .dijitMenuItem TD {
+	border-color: transparent;
+}
+.ih_style .dijitMenuItem TD.dijitMenuFirstChild {
+	border-left-width: 1px;
+	-moz-border-radius: 3px 0 0 3px;
+	     border-radius: 3px 0 0 3px;
+}
+.ih_style .dijitMenuItem TD.dijitMenuLastChild {
+	border-right-width: 1px;
+	width: 15px;
+	min-width: 15px;
+	-moz-border-radius: 0 3px 3px 0;
+	     border-radius: 0 3px 3px 0;
+}
+.ih_style .dijitMenuItem.dijitMenuItemDisabledFocused TD,
+html>body .ih_style .dijitMenuItem.dijitMenuItemDisabledFocused TD {
+	border-color: #d4d3d3;
+	background-color: #ebecec;
+}
+.ih_style .dijitMenuItemHover {
+	cursor: default;
+}
+.ih_style .dijitMenuItem.dijitMenuItemHover TD,
+html>body .ih_style .dijitMenuItem.dijitMenuItemHover TD {
+	border-color: #5db8fd !important;
+	background-color: #c3e3f2;
+}
+.ih_style .dijitMenuItemIconSpacer, .ih_style .dijitMenuItemIcon {
+	width: 21px;
+	height: 15px;
+	line-height: 15px;
+}
+.ih_style .dijitMenuSeparatorIconCell {
+	width: 21px;
+	background: url(images/menuSeparatorIconBg.gif) #f1f1f1 right repeat-y;
+}
+.ih_style .dijitMenuItemHover .dijitMenuItemIconCell {
+	background: url(images/menuSeparatorHoverIconBg.gif) #e0edf3 right repeat-y;
+}
+.ih_style .dijitMenuItemIconCell {
+	font-size: 0px;
+	width: 21px !important;
+	background: url(images/menuSeparatorIconBg.gif) #f1f1f1 right repeat-y;
+}
+.ih_style .dijitMenuItemLabel {
+	position: inherit;
+	padding-right: 15px !important;
+	white-space: nowrap;
+	padding-left: 4px !important;
+}
+.ih_style .dijitMenuExpand {
+	float: right;
+	width: 15px;
+	height: 15px;
+	background: url(images/spriteRoundedIconsSmall.png) no-repeat -30px top;
+	display: block;
+}
+.dj_ie6 .ih_style .dijitMenuExpand {
+	background-image: url(images/spriteRoundedIconsSmall.gif);
+}
+.dijitMenuExpandA11y {
+	display: none;
+}
+.ih_style .dijit_a11y .dijitMenuExpandA11y {
+	display: inline;
+}
+.ih_style .dijitMenuExpandInner {
+	display: none;
+}
+.ih_style .dijitMenuSeparator {
+	background-color: #f1f1f1;
+}
+.ih_style .dijitMenuSeparatorTop {
+	cursor: default;
+	border-bottom: 1px solid #e0e0e0;
+}
+.ih_style .dijitMenuSeparatorBottom {
+	cursor: default;
+	border-top: 1px solid #ffffff;
+}
+.dijitIEFixedToolbar {
+	position: absolute;
+	top: expression(eval((document.documentElement||document.body).scrollTop));
+}
+.ih_style .dijitToolbar .dijitToolbarSeparator {
+	background: url(images/toolbarSeparator.png);
+}
+.ih_style .upload_iframe {
+	display: none;
+	position: absolute;
+	top: -1000px;
+	left: -1000px;
+}
+.ih_style .uploadContainer {
+	position: relative;
+	height: 20px;
+	width: 100%;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	overflow: hidden;
+}
+.ih_style .uploadContainer button {
+    box-sizing: border-box;
+}
+.ih_style .uploadPanel {
+    margin-top: 7px;
+    white-space: nowrap;
+}
+.ih_style .uploadPanel table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.ih_style .uploadFileName {
+	width: 100%;
+	height: 18px;
+	margin: 0px;
+	border: 1px solid gray;
+}
+.dj_quirks .ih_style .uploadFileName {
+	height: 20px !important;
+}
+.ih_style .hiddenFileField {
+	position: absolute;
+	opacity: 0;
+	filter: alpha(opacity=0);
+	-moz-opacity: 0;
+	top: 1px;
+	right: 0px;
+	z-index: 2;
+	cursor: pointer !important;
+	outline: none;
+	height: 18px;
+}
+.dj_iequirks .ih_style .hiddenFileField {
+	height: 20px !important;
+}
+.ih_style .hiddenFileField[disabled] {
+	cursor: default !important;
+}
+.ih_style .uploadButtons {
+	width: 100% !important;
+	height: 20px !important;
+	padding: 0px !important;
+}
+.ih_style .uploadButtons[disabled] {
+	color: #999999;
+	cursor: default !important;
+	-moz-opacity: 0.6;
+	filter: alpha(opacity=60);
+	opacity: 0.6;
+}
+.ih_style .addressBarLine table table {
+    border-collapse: collapse;
+}
+.ih_style .searchBar .separator {
+    width: 9px;
+}
+.ih_style .searchBar .separator div {
+    width: 1px;
+    height: 16px;
+    border-left: solid 1px #47a4eb;
+    float: right;
+}
+.ih_style .searchBar .inputContainer {
+    position: relative;
+    padding: 0 1px 0 8px;
+}
+.ih_style .searchBar input::-ms-clear {
+    display: none;
+}
+.ih_style .searchBar .button-clear {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAABqSURBVHjahM+xDcIADATACwIGYBMkNgkrJEpPmZYyfbJE1mAHRknlNEayKMCSpf+3/Xo3EeFn5cKCrsg95ohwTOGFEVvyB57VAe54Z7ef2aHYngo+f2cYymWbeKgZrpiwJr/gBs2/N/cBAH6NJFwtdqLxAAAAAElFTkSuQmCC");
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.dj_ie .ih_style .searchBar .button-clear {
+    top: 2px;
+    right: 3px;
+}
+.dj_ie .ih_style .searchBar .dijitTextBox {
+    height: 16px;
+}
+.ih_style .searchBar td {
+    vertical-align: top;
+}
+.ih_style .searchBar td.searchLabel, .ih_style .searchBar td.separator {
+    vertical-align: middle;
+}
+.ih_style .searchBar .dijitTextBox {
+    margin: 0;
+}
+.ih_style .searchBar .dijitComboBox {
+    width: auto;
+    border: 1px solid #9fc4e3;
+}
+.ih_style .searchBar .dijitDisabled .dijitInputField .dijitInputInner {
+    background-color: #ddd;
+}
+.ih_style .searchBar .dijitComboBox, .ih_style .searchBar .dijitInputField .dijitInputInner {
+    background-color: #ecf6f9 !important;
+}
+.ih_style .searchBar .dijitInputField .dijitInputInner {
+    width: 97%;
+    height: 14px;
+    box-sizing: content-box;
+}
+.ih_style .addressBarLine {
+	background-color: #add5f3;
+	padding: 2px;
+	padding-left: 4px;
+	height: 22px !important;
+}
+.dj_iequirks .ih_style .addressBarLine {
+	height: 26px;
+}
+.ih_style .addressBar {
+	width: 100%;
+	background: none;
+	height: 14px;
+	margin: 0px !important;
+	padding: 2px;
+	background-color: #ecf6f9 !important;
+	border: 1px solid #9fc4e3;
+}
+.dj_quirks .ih_style .addressBar {
+	height: 20px;
+}
+.ih_style .addressGoButton {
+	width: 16px;
+	height: 16px;
+	margin: 0px;
+	padding: 0px;
+	border: 0px;
+	background-color: transparent !important;
+	background-color: #b9d1ea;
+	background-image: url(images/normal/16/_go.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+}
+
+.ih_style .addressGoContainer {
+	width: 16px;
+	height: 16px;
+	margin: 0px;
+	padding: 2px;
+	border: 1px solid transparent;
+}
+
+.ih_style .addressGoContainer:hover{
+	background: #ecf6f9;
+	border:1px solid #fff !important;
+	-moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.ih_style .addressGoContainer:active{
+	background: #fff;
+	border:1px solid #fff !important;
+	-moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.ih_style .invisibleTextfieldWrapper {
+	overflow: hidden;
+}
+.ih_style .invisibleTextfield {
+	background-color: transparent;
+	text-overflow: ellipsis;
+	width: 100%;
+	border: none;
+	margin: 0px;
+	padding: 1px;
+	height: 17px;
+}
+
+.ih_style .treePane {
+	background-color: #FFFFFF;
+}
+
+.ih_style .dialogMessageDiv {
+	padding: 3px;
+	border: 1px solid #CCCCCC;
+	background-color: #EEEEEE;
+}
+.ih_style .dijitMenuPassive {
+    overflow: visible;
+}
+.ih_style .checked_menuitem_icon {
+    width: 16px;
+    height: 16px;
+    background: url('images/normal/16/dlg_ok_alt.png');
+    border: 0px;
+}
+
+.dj_chrome .ih_style .checked_menuitem_icon{
+    content: url('images/blank_1.gif') !important;
+}
+
+.ih_style .resizeGrip {
+    display: none;
+    width: 1px;
+}
+
+.ih_style .messageError, .ih_style .messageWarning, .ih_style .messageSuccess {
+    padding: 8px 35px 8px 14px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-width: 1px;
+    border-style: solid;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.ih_style .messageError {
+    color: #b94a48;
+    background-color: #f2dede;
+    border-color: #eed3d7;
+}
+.ih_style .messageWarning {
+    color: #c09853;
+    background-color: #fcf8e3;
+    border-color: #fbeed5;
+}
+.ih_style .messageSuccess {
+    color: #468847;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+/* Properties dialog */
+.ih_style .itemInfoName {
+    width: 84px; 
+    margin: auto;
+    white-space:nowrap;
+}
+
+.ih_style .itemInfoName .folder{
+	background-image: url("images/normal/32/folder.png") !important;
+}
+
+.ih_style .itemInfoName .folder{
+	background-image: url("images/normal/32/folder.png") !important;
+}
+
+.ih_style .quota {
+    width: 100%;
+}
+.ih_style .itemInfoQuotaBytes {
+    width: 160px; 
+    text-align: left;
+}
+.ih_style .itemInfoQuota {
+    width: 80px; 
+    text-align: right;
+}
+
+/* For ComboBox dojo widget */
+.ih_style .dijitInputContainer {
+    overflow: hidden;
+    float: none !important;
+    position: relative;
+    vertical-align: middle;
+}
+.ih_style .dijitTextBox .dijitValidationContainer {
+    display: none;
+}
+.ih_style .dijitArrowButtonContainer {
+    display: none;
+}
+.ih_style .dijitComboBoxMenu {
+    list-style-type: none;
+}
+.ih_style .dijitComboBoxMenuPopup {
+    border: 1px solid #ccc;
+    border-top: none;
+    background-color: #fff;
+}
+.ih_style .dijitComboBoxMenuPopup .dijitMenu {
+    background-color: #fff;
+}
+.ih_style .dijitTextBox .dijitSpinnerButtonContainer,
+.ih_style .dijitTextBox .dijitArrowButtonContainer,
+.ih_style .dijitTextBox .dijitValidationContainer {
+    float: right;
+    text-align: center;
+}
+.ih_style .dijitComboBoxMenu .dijitMenuItem {
+    padding: 2px;
+    border-width: 1px 0 1px 0;
+    border-style: solid;
+    border-color: #ffffff;
+    cursor: pointer;
+
+}
+.ih_style .dijitComboBoxMenu .dijitMenuItemSelected {
+    border-color: #5db8fd !important;
+    background-color: #c3e3f2;
+}
+
+.ih_style .dojoxGrid {
+	position: relative;
+	background-color: #e9e9e9;
+	-moz-outline-style: none;
+	outline: none;
+	overflow: hidden;
+	height: 0;
+	border: none;
+}
+
+.ih_style .thumb_block, .ih_style .thumb_block tr, .ih_style .thumb_block tr td {
+	width: 100%;
+	border: 0px;
+	padding: 0px;
+	margin: 0;
+	border-collapse: collapse;
+	outline: none;
+}
+
+.ih_style .grid_lock {
+    position:absolute;
+    width: 20px;
+    height: 18px;
+    background: url('images/normal/10/lock.png') no-repeat right bottom;
+}
+
+/* ------------------- */
+/*     Table block     */
+/* ------------------- */
+
+.ih_style .dojoxGrid.table{
+	margin-left: 1px;
+}
+
+.ih_style .table .alignCenter {
+	text-align: center;
+}
+
+.ih_style .table .alignRight {
+	text-align: right;
+}
+
+.ih_style .table .dojoxGrid table {
+	padding: 0;
+}
+.ih_style .table .dojoxGrid td {
+	-moz-outline: none;
+}
+.ih_style .table .dojoxGridMasterHeader {
+	position: relative;
+}
+.ih_style .table .dojoxGridMasterView  {
+	position: relative;
+}
+.ih_style .dojoxGridMasterMessages {
+	position: relative;
+	padding: 1em;
+	text-align: center;
+	background-color: white;
+}
+.ih_style .table .dojoxGridView {
+	position: absolute;
+	overflow: hidden;
+}
+.ih_style .table .dojoxGridHeader {
+	position: absolute;
+	overflow: hidden;
+	cursor: default;
+	height: 21px;
+	background:#ecf6f9;
+	border-bottom:1px solid #bbc3cd;
+	border-top:1px solid #bbc3cd;
+}
+.ih_style .table .dojoxGridHeader table {
+	text-align: center;
+}
+.ih_style .table .dojoxGridHeader .dojoxGridCell {
+	height: 23px;
+	border: none;
+	border-left: 1px solid #c8cfd9;
+	border-right: 1px solid #c8cfd9;
+	font-weight: normal !important;
+	color: #000;
+	outline: none;
+	-moz-outline-style: none;
+}
+.ih_style .dojoxGridResizeColLine {
+	width: 1px;
+	background-color: #777;
+	position: absolute;
+	cursor: col-resize;
+	z-index:10000;
+}
+.ih_style .dojoxGridColNoResize, 
+.ih_style .dojoxGridColNoResize .dojoDndItemOver {
+	cursor: not-allowed !important;
+}
+.ih_style .dojoxGridColResize, 
+.ih_style .dojoxGridColResize .dojoDndItemOver,
+.ih_style .dojoxGridColumnResizing,
+.ih_style .dojoxGridColumnResizing .dojoDndItemOver,
+.ih_style .dojoxGridColumnResizing .dojoxGridHeader {
+	cursor: col-resize !important;
+}
+.ih_style .table .dojoxGridHeader .dojoxGridCellOver {
+	background: url(images/gridTitleBarActive.png) #f2f9fc repeat-x top;
+	border-color: white #96d9f9 #96d9f9 #96d9f9 !important;
+}
+.ih_style .table .dojoxGridSortDown {
+	background: url(images/grid_sort_down.gif) center top no-repeat;
+	padding-left: 0px;
+	margin-left: 0px;
+}
+.ih_style .table .dojoxGridSortUp {
+	background: url(images/grid_sort_up.gif) center top no-repeat;
+	padding-left: 0px;
+	margin-left: 0px;
+}
+.ih_style .table .dojoxGridArrowButtonChar {
+	display:none !important;
+}
+.ih_style .table .dojoxGridScrollbox {
+	position: relative;
+	overflow: auto;
+	background-color: #fefefe;
+	width: 100%;
+}
+.ih_style .table .dojoxGridContent {
+	position: relative;
+	overflow: hidden;
+	 -moz-outline-style: none;
+	outline: none;
+	cursor: default;
+}
+.ih_style .table .dojoxGridContent>div:first-child {
+	padding-top: 1px;
+}
+.ih_style .table .dojoxGridRowbar {
+	border: none;
+	background: #ecf6f9;
+	border:1px solid #c8cfd9;
+	margin: 0px;
+	padding: 0px;
+}
+.ih_style .table .dojoxGridRowbarInner {
+	border: none;
+	border-bottom: 1px solid #cccccc;
+}
+.ih_style .table .dojoxGridRowbarOver {
+	background: url(images/gridTitleBarActive.png) #e9e9e9 repeat-y right;
+}
+.ih_style .table .dojoxGridRowbarSelected {
+	background-color: #D9E8F9;
+	background-image: none;
+	background: url(images/gridTitleBar.png) #dddddd repeat-x top;
+	border-right: 1px solid #cccccc;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.ih_style .table .dojoxGridRow {
+	height: 20px;
+	position: relative;
+	margin-top: -1px;
+	border: 1px solid transparent;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+    font-size: 11px;
+}
+.ih_style .table .dojoxGridRow div {
+    font-size: inherit;
+}
+.ih_style .table .dojoxGridRowOver, .ih_style .table .dojoxGridRow.dnd_target.drag_over {
+	background-color: #f4fafd;
+	border: 1px solid #7cc8fd !important;
+}
+.ih_style .table .dojoxGridRowOver .dojoxGridCell {}
+.ih_style .table .dojoxGridRowOdd {}
+.ih_style .table .dojoxGridRowSelected {
+	background-color: #cce9f8;
+	border: 1px solid #67c0ff !important;
+}
+.ih_style .table .dojoxGridRowSelected.dojoxGridRowOver, .ih_style .table .dojoxGridRowSelected.dnd_target.drag_over {
+	background-color: #b3e2fa;
+	border: 1px solid #4ab3fe !important;
+}
+.ih_style .table .dojoxGridRowSelected .dojoxGridCell.last-child {
+	border-right-color: #cecece;
+}
+.ih_style .table .dojoxGridRowTable {
+	table-layout: fixed;
+	width: 0;
+	empty-cells: show;
+	border-collapse: collapse;
+}
+.ih_style .table .dojoxGridInvisible {
+	visibility: hidden;
+}
+.ih_style .table .Xdojo-ie .dojoxGridInvisible {
+	display: none;
+}
+.ih_style .table .dojoxGridInvisible td, .dojoxGridHeader .dojoxGridInvisible td {
+	border-top-width: 0;
+	border-bottom-width: 0;
+	padding-top: 0;
+	padding-bottom: 0;
+	height: 0;
+	overflow: hidden;
+}
+.ih_style .table .dojoxGridCell {
+	border: none;
+	border-right-width: 0px 1px;
+	text-align: left;
+	white-space: nowrap !important;
+	-moz-outline-style: none;
+	outline: none;
+	overflow: hidden !important;
+	height: 20px;
+	font: inherit;
+	padding: 0px;
+}
+.ih_style .table .dojoxGridCell:first-child {
+	border-left: none;
+}
+.ih_style .table .dojoxGridContent .dojoxGridCell {
+	cursor: default !important;
+}
+.dj_ie6 .ih_style .table .dojoxGridCell {}
+.ih_style .table .dojoxGridCellFocus {}
+.ih_style .table .dojoxGridCellOver {}
+.ih_style .table .dojoxGridCellFocus.dojoxGridCellOver {}
+.ih_style .table .dojoxGridCellClip {
+	width: 100%;
+	overflow: hidden;
+	white-space:nowrap;
+	text-overflow: ellipsis;
+}
+.ih_style .table .dojoxGridRowEditing td {
+	background-color: #60a1ea; 
+	
+}
+.ih_style .table .dojoxGridRowInserting td {
+	background-color: #F4FFF4;
+}
+.ih_style .table .dojoxGridRowInflight td {
+	background-color: #F2F7B7;
+}
+.ih_style .table .dojoxGridRowError td {
+	background-color: #F8B8B6;
+}
+.ih_style .table .dojoxGridInput,
+.ih_style .table .dojoxGridSelect,
+.ih_style .table .dojoxGridTextarea {
+	margin: 0;
+	padding: 0px;
+	border-style: none;
+	width: 100%;
+	font-size: 100%;
+	font-family: inherit;
+}
+.ih_style .table .dijitGrid-rightAlignContainer {
+	width:100%;
+	position:relative;
+	height: 20px;
+	overflow: hidden;
+}
+.ih_style .table .dijitGrid-rightAlignText {
+	white-space: nowrap;
+	position: absolute;
+	top: 3px;
+	right: 0px;
+}
+.ih_style .table .thumb-block {
+	text-align: center;
+}
+.ih_style .table .dojoxGridCellData {
+	cursor: default;
+	white-space: nowrap !important;
+	margin: 0;
+	padding: 0;
+}
+.ih_style .table .dojoxGridCellSpacer {
+	margin: 0px 3px;
+	overflow: hidden;
+}
+.ih_style .table img {
+	width: 16px;
+	height: 16px;
+	padding: 0px;
+	margin: auto;
+	vertical-align: middle;
+	outline: none;
+	border: none;
+}
+.ih_style .table .folder, .ih_style .table .resource {
+	width: 16px;
+	height: 16px;
+	background-repeat: no-repeat;
+	border: none;
+	margin: 0;
+	margin-left: auto;
+	margin-right: auto;
+}
+.dj_ie6 .ih_style .table .folder, .dj_ie6 .ih_style .table .resource, .dj_ie6 .ih_style .table img {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+}
+.ih_style .table .folder {
+	background-image: url('images/normal/16/folder.png');
+}
+
+.ih_style .table .resource {
+	background-image: url('images/normal/16/file.png');
+}
+.dojoxGridColPlaceTop, .dojoxGridColPlaceBottom {
+	font-size:1px;
+	height:6px;
+	z-index:10000;
+	top:0;
+	overflow:hidden;
+	position:absolute;
+	line-height:1px;
+	width:8px;
+}
+
+.dojoxGridColPlaceTop, .dojoxGridColPlaceBottom {
+	font-size:1px;
+	height:6px;
+	z-index:10000;
+	top:0;
+	overflow:hidden;
+	position:absolute;
+	line-height:1px;
+	width:8px;
+}
+.dojoxGridHiddenFocus {
+	position: absolute;
+	top: -1000px;
+	height: 0px;
+	width: 0px;
+}
+
+.dojoxGridResizeColLine {
+	width: 1px;
+	background-color: #777;
+	position: absolute;
+}
+
+/* ------------------ */
+/*  Thumbnails block  */
+/* ------------------ */
+
+.ih_style .thumb .thumb_block, .ih_style .thumb .thumb_block tr, .ih_style .thumb .thumb_block tr td {
+	height: 100%;
+}
+
+.ih_style .thumb table.thumb_block tr td {
+	padding: auto;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.ih_style .thumb .dojoxGridMasterHeader {
+	position: relative;
+}
+.ih_style .thumb .dojoxGridHeader {
+	display: none;
+}
+
+.ih_style .thumb .dojoxGridMasterView {
+	position: relative;
+}
+
+.ih_style .thumb .dojoxGridView {
+	position: absolute;
+	overflow: hidden;
+}
+.ih_style .thumb .dojoxGridScrollbox {
+	position: relative;
+	overflow: auto;
+	background-color: #FFFFFF;
+	width: 100%;
+	
+}
+.ih_style .thumb .dojoxGridContent {
+	position: relative;
+	overflow: hidden;
+}
+
+.ih_style .thumb .dojoxGridRow {
+	border: 1px solid transparent !important;
+	border: 1px solid #FFFFFF;
+	float: left;
+	margin: 2px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.ih_style .thumb .dojoxGridTr {
+	width: 100%;
+	margin: auto;
+}
+.ih_style .thumb .dojoxGridCell {
+	border: none;
+	overflow: hidden;
+	width: 100% !important;
+	text-align: center;
+	cursor: default;
+	 -moz-outline-style: none;
+	outline: none;
+}
+.ih_style .thumb .dojoxGridRowOdd {
+	background-color: transparent;
+}
+.ih_style .thumb .dojoxGridRowOver, .ih_style .thumb .dnd_target.drag_over {
+	background-color: #f4fafd;
+	border: 1px solid #d8f0fa !important;
+}
+.ih_style .thumb .dojoxGridRowSelected {
+	background-color: #eff8fd;
+	border: 1px solid #99defd !important;
+}
+.ih_style .thumb .dojoxGridRowSelected.dojoxGridRowOver, .ih_style .thumb .dojoxGridRowSelected.dnd_target.drag_over {
+	background-color: #e7f5fd;
+	border: 1px solid #b6e6fb !important;
+}
+.ih_style .thumb .dojoxGridCellFocus {
+	border: none;
+}
+.ih_style .thumb .dojoxGridCellOver {
+	border: none;
+}
+.ih_style .thumb .image_preview {
+	border: 1px solid #8e8e8e;
+	background-color: white;
+	visibility:hidden;
+	vertical-align: bottom;
+	outline: none;
+}
+.dj_ie6 .ih_style .thumb .image_preview {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+}
+.ih_style .thumb .thumb_block tr td {
+	vertical-align: bottom;
+}
+.dj_ie6 .ih_style .thumb img {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+}
+
+/** EXTRA LARGE **/
+
+/* div */
+.ih_style .thumb .elarge .dojoxGridRow {
+	width: 270px;
+	height: 276px;
+	margin: 3px;
+	margin-bottom: 33px;
+}
+/* image block */
+.ih_style .thumb .elarge .image {
+	height: 258px;
+	text-align: center;
+}
+/* image */
+.ih_style .thumb .elarge img {
+	padding: 5px;
+	margin-bottom: 10px;
+}
+/* text */
+.ih_style .thumb .elarge .name {
+	height: 18px;
+	line-height: 18px;
+	text-overflow: ellipsis;
+}
+
+.ih_style .thumb .elarge .folder, .ih_style .thumb .elarge .resource {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+	width: 256px;
+	height: 256px;
+	background-repeat: no-repeat;
+	margin: auto;
+	margin-bottom: 10px !important;
+}
+.ih_style .thumb .elarge .folder {
+	background-image: url('images/normal/256/_folder.png');
+}
+.ih_style .thumb .elarge .resource {
+	background-image: url('images/normal/256/_file.png');
+}
+
+
+.ih_style .thumb .elarge .dojoxGridRowOver, .ih_style .thumb .elarge .dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_over_el.gif');
+	background-repeat: repeat-x;
+}
+.ih_style .thumb .elarge .dojoxGridRowSelected {
+	background-image: url('images/grid_bg/thumb_bg_selected_el.gif');
+	background-repeat: repeat-x;
+	
+}
+.ih_style .thumb .elarge .dojoxGridRowSelected.dojoxGridRowOver, .ih_style .thumb .elarge .dojoxGridRowSelected.dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_selected_over_el.gif');
+	background-repeat: repeat-x;
+}
+
+/** LARGE **/
+
+/* div */
+.ih_style .thumb .large .dojoxGridRow {
+	width: 104px;
+	height: 116px;
+	margin: 3px;
+	margin-bottom: 27px;
+}
+/* image block */
+.ih_style .thumb .large .image {
+	height: 98px;
+	text-align: center;
+}
+/* image */
+.ih_style .thumb .large img {
+	padding: 2px;
+	margin-bottom: 5px;
+}
+/* text */
+.ih_style .thumb .large .name {
+	height: 18px;
+	line-height: 18px;
+	text-overflow: ellipsis;
+}
+
+.ih_style .thumb .large .folder, .ih_style .thumb .large .resource {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+	width: 64px;
+	height: 64px;
+	background-repeat: no-repeat;
+	margin: auto;
+	margin-bottom: 5px !important;
+}
+.ih_style .thumb .large .folder {
+	background-image: url('images/normal/64/_folder.png');
+}
+.ih_style .thumb .large .resource {
+	background-image: url('images/normal/64/_file.png');
+}
+
+.ih_style .thumb .large .dojoxGridRowOver, .ih_style .thumb .large .dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_over_l.gif');
+	background-repeat: repeat-x;
+}
+.ih_style .thumb .large .dojoxGridRowSelected {
+	background-image: url('images/grid_bg/thumb_bg_selected_l.gif');
+	background-repeat: repeat-x;
+	
+}
+.ih_style .thumb .large .dojoxGridRowSelected.dojoxGridRowOver, .ih_style .thumb .large .dojoxGridRowSelected.dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_selected_over_l.gif');
+	background-repeat: repeat-x;
+}
+
+/** MEDIUM **/
+
+/* div */
+.ih_style .thumb .medium .dojoxGridRow {
+	width: 74px;
+	height: 68px;
+	margin: 3px;
+	margin-bottom: 18px;
+}
+/* image block */
+.ih_style .thumb .medium .image {
+	height: 50px;
+	text-align: center;
+}
+/* image */
+.ih_style .thumb .medium img {
+	padding: 1px;
+	margin-bottom: 4px;
+}
+/* text */
+.ih_style .thumb .medium .name {
+	height: 18px;
+	line-height: 18px;
+	text-overflow: ellipsis;
+}
+
+.ih_style .thumb .medium .folder, .ih_style .thumb .medium .resource 
+{
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+	width: 32px;
+	height: 32px;
+	background-repeat: no-repeat;
+	margin: auto;
+	margin-bottom: 4px !important;
+}
+.ih_style .thumb .medium .folder {
+	background-image: url('images/normal/32/_folder.png');
+}
+.ih_style .thumb .medium .resource {
+	background-image: url('images/normal/32/_file.png');
+}
+
+
+.ih_style .thumb .medium .dojoxGridRowOver, .ih_style .thumb .medium .dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_over_m.gif');
+	background-repeat: repeat-x;
+}
+.ih_style .thumb .medium .dojoxGridRowSelected {
+	background-image: url('images/grid_bg/thumb_bg_selected_m.gif');
+	background-repeat: repeat-x;
+	
+}
+.ih_style .thumb .medium .dojoxGridRowSelected.dojoxGridRowOver, .ih_style .thumb .medium .dojoxGridRowSelected.dnd_target.drag_over {
+	background-image: url('images/grid_bg/thumb_bg_selected_over_m.gif');
+	background-repeat: repeat-x;
+}
+
+/* ********************* */
+/* Upload manager images */
+/* ********************* */
+
+.ih_style .table .upload_status, .ih_style .table .queue_status, .ih_style .table .error_status, .ih_style .table .pause_status {
+	filter: expression(ITHit.WebDAV.Client.AjaxFileBrowser.Utils.FixPNG(this));
+	width: 16px;
+	height: 16px;
+	margin: auto;
+	margin-left: 0px;
+	background-repeat: no-repeat;
+}
+
+.ih_style .table .upload_status {
+	background-image: url('images/normal/16/uploading.png');
+}
+
+.ih_style .table .queue_status {
+	background-image: url('images/normal/16/upload_waiting.png');
+}
+
+.ih_style .table .error_status {
+	background-image: url('images/normal/16/upload_failed.png');
+}
+
+.ih_style .table .pause_status {
+	background-image: url('images/normal/16/upload_pause.png');
+}
+
+.ih_style .table .error_percent {
+	color: red;
+}
+
+.ih_style .table .pause_percent {
+	color: brown;
+}
+
+.ih_style .table .progress_bar {
+	height: 6px;
+	padding: 0px;
+	border: 1px solid #CCCCCC;
+	font-size: 0px;
+	margin: auto;
+	overflow: hidden; 
+}
+
+.ih_style .table .progress {
+	background-color: lightblue;
+	height: 100%;
+	width: 0%;
+	font-size: 0px;
+}
+
+.ih_style .table .complite {
+	background-color: #879fae;
+}
+
+.ih_style .table .error {
+	background-color: red;
+}
+.ih_style .ithitThumbnailViewContainer {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+	background-color: #FFFFFF;
+}
+
+.ih_style .thumbnailItem {
+	border: 1px solid transparent !important;
+	border: 1px solid #FFFFFF;
+	float: left;
+	margin: 2px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.ih_style .iconContainer, .ih_style .nameContainer {
+	border: none;
+	overflow: hidden;
+	width: auto !important;
+	text-align: center;
+	cursor: default;
+	 -moz-outline-style: none;
+	outline: none;
+}
+/* text */
+.ih_style .thumbnailItem .nameContainer {
+	height: 18px;
+	line-height: 18px;
+	text-overflow: ellipsis;
+	margin: auto 2px;
+}
+.ih_style .iconContainer table {
+	margin: 0px;
+	width: 100%;
+	height: 100%;
+	border-collapse: collapse;
+}
+.ih_style .iconContainer table td {
+	text-align: center;
+	vertical-align: bottom;
+}
+.ih_style .iconContainer img {
+	vertical-align: middle;
+	padding: 0px;
+	margin: auto;
+	margin-bottom:0px !important;
+}
+.ih_style .thumbnailItem {
+	background-repeat: repeat-x;
+}
+.ih_style .thumbnailItem:hover, .ih_style .thumbnailItem.dnd_target.drag_over {
+	background:#d8e9fd;
+	border:1px solid #b8c7d8 !important;
+}
+.ih_style .thumbnailItem.selected {
+	background:#d6dee7;
+	border:1px solid #acbccf !important;
+}
+.ih_style .thumbnailItem.selected:hover, .ih_style .thumbnailItem.selected.dnd_target.drag_over {
+	border:1px solid #99aabf !important;
+}
+.ih_style .image_preview {
+	border: 1px solid #8e8e8e;
+	background-color: white;
+	visibility:hidden;
+	vertical-align: bottom;
+	outline: none;
+}
+
+.ih_style .thumbnailItem .iconContainer .folder, .ih_style .thumbnailItem .iconContainer .resource {
+	display: inline-block;
+	background-repeat: no-repeat;
+	margin: auto;
+	vertical-align: bottom;
+}
+
+
+.ih_style .thumbnailItem:hover, .ih_style .thumbnailItem.dnd_target.drag_over {
+	background-color: #f4fafd;
+	border: 1px solid #7cc8fd !important;
+}
+.ih_style .thumbnailItem.selected {
+	background-color: #cce9f8;
+	border: 1px solid #67c0ff !important;
+}
+.ih_style .thumbnailItem.selected:hover, .ih_style .thumbnailItem.selected.dnd_target.drag_over {
+	background-color: #b3e2fa;
+	border: 1px solid #4ab3fe !important;
+}
+
+.ih_style .thumbnailLockContainer {
+    position: absolute;
+    width: 0px;
+    height: 0px;
+}
+.ih_style .thumbnailLockContainer .lock {
+    position: relative;
+    background-position: right bottom;
+    background-repeat: no-repeat;
+}
+
+
+/** EXTRA LARGE **/
+
+/* div */
+.ih_style .elarge .thumbnailItem {
+	width: 270px;
+	height: 276px;
+	margin: 3px;
+	margin-bottom: 33px;
+}
+/* image block */
+.ih_style .elarge .iconContainer {
+	height: 258px;
+	line-height: 258px;
+}
+/* image */
+.ih_style .elarge img {
+	padding: 5px;
+	margin-bottom: 10px;
+}
+/* lock */
+.ih_style .elarge .thumbnailLockContainer .lock {
+    width: 72px;
+    height: 72px;
+    top: -72px;
+    left: 198px;
+    background: url('images/normal/72/_lock.png');
+}
+
+.ih_style .elarge .folder, .ih_style .elarge .resource {
+	width: 256px;
+	height: 256px;
+	margin-bottom: 10px !important;
+}
+.ih_style .elarge .folder {
+	background-image: url('images/normal/256/folder.png');
+}
+.ih_style .elarge .resource {
+	background-image: url('images/normal/256/file.png');
+}
+
+
+
+/** LARGE **/
+
+/* div */
+.ih_style .large .thumbnailItem {
+	width: 104px;
+	height: 116px;
+	margin: 3px;
+	margin-bottom: 27px;
+}
+/* image block */
+.ih_style .large .iconContainer {
+	height: 98px;
+	line-height: 98px;
+}
+/* image */
+.ih_style .large img {
+	padding: 2px;
+	margin-bottom: 5px;
+}
+/* lock */
+.ih_style .large .thumbnailLockContainer .lock {
+    width: 48px;
+    height: 48px;
+    top: -48px;
+    left: 56px;
+    background: url('images/normal/48/_lock.png');
+}
+
+.ih_style .large .folder, .ih_style .large .resource {
+	width: 72px;
+	height: 72px;
+	margin-bottom: 5px !important;
+}
+.ih_style .large .folder {
+	background-image: url('images/normal/72/folder.png');
+}
+.ih_style .large .resource {
+	background-image: url('images/normal/72/file.png');
+}
+
+/** MEDIUM **/
+
+/* div */
+.ih_style .medium .thumbnailItem {
+	width: 74px;
+	height: 68px; 
+	margin: 3px;
+	margin-bottom: 18px;
+}
+/* image block */
+.ih_style .medium .iconContainer {
+	height: 51px;
+	line-height: 51px;
+}
+/* image */
+.ih_style .medium img {
+	padding: 1px;
+	margin-bottom: 4px;
+}
+/* lock */
+.ih_style .medium .thumbnailLockContainer .lock {
+    width: 24px;
+    height: 24px;
+    top: -24px;
+    left: 50px;
+    background: url('images/normal/24/_lock.png');
+}
+
+.ih_style .medium .folder, .ih_style .medium .resource {
+	width: 32px;
+	height: 32px;
+	margin-bottom: 4px !important;
+}
+.ih_style .medium .folder {
+	background-image: url('images/normal/32/folder.png');
+}
+.ih_style .medium .resource {
+	background-image: url('images/normal/32/file.png');
+}
+/*
+Copyright (c) 2008, Yahoo! Inc. All rights reserved.
+Code licensed under the BSD License:
+http://developer.yahoo.net/yui/license.txt
+version: 2.5.1
+*/
+.ygtvtn {
+	width: 18px;
+	height: 22px;
+	background: url(images/treeview-sprite.gif) 0 -5600px no-repeat;
+}.ygtvtm {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -4000px no-repeat;
+}.ygtvtmh {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -4800px no-repeat;
+}.ygtvtp {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -6400px no-repeat;
+}.ygtvtph {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -7200px no-repeat;
+}.ygtvln {
+	width: 18px;
+	height: 22px;
+	background: url(images/treeview-sprite.gif) 0 -1600px no-repeat;
+}.ygtvlm {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 0px no-repeat;
+}.ygtvlmh {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -800px no-repeat;
+}.ygtvlp {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -2400px no-repeat;
+}.ygtvlph {
+	width: 18px;
+	height: 22px;
+	cursor: pointer;
+	background: url(images/treeview-sprite.gif) 0 -3200px no-repeat;
+}.ygtvloading, .ygtvloadingh {
+	width: 18px;
+	height: 22px;
+	background: url(images/treeview-loading.gif) 0 0 no-repeat;
+}.ygtvdepthcell {
+	width: 18px;
+	height: 22px;
+	background: url(images/treeview-sprite.gif) 0 -8000px no-repeat;
+}.ygtvblankdepthcell {
+	width: 18px;
+	height: 22px;
+}.ygtvitem {
+	
+}.ygtvchildren {
+	*zoom: 1;
+}.ygtvlabel, .ygtvlabel:link, .ygtvlabel:visited, .ygtvlabel:hover {
+	height: 20px;
+	line-height: 20px;
+	display: inline-block;
+	outline: none;
+	-moz-outline: none;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	margin-left: 2px;
+	text-decoration: none;
+	padding: 0px 5px;
+	white-space: nowrap;
+	color: #000000;
+	border: 1px solid transparent !important;
+	border: 1px solid #FFFFFF;
+}
+.ygtvlabel.hover, .ygtvlabel:hover, .ygtvlabel.dnd_target.drag_over {
+	border-color: #c0e4fd !important;
+	background:#edf7fc;
+}
+.ygtvlabel[class~="ygtvsel"] {
+	border-color: #b3dfff !important;
+	background:#e5f4fb;
+}
+.active .ygtvlabel[class~="ygtvsel"] {
+	border-color: #a2d7fe !important;
+	background:#e5f4fb;
+}
+.ygtvlabel[class~="ygtvsel"].hover, .ygtvlabel.uponMe, .ygtvlabel[class~="ygtvsel"]:hover, .ygtvlabel[class~="ygtvsel"].dnd_target.drag_over {
+	border-color: #99d4fe !important;
+	background:#d2eefb;
+}
+.ygtvspacer {
+	width: 18px;
+	height: 22px;
+}
+
+
+.ih_style .dragInfoDiv {
+	position: absolute;
+	width: 106px;
+	height: 128px;
+	overflow: visible;
+	border: none;
+	font-size: 14px;
+	padding: 0px;
+}
+
+.ih_style .dragIconDiv {
+	width: 94px;
+	height: 94px;
+	padding: 5px;
+	border: 1px solid #d9f1fc;
+	background-color: #eff8fc;
+	text-align: center;
+	opacity: 0.6;
+	font-size: 94px;
+	line-height: 94px;
+	white-space: nowrap;
+}
+.dj_ie .ih_style .dragIconDiv {
+	filter: alpha(opacity=60);
+}
+
+.ih_style .dragIcon {
+	
+	padding: 0px;
+	margin: auto;
+	outline: none;
+	vertical-align: middle;
+	visibility: hidden;
+}
+.ih_style .dragIcon.visible {
+	visibility: visible;
+}
+.ih_style .dragIcon.dndFolder {
+	width: 94px;
+	height: 94px;
+	background: url('images/normal/94/_dd_folder.png') no-repeat;
+	visibility: visible;
+}
+.ih_style .dragIcon.dndFile {
+	width: 94px;
+	height: 94px;
+	background: url('images/normal/94/_dd_file.png') no-repeat;
+	visibility: visible;
+}
+
+.ih_style .dragItemsCountCenterDiv {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	height: 17px;
+}
+.ih_style .dragItemsCount {
+	position: relative;
+	left: -50%;
+	top: -50%;
+	line-height: 15px;
+	height: 15px;
+	padding: 0px 3px;
+	background: #0046ac url('images/dnd/count_bg.png') repeat-x;
+	border: 1px solid white;
+	color: #fff;
+	text-align: center;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+
+.ih_style .dragActionDiv {
+	position: absolute;
+	height: 20px;
+	left: 63px;
+	bottom: 0px;
+	font-size: 11px;
+	z-index:4 !important;
+
+}
+.ih_style .dragActionDiv ul {
+	margin: 0;
+	padding: 0 3px;
+	list-style: none;
+}
+.ih_style .dragActionDiv ul.content {
+	border: 1px solid #767676;
+	background: #58a6e2;
+	color: #fff;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.ih_style .dragActionDiv ul li {
+	padding: 0 0 0 0;
+	padding-left: 15px;
+	height: 18px;
+	line-height: 18px;
+	background-repeat: no-repeat;
+	background-position: 0 1px;
+	padding-left:20px !important;
+	white-space: nowrap;
+}
+.ih_style .dragActionDiv ul li.copy{
+	background-image: url('images/normal/16/dd_copy.png');
+}
+.ih_style .dragActionDiv ul li.move{
+	background-image: url('images/normal/16/dd_move.png');
+}
+.ih_style .dragActionDiv ul li.cancel{
+	background-image: url('images/normal/16/dd_cancel.png');
+}
+.ih_style .dragActionDiv li span {
+	color: #fff;
+}
+
+.ih_style .uponMe {}
+
+.ih_style .dropZone{
+	padding-top:4px !important;
+	height:37px !important;
+	background:#e5f4fb !important;
+	border:none !important;
+	border-top:1px solid #c8cfd9 !important;
+}
+
+.ih_style .dropZone.drag_over {
+	background:#cce9f8 !important;
+	color:#002d64;
+}
+
+body {
+	/*BUGFIX:DIME #4*/
+	/*-khtml-user-drag: element;
+	-webkit-user-drag: element;*/
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+}
+
+.ih_style .selectionBorder {
+	position: absolute;
+	border: 1px solid #67c0ff; 
+	top: 0px;
+	left: 0px;
+	width: 0px;
+	height: 0px;
+	z-index: 100;
+}
+.ih_style .selectionArea {
+	background: #cce9f8;
+	width: 100%;
+	height: 100%;
+	filter:alpha(opacity=50);
+	-moz-opacity:0.5;
+	opacity: 0.5;
+}
+.ih_style #ithit_interface_context_help_container {
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	width: 260px;
+	height: 88px;
+	background: #87c9fb;
+	z-index:4 !important;
+	border: 1px solid #abadb1;
+
+  -ms-transition:.5s;
+  -moz-transition:.5s;
+  -webkit-transition:.5s;
+  transition:.5s;
+  opacity:0;
+}
+.ih_style #ithit_interface_context_help_container.left {
+    left: 10px;
+    right: auto;
+}
+.ih_style #ithit_interface_context_help_content {
+    border-collapse: collapse;
+    display: block;
+    height: 72px !important;
+    overflow: hidden;
+    padding: 8px;
+    text-overflow: ellipsis;
+    vertical-align: top;
+    border: 1px solid transparent;	
+}
+
+.ih_style #ithit_interface_context_help_container div {
+    width: 244px;
+}
+
+.ih_style .thumbnailsContextHelpCntr{
+    border-collapse:collapse;
+    width: 100%;
+    height: 100%;
+    table-layout:fixed;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ih_style .thumbnailsContextHelpIcon {
+    width: 80px;
+    height: 72px;
+}
+
+.ih_style .thumbnailsContextHelpName {
+    width: 164px;
+    height: 18px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.ih_style .colContextHelpNames {
+    height: 54px;
+    vertical-align:top;
+}
+
+.ih_style .thumbnailsContextHelpInfo {
+    border-collapse:collapse;
+    width: 100%;
+    margin-top: 3px;
+}
+
+.ih_style .thumbnailsContextHelpInfoNames {
+    width: 55px;
+    padding-bottom:4px;
+}
+
+
+.ih_style #ithit_interface_context_help_content .resource,
+.ih_style #ithit_interface_context_help_content .folder
+{
+	width: 72px;
+	height: 72px;
+}
+
+.ih_style #ithit_interface_context_help_content .folder {
+	background-image: url('images/normal/72/_folder.png');
+}
+
+.ih_style #ithit_interface_context_help_content .resource {
+	background-image: url('images/normal/72/file.png');
+}
+
+.ih_style .contextIconArrowDown,
+.ih_style .contextIconArrowLeft,
+.ih_style .contextIconArrowRight,
+.ih_style .contextIconArrowUp,
+.ih_style .contextIconView,
+.ih_style .contextIconViewDetails,
+.ih_style .contextIconViewMedium,
+.ih_style .contextIconViewLarge,
+.ih_style .contextIconViewExtraLarge,
+.ih_style .contextIconFolders,
+.ih_style .contextIconUp,
+.ih_style .contextIconRefresh,
+.ih_style .contextIconUpload,
+.ih_style .contextIconNewFolder,
+.ih_style .contextIconDownload,
+.ih_style .contextIconEdit,
+.ih_style .contextIconFileManager,
+.ih_style .contextIconCustomProp,
+.ih_style .contextIconEditMode,
+.ih_style .contextIconUploadFolder,
+.ih_style .contextIconSearch,
+.ih_style .contextIconVersions,
+.ih_style .contextIconDelete,
+.ih_style .contextIconUndo,
+.ih_style .contextIconRedo,
+.ih_style .contextIconCopy,
+.ih_style .contextIconCut,
+.ih_style .contextIconPaste,
+.ih_style .contextIconLock,
+.ih_style .contextIconUnlock,
+.ih_style .contextIconInfo,
+.ih_style .contextIconLog,
+.ih_style .contextIconNewDocument,
+.ih_style .contextIconNewWord,
+.ih_style .contextIconNewExcel,
+.ih_style .contextIconNewPowerPoint,
+.ih_style .contextIconUpdateFile,
+.ih_style .contextIconRestartUpload,
+.ih_style .contextIconCancelUpload,
+.ih_style .contextIconPauseUpload,
+.ih_style .contextIconResumeUpload,
+.ih_style .contextIconViewError{
+	background-repeat: no-repeat;
+    width:72px;
+    height:72px;
+    float: left;
+    padding-right: 8px;
+}
+
+.ih_style .contextIconArrowDown      {background-image: url('images/normal/72/arrow_down.png');}
+.ih_style .contextIconArrowLeft      {background-image: url('images/normal/72/arrow_left.png');}
+.ih_style .contextIconArrowRight     {background-image: url('images/normal/72/arrow_right.png');}
+.ih_style .contextIconArrowUp        {background-image: url('images/normal/72/arrow_up.png');}
+.ih_style .contextIconView           {background-image: url('images/normal/72/view.png');}
+.ih_style .contextIconViewDetails    {background-image: url('images/normal/72/view_details.png');}
+.ih_style .contextIconViewMedium     {background-image: url('images/normal/72/view_medium.png');}
+.ih_style .contextIconViewLarge      {background-image: url('images/normal/72/view_large.png');}
+.ih_style .contextIconViewExtraLarge {background-image: url('images/normal/72/view_extra_large.png');}
+.ih_style .contextIconFolders   {background-image: url('images/normal/72/_folder.png');}
+.ih_style .contextIconUp        {background-image: url('images/normal/72/up.png');}
+.ih_style .contextIconRefresh   {background-image: url('images/normal/72/refresh.png');}
+.ih_style .contextIconUpload    {background-image: url('images/normal/72/upload.png');}
+.ih_style .contextIconNewFolder {background-image: url('images/normal/72/new_folder.png');}
+.ih_style .contextIconDownload  {background-image: url('images/normal/72/download.png');}
+.ih_style .contextIconEdit      {background-image: url('images/normal/72/edit.png');}
+.ih_style .contextIconFileManager{background-image: url('images/normal/72/file_manager_open.png');}
+.ih_style .contextIconCustomProp{background-image: url('images/normal/72/custom_prop.png');}
+.ih_style .contextIconEditMode{background-image: url('images/normal/72/edit_mode.png');}
+.ih_style .contextIconUploadFolder{background-image: url('images/normal/72/upload_folder.png');}
+.ih_style .contextIconSearch{background-image: url('images/normal/72/search.png');}
+.ih_style .contextIconVersions{background-image: url('images/normal/72/versions.png');}
+.ih_style .contextIconDelete    {background-image: url('images/normal/72/delete.png');}
+.ih_style .contextIconUndo      {background-image: url('images/normal/72/undo.png');}
+.ih_style .contextIconRedo      {background-image: url('images/normal/72/redo.png');}
+.ih_style .contextIconCopy      {background-image: url('images/normal/72/copy.png');}
+.ih_style .contextIconCut       {background-image: url('images/normal/72/cut.png');}
+.ih_style .contextIconPaste     {background-image: url('images/normal/72/paste.png');}
+.ih_style .contextIconLock      {background-image: url('images/normal/72/lock.png');}
+.ih_style .contextIconUnlock    {background-image: url('images/normal/72/unlock.png');}
+.ih_style .contextIconInfo      {background-image: url('images/normal/72/info.png');}
+.ih_style .contextIconLog       {background-image: url('images/normal/72/log.png');}
+.ih_style .contextIconNewDocument{background-image: url('images/normal/72/new_document.png');}
+.ih_style .contextIconNewWord   {background-image: url('images/normal/72/new_word.png');}
+.ih_style .contextIconNewExcel  {background-image: url('images/normal/72/new_excel.png');}
+.ih_style .contextIconNewPowerPoint{background-image: url('images/normal/72/new_powerpoint.png');}
+.ih_style .contextIconRestartUpload{background-image: url('images/normal/72/restart.png');}
+.ih_style .contextIconCancelUpload{background-image: url('images/normal/72/upload_failed.png');}
+.ih_style .contextIconPauseUpload{background-image: url('images/normal/72/pause.png');}
+.ih_style .contextIconResumeUpload{background-image: url('images/normal/72/resume.png');}
+.ih_style .contextIconViewError {background-image: url('images/normal/72/view_error.png');}
+.ih_style .contextIconUpdateFile {background-image: url('images/normal/72/update_file.png');}
+
+.ih_style #ithit_interface_context_help_container div div:first-child{
+	display: inline;
+    float: left;
+    width: 80px;
+}
+
+/*ie7 hack*/
+*:first-child+html .ih_style #ithit_interface_context_help_container div div{ 
+	display: inline;
+    float: left;
+    width: 84px;
+	height: 75px !important;
+}
+
+*:first-child+html .ih_style #ithit_interface_context_help_container  .contextHelpText{ 
+    width: 130px !important;
+}
+
+*:first-child+html .ih_style #ithit_interface_context_help_content .resource,
+*:first-child+html .ih_style #ithit_interface_context_help_content .folder
+{
+	height: 75px !important;
+}/* Colors for theme */
+.ih_style .commands-info ul li .status-container .progress {
+    background-color: #ffffff; /* @b-bar-color */
+}
+.ih_style .commands-info ul li .status-container .progress div {
+    background-color: #7db9e2; /* @b-bar-border */
+}
+.ih_style .commands-info ul li .button-cancel {
+    background-image: url('images/normal/16/cancel_alt.png') !important;
+}
+
+/* Base styles */
+.ih_style .commands-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1001;
+    font-size: 13px;
+}
+.ih_style .commands-info ul,
+.ih_style .commands-info ul li {
+    margin: 0;
+    padding: 0;
+}
+.ih_style .commands-info ul li {
+    display: inline-block;
+    width: auto;
+    float: right;
+    margin: 3px;
+    font-size: .8em;
+    background: rgba(220, 220, 220, 0.9);
+    background : #ddd\9; /* IE8 and below */
+    border-radius: 5px;
+}
+.ih_style .commands-info ul li .status-container {
+    padding: 5px 0 6px 10px;
+    float: left;
+    display: inline-block;
+}
+.ih_style .commands-info ul li .status-container .title,
+.ih_style .commands-info ul li .status-container .status {
+    float: left;
+    display: inline-block;
+    line-height: 1.7em;
+}
+.ih_style .commands-info ul li .status-container .title {
+    width: 200px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.ih_style .commands-info ul li .status-container .status {
+    float: left;
+    display: inline-block;
+    margin-left: 7px;
+    min-width: 35px;
+}
+.ih_style .commands-info ul li .status-container .progress {
+    clear: left;
+    width: 100%;
+    height: 3px;
+    margin-bottom: -1px;
+}
+.ih_style .commands-info ul li .status-container .progress div {
+    width: 0%;
+    height: 100%;
+}
+.ih_style .commands-info ul li .button-cancel {
+    position: relative;
+    float: left;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin: 8px 2px 0 8px;
+    background-image: url('images/normal/16/cancel.png');
+}
+.ih_style .commands-info ul li .button-cancel:after {
+    background-size: 65%;
+}
+.ih_style .commands-info ul li.cancelled .status-container {
+    padding-right: 10px;
+}
+.ih_style .commands-info ul li.cancelled .button-cancel {
+    display: none;
+}

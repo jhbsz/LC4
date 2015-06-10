@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $TYPE are required.
+BIN=/usr/sbin/ntpclient 
+NTP_RESULT_FILE=/var/ntpresult    
+DHCP_LEASE_FILE="/tmp/dhcp.leases"
+. /etc/network.sh
+TRIGGER=60
+log_msg="NTP-client"
+update_dhcp_lease () {
+    [ -f "$DHCP_LEASE_FILE" ] || return
+    local shift="$(($(cat $NTP_RESULT_FILE | awk '{print $5}' | awk -F. '/\./{print $1}')/1000000))"
+    for lease_time in $lease_table;do
+        local shift_time=$(($lease_time+$shift))
+        sed -i "s/$lease_time/$shift_time/g" $DHCP_LEASE_FILE
+    done
+}
+start () {
+    
+    local lease_table=$(echo $(cat $DHCP_LEASE_FILE | awk '{print $1}'))
+    err=0
+    
+    [ "$TYPE" != "wan" ] && exit 1;
+    type=$(nvram show ntp_rule 0 type)
+
+    echo "$(nvram show ntp_rule 0 zone)" > /etc/TZ
+    
+    [ "$type" = "pool" ] && {
+
+        $BIN -c 1 -i 8 -l -s -t -h $(nvram show ntp_rule 0 pool) 2>&1 | tee $NTP_RESULT_FILE
+        grep "Unknown host" $NTP_RESULT_FILE && err=1
+        grep "Network is unreachable" $NTP_RESULT_FILE && err=1
+        
+        if [ ! -s $NTP_RESULT_FILE -o "$err" = "1" ]; then {
+            err=0
+        
+            $BIN -c 1 -i 8 -l -s -t -h 220.130.158.71  2>&1 | tee $NTP_RESULT_FILE
+	
+            grep "Unknown host" $NTP_RESULT_FILE && err=1
+            grep "Network is unreachable" $NTP_RESULT_FILE && err=1
+	    [  ! -s $NTP_RESULT_FILE -o "$err" = "1" ] && logger -t "ntpclient[54]" "Fail to get current time" && err=1
+	
+	    [ $err != "1" ] && { 
+            logger -t "ntpclient[55]" "Success: Update date and time $(date)"
+            update_dhcp_lease
+        }
+        
+            rm -rf  $NTP_RESULT_FILE
+        } else {
+            logger -t "ntpclient[55]" "Success: Update date and time $(date)" 	
+            update_dhcp_lease
+        } fi
+        
+        rm -rf  $NTP_RESULT_FILE
+    }
+    
+    [ "$type" = "ipaddr" ] && {
+    
+        $BIN -c 1 -i 8 -l -s -t -h $(nvram show ntp_rule 0 ipaddr)  2>&1 | tee $NTP_RESULT_FILE
+        grep "Unknown host" $NTP_RESULT_FILE && err=1
+        grep "Network is unreachable" $NTP_RESULT_FILE && err=1
+    
+        [ ! -s $NTP_RESULT_FILE -o "$err" = "1" ] && logger -t "ntpclient[61]" "Fail to get current time" && err=1
+    
+        [ "$err" != "1" ] && {
+            logger -t "ntpclient[62]" "Success: Update date and time $(date)" 
+            update_dhcp_lease
+        }
+    
+        rm -rf  $NTP_RESULT_FILE
+    }
+    
+    return $err
+}
+stop () {
+    return $err
+}
+

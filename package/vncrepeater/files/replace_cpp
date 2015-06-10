@@ -1,0 +1,3 @@
+#!/bin/sh
+for a in $(find $1 -name "*.cpp"); 
+do mv $a $(echo $a | sed 's/.cpp/.c/g');done

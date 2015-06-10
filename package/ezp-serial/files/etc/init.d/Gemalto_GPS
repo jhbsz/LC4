@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# MAC_SENSE.
+START=99
+log_msg="gemalto"
+start () {
+
+    PH8="$(cat /proc/bus/usb/devices | grep "Vendor=1e2d ProdID=0053")"
+    ACM_MODE="$(dmesg |grep ttyUSB5)"
+
+    [ -n "$PH8" -a -n "$ACM_MODE" ] && {
+        SCRIPT="At^SGPSC=\"Engine\",1" ezpcom -d /dev/ttyUSB5 -s /etc/chatscripts/script.gcom
+        SCRIPT="At^SGPSC=\"Engine\",1" ezpcom -d /dev/ttyUSB5 -s /etc/chatscripts/script.gcom
+        SCRIPT="At^SGPSC=\"Engine\",1" ezpcom -d /dev/ttyUSB5 -s /etc/chatscripts/script.gcom
+    }
+
+}
+stop () {
+
+}

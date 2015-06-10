@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+. /etc/network.sh
+
+BIN=/usr/sbin/bpalogin
+BPALOGIN_CONFIG_FILE=/etc/bpalogin.conf
+BPALOGIN_CONFIG_RFILE=/tmp/bpalogin.conf
+
+TRIGGER=60
+log_msg="Bigpond-Auth"
+
+start() {
+    [ "$TYPE" != "wan" -o -z "$NUM" ] && exit 1;
+
+    # Check directip and Bigpond
+    PROTO=$(nvram get wan${NUM}_proto)
+    [ "$PROTO" != "directip" -a "$PROTO" != "dhcp" ] && exit 1;
+
+    BIGPOND_ENABLE=$(nvram show wan_bigpond_rule 0 enable)
+    [ "$BIGPOND_ENABLE" = "0" ] && exit 1;
+
+    rm -rf $BPALOGIN_CONFIG_RFILE
+
+    SERVER=$(nvram show wan_bigpond_rule 0 server)
+    USERNAME=$(nvram show wan_bigpond_rule 0 username)
+    PASSWORD=$(nvram show wan_bigpond_rule 0 passwd)
+
+    # Create bpalogin.config
+    echo "debuglevel 1" >> $BPALOGIN_CONFIG_FILE
+    echo "authserver $SERVER" >> $BPALOGIN_CONFIG_FILE
+    echo "username $USERNAME" >> $BPALOGIN_CONFIG_FILE
+    echo "password $PASSWORD" >> $BPALOGIN_CONFIG_FILE
+    echo "minheartbeatinterval 60" >> $BPALOGIN_CONFIG_FILE
+
+	$BIN -c /etc/bpalogin.conf
+}
+stop() {
+    killall bpalogin
+    return $err	
+}

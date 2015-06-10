@@ -1,0 +1,90 @@
+Source-Makefile: target/linux/brcm47xx/Makefile
+Target: brcm47xx
+Target-Board: brcm47xx
+Target-Kernel: 2.6
+Target-Name: Broadcom BCM947xx/953xx [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom based routers
+	(e.g. Netgear WGT634U)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-switch kmod-diag
+Target-Profile: Broadcom-b43
+Target-Profile-Name: Broadcom BCM43xx WiFi (default)
+Target-Profile-Packages: kmod-b43
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Broadcom BCM43xx cards
+@@
+
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: Atheros-ath5k
+Target-Profile-Name: Atheros WiFi (atk5k)
+Target-Profile-Packages: kmod-ath5k
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+Target-Profile: WGT634U
+Target-Profile-Name: Netgear WGT634U
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-ohci kmod-usb2
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the Netgear WGT634U. Contains USB support
+@@
+
+Target-Profile: WL500GPv1
+Target-Profile-Name: ASUS WL-500g Premium v1 (Atheros WiFi)
+Target-Profile-Packages: kmod-madwifi kmod-usb-core kmod-usb-uhci kmod-usb2
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Premium v1 with USB and Atheros WiFi card support
+@@
+
+Target-Profile: WRTSL54GS
+Target-Profile-Name: Linksys WRTSL54GS
+Target-Profile-Packages: kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-storage kmod-scsi-core kmod-fs-ext3 e2fsprogs kmod-b43
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the Linksys WRTSL54GS. Contains USB support
+@@
+
+

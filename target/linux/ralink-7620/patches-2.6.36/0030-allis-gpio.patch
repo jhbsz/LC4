@@ -1,0 +1,15 @@
+--- linux-2.6.36/drivers/char/ralink_gpio.c	2014-08-04 13:58:58.035867867 +0800
++++ linux-2.6.36/drivers/char/ralink_gpio.c	2014-08-04 12:45:39.738820565 +0800
+@@ -2617,6 +2617,12 @@
+ #endif
+ #endif
+ 	gpiomode |= RALINK_GPIOMODE_DFT;
++#if defined (CONFIG_BOARD_ALS)
++	gpiomode &= ~0x1C;
++   gpiomode |= 0x15;
++   gpiomode |= 0x40400; //RGMII set GPIO
++   gpiomode &= ~0x80000; //RGMII set GPIO
++#endif
+ 	*(volatile u32 *)(RALINK_REG_GPIOMODE) = cpu_to_le32(gpiomode);
+ 
+ 	//enable gpio interrupt

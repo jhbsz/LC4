@@ -1,0 +1,277 @@
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/ap/ap_cfg.c	2013-10-09 13:48:43.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/ap/ap_cfg.c	2014-05-07 20:16:29.988045404 +0800
+@@ -12618,6 +12618,12 @@
+ 		    break;
+ #endif/*WSC_AP_SUPPORT*/
+ 
++#ifdef CONFIG_MAC_SENSE
++		case MACSENSE:
++			MAC_SENSE(pAd,wrq);
++		    break;
++#endif
++
+ 		case CMD_RTPRIV_IOCTL_GET_MAC_TABLE:
+ 			RTMPIoctlGetMacTable(pAd,wrq);
+ 		    break;
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/include/os/rt_os.h	2013-10-09 13:48:43.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/include/os/rt_os.h	2014-05-07 20:17:18.072046691 +0800
+@@ -66,6 +66,9 @@
+ #define RTPRIV_IOCTL_GSITESURVEY					(SIOCIWFIRSTPRIV + 0x0D)
+ #define RT_PRIV_IOCTL_EXT							(SIOCIWFIRSTPRIV + 0x0E) /* Sync. with RT61 (for wpa_supplicant) */
+ #define RTPRIV_IOCTL_GET_MAC_TABLE					(SIOCIWFIRSTPRIV + 0x0F)
++#ifdef CONFIG_MAC_SENSE
++#define MACSENSE	                				(SIOCIWFIRSTPRIV + 0x15)
++#endif
+ #define RTPRIV_IOCTL_GET_MAC_TABLE_STRUCT					(SIOCIWFIRSTPRIV + 0x1F)	/* modified by Red@Ralink, 2009/09/30 */
+ 
+ #define RTPRIV_IOCTL_SHOW							(SIOCIWFIRSTPRIV + 0x11)
+@@ -101,6 +104,9 @@
+ #define RTPRIV_IOCTL_GSITESURVEY					(SIOCIWFIRSTPRIV + 0x0D)
+ #define RTPRIV_IOCTL_ADD_WPA_KEY                    (SIOCIWFIRSTPRIV + 0x0E)
+ #define RTPRIV_IOCTL_GET_MAC_TABLE					(SIOCIWFIRSTPRIV + 0x0F)
++#ifdef CONFIG_MAC_SENSE
++#define MACSENSE					                (SIOCIWFIRSTPRIV + 0x15)
++#endif
+ #define RTPRIV_IOCTL_GET_MAC_TABLE_STRUCT	(SIOCIWFIRSTPRIV + 0x1F)	/* modified by Red@Ralink, 2009/09/30 */
+ #define RTPRIV_IOCTL_STATIC_WEP_COPY                (SIOCIWFIRSTPRIV + 0x10)
+ 
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/os/linux/ap_ioctl.c	2013-10-09 13:48:43.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/os/linux/ap_ioctl.c	2014-05-07 20:17:29.708047003 +0800
+@@ -53,7 +53,12 @@
+   "set_wsc_oob"}, 
+ { RTPRIV_IOCTL_GET_MAC_TABLE,
+   IW_PRIV_TYPE_CHAR | 1024, IW_PRIV_TYPE_CHAR | 1024 ,
+-  "get_mac_table"}, 
++  "get_mac_table"},
++#ifdef CONFIG_MAC_SENSE
++{ MACSENSE,
++  IW_PRIV_TYPE_CHAR | 1024, IW_PRIV_TYPE_CHAR | 1024 ,
++  "sense"}, 
++#endif
+ { RTPRIV_IOCTL_E2P,
+   IW_PRIV_TYPE_CHAR | 1024, IW_PRIV_TYPE_CHAR | 1024,
+   "e2p"},
+@@ -370,6 +375,12 @@
+ 			RTMP_AP_IoctlHandle(pAd, wrq, CMD_RTPRIV_IOCTL_GET_MAC_TABLE, 0, NULL, 0);
+ 		    break;
+ 
++#ifdef CONFIG_MAC_SENSE
++		case MACSENSE:
++			RTMP_AP_IoctlHandle(pAd, wrq, MACSENSE, 0, NULL, 0);
++		    break;
++#endif
++
+ 		case RTPRIV_IOCTL_GET_MAC_TABLE_STRUCT:
+ 			RTMP_AP_IoctlHandle(pAd, wrq, CMD_RTPRIV_IOCTL_GET_MAC_TABLE_STRUCT, 0, NULL, 0);
+ 			break;
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/common/cmm_info.c	2014-05-07 17:21:29.249634578 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/common/cmm_info.c	2014-05-07 20:17:53.268047634 +0800
+@@ -3820,6 +3820,75 @@
+ #endif /* RTMP_RBUS_SUPPORT */
+ 
+ 
++/*
++ *iwpriv ra0 sense
++ *
++ */ 
++#ifdef CONFIG_MAC_SENSE
++#define	MAC_TABLE_LEN	(1+20+3+4+3+10)
++VOID MAC_SENSE(
++    IN  PRTMP_ADAPTER   pAd,
++    IN  RTMP_IOCTL_INPUT_STRUCT *wrq)
++{
++    MAC_LIST *mac_list; 
++    MAC_TABLES *now;
++    INT x,count=0;
++    char *msg;
++
++    for (x=0;x < 16 ;x++)
++    {
++        mac_list = &pAd->mac_tables[x];
++        now = mac_list->child;
++        while(now != NULL)
++        {
++            count++;
++            now=now->next;
++        }
++    }
++
++
++    os_alloc_mem(NULL, (UCHAR **)&msg, sizeof(CHAR)*(count*MAC_TABLE_LEN));
++
++	if (msg == NULL)
++	{
++		DBGPRINT(RT_DEBUG_ERROR, ("%s():Alloc memory failed\n", __FUNCTION__));
++    }else
++    {    
++        memset(msg, 0 ,count*MAC_TABLE_LEN );
++
++        sprintf(msg,"%s","\n");
++        for (x=0;x < 16 ;x++)
++        {
++            mac_list = &pAd->mac_tables[x];
++            now = mac_list->child;
++            
++            while(now != NULL)
++            {
++               if((strlen(msg)+MAC_TABLE_LEN ) >= (count*MAC_TABLE_LEN) )
++                   break;
++               sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x\t",
++                   now->Addr1[0], now->Addr1[1], now->Addr1[2],
++                   now->Addr1[3], now->Addr1[4], now->Addr1[5]);
++                sprintf(msg+strlen(msg),"%d\t", now->Rssi);
++                sprintf(msg+strlen(msg),"%d\t\n", now->Count);
++                spin_lock(&pAd->xxx_lock);
++                mac_list->child = now->next;
++                os_free_mem(NULL, now);
++                now = mac_list->child;
++                spin_unlock(&pAd->xxx_lock);
++            }
++        }
++
++        wrq->u.data.length = strlen(msg);
++        if (copy_to_user(wrq->u.data.pointer, msg, wrq->u.data.length))
++        {
++            DBGPRINT(RT_DEBUG_OFF, ("%s", msg));
++        }
++    }
++/*	kfree(msg);*/
++	os_free_mem(NULL, msg);
++}
++#endif
+ #define	MAC_LINE_LEN	(1+14+4+4+4+4+10+10+10+6+6)	/* "\n"+Addr+aid+psm+datatime+rxbyte+txbyte+current tx rate+last tx rate+"\n" */
+ VOID RTMPIoctlGetMacTable(
+ 	IN PRTMP_ADAPTER pAd, 
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/include/rtmp.h	2013-10-09 13:48:43.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/include/rtmp.h	2014-05-07 20:18:42.356048948 +0800
+@@ -3491,7 +3489,29 @@
+ /* */
+ /*  The miniport adapter structure */
+ /* */
++#ifdef CONFIG_MAC_SENSE
++typedef struct _MAC_TABLES {
++    UCHAR           Addr1[MAC_ADDR_LEN];
++    UINT32          Rssi;
++    INT             Count;
++    struct MAC_TABLES *next;
++    struct MAC_TABLES *previous;
++}MAC_TABLES;
++#endif
++
++#ifdef CONFIG_MAC_SENSE
++typedef struct _MAC_LIST {
++    INT id;
++    MAC_TABLES *child;
++    struct MAC_LIST *next;
++}MAC_LIST;
++#endif
++
+ struct _RTMP_ADAPTER {
++#ifdef CONFIG_MAC_SENSE
++    MAC_LIST mac_tables[16];
++    spinlock_t xxx_lock;
++#endif
+ 	PVOID OS_Cookie;	/* save specific structure relative to OS */
+ 	PNET_DEV net_dev;
+ 	ULONG VirtualIfCnt;
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/include/ap_cfg.h	2013-10-09 13:48:43.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/include/ap_cfg.h	2014-05-07 20:18:13.744048182 +0800
+@@ -54,11 +54,16 @@
+ /* ++ end of addition */
+ #endif /* RTMP_RBUS_SUPPORT */
+ 
++#ifdef CONFIG_MAC_SENSE
++VOID MAC_SENSE(
++    IN PRTMP_ADAPTER pAd,
++    IN RTMP_IOCTL_INPUT_STRUCT *wrq);
++#endif
++
+ VOID RTMPIoctlGetMacTable(
+ 	IN PRTMP_ADAPTER pAd, 
+ 	IN RTMP_IOCTL_INPUT_STRUCT *wrq);
+ 
+-
+ VOID RTMPAPIoctlE2PROM(
+     IN  PRTMP_ADAPTER   pAdapter,
+     IN  RTMP_IOCTL_INPUT_STRUCT    *wrq);
+--- linux-2.6.36/drivers/net/wireless/rt2860v2/ap/ap_data.c	2014-05-07 20:38:23.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/rt2860v2/ap/ap_data.c	2014-05-07 20:18:59.548049409 +0800
+@@ -4669,6 +4669,9 @@
+ 	RX_BLK			RxCell, *pRxCell;
+ 	MULTISSID_STRUCT *pMbss;
+ 	UINT8 RXWISize = pAd->chipCap.RXWISize;
++
++    INT i,j,k;
++    MLME_QUEUE_ELEM        *Elem = NULL;
+ #ifdef WDS_SUPPORT
+ 	MAC_TABLE_ENTRY	    			*pEntry = NULL;
+ #endif
+@@ -4903,7 +4906,53 @@
+ 			RELEASE_NDIS_PACKET(pAd, pRxPacket, NDIS_STATUS_FAILURE);
+ 			continue;
+ 		}
+-
++        /*
++         * Search MAC
++         */
++#ifdef CONFIG_MAC_SENSE
++        spin_lock(&pAd->xxx_lock);
++        MAC_LIST *mac_list,*new_list;
++        MAC_TABLES *mac_table,*mac_tables,*new_mac,*now;
++        BOOLEAN x = true,y = true; 
++
++        i= pHeader->Addr2[0] + pHeader->Addr2[1] + pHeader->Addr2[2];
++        i%=16;
++
++        mac_list = &pAd->mac_tables[i];
++
++        now = mac_list->child;
++
++        while(now != NULL)
++        {
++            if(memcmp(now->Addr1, pHeader->Addr2, MAC_ADDR_LEN) == 0)
++            {
++                if(now->Count > 2048)
++                    now->Count = 2048;
++                else
++                    now->Count++;
++                now->Rssi = pRxWI->RSSI0;
++                x = false;
++            }
++            mac_tables=now;
++            now = now->next;
++        }
++        if(x){
++            new_mac = (MAC_TABLES *)kmalloc(sizeof(MAC_TABLES),GFP_ATOMIC);
++            if(new_mac != NULL)
++            {
++                memset(new_mac, 0, sizeof(MAC_TABLES));
++                memcpy(new_mac->Addr1, pHeader->Addr2, MAC_ADDR_LEN);
++                new_mac->Rssi = pRxWI->RSSI0;
++                new_mac->Count = 1;
++                new_mac->next=NULL;
++                if(mac_list->child == NULL)
++                   mac_list->child = new_mac;
++                else
++                   mac_tables->next=new_mac;
++            }
++        }
++        spin_unlock(&pAd->xxx_lock);
++#endif
+ 		/*
+ 			All frames to AP are directed except probe_req. IEEE 802.11/1999 - p.463
+ 			Do this before checking "duplicate frame".
+--- linux-2.6.36/drivers/net/wireless/Kconfig	2013-10-09 13:48:41.000000000 +0800
++++ linux-2.6.36/drivers/net/wireless/Kconfig	2014-05-08 09:48:59.211271225 +0800
+@@ -45,6 +45,11 @@
+ 	---help---
+ 	  Debugging support.
+ 
++config MAC_SENSE
++   tristate "MAC-SENSE"
++   default n
++
++
+ config LIBERTAS_THINFIRM_USB
+ 	tristate "Marvell Libertas 8388 USB 802.11b/g cards with thin firmware"
+ 	depends on LIBERTAS_THINFIRM && USB

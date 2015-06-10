@@ -1,0 +1,20 @@
+--- linux-igd-1.0.0/gatedevice.c	2010-09-13 15:40:45.220441537 +0800
++++ linux-igd-1.0.0/gatedevice.c	2010-09-13 15:40:36.447942022 +0800
+@@ -460,7 +460,7 @@
+ 		if (read == 1)
+ 			read = 5;
+ 	}
+-	while (read != EOF && (read == 5 && strncmp(dev, g_vars.extInterfaceName, IFNAMSIZ) != 0));
++	while (read != EOF && (read == 5 && *dev && !strstr(dev, g_vars.extInterfaceName)));
+ 
+ 	fclose(proc);
+ 
+@@ -526,7 +526,7 @@
+ 		if (read == 1)
+ 			read = 5;
+ 	}
+-	while (read != EOF && (read == 5 && strncmp(dev, g_vars.extInterfaceName, IFNAMSIZ) != 0));
++	while (read != EOF && (read == 5 && *dev && !strstr(dev, g_vars.extInterfaceName)));
+ 
+ 	fclose(proc);
+ // (Aaron patch 2009/8/19)->	

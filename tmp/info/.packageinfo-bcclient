@@ -1,0 +1,14 @@
+Source-Makefile: package/bcclient/Makefile
+Package: bcclient
+Version: 1-1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: bcclient
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	bcclient
+@@
+

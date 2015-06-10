@@ -1,0 +1,8 @@
+./
+./host
+./usr
+./usr/include
+./usr/include/shared.h
+./usr/lib
+./usr/lib/libshared.so
+./usr/lib/libnvram.so

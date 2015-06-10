@@ -1,0 +1,21 @@
+
+config HTTPD_WIDGET_SHOW
+        bool "Widget"
+        default y
+
+config HTTPD_LOGO_SHOW
+        bool "Logo"
+        default y
+
+config HTTPD_COPYRIGH_TEXT
+        string
+        prompt "Copyrigth text"
+        default "AXIM_Communications_Inc."
+        help 
+            Input text to display copyright infomation. Use the underline to replace the blank.
+
+config HTTPD_DISPLAY
+    int
+    default 1          if HTTPD_WIDGET_SHOW
+    default 0
+

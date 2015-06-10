@@ -1,0 +1,14 @@
+Source-Makefile: package/lldt/Makefile
+Package: lldt
+Version: 1.0.0
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Link Layer Topology Discovery
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Link Layer Topology Discovery
+@@
+

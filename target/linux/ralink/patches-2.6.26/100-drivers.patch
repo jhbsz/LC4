@@ -1,0 +1,25 @@
+--- old/drivers/Makefile	2008-07-14 05:51:29.000000000 +0800
++++ new/drivers/Makefile	2008-11-25 17:54:29.000000000 +0800
+@@ -6,6 +6,9 @@
+ #
+ 
+ obj-$(CONFIG_HAVE_GPIO_LIB)	+= gpio/
++#added by Steven Liu
++obj-$(CONFIG_RALINK_FLASH_API) += flash/
++#--
+ obj-$(CONFIG_PCI)		+= pci/
+ obj-$(CONFIG_PARISC)		+= parisc/
+ obj-$(CONFIG_RAPIDIO)		+= rapidio/
+--- old/drivers/Kconfig	2008-07-14 05:51:29.000000000 +0800
++++ new/drivers/Kconfig	2008-11-25 17:48:11.000000000 +0800
+@@ -2,6 +2,10 @@
+ 
+ menu "Device Drivers"
+ 
++#added by Steven
++source "drivers/flash/Kconfig"
++#--
++
+ source "drivers/base/Kconfig"
+ 
+ source "drivers/connector/Kconfig"

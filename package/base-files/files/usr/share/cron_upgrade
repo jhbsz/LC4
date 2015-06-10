@@ -1,0 +1,37 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/crond
+PID_FILE=/var/run/crond.pid
+
+START=60
+log_msg="CRON-service"
+
+start () {
+    local err; err=0
+    {
+        [ ! -d /var/spool/cron ] && mkdir -p /var/spool/cron
+        [ -f /var/spool/cron/root ] && rm -f /var/spool/cron/root
+        pidof crond > /dev/null && stop
+        # Construct crontabs
+        # check bt engine is running 
+        # keep all ddns update
+        # ddns check
+        # NTP client
+        [ "$(nvram show cron_rule 0 ntp_enable)" = "1" ] && {
+            echo "$(nvram show cron_rule 0 ntp_interval) TYPE=wan /etc/rc.common /etc/init.d/ntpclient start" >> /etc/crontabs/root
+        }
+        $BIN -c /etc/crontabs || err=1
+        # XXX: pidof might return multiple PIDs
+        [ $err = 0 ] && echo "$(pidof crond)" > $PID_FILE
+    }
+    watchdog -c /etc/watchdog.conf
+    return $err
+}
+stop (){
+    kill -9 $(pidof watchdog)
+    [ -f $PID_FILE ] && {
+        kill -TERM $(cat $PID_FILE) || err=1
+        rm -f $PID_FILE || err=1
+    }
+
+    return $err
+}

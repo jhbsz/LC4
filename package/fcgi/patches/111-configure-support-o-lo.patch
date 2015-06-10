@@ -1,0 +1,15 @@
+--- fcgi/configure	2014-04-23 20:36:23.178687193 +0800
++++ fcgi/configure	2014-04-23 20:36:19.090687256 +0800
+@@ -4067,11 +4067,7 @@
+ if { (eval echo configure:4067: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+   # The compiler can only warn and ignore the option if not recognized
+   # So say no if there are warnings
+-  if test -s out/conftest.err; then
+-    lt_cv_compiler_c_o=no
+-  else
+-    lt_cv_compiler_c_o=yes
+-  fi
++  lt_cv_compiler_c_o=yes
+ else
+   # Append any errors to the config.log.
+   cat out/conftest.err 1>&5

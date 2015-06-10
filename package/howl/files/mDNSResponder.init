@@ -1,0 +1,53 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=60
+log_msg="mDNSResponder-server"
+
+BIN="/usr/sbin/mDNSResponder"
+CONFIG_FILE="/etc/mDNSResponder.conf.$$"
+R_CONFIG_FILE="/etc/mDNSResponder.conf"
+
+start() {
+    stop
+    NAME="$(nvram show wl0_ssid_rule 0)"
+    IP="$(nvram get lan0_ipaddr)"
+    PORT="$(nvram show http_rule 0 port)"
+    MAC="$(nvram show lan_hwaddr_rule_default 0 hwaddr)"
+    echo "\"$NAME\" _router._tcp. local. $PORT ip=$IP port=$PORT mac=$MAC config=0" >> $CONFIG_FILE
+    echo "\"$NAME\" _http._tcp. local. $PORT ip=$IP port=$PORT mac=$MAC config=0" >> $CONFIG_FILE
+    local NUM="$(nvram get togo_rule_num)"
+    local i=0
+    while [ $i -lt $NUM ]; do
+        [ "$(nvram show togo_rule $i status)" = "1" ] && {
+            PROTO="$(nvram show togo_rule $i proto)"
+            IP="$(nvram show togo_rule $i ip)"
+            PORT="$(nvram show togo_rule $i port)"
+            MAC="$(nvram show togo_rule $i mac)"
+            CONFIG="$(nvram show togo_rule $i config)"
+            MAC_ID=$(echo $MAC | tr -d ":")
+            [ "$PROTO" = "_raop._tcp." ] && \
+            echo "\"${MAC_ID}@$NAME\" _raop._tcp local. 5100 txtvers=1 ch=2 cn=0,1 ek=1 et=0,1 sv=false da=true sr=44100 ss=16 pw=false vn=65537 tp=TCP,UDP vs=102.2 am=AirPort4,107 fv=75200.14 sf=0x4" >> $CONFIG_FILE
+            [ "$PROTO" != "_raop._tcp." ] && \
+            echo "\"$NAME\" $PROTO local. $PORT ip=$IP port=$PORT mac=$MAC config=$CONFIG" >> $CONFIG_FILE
+        }
+        i=$(($i+1))
+    done
+    mv $CONFIG_FILE $R_CONFIG_FILE
+    local b_interface=""
+    [ "$(nvram get platform)" != "AXM" ] && b_interface="-i br0"
+    $BIN -f $R_CONFIG_FILE -d $b_interface &
+}
+stop() {
+    local count=0
+    kill -9 $(pidof mDNSResponder)
+    while [ -n "$(pidof mDNSResponder)" ]
+    do
+       sleep 1
+       count=$(($count + 1))
+       [ "$count" -gt "20" ] && {
+           err=1
+           return
+       }
+    done
+}

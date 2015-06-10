@@ -1,0 +1,14 @@
+Source-Makefile: package/barry/Makefile
+Package: barry
+Version: 0.16-1
+Depends: +libiconv +zlib +libusb
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: barry
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	barry
+@@
+

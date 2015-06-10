@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-nconfig/Makefile
+Package: ezp-nconfig
+Version: 1
+Depends: +libncurses +dialog
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: ezp-nconfig - product authentication tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	product authentication tool
+@@
+

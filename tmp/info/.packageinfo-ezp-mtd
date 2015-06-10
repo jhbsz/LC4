@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-mtd/Makefile
+Package: ezp-mtd
+Version: 8
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Update utility for EZ Packet firmware images
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains an utility useful to upgrade/downgrade EZ Packet releases.
+@@
+

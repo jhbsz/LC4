@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. /etc/arch.sh
+
+local vid="$(echo $PRODUCT | awk -F/ '{print $1}')"
+local pid="$(echo $PRODUCT | awk -F/ '{print $2}')"
+[ "$vid" != "5ac" -o "$pid" != "1402" ] && exit
+
+case "$ACTION" in
+        add)
+            sleep 1
+            brctl addif br0 usb0
+            ifconfig usb0 up           
+        ;;
+esac
+

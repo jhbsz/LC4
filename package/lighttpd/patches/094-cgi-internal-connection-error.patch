@@ -1,0 +1,17 @@
+--- lighttpd-1.4.30/src/mod_cgi.c	2014-01-27 16:41:02.285460092 +0800
++++ lighttpd-1.4.30/src/mod_cgi.c	2014-02-11 10:04:25.550983837 +0800
+@@ -585,9 +585,11 @@
+ 		default:
+ 			/* Send an error if we haven't sent any data yet */
+ 			if (0 == con->file_started) {
+-				connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-				con->http_status = 500;
+-				con->mode = DIRECT;
++                if (!WIFEXITED(status)) {
++                    connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
++                    con->http_status = 500;
++                    con->mode = DIRECT;
++                }
+ 			} else {
+ 				con->file_finished = 1;
+ 			}

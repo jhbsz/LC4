@@ -1,0 +1,1111 @@
+diff -Naur linux-2.6.24.4/include/asm-arm/assembler.h linux-2.6.24.4-oxnas/include/asm-arm/assembler.h
+--- linux-2.6.24.4/include/asm-arm/assembler.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/assembler.h	2009-05-08 16:21:54.000000000 +0800
+@@ -48,8 +48,10 @@
+ 
+ /*
+  * Data preload for architectures that support it
++ * OXNAS altered to >= 6 from >= 5 as 926 supports pld, but implements it as
++ * nop, so wastes instruction cycles to include pld support
+  */
+-#if __LINUX_ARM_ARCH__ >= 5
++#if __LINUX_ARM_ARCH__ >= 6
+ #define PLD(code...)	code
+ #else
+ #define PLD(code...)
+diff -Naur linux-2.6.24.4/include/asm-arm/cacheflush.h linux-2.6.24.4-oxnas/include/asm-arm/cacheflush.h
+--- linux-2.6.24.4/include/asm-arm/cacheflush.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/cacheflush.h	2009-05-08 16:21:54.000000000 +0800
+@@ -95,19 +95,19 @@
+ #endif
+ 
+ #if defined(CONFIG_CPU_V6)
+-//# ifdef _CACHE
++# ifdef _CACHE
+ #  define MULTI_CACHE 1
+-//# else
+-//#  define _CACHE v6
+-//# endif
++# else
++#  define _CACHE v6
++# endif
+ #endif
+ 
+ #if defined(CONFIG_CPU_V7)
+-//# ifdef _CACHE
++# ifdef _CACHE
+ #  define MULTI_CACHE 1
+-//# else
+-//#  define _CACHE v7
+-//# endif
++# else
++#  define _CACHE v7
++# endif
+ #endif
+ 
+ #if !defined(_CACHE) && !defined(MULTI_CACHE)
+@@ -260,6 +260,26 @@
+ 
+ #endif
+ 
++#if defined(CONFIG_SMP) && defined(CONFIG_CPU_V6) 
++enum smp_dma_cache_type {
++	SMP_DMA_CACHE_INV,
++	SMP_DMA_CACHE_CLEAN,
++	SMP_DMA_CACHE_FLUSH,
++};
++extern void smp_dma_cache_op(int type, const void *start, const void* end);
++
++#define smp_dma_inv_range(s, e) smp_dma_cache_op(SMP_DMA_CACHE_INV, s, e)
++#define smp_dma_clean_range(s, e) smp_dma_cache_op(SMP_DMA_CACHE_CLEAN, s, e)
++#define smp_dma_flush_range(s, e) smp_dma_cache_op(SMP_DMA_CACHE_FLUSH, s, e)
++
++#else
++
++#define smp_dma_inv_range		dmac_inv_range
++#define smp_dma_clean_range		dmac_clean_range
++#define smp_dma_flush_range		dmac_flush_range
++
++#endif
++
+ #ifdef CONFIG_OUTER_CACHE
+ 
+ extern struct outer_cache_fns outer_cache;
+@@ -402,6 +422,14 @@
+ 
+ extern void __flush_dcache_page(struct address_space *mapping, struct page *page);
+ 
++static inline void __flush_icache_all(void)
++{
++	asm("mcr	p15, 0, %0, c7, c5, 0	@ invalidate I-cache\n"
++	    "mcr	p15, 0, %0, c7, c5, 6	@ flush BTAC/BTB\n"
++	    :
++	    : "r" (0));
++}
++
+ #define ARCH_HAS_FLUSH_ANON_PAGE
+ static inline void flush_anon_page(struct vm_area_struct *vma,
+ 			 struct page *page, unsigned long vmaddr)
+diff -Naur linux-2.6.24.4/include/asm-arm/dma.h linux-2.6.24.4-oxnas/include/asm-arm/dma.h
+--- linux-2.6.24.4/include/asm-arm/dma.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/dma.h	2009-05-08 16:21:54.000000000 +0800
+@@ -1,143 +1,5 @@
+ #ifndef __ASM_ARM_DMA_H
+ #define __ASM_ARM_DMA_H
+ 
+-typedef unsigned int dmach_t;
+-
+-#include <linux/spinlock.h>
+-#include <asm/system.h>
+-#include <asm/scatterlist.h>
+ #include <asm/arch/dma.h>
+-
+-/*
+- * This is the maximum virtual address which can be DMA'd from.
+- */
+-#ifndef MAX_DMA_ADDRESS
+-#define MAX_DMA_ADDRESS	0xffffffff
+-#endif
+-
+-/*
+- * DMA modes
+- */
+-typedef unsigned int dmamode_t;
+-
+-#define DMA_MODE_MASK	3
+-
+-#define DMA_MODE_READ	 0
+-#define DMA_MODE_WRITE	 1
+-#define DMA_MODE_CASCADE 2
+-#define DMA_AUTOINIT	 4
+-
+-extern spinlock_t  dma_spin_lock;
+-
+-static inline unsigned long claim_dma_lock(void)
+-{
+-	unsigned long flags;
+-	spin_lock_irqsave(&dma_spin_lock, flags);
+-	return flags;
+-}
+-
+-static inline void release_dma_lock(unsigned long flags)
+-{
+-	spin_unlock_irqrestore(&dma_spin_lock, flags);
+-}
+-
+-/* Clear the 'DMA Pointer Flip Flop'.
+- * Write 0 for LSB/MSB, 1 for MSB/LSB access.
+- */
+-#define clear_dma_ff(channel)
+-
+-/* Set only the page register bits of the transfer address.
+- *
+- * NOTE: This is an architecture specific function, and should
+- *       be hidden from the drivers
+- */
+-extern void set_dma_page(dmach_t channel, char pagenr);
+-
+-/* Request a DMA channel
+- *
+- * Some architectures may need to do allocate an interrupt
+- */
+-extern int  request_dma(dmach_t channel, const char * device_id);
+-
+-/* Free a DMA channel
+- *
+- * Some architectures may need to do free an interrupt
+- */
+-extern void free_dma(dmach_t channel);
+-
+-/* Enable DMA for this channel
+- *
+- * On some architectures, this may have other side effects like
+- * enabling an interrupt and setting the DMA registers.
+- */
+-extern void enable_dma(dmach_t channel);
+-
+-/* Disable DMA for this channel
+- *
+- * On some architectures, this may have other side effects like
+- * disabling an interrupt or whatever.
+- */
+-extern void disable_dma(dmach_t channel);
+-
+-/* Test whether the specified channel has an active DMA transfer
+- */
+-extern int dma_channel_active(dmach_t channel);
+-
+-/* Set the DMA scatter gather list for this channel
+- *
+- * This should not be called if a DMA channel is enabled,
+- * especially since some DMA architectures don't update the
+- * DMA address immediately, but defer it to the enable_dma().
+- */
+-extern void set_dma_sg(dmach_t channel, struct scatterlist *sg, int nr_sg);
+-
+-/* Set the DMA address for this channel
+- *
+- * This should not be called if a DMA channel is enabled,
+- * especially since some DMA architectures don't update the
+- * DMA address immediately, but defer it to the enable_dma().
+- */
+-extern void __set_dma_addr(dmach_t channel, void *addr);
+-#define set_dma_addr(channel, addr)				\
+-	__set_dma_addr(channel, bus_to_virt(addr))
+-
+-/* Set the DMA byte count for this channel
+- *
+- * This should not be called if a DMA channel is enabled,
+- * especially since some DMA architectures don't update the
+- * DMA count immediately, but defer it to the enable_dma().
+- */
+-extern void set_dma_count(dmach_t channel, unsigned long count);
+-
+-/* Set the transfer direction for this channel
+- *
+- * This should not be called if a DMA channel is enabled,
+- * especially since some DMA architectures don't update the
+- * DMA transfer direction immediately, but defer it to the
+- * enable_dma().
+- */
+-extern void set_dma_mode(dmach_t channel, dmamode_t mode);
+-
+-/* Set the transfer speed for this channel
+- */
+-extern void set_dma_speed(dmach_t channel, int cycle_ns);
+-
+-/* Get DMA residue count. After a DMA transfer, this
+- * should return zero. Reading this while a DMA transfer is
+- * still in progress will return unpredictable results.
+- * If called before the channel has been used, it may return 1.
+- * Otherwise, it returns the number of _bytes_ left to transfer.
+- */
+-extern int  get_dma_residue(dmach_t channel);
+-
+-#ifndef NO_DMA
+-#define NO_DMA	255
+-#endif
+-
+-#ifdef CONFIG_PCI
+-extern int isa_dma_bridge_buggy;
+-#else
+-#define isa_dma_bridge_buggy    (0)
+-#endif
+-
+-#endif /* _ARM_DMA_H */
++#endif // __ASM_ARM_DMA_H
+diff -Naur linux-2.6.24.4/include/asm-arm/dma-mapping.h linux-2.6.24.4-oxnas/include/asm-arm/dma-mapping.h
+--- linux-2.6.24.4/include/asm-arm/dma-mapping.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/dma-mapping.h	2009-05-08 16:21:54.000000000 +0800
+@@ -265,6 +265,8 @@
+  * the same here.
+  */
+ #ifndef CONFIG_DMABOUNCE
++
++#ifndef CONFIG_SMP
+ static inline int
+ dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
+ 	   enum dma_data_direction dir)
+@@ -284,6 +286,13 @@
+ 	return nents;
+ }
+ #else
++
++int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
++	   enum dma_data_direction dir);
++
++#endif
++
++#else
+ extern int dma_map_sg(struct device *, struct scatterlist *, int, enum dma_data_direction);
+ #endif
+ 
+diff -Naur linux-2.6.24.4/include/asm-arm/hardware/gic.h linux-2.6.24.4-oxnas/include/asm-arm/hardware/gic.h
+--- linux-2.6.24.4/include/asm-arm/hardware/gic.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/hardware/gic.h	2009-05-08 16:21:50.000000000 +0800
+@@ -12,6 +12,7 @@
+ 
+ #include <linux/compiler.h>
+ 
++// These start at 0x0100 and are alaised at 0x200 + (0x100 * CPU_Number)
+ #define GIC_CPU_CTRL			0x00
+ #define GIC_CPU_PRIMASK			0x04
+ #define GIC_CPU_BINPOINT		0x08
+@@ -20,6 +21,8 @@
+ #define GIC_CPU_RUNNINGPRI		0x14
+ #define GIC_CPU_HIGHPRI			0x18
+ 
++
++// These start at 0x1000 + ...
+ #define GIC_DIST_CTRL			0x000
+ #define GIC_DIST_CTR			0x004
+ #define GIC_DIST_ENABLE_SET		0x100
+@@ -37,6 +40,7 @@
+ void gic_cpu_init(unsigned int gic_nr, void __iomem *base);
+ void gic_cascade_irq(unsigned int gic_nr, unsigned int irq);
+ void gic_raise_softirq(cpumask_t cpumask, unsigned int irq);
++void gic_legacy_mode(unsigned int legacy_mode_on, void __iomem *base);
+ #endif
+ 
+ #endif
+diff -Naur linux-2.6.24.4/include/asm-arm/io.h linux-2.6.24.4-oxnas/include/asm-arm/io.h
+--- linux-2.6.24.4/include/asm-arm/io.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/io.h	2009-05-08 16:21:54.000000000 +0800
+@@ -108,27 +108,24 @@
+  *
+  * The {in,out}[bwl] macros are for emulating x86-style PCI/ISA IO space.
+  */
+-#ifdef __io
+-#define outb(v,p)		__raw_writeb(v,__io(p))
+-#define outw(v,p)		__raw_writew((__force __u16) \
+-					cpu_to_le16(v),__io(p))
+-#define outl(v,p)		__raw_writel((__force __u32) \
+-					cpu_to_le32(v),__io(p))
+-
+-#define inb(p)	({ __u8 __v = __raw_readb(__io(p)); __v; })
+-#define inw(p)	({ __u16 __v = le16_to_cpu((__force __le16) \
+-			__raw_readw(__io(p))); __v; })
+-#define inl(p)	({ __u32 __v = le32_to_cpu((__force __le32) \
+-			__raw_readl(__io(p))); __v; })
+-
+-#define outsb(p,d,l)		__raw_writesb(__io(p),d,l)
+-#define outsw(p,d,l)		__raw_writesw(__io(p),d,l)
+-#define outsl(p,d,l)		__raw_writesl(__io(p),d,l)
+-
+-#define insb(p,d,l)		__raw_readsb(__io(p),d,l)
+-#define insw(p,d,l)		__raw_readsw(__io(p),d,l)
+-#define insl(p,d,l)		__raw_readsl(__io(p),d,l)
+-#endif
++extern unsigned int pciio_read( u32 addr, unsigned int size );
++extern void pciio_write(unsigned int   data, u32 addr, unsigned int size );
++
++extern void outb(unsigned char  v, u32 p);
++extern void outw(unsigned short v, u32 p);
++extern void outl(unsigned long  v, u32 p);
++
++extern unsigned char   inb(u32 p);
++extern unsigned short  inw(u32 p);
++extern unsigned long   inl(u32 p);
++
++extern void outsb(u32 p, unsigned char  * from, u32 len);
++extern void outsw(u32 p, unsigned short * from, u32 len);
++extern void outsl(u32 p, unsigned long  * from, u32 len);
++
++extern void insb(u32 p, unsigned char  * to, u32 len);	
++extern void insw(u32 p, unsigned short * to, u32 len);	
++extern void insl(u32 p, unsigned long  * to, u32 len);	
+ 
+ #define outb_p(val,port)	outb((val),(port))
+ #define outw_p(val,port)	outw((val),(port))
+diff -Naur linux-2.6.24.4/include/asm-arm/mmu_context.h linux-2.6.24.4-oxnas/include/asm-arm/mmu_context.h
+--- linux-2.6.24.4/include/asm-arm/mmu_context.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/mmu_context.h	2009-05-08 16:21:54.000000000 +0800
+@@ -41,12 +41,23 @@
+ #define ASID_FIRST_VERSION	(1 << ASID_BITS)
+ 
+ extern unsigned int cpu_last_asid;
++#ifdef CONFIG_SMP
++DECLARE_PER_CPU(struct mm_struct *, current_mm);
++#endif
+ 
+ void __init_new_context(struct task_struct *tsk, struct mm_struct *mm);
+ void __new_context(struct mm_struct *mm);
+ 
+ static inline void check_context(struct mm_struct *mm)
+ {
++	/*
++	 * This code is executed with interrupts enabled. Therefore,
++	 * mm->context.id cannot be updated to the latest ASID version
++	 * on a different CPU (and condition below not triggered)
++	 * without first getting an IPI to reset the context. The
++	 * alternative is to take a read_lock on mm->context.id_lock
++	 * (after changing its type to rwlock_t).
++	 */
+ 	if (unlikely((mm->context.id ^ cpu_last_asid) >> ASID_BITS))
+ 		__new_context(mm);
+ 
+@@ -60,8 +71,10 @@
+ 
+ static inline void check_context(struct mm_struct *mm)
+ {
++#ifdef CONFIG_MMU
+ 	if (unlikely(mm->context.kvm_seq != init_mm.context.kvm_seq))
+ 		__check_kvm_seq(mm);
++#endif
+ }
+ 
+ #define init_new_context(tsk,mm)	0
+@@ -97,7 +110,16 @@
+ #ifdef CONFIG_MMU
+ 	unsigned int cpu = smp_processor_id();
+ 
++#ifdef CONFIG_SMP
++	/* check for possible thread migration */
++	if (!cpus_empty(next->cpu_vm_mask) && !cpu_isset(cpu, next->cpu_vm_mask))
++		__flush_icache_all();
++#endif
+ 	if (!cpu_test_and_set(cpu, next->cpu_vm_mask) || prev != next) {
++#ifdef CONFIG_SMP
++		struct mm_struct **crt_mm = &per_cpu(current_mm, cpu);
++		*crt_mm = next;
++#endif
+ 		check_context(next);
+ 		cpu_switch_mm(next->pgd, next);
+ 		if (cache_is_vivt())
+diff -Naur linux-2.6.24.4/include/asm-arm/mmu.h linux-2.6.24.4-oxnas/include/asm-arm/mmu.h
+--- linux-2.6.24.4/include/asm-arm/mmu.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/mmu.h	2009-05-08 16:21:54.000000000 +0800
+@@ -6,6 +6,7 @@
+ typedef struct {
+ #ifdef CONFIG_CPU_HAS_ASID
+ 	unsigned int id;
++	spinlock_t id_lock;
+ #endif
+ 	unsigned int kvm_seq;
+ } mm_context_t;
+diff -Naur linux-2.6.24.4/include/asm-arm/mutex.h linux-2.6.24.4-oxnas/include/asm-arm/mutex.h
+--- linux-2.6.24.4/include/asm-arm/mutex.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/mutex.h	2009-05-08 16:21:54.000000000 +0800
+@@ -9,8 +9,9 @@
+ #define _ASM_MUTEX_H
+ 
+ #if __LINUX_ARM_ARCH__ < 6
++
+ /* On pre-ARMv6 hardware the swp based implementation is the most efficient. */
+-# include <asm-generic/mutex-xchg.h>
++#include <asm-generic/mutex-xchg.h>
+ #else
+ 
+ /*
+diff -Naur linux-2.6.24.4/include/asm-arm/spinlock.h linux-2.6.24.4-oxnas/include/asm-arm/spinlock.h
+--- linux-2.6.24.4/include/asm-arm/spinlock.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/spinlock.h	2009-05-08 16:21:54.000000000 +0800
+@@ -23,12 +23,32 @@
+ 
+ #define __raw_spin_lock_flags(lock, flags) __raw_spin_lock(lock)
+ 
++#ifdef CONFIG_ARM_ERRATA_351422
++#define spinlock_backoff_delay()			\
++{							\
++	unsigned int delay;				\
++	__asm__ __volatile__(				\
++	"1:	mrc     p15, 0, %0, c0, c0, 5\n"	\
++	"	and	%0, %0, #0xf\n"			\
++	"	mov	%0, %0, lsl #8\n"		\
++	"2:	subs	%0, %0, #1\n"			\
++	"	bpl	2b\n"				\
++	: "=&r" (delay)					\
++	:						\
++	: "cc" );					\
++}
++#else
++#define spinlock_backoff_delay()			\
++	__asm__ __volatile__("1:	\n");
++#endif
++ 
+ static inline void __raw_spin_lock(raw_spinlock_t *lock)
+ {
+ 	unsigned long tmp;
+ 
++ 	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+-"1:	ldrex	%0, [%1]\n"
++"	ldrex	%0, [%1]\n"
+ "	teq	%0, #0\n"
+ #ifdef CONFIG_CPU_32v6K
+ "	wfene\n"
+@@ -47,6 +67,7 @@
+ {
+ 	unsigned long tmp;
+ 
++ 	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+ "	ldrex	%0, [%1]\n"
+ "	teq	%0, #0\n"
+@@ -90,8 +111,9 @@
+ {
+ 	unsigned long tmp;
+ 
++ 	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+-"1:	ldrex	%0, [%1]\n"
++"	ldrex	%0, [%1]\n"
+ "	teq	%0, #0\n"
+ #ifdef CONFIG_CPU_32v6K
+ "	wfene\n"
+@@ -110,6 +132,7 @@
+ {
+ 	unsigned long tmp;
+ 
++ 	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+ "1:	ldrex	%0, [%1]\n"
+ "	teq	%0, #0\n"
+@@ -160,8 +183,9 @@
+ {
+ 	unsigned long tmp, tmp2;
+ 
++ 	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+-"1:	ldrex	%0, [%2]\n"
++"	ldrex	%0, [%2]\n"
+ "	adds	%0, %0, #1\n"
+ "	strexpl	%1, %0, [%2]\n"
+ #ifdef CONFIG_CPU_32v6K
+@@ -182,8 +206,9 @@
+ 
+ 	smp_mb();
+ 
++	spinlock_backoff_delay();
+ 	__asm__ __volatile__(
+-"1:	ldrex	%0, [%2]\n"
++"	ldrex	%0, [%2]\n"
+ "	sub	%0, %0, #1\n"
+ "	strex	%1, %0, [%2]\n"
+ "	teq	%1, #0\n"
+diff -Naur linux-2.6.24.4/include/asm-arm/uaccess.h linux-2.6.24.4-oxnas/include/asm-arm/uaccess.h
+--- linux-2.6.24.4/include/asm-arm/uaccess.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/uaccess.h	2009-05-08 16:21:54.000000000 +0800
+@@ -383,9 +383,30 @@
+ 
+ 
+ #ifdef CONFIG_MMU
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++extern unsigned long __must_check __copy_from_user_alt(void *to, const void __user *from, unsigned long n);
++static inline unsigned long __must_check __copy_from_user(void *to, const void __user *from, unsigned long n)
++{
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("__copy_from_user() %lu bytes\n", n);
++	return __copy_from_user_alt(to, from , n);
++}
++extern unsigned long __must_check __copy_to_user_alt(void __user *to, const void *from, unsigned long n);
++static inline unsigned long __must_check __copy_to_user(void __user *to, const void *from, unsigned long n)
++{
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("__copy_to_user() %lu bytes\n", n);
++	return __copy_to_user_alt(to, from , n);
++}
++extern unsigned long __must_check __clear_user_alt(void __user *addr, unsigned long n);
++static inline unsigned long __must_check __clear_user(void __user *addr, unsigned long n)
++{
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("__clear_user() %lu bytes\n", n);
++	return __clear_user_alt(addr, n);
++}
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ extern unsigned long __must_check __copy_from_user(void *to, const void __user *from, unsigned long n);
+ extern unsigned long __must_check __copy_to_user(void __user *to, const void *from, unsigned long n);
+ extern unsigned long __must_check __clear_user(void __user *addr, unsigned long n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ #else
+ #define __copy_from_user(to,from,n)	(memcpy(to, (void __force *)from, n), 0)
+ #define __copy_to_user(to,from,n)	(memcpy((void __force *)to, from, n), 0)
+@@ -397,8 +418,15 @@
+ 
+ static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)
+ {
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("copy_from_user() %lu bytes\n", n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	if (access_ok(VERIFY_READ, from, n))
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++		n = __copy_from_user_alt(to, from, n);
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 		n = __copy_from_user(to, from, n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	else /* security hole - plug it */
+ 		memzero(to, n);
+ 	return n;
+@@ -406,8 +434,15 @@
+ 
+ static inline unsigned long __must_check copy_to_user(void __user *to, const void *from, unsigned long n)
+ {
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("copy_to_user() %lu bytes\n", n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	if (access_ok(VERIFY_WRITE, to, n))
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++		n = __copy_to_user_alt(to, from, n);
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 		n = __copy_to_user(to, from, n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	return n;
+ }
+ 
+@@ -416,8 +451,15 @@
+ 
+ static inline unsigned long __must_check clear_user(void __user *to, unsigned long n)
+ {
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++	if (n >= CONFIG_OXNAS_INSTRUMENT_COPIES_THRESHOLD) printk("clear_user() %lu bytes\n", n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	if (access_ok(VERIFY_WRITE, to, n))
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++		n = __clear_user_alt(to, n);
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 		n = __clear_user(to, n);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 	return n;
+ }
+ 
+diff -Naur linux-2.6.24.4/include/asm-arm/unistd.h linux-2.6.24.4-oxnas/include/asm-arm/unistd.h
+--- linux-2.6.24.4/include/asm-arm/unistd.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-arm/unistd.h	2009-05-08 16:21:54.000000000 +0800
+@@ -379,6 +379,7 @@
+ #define __NR_timerfd			(__NR_SYSCALL_BASE+350)
+ #define __NR_eventfd			(__NR_SYSCALL_BASE+351)
+ #define __NR_fallocate			(__NR_SYSCALL_BASE+352)
++#define __NR_samba_reserve		(__NR_SYSCALL_BASE+353)
+ #define __NR_timerfd_settime		(__NR_SYSCALL_BASE+353)
+ #define __NR_timerfd_gettime		(__NR_SYSCALL_BASE+354)
+
+diff -Naur linux-2.6.24.4/include/asm-generic/fcntl.h linux-2.6.24.4-oxnas/include/asm-generic/fcntl.h
+--- linux-2.6.24.4/include/asm-generic/fcntl.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/asm-generic/fcntl.h	2009-05-08 16:21:46.000000000 +0800
+@@ -51,6 +51,9 @@
+ #ifndef O_CLOEXEC
+ #define O_CLOEXEC	02000000	/* set close_on_exec */
+ #endif
++#ifndef O_BACKUP
++#define O_BACKUP  04000000
++#endif
+ #ifndef O_NDELAY
+ #define O_NDELAY	O_NONBLOCK
+ #endif
+diff -Naur linux-2.6.24.4/include/linux/serial_reg.h linux-2.6.24.4-oxnas/include/linux/serial_reg.h
+--- linux-2.6.24.4/include/linux/serial_reg.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/serial_reg.h	2009-05-08 16:22:10.000000000 +0800
+@@ -133,6 +133,15 @@
+ 
+ #define UART_SCR	7	/* I/O: Scratch Register */
+ 
++/* Oxsemi NAS UART extra registers */
++#define UART_DLF            0x09  /* Oxsemi 16550 fractional divider */
++#define UART_RX_FILL        0x0a
++#define UART_TX_SPACE       0x0b
++#define UART_WIDE_ACCESS    0x0c
++#define UART_XON_CHAR       0x10
++#define UART_XOFF_CHAR      0x11
++#define UART_DMA            0x12
++
+ /*
+  * DLAB=1
+  */
+diff -Naur linux-2.6.24.4/include/linux/syscalls.h linux-2.6.24.4-oxnas/include/linux/syscalls.h
+--- linux-2.6.24.4/include/linux/syscalls.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/syscalls.h	2009-05-08 16:22:10.000000000 +0800
+@@ -611,6 +611,7 @@
+ 			    const struct itimerspec __user *utmr);
+ asmlinkage long sys_eventfd(unsigned int count);
+ asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
++asmlinkage long sys_samba_reserve(int fd, void __user *info);
+ 
+ int kernel_execve(const char *filename, char *const argv[], char *const envp[]);
+ 
+diff -Naur linux-2.6.24.4/include/linux/tcp.h linux-2.6.24.4-oxnas/include/linux/tcp.h
+--- linux-2.6.24.4/include/linux/tcp.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/tcp.h	2009-05-08 16:22:10.000000000 +0800
+@@ -406,6 +406,9 @@
+ /* TCP MD5 Signagure Option information */
+ 	struct tcp_md5sig_info	*md5sig_info;
+ #endif
++
++	/* DirectNetToDisk context */
++	void *direct_net_to_disk_context;
+ };
+ 
+ static inline struct tcp_sock *tcp_sk(const struct sock *sk)
+diff -Naur linux-2.6.24.4/include/linux/libata.h linux-2.6.24.4-oxnas/include/linux/libata.h
+--- linux-2.6.24.4/include/linux/libata.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/libata.h	2009-05-08 16:22:10.000000000 +0800
+@@ -236,8 +236,8 @@
+ 	/* various lengths of time */
+ 	ATA_TMOUT_BOOT		= 30 * HZ,	/* heuristic */
+ 	ATA_TMOUT_BOOT_QUICK	= 7 * HZ,	/* heuristic */
+-	ATA_TMOUT_INTERNAL	= 30 * HZ,
+-	ATA_TMOUT_INTERNAL_QUICK = 5 * HZ,
++	ATA_TMOUT_INTERNAL	= 10 * HZ,
++    ATA_TMOUT_INTERNAL_QUICK = 5 * HZ,
+ 
+ 	/* FIXME: GoVault needs 2s but we can't afford that without
+ 	 * parallel probing.  800ms is enough for iVDR disk
+@@ -713,6 +713,9 @@
+ 	 * Command execution
+ 	 */
+ 	int  (*qc_defer)(struct ata_queued_cmd *qc);
++    struct ata_queued_cmd* (*qc_new)(struct ata_port *ap);
++    void (*qc_free)(struct ata_queued_cmd *qc);
++
+ 	int  (*check_atapi_dma)(struct ata_queued_cmd *qc);
+ 	void (*qc_prep)(struct ata_queued_cmd *qc);
+ 	unsigned int (*qc_issue)(struct ata_queued_cmd *qc);
+@@ -727,7 +730,7 @@
+ 	void (*set_dmamode)(struct ata_port *ap, struct ata_device *dev);
+ 	int  (*set_mode)(struct ata_link *link, struct ata_device **r_failed_dev);
+ 
+-	void (*dev_config)(struct ata_device *dev);
++    void (*dev_config) (struct ata_port *, struct ata_device *);
+ 
+ 	void (*freeze)(struct ata_port *ap);
+ 	void (*thaw)(struct ata_port *ap);
+@@ -766,7 +769,8 @@
+ 	 * SFF / taskfile oriented ops
+ 	 */
+ 	void (*sff_dev_select)(struct ata_port *ap, unsigned int device);
+-	u8   (*sff_check_status)(struct ata_port *ap);
++    unsigned int (*dev_chk)(struct ata_port *ap, unsigned int device);
++    u8   (*sff_check_status)(struct ata_port *ap);
+ 	u8   (*sff_check_altstatus)(struct ata_port *ap);
+ 	void (*sff_tf_load)(struct ata_port *ap, const struct ata_taskfile *tf);
+ 	void (*sff_tf_read)(struct ata_port *ap, struct ata_taskfile *tf);
+@@ -781,6 +785,8 @@
+ 	void (*bmdma_start)(struct ata_queued_cmd *qc);
+ 	void (*bmdma_stop)(struct ata_queued_cmd *qc);
+ 	u8   (*bmdma_status)(struct ata_port *ap);
++    void (*pio_task)(struct work_struct *work);
++
+ #endif /* CONFIG_ATA_SFF */
+ 
+ 	/*
+diff -Naur linux-2.6.24.4/include/asm-arm/unaligned.h linux-2.6.24.4-oxnas/include/asm-arm/unaligned.h
+--- linux-2.6.24.4/include/asm-arm/unaligned.h	2009-12-04 11:56:18.000000000 +0800
++++ linux-2.6.24.4/include/asm-arm/unaligned.h	2009-12-04 11:58:53.000000000 +0800
+@@ -17,3 +17,15 @@
+ #endif
+ 
+ #endif /* _ASM_ARM_UNALIGNED_H */
++
++#define __get_unaligned_2_le(__p)					\
++	(unsigned int)(__p[0] | __p[1] << 8)
++
++#define __get_unaligned_2_be(__p)					\
++	(unsigned int)(__p[0] << 8 | __p[1])
++
++#define __get_unaligned_4_le(__p)					\
++	(unsigned int)(__p[0] | __p[1] << 8 | __p[2] << 16 | __p[3] << 24)
++
++#define __get_unaligned_4_be(__p)					\
++	(unsigned int)(__p[0] << 24 | __p[1] << 16 | __p[2] << 8 | __p[3])
+diff -Naur linux-2.6.24.4/include/linux/bio.h linux-2.6.24.4-oxnas/include/linux/bio.h
+--- linux-2.6.24.4/include/linux/bio.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/bio.h	2009-05-08 16:22:10.000000000 +0800
+@@ -114,6 +114,15 @@
+ 	void			*bi_private;
+ 
+ 	bio_destructor_t	*bi_destructor;	/* destructor */
++
++	/*
++	 * The raid settings for the bio, this should only be used by the oxsemi
++	 * sata driver to control raid hardware and the request merging code in 
++	 * ll_rw_blk.c to prevent merging of requests to hwraid and non-hwraid 
++	 *partitions.
++	 */ 
++  	u32                 bi_raid;
++   
+ };
+ 
+ /*
+@@ -152,6 +161,7 @@
+ #define BIO_RW_FAILFAST	3
+ #define BIO_RW_SYNC	4
+ #define BIO_RW_META	5
++#define BIO_RW_INCOHERENT 6
+ 
+ /*
+  * upper 16 bits of bi_rw define the io priority of this bio
+diff -Naur linux-2.6.24.4/include/linux/byteorder/swab.h linux-2.6.24.4-oxnas/include/linux/byteorder/swab.h
+--- linux-2.6.24.4/include/linux/byteorder/swab.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/byteorder/swab.h	2009-05-08 16:22:03.000000000 +0800
+@@ -61,26 +61,37 @@
+  * how U/UL/ULL map to __u16, __u32, __u64. At least not in a portable way.
+  */
+ 
+-static __inline__ __attribute_const__ __u16 ___swab16(__u16 x)
+-{
+-	return x<<8 | x>>8;
+-}
+-static __inline__ __attribute_const__ __u32 ___swab32(__u32 x)
+-{
+-	return x<<24 | x>>24 |
+-		(x & (__u32)0x0000ff00UL)<<8 |
+-		(x & (__u32)0x00ff0000UL)>>8;
+-}
+-static __inline__ __attribute_const__ __u64 ___swab64(__u64 x)
+-{
+-	return x<<56 | x>>56 |
+-		(x & (__u64)0x000000000000ff00ULL)<<40 |
+-		(x & (__u64)0x0000000000ff0000ULL)<<24 |
+-		(x & (__u64)0x00000000ff000000ULL)<< 8 |
+-	        (x & (__u64)0x000000ff00000000ULL)>> 8 |
+-		(x & (__u64)0x0000ff0000000000ULL)>>24 |
+-		(x & (__u64)0x00ff000000000000ULL)>>40;
+-}
++#define ___swab16(x) \
++({ \
++	__u16 __x = (x); \
++	((__u16)( \
++		(((__u16)(__x) & (__u16)0x00ffU) << 8) | \
++		(((__u16)(__x) & (__u16)0xff00U) >> 8) )); \
++})
++
++#define ___swab32(x) \
++({ \
++	__u32 __x = (x); \
++	((__u32)( \
++		(((__u32)(__x) & (__u32)0x000000ffUL) << 24) | \
++		(((__u32)(__x) & (__u32)0x0000ff00UL) <<  8) | \
++		(((__u32)(__x) & (__u32)0x00ff0000UL) >>  8) | \
++		(((__u32)(__x) & (__u32)0xff000000UL) >> 24) )); \
++})
++
++#define ___swab64(x) \
++({ \
++	__u64 __x = (x); \
++	((__u64)( \
++		(__u64)(((__u64)(__x) & (__u64)0x00000000000000ffULL) << 56) | \
++		(__u64)(((__u64)(__x) & (__u64)0x000000000000ff00ULL) << 40) | \
++		(__u64)(((__u64)(__x) & (__u64)0x0000000000ff0000ULL) << 24) | \
++		(__u64)(((__u64)(__x) & (__u64)0x00000000ff000000ULL) <<  8) | \
++	        (__u64)(((__u64)(__x) & (__u64)0x000000ff00000000ULL) >>  8) | \
++		(__u64)(((__u64)(__x) & (__u64)0x0000ff0000000000ULL) >> 24) | \
++		(__u64)(((__u64)(__x) & (__u64)0x00ff000000000000ULL) >> 40) | \
++		(__u64)(((__u64)(__x) & (__u64)0xff00000000000000ULL) >> 56) )); \
++})
+ 
+ #define ___constant_swab16(x) \
+ 	((__u16)( \
+@@ -103,6 +114,7 @@
+ 		(__u64)(((__u64)(x) & (__u64)0x00ff000000000000ULL) >> 40) | \
+ 		(__u64)(((__u64)(x) & (__u64)0xff00000000000000ULL) >> 56) ))
+ 
++
+ /*
+  * provide defaults when no architecture-specific optimization is detected
+  */
+diff -Naur linux-2.6.24.4/include/linux/fs.h linux-2.6.24.4-oxnas/include/linux/fs.h
+--- linux-2.6.24.4/include/linux/fs.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/fs.h	2009-05-08 16:22:10.000000000 +0800
+@@ -150,6 +150,7 @@
+ #define S_NOCMTIME	128	/* Do not update file c/mtime */
+ #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
+ #define S_PRIVATE	512	/* Inode is fs-internal */
++#define S_BACKUP	1024/* Inode is special backup file */
+ 
+ /*
+  * Note that nosuid etc flags are inode-specific: setting some file-system
+@@ -184,6 +185,8 @@
+ #define IS_SWAPFILE(inode)	((inode)->i_flags & S_SWAPFILE)
+ #define IS_PRIVATE(inode)	((inode)->i_flags & S_PRIVATE)
+ 
++#define IS_BACKUP(inode)	((inode)->i_flags & S_BACKUP)
++
+ /* the read-only stuff doesn't really belong here, but any other place is
+    probably as bad and I don't want to create yet another include file. */
+ 
+@@ -1147,7 +1150,7 @@
+ 	int error;
+ } read_descriptor_t;
+ 
+-typedef int (*read_actor_t)(read_descriptor_t *, struct page *, unsigned long, unsigned long);
++typedef int (*read_actor_t)(read_descriptor_t *, struct page **, unsigned long, unsigned long);
+ 
+ /* These macros are for out of kernel modules to test that
+  * the kernel supports the unlocked_ioctl and compat_ioctl
+@@ -1167,6 +1170,7 @@
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*aio_read) (struct kiocb *, const struct iovec *, unsigned long, loff_t);
+ 	ssize_t (*aio_write) (struct kiocb *, const struct iovec *, unsigned long, loff_t);
++	ssize_t (*aio_write_kernel) (struct kiocb *, const struct iovec *, unsigned long, loff_t, void *arg);
+ 	int (*readdir) (struct file *, void *, filldir_t);
+ 	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+ 	int (*ioctl) (struct inode *, struct file *, unsigned int, unsigned long);
+@@ -1180,7 +1184,9 @@
+ 	int (*aio_fsync) (struct kiocb *, int datasync);
+ 	int (*fasync) (int, struct file *, int);
+ 	int (*lock) (struct file *, int, struct file_lock *);
++	ssize_t (*sendfile) (struct file *, loff_t *, size_t, read_actor_t, void *);
+ 	ssize_t (*sendpage) (struct file *, struct page *, int, size_t, loff_t *, int);
++	ssize_t (*sendpages) (struct file *, struct page **, int, size_t, loff_t *, int);
+ 	unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+ 	int (*check_flags)(int);
+ 	int (*dir_notify)(struct file *filp, unsigned long arg);
+@@ -1670,6 +1676,8 @@
+ extern int invalidate_inode_pages2(struct address_space *mapping);
+ extern int invalidate_inode_pages2_range(struct address_space *mapping,
+ 					 pgoff_t start, pgoff_t end);
++extern void generic_sync_sb_inodes(struct super_block *sb,
++				struct writeback_control *wbc);
+ extern int write_inode_now(struct inode *, int);
+ extern int filemap_fdatawrite(struct address_space *);
+ extern int filemap_flush(struct address_space *);
+@@ -1791,7 +1799,8 @@
+ 
+ extern int generic_file_mmap(struct file *, struct vm_area_struct *);
+ extern int generic_file_readonly_mmap(struct file *, struct vm_area_struct *);
+-extern int file_read_actor(read_descriptor_t * desc, struct page *page, unsigned long offset, unsigned long size);
++extern int file_read_actor(read_descriptor_t * desc, struct page **page, unsigned long offset, unsigned long size);
++extern int file_send_actor(read_descriptor_t * desc, struct page **page, unsigned long offset, unsigned long size);
+ int generic_write_checks(struct file *file, loff_t *pos, size_t *count, int isblk);
+ extern ssize_t generic_file_aio_read(struct kiocb *, const struct iovec *, unsigned long, loff_t);
+ extern ssize_t generic_file_aio_write(struct kiocb *, const struct iovec *, unsigned long, loff_t);
+@@ -1849,10 +1849,16 @@
+ 		unsigned long *, loff_t, loff_t *, size_t, size_t);
+ extern ssize_t generic_file_buffered_write(struct kiocb *, const struct iovec *,
+ 		unsigned long, loff_t, loff_t *, size_t, ssize_t);
++extern ssize_t generic_file_buffered_write_ex(struct kiocb *, const struct iovec *,
++		unsigned long, loff_t, loff_t *, size_t, ssize_t, int kernel, void *arg);
+ extern ssize_t do_sync_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos);
+ extern ssize_t do_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos);
++extern ssize_t generic_file_sendfile(struct file *, loff_t *, size_t, read_actor_t, void *);
+ extern int generic_segment_checks(const struct iovec *iov,
+ 		unsigned long *nr_segs, size_t *count, int access_flags);
++extern int generic_segment_checks_ex(const struct iovec *iov,
++		unsigned long *nr_segs, size_t *count, int access_flags, int kernel);
++
+ 
+ /* fs/splice.c */
+ extern ssize_t generic_file_splice_read(struct file *, loff_t *,
+diff -Naur linux-2.6.24.4/include/linux/i2c-id.h linux-2.6.24.4-oxnas/include/linux/i2c-id.h
+--- linux-2.6.24.4/include/linux/i2c-id.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/i2c-id.h	2009-05-08 16:22:10.000000000 +0800
+@@ -122,6 +122,7 @@
+ #define I2C_HW_B_CX2341X	0x010020 /* Conexant CX2341X MPEG encoder cards */
+ #define I2C_HW_B_INTELFB	0x010021 /* intel framebuffer driver */
+ #define I2C_HW_B_CX23885	0x010022 /* conexant 23885 based tv cards (bus1) */
++#define I2C_HW_B_OXNAS 		0x010024 /* Oxford Semiconductor OX800 */
+ #define I2C_HW_B_AU0828		0x010023 /* auvitek au0828 usb bridge */
+ 
+ /* --- PCF 8584 based algorithms					*/
+diff -Naur linux-2.6.24.4/include/linux/leds.h linux-2.6.24.4-oxnas/include/linux/leds.h
+--- linux-2.6.24.4/include/linux/leds.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/leds.h	2009-05-08 16:22:09.000000000 +0800
+@@ -123,5 +123,11 @@
+ 	struct gpio_led *leds;
+ };
+ 
++/* Trigger specific functions */
++#ifdef CONFIG_WDC_LEDS_TRIGGER_SATA_DISK
++extern void wdc_ledtrig_sata_activity(void);
++#else
++#define wdc_ledtrig_sata_activity() do {} while(0)
++#endif
+ 
+ #endif		/* __LINUX_LEDS_H_INCLUDED */
+diff -Naur linux-2.6.24.4/include/linux/mii.h linux-2.6.24.4-oxnas/include/linux/mii.h
+--- linux-2.6.24.4/include/linux/mii.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/mii.h	2009-05-08 16:22:10.000000000 +0800
+@@ -21,18 +21,18 @@
+ #define MII_EXPANSION       0x06        /* Expansion register          */
+ #define MII_CTRL1000        0x09        /* 1000BASE-T control          */
+ #define MII_STAT1000        0x0a        /* 1000BASE-T status           */
+-#define MII_ESTATUS	    0x0f	/* Extended Status */
+-#define MII_DCOUNTER        0x12        /* Disconnect counter          */
+-#define MII_FCSCOUNTER      0x13        /* False carrier counter       */
+-#define MII_NWAYTEST        0x14        /* N-way auto-neg test reg     */
+-#define MII_RERRCOUNTER     0x15        /* Receive error counter       */
+-#define MII_SREVISION       0x16        /* Silicon revision            */
+-#define MII_RESV1           0x17        /* Reserved...                 */
+-#define MII_LBRERROR        0x18        /* Lpback, rx, bypass error    */
+-#define MII_PHYADDR         0x19        /* PHY address                 */
+-#define MII_RESV2           0x1a        /* Reserved...                 */
+-#define MII_TPISTATUS       0x1b        /* TPI status for 10mbps       */
+-#define MII_NCONFIG         0x1c        /* Network interface config    */
++#define MII_ESTATUS         0x0f        /* Extended Status */
++//#define MII_DCOUNTER        0x12        /* Disconnect counter          */
++//#define MII_FCSCOUNTER      0x13        /* False carrier counter       */
++//#define MII_NWAYTEST        0x14        /* N-way auto-neg test reg     */
++//#define MII_RERRCOUNTER     0x15        /* Receive error counter       */
++//#define MII_SREVISION       0x16        /* Silicon revision            */
++//#define MII_RESV1           0x17        /* Reserved...                 */
++//#define MII_LBRERROR        0x18        /* Lpback, rx, bypass error    */
++//#define MII_PHYADDR         0x19        /* PHY address                 */
++//#define MII_RESV2           0x1a        /* Reserved...                 */
++//#define MII_TPISTATUS       0x1b        /* TPI status for 10mbps       */
++//#define MII_NCONFIG         0x1c        /* Network interface config    */
+ 
+ /* Basic mode control register. */
+ #define BMCR_RESV               0x003f  /* Unused...                   */
+@@ -121,9 +121,9 @@
+ #define ESTATUS_1000_THALF	0x1000	/* Can do 1000BT Half */
+ 
+ /* N-way test register. */
+-#define NWAYTEST_RESV1          0x00ff  /* Unused...                   */
+-#define NWAYTEST_LOOPBACK       0x0100  /* Enable loopback for N-way   */
+-#define NWAYTEST_RESV2          0xfe00  /* Unused...                   */
++//#define NWAYTEST_RESV1          0x00ff  /* Unused...                   */
++//#define NWAYTEST_LOOPBACK       0x0100  /* Enable loopback for N-way   */
++//#define NWAYTEST_RESV2          0xfe00  /* Unused...                   */
+ 
+ /* 1000BASE-T Control register */
+ #define ADVERTISE_1000FULL      0x0200  /* Advertise 1000BASE-T full duplex */
+@@ -157,7 +157,9 @@
+ 
+ 	unsigned int full_duplex : 1;	/* is full duplex? */
+ 	unsigned int force_media : 1;	/* is autoneg. disabled? */
+-	unsigned int supports_gmii : 1; /* are GMII registers supported? */
++	unsigned int using_1000 : 1;    /* the PHY is using 1000Mb rate */
++	unsigned int using_100 : 1;     /* the PHY is using 100Mb rate */
++	unsigned int using_pause : 1;	/* the PHY will generate pause frames */
+ 
+ 	struct net_device *dev;
+ 	int (*mdio_read) (struct net_device *dev, int phy_id, int location);
+@@ -170,9 +172,16 @@
+ extern int mii_ethtool_sset(struct mii_if_info *mii, struct ethtool_cmd *ecmd);
+ extern int mii_check_gmii_support(struct mii_if_info *mii);
+ extern void mii_check_link (struct mii_if_info *mii);
+-extern unsigned int mii_check_media (struct mii_if_info *mii,
+-				     unsigned int ok_to_print,
+-				     unsigned int init_media);
++extern unsigned int mii_check_media(struct mii_if_info *mii,
++                                    unsigned int ok_to_print,
++                                    unsigned int init_media);
++extern unsigned int mii_check_media_ex(struct mii_if_info *mii,
++                                    unsigned int ok_to_print,
++                                    unsigned int init_media,
++                                    int *has_gigabit_changed,
++									 int *has_pause_changed,
++									 void (*link_state_change_callback)(int link_state, void* arg),
++									 void *link_state_change_arg);
+ extern int generic_mii_ioctl(struct mii_if_info *mii_if,
+                       	     struct mii_ioctl_data *mii_data, int cmd,
+ 			     unsigned int *duplex_changed);
+@@ -216,6 +225,23 @@
+ 	return ret;
+ }
+ 
++static inline unsigned int mii_nway_result_1000(unsigned int lpa_1000, unsigned int advertised_1000)
++{
++	int full_negotiated = (lpa_1000 & LPA_1000FULL) &&
++						  (advertised_1000 & ADVERTISE_1000FULL);
++
++	int half_negotiated = (lpa_1000 & LPA_1000HALF) &&
++						  (advertised_1000 & ADVERTISE_1000HALF);
++	
++	if (full_negotiated) {
++		return LPA_1000FULL;
++	} else if (half_negotiated) {
++		return LPA_1000HALF;
++	} else {
++		return 0;
++	}
++}
++
+ /**
+  * mii_duplex
+  * @duplex_lock: Non-zero if duplex is locked at full
+diff -Naur linux-2.6.24.4/include/linux/net.h linux-2.6.24.4-oxnas/include/linux/net.h
+--- linux-2.6.24.4/include/linux/net.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/net.h	2009-05-08 16:22:10.000000000 +0800
+@@ -174,6 +174,8 @@
+ 				      struct vm_area_struct * vma);
+ 	ssize_t		(*sendpage)  (struct socket *sock, struct page *page,
+ 				      int offset, size_t size, int flags);
++	ssize_t		(*sendpages)  (struct socket *sock, struct page **page,
++				      int offset, size_t size, int flags);
+ 	ssize_t 	(*splice_read)(struct socket *sock,  loff_t *ppos,
+ 				       struct pipe_inode_info *pipe, size_t len, unsigned int flags);
+ };
+diff -Naur linux-2.6.24.4/include/net/sock.h linux-2.6.24.4-oxnas/include/net/sock.h
+--- linux-2.6.24.4/include/net/sock.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/net/sock.h	2009-05-08 16:21:43.000000000 +0800
+@@ -549,6 +549,8 @@
+ 					int *addr_len);
+ 	int			(*sendpage)(struct sock *sk, struct page *page,
+ 					int offset, size_t size, int flags);
++	int			(*sendpages)(struct sock *sk, struct page **page,
++					int offset, size_t size, int flags);
+ 	int			(*bind)(struct sock *sk, 
+ 					struct sockaddr *uaddr, int addr_len);
+ 
+diff -Naur linux-2.6.24.4/include/net/tcp.h linux-2.6.24.4-oxnas/include/net/tcp.h
+--- linux-2.6.24.4/include/net/tcp.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/net/tcp.h	2009-05-08 16:21:43.000000000 +0800
+@@ -285,6 +285,7 @@
+ extern int			tcp_sendmsg(struct kiocb *iocb, struct socket *sock,
+ 					    struct msghdr *msg, size_t size);
+ extern ssize_t			tcp_sendpage(struct socket *sock, struct page *page, int offset, size_t size, int flags);
++extern ssize_t			tcp_sendpages(struct socket *sock, struct page **page, int offset, size_t size, int flags);
+ 
+ extern int			tcp_ioctl(struct sock *sk, 
+ 					  int cmd, 
+@@ -478,6 +479,17 @@
+ 				unsigned int, size_t);
+ extern int tcp_read_sock(struct sock *sk, read_descriptor_t *desc,
+ 			 sk_read_actor_t recv_actor);
++ 
++typedef void (*oxnas_net_rx_actor_t)(
++	read_descriptor_t *desc,
++	struct sk_buff    *skb,
++	u32                offset);
++
++extern ssize_t oxnas_net_read_sock(
++	struct sock			 *sk,
++	read_descriptor_t	 *desc,
++	oxnas_net_rx_actor_t  actor,
++	int					  block);
+ 
+ extern void tcp_initialize_rcv_mss(struct sock *sk);
+
+diff -Naur linux-2.6.24.4/include/linux/raid/raid0.h linux-2.6.24.4-oxnas/include/linux/raid/raid0.h
+--- linux-2.6.24.4/include/linux/raid/raid0.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/raid/raid0.h	2009-05-08 16:22:03.000000000 +0800
+@@ -21,6 +21,8 @@
+ 
+ 	sector_t hash_spacing;
+ 	int preshift;			/* shift this before divide by hash_spacing */
++    
++    unsigned int hw_raid0_settings;
+ };
+ 
+ typedef struct raid0_private_data raid0_conf_t;
+diff -Naur linux-2.6.24.4/include/linux/raid/raid1.h linux-2.6.24.4-oxnas/include/linux/raid/raid1.h
+--- linux-2.6.24.4/include/linux/raid/raid1.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/include/linux/raid/raid1.h	2009-05-08 16:22:03.000000000 +0800
+@@ -61,6 +61,10 @@
+ 
+ 	mempool_t *r1bio_pool;
+ 	mempool_t *r1buf_pool;
++
++    /** This contains flags that can be included with the BIOs generated by
++    writes to set the correct hardware RAID modes */ 
++    u32 hw_raid1_settings;
+ };
+ 
+ typedef struct r1_private_data_s conf_t;

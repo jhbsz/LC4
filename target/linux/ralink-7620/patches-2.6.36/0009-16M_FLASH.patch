@@ -1,0 +1,36 @@
+--- linux-2.6.36/drivers/mtd/ralink/ralink_spi.c	2013-12-16 14:34:40.007963638 +0800
++++ linux-2.6.36/drivers/mtd/ralink/ralink_spi.c	2013-12-16 14:33:30.467961775 +0800
+@@ -69,7 +69,7 @@
+         }, {
+                 name:           "rootfs",
+ #ifdef CONFIG_RT3052_FLASH_16M
+-                size:           0xDE0000,
++                size:           0xDC0000,
+ #else
+                 size:           0x5C0000,
+ #endif
+
+--- linux-2.6.36/arch/mips/ralink/Kconfig	2013-12-16 16:07:58.605048506 +0800
++++ linux-2.6.36/arch/mips/ralink/Kconfig	2013-12-16 16:07:06.905047123 +0800
+@@ -139,6 +139,21 @@
+ 
+ endchoice
+ 
++choice
++       prompt "RT3052 flash Size"
++       default RT3052_FLASH_8M
++		#depends on RALINK_RT3052
++
++config RT3052_FLASH_4M
++       bool "FLASH 4M"
++
++config RT3052_FLASH_8M
++       bool "FLASH 8M"
++
++config RT3052_FLASH_16M
++       bool "FLASH 16M"
++
++endchoice
+ 
+ choice
+        prompt "Flash Type"

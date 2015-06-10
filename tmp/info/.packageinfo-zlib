@@ -1,0 +1,16 @@
+Source-Makefile: package/zlib/Makefile
+Package: zlib
+Version: 1.2.3-5
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Library implementing the deflate compression method
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Library implementing the deflate compression method
+
+http://www.zlib.net/
+@@
+

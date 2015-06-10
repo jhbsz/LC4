@@ -1,0 +1,133 @@
+--- openswan.old/packaging/makefiles/module.defs	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/packaging/makefiles/module.defs	2009-08-28 19:56:01.000000000 +0800
+@@ -27,10 +27,14 @@
+ CONFIG_KLIPS_ALG_SHA1=m
+ CONFIG_KLIPS_ALG_SHA2=m
+ #CONFIG_KLIPS_ALG_CAST=n
+-#CONFIG_KLIPS_ALG_NULL=n
+ 
+ # Use CryptoAPI for ALG? - by default, no.
+-CONFIG_KLIPS_ENC_CRYPTOAPI=n
++# EZPacket
++# Enabled for null and 1des encryption
++CONFIG_KLIPS_ENC_CRYPTOAPI=y
++CONFIG_KLIPS_ENC_1DES=y
++CONFIG_KLIPS_ENC_NULL=y
++# EZPacket
+ 
+ 
+ # IP Compression: new, probably still has minor bugs.
+--- openswan.old/linux/net/ipsec/defconfig	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/linux/net/ipsec/defconfig	2009-08-28 19:56:20.000000000 +0800
+@@ -50,7 +50,12 @@
+ CONFIG_KLIPS_ENC_AES=y
+ 
+ # Use CryptoAPI for ALG? - by default, no.
+-CONFIG_KLIPS_ENC_CRYPTOAPI=n
++# EZPacpket
++# Enabled for null and 1des encryption
++CONFIG_KLIPS_ENC_CRYPTOAPI=y
++CONFIG_KLIPS_ENC_1DES=y
++CONFIG_KLIPS_ENC_NULL=y
++# EZPacket
+ 
+ # IP Compression: new, probably still has minor bugs.
+ CONFIG_KLIPS_IPCOMP=y
+--- openswan.old/packaging/linus/config-all.h	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/packaging/linus/config-all.h	2009-08-31 13:02:29.000000000 +0800
+@@ -64,6 +64,14 @@
+ #define CONFIG_KLIPS_ENC_AES 1
+ #endif
+ 
++#ifndef CONFIG_KLIPS_ENC_1DES
++#define CONFIG_KLIPS_ENC_1DES 1
++#endif
++
++#ifndef CONFIG_KLIPS_ENC_NULL
++#define CONFIG_KLIPS_ENC_NULL 1
++#endif
++
+ /* off by default for now */
+ #ifndef CONFIG_KLIPS_ENC_CRYPTOAPI
+ #define CONFIG_KLIPS_ENC_CRYPTOAPI 0
+--- openswan.old/linux/net/ipsec/ipsec_alg.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/linux/net/ipsec/ipsec_alg.c	2009-08-31 12:54:10.000000000 +0800
+@@ -859,11 +859,15 @@
+ #endif
+ 
+ 	/* If we are doing CryptoAPI, then init */
+-#if defined(CONFIG_KLIPS_ENC_CRYPTOAPI) && CONFIG_KLIPS_ENC_CRYPTOAPI && !defined(CONFIG_KLIPS_ENC_CRYPTOAPI_MODULE)
+-	{
+-                extern int ipsec_cryptoapi_init(void);
+-                ipsec_cryptoapi_init();
+-        }
++#if defined(CONFIG_KLIPS_ENC_CRYPTOAPI) && !defined(CONFIG_KLIPS_ENC_CRYPTOAPI_MODULE)
++#if defined(CONFIG_KLIPS_ENC_CRYPTOAPI) && CONFIG_KLIPS_ENC_CRYPTOAPI
++    /* Warning for Crypto API support */
++#warning "Using built-in crypto api rather than Kernel CryptoAPI"
++#endif
++    {
++        extern int ipsec_cryptoapi_init(void);
++        ipsec_cryptoapi_init();
++    }
+ #endif
+ 
+ 
+--- openswan.old/linux/net/ipsec/ipsec_alg_cryptoapi.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/linux/net/ipsec/ipsec_alg_cryptoapi.c	2009-08-31 13:18:40.216764601 +0800
+@@ -81,8 +81,8 @@
+ 	return -EINVAL;
+ }
+ #else
+-#include <asm/scatterlist.h>
+-#include <asm/pgtable.h>
++#include <linux/scatterlist.h>
++#include <linux/pagemap.h>
+ #include <linux/mm.h>
+ 
+ /*
+@@ -160,9 +160,10 @@
+ #define CIPHERNAME_CAST		cbc(cast5)
+ #define CIPHERNAME_SERPENT	cbc(serpent)
+ #define CIPHERNAME_TWOFISH	cbc(twofish)
+-
+ #define DIGESTNAME_MD5		"md5"
+ #define DIGESTNAME_SHA1		"sha1"
++/* EZPacket: add null encryption support */
++#define CIPHERNAME_NULL     ecb(cipher_null)
+ 
+ #define ESP_SERPENT		252	/* from ipsec drafts */
+ #define ESP_TWOFISH		253	/* from ipsec drafts */
+@@ -179,6 +180,10 @@
+ 
+ MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
+ 
++/* EZPacket: add null encryption support */
++#define NULL_KEY_SIZE		0
++#define NULL_BLOCK_SIZE		1
++
+ #ifdef CONFIG_KLIPS_ENC_NULL
+ static int cipher_null[] = {-1, -1};
+ #endif
+@@ -223,11 +240,18 @@
+   { CIPHERNAME_CAST,     8, 128, 128, cast   ,  { ixt_common:{ ixt_support:{ ias_id: ESP_CAST,}}}},
+   { CIPHERNAME_BLOWFISH, 8,  96, 448, blowfish, { ixt_common:{ ixt_support:{ ias_id: ESP_BLOWFISH,}}}},
+   { CIPHERNAME_3DES,     8, 192, 192, des_ede3, { ixt_common:{ ixt_support:{ ias_id: ESP_3DES,}}}},
++/* EZPacket: add null encryption support */
++#ifdef CONFIG_KLIPS_ENC_NULL
++  { CIPHERNAME_NULL,  NULL_BLOCK_SIZE, NULL_KEY_SIZE, NULL_KEY_SIZE, cipher_null, { ixt_common:{ ixt_support:{ ias_id: ESP_NULL,}}}},
++#else
++#warning "klib null encoding doesn't support"
++#endif
++
++/* EZPacket: add 1des encryption support */
+ #ifdef CONFIG_KLIPS_ENC_1DES
+   { CIPHERNAME_1DES,     8,  64,  64, des_ede1, { ixt_common:{ ixt_support:{ ias_id: ESP_DES,}}}},
+-#endif
+-#ifdef CONFIG_KLIPS_ENC_NULL
+-  { CIPHERNAME_NULL,     1,  0,  0, cipher_null, { ias_id: ESP_NULL,}},
++#else
++#warning "klib des encoding doesn't support"
+ #endif
+   { NULL, 0, 0, 0, NULL, {} }
+ };

@@ -1,0 +1,11 @@
+--- old/drivers/char/ralink_gpio.c	2014-03-03 11:45:39.250336155 +0800
++++ new/drivers/char/ralink_gpio.c	2014-03-03 11:45:46.726596355 +0800
+@@ -2579,7 +2579,7 @@
+ #if defined (CONFIG_RALINK_MT7620)
+ 	gpiomode &= ~0x2000;  //clear bit[13] WLAN_LED
+ #if defined (CONFIG_BOARD_M2E)
+-    gpiomode |= 0x00008000;
++    gpiomode |= 0x0000A000;
+ #endif
+ #endif
+ 	gpiomode |= RALINK_GPIOMODE_DFT;

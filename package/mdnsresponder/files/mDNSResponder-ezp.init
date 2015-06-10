@@ -1,0 +1,59 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=60
+log_msg="mDNSResponder-server"
+
+BIN="/usr/bin/mDNSResponder"
+CONFIG_FILE="/etc/mDNSResponder.conf.$$"
+R_CONFIG_FILE="/etc/mDNSResponder.conf"
+
+start() {
+    stop
+    NAME="$(nvram show wl0_ssid_rule 0)"
+    IP="$(nvram get lan0_ipaddr)"
+    PORT="$(nvram show http_rule 0 port)"
+    MAC="$(nvram show lan_hwaddr_rule_default 0 hwaddr)"
+    local DEVICE="$(nvram get platform)"
+    echo -e "\n$NAME\n_router._tcp. local.\n$PORT\ndevice=$DEVICE\nip=$IP\nport=$PORT\nmac=$MAC\nconfig=0" >> $CONFIG_FILE
+    echo -e "\n$NAME\n_http._tcp. local.\n$PORT\nip=$IP\nport=$PORT\nmac=$MAC\nconfig=0" >> $CONFIG_FILE
+    local NUM="$(nvram get togo_rule_num)"
+    local i=0
+    while [ $i -lt $NUM ]; do
+        [ "$(nvram show togo_rule $i status)" = "1" ] && {
+            PROTO="$(nvram show togo_rule $i proto)"
+            IP="$(nvram show togo_rule $i ip)"
+            PORT="$(nvram show togo_rule $i port)"
+            MAC="$(nvram show togo_rule $i mac)"
+            MAC_ID=$(echo $MAC | tr -d ":")
+            CONFIG="$(nvram show togo_rule $i config)"
+            # roap
+            [ "$PROTO" = "_raop._tcp." ] && \
+            echo -e "\n${MAC_ID}@$NAME\n_raop._tcp local.\n5100\ntxtvers=1\nch=2\ncn=0,1\nek=1\net=0,1\nsv=false\nsr=44100\nss=16\npw=false\ntp=UDP\nvn=3\nsm=false" >> $CONFIG_FILE
+            # other than roap
+            [ "$PROTO" != "_raop._tcp." ] && \
+            echo -e "\n$NAME\n$PROTO local.\n$PORT\nip=$IP\nport=$PORT\nmac=$MAC\nconfig=$CONFIG" >> $CONFIG_FILE
+        }
+        i=$(($i+1))
+    done
+    mv $CONFIG_FILE $R_CONFIG_FILE
+    local platform="$(nvram get platform)"
+    [ $platform = "AXA" ] && {
+        $BIN -b -i br0 -f $R_CONFIG_FILE &
+    } || {
+        $BIN -b -f $R_CONFIG_FILE &
+    }
+}
+stop() {
+    local count=0
+    kill -9 $(pidof mDNSResponder)
+    while [ -n "$(pidof mDNSResponder)" ]
+    do
+       sleep 1
+       count=$(($count + 1))
+       [ "$count" -gt "20" ] && {
+           err=1
+           return
+       }
+    done
+}

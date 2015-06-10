@@ -1,0 +1,132 @@
+--- wide-dhcpv6-20080615/dhcp6c.c	2008-06-15 15:48:41.000000000 +0800
++++ wide-dhcpv6-20080615/dhcp6c.c	2011-03-02 20:35:35.689493164 +0800
+@@ -1828,15 +1828,6 @@
+ 	}
+ 
+ 	/*
+-	 * Call the configuration script, if specified, to handle various
+-	 * configuration parameters.
+-	 */
+-	if (ifp->scriptpath != NULL && strlen(ifp->scriptpath) != 0) {
+-		dprintf(LOG_DEBUG, FNAME, "executes %s", ifp->scriptpath);
+-		client6_script(ifp->scriptpath, state, optinfo);
+-	}
+-
+-	/*
+ 	 * Set refresh timer for configuration information specified in
+ 	 * information-request.  If the timer value is specified by the server
+ 	 * in an information refresh time option, use it; use the protocol
+@@ -1888,6 +1879,15 @@
+ 		    &optinfo->serverID, ev->authparam);
+ 	}
+ 
++	/*
++	 * Call the configuration script, if specified, to handle various
++	 * configuration parameters.
++	 */
++	if (ifp->scriptpath != NULL && strlen(ifp->scriptpath) != 0) {
++		dprintf(LOG_DEBUG, FNAME, "executes %s", ifp->scriptpath);
++		client6_script(ifp->scriptpath, state, optinfo);
++	}
++
+ 	dhcp6_remove_event(ev);
+ 
+ 	if (state == DHCP6S_RELEASE) {
+--- wide-dhcpv6-20080615/dhcp6c_ia.c	2007-03-21 17:52:55.000000000 +0800
++++ wide-dhcpv6-20080615/dhcp6c_ia.c	2011-03-02 20:35:35.689493164 +0800
+@@ -77,6 +77,8 @@
+ 	struct authparam *authparam;
+ };
+ 
++struct in6_addr stateful_ipaddr = {0};
++
+ static int update_authparam __P((struct ia *, struct authparam *));
+ static void reestablish_ia __P((struct ia *));
+ static void callback __P((struct ia *));
+@@ -90,6 +92,28 @@
+ static char *iastr __P((iatype_t));
+ static char *statestr __P((iastate_t));
+ 
++int assign_stateful_ipaddr(struct in6_addr *sia) {
++    memcpy(&stateful_ipaddr, sia, sizeof(stateful_ipaddr));
++    return 0;
++}
++
++int clear_stateful_ipaddr(void) {
++    memset(&stateful_ipaddr,0,sizeof(stateful_ipaddr));
++    return 0;
++}
++
++struct in6_addr *get_stateful_ipaddr(void) {
++    char *p = (char*)&stateful_ipaddr;
++    int i;
++    for(i = 0; i < sizeof(stateful_ipaddr) ; i++) {
++        if(*p) {
++            return &stateful_ipaddr;
++        }
++        p++;
++    }
++    return NULL;
++}
++
+ void
+ update_ia(iatype, ialist, ifp, serverid, authparam)
+ 	iatype_t iatype;
+@@ -168,7 +192,11 @@
+ 					dprintf(LOG_NOTICE, FNAME,
+ 					    "failed to update an address %s",
+ 					    in6addr2str(&siav->val_statefuladdr6.addr, 0));
+-				}
++                    clear_stateful_ipaddr();
++				} else {
++                    /* Store retrieved ip address and leave it to script */
++                    assign_stateful_ipaddr(&siav->val_statefuladdr6.addr);
++               }
+ 				break;
+ 			case DHCP6_LISTVAL_STCODE:
+ 				dprintf(LOG_INFO, FNAME,
+--- wide-dhcpv6-20080615/dhcp6c_script.c	2007-03-21 17:52:55.000000000 +0800
++++ wide-dhcpv6-20080615/dhcp6c_script.c	2011-03-02 20:35:35.689493164 +0800
+@@ -71,6 +71,7 @@
+ static char nispname_str[] = "new_nisp_name";
+ static char bcmcsserver_str[] = "new_bcmcs_servers";
+ static char bcmcsname_str[] = "new_bcmcs_name";
++static char ipaddrname_str[] = "ipaddr_name";
+ 
+ int
+ client6_script(scriptpath, state, optinfo)
+@@ -153,6 +154,7 @@
+ 		bcmcsnamelen += v->val_vbuf.dv_len;
+ 	}
+ 	envc += bcmcsnamelen ? 1 : 0;
++    envc += get_stateful_ipaddr() ? 1 : 0;
+ 
+ 	/* allocate an environments array */
+ 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
+@@ -379,7 +381,16 @@
+ 			strlcat(s, " ", elen);
+ 		}
+ 	}
+-
++    if (get_stateful_ipaddr()) {
++        elen = sizeof (ipaddrname_str) + strlen(in6addr2str(get_stateful_ipaddr(), 0)) + 10;
++		if ((s = envp[i++] = malloc(elen)) == NULL) {
++			dprintf(LOG_NOTICE, FNAME,
++			    "failed to allocate strings for BCMC domain name");
++			ret = -1;
++			goto clean;
++		}
++        snprintf(s, elen, "%s=%s ", ipaddrname_str, in6addr2str(get_stateful_ipaddr(), 0));
++    }
+ 	/* launch the script */
+ 	pid = fork();
+ 	if (pid < 0) {
+--- wide-dhcpv6-20080615/dhcp6.h	2007-03-21 17:52:53.000000000 +0800
++++ wide-dhcpv6-20080615/dhcp6.h	2011-03-02 20:42:31.456572371 +0800
+@@ -381,5 +381,6 @@
+        DHCP6_AUTHPROTO_RECONFIG = 3 };
+ enum { DHCP6_AUTHALG_UNDEF = -1, DHCP6_AUTHALG_HMACMD5 = 1 };
+ enum { DHCP6_AUTHRDM_UNDEF = -1, DHCP6_AUTHRDM_MONOCOUNTER = 0 };
++struct in6_addr *get_stateful_ipaddr(void);
+ 
+ #endif /*__DHCP6_H_DEFINED*/

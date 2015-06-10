@@ -1,0 +1,21 @@
+--- linux.old/drivers/mtd/chips/cfi_cmdset_0002.c	2009-04-14 15:09:00.000000000 +0800
++++ linux.new/drivers/mtd/chips/cfi_cmdset_0002.c	2009-04-30 20:27:07.000000000 +0800
+@@ -416,6 +416,7 @@
+ 	unsigned long devsize = (1<<cfi->cfiq->DevSize) * cfi->interleave;
+ 	unsigned long offset = 0;
+ 	int i,j;
++    struct flchip *chip;
+ 
+ 	printk(KERN_NOTICE "number of %s chips: %d\n",
+ 	       (cfi->cfi_mode == CFI_MODE_CFI)?"CFI":"JEDEC",cfi->numchips);
+@@ -439,6 +440,10 @@
+ 			mtd->erasesize = ersize;
+ 		}
+ 		for (j=0; j<cfi->numchips; j++) {
++            /* EZP: Send the reset command first! (from Ralink SDK). */
++            chip=&cfi->chips[j];
++            map_write(map, CMD(0xF0), chip->start);
++
+ 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].offset = (j*devsize)+offset;
+ 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].erasesize = ersize;
+ 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].numblocks = ernum;

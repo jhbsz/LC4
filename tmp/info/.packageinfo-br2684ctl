@@ -1,0 +1,16 @@
+Source-Makefile: package/br2684ctl/Makefile
+Package: br2684ctl
+Version: 20040226-1
+Depends: +linux-atm
+Provides: 
+Build-Depends: linux-atm
+Section: net
+Category: Base system
+Title: ATM Ethernet bridging configuration utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	ATM Ethernet bridging configuration utility
+
+http://ftp.debian.org/debian/pool/main/b/br2684ctl
+@@
+

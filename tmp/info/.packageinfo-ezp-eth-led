@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-eth-led/Makefile
+Package: ezp-eth-led
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Power-detect - EZ Packet ethernet detection daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A ethernet detect server for EZ Packet Products.
+@@
+

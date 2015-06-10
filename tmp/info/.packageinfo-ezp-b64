@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-b64/Makefile
+Package: ezp-b64
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Base 64 encode/decode
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A base 64 encode/decode program
+@@
+

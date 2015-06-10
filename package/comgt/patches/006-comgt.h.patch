@@ -1,0 +1,88 @@
+--- comgt.0.32/comgt.h	2015-05-08 15:08:20.441732925 +0800
++++ comgt.0.32/comgt.h 	2015-05-08 15:09:38.405735013 +0800
+@@ -636,6 +636,77 @@
+     exit 0\n";
+ 
+ /* IMEI / Network / Signal strength */
++char _ph8_stats_code[] = \
++    "opengt\n\
++    set com 115200n81\n\
++    set senddelay 0.05\n\
++  :imei_serial\n\
++    waitquiet 5 0.1\n\
++    print \"IMEI and Serial Number: \"\n\
++    send \"AT+GSN^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let x=len($s)\n\
++    dec x\n\
++    let $s=$right($s,x)\n\
++    print ,$s,\"\\n\"\n\
++    goto registered\n\
++  :regtimeout\n\
++    print \"Failed to register: Unknown\n\"\n\
++    goto signal\n\
++  :registered\n\
++    waitquiet 1 0.1\n\
++    send \"AT+COPS?^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let a=len($s)\n\
++    let b=a-12\n\
++    if b < 1 goto regtimeout\n\
++    let $c=$right($s,b)\n\
++    print \"Registered on Home network: \"\n\
++    print $c,\"\n\"\n\
++    let c=0\n\
++  :signal\n\
++    waitquiet 1 0.1\n\
++    send \"AT+CSQ?^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let a=len($s)\n\
++    let a=a-1\n\
++    let $s=$right($s,a)\n\
++    if $s <> \"0,0\" goto sigcont\n\
++    if c > 3 goto sigexit\n\
++    let c=c+1\n\
++    pause 1\n\
++    goto signal\n\
++  :sigexit\n\
++    print \"Signal strength measure 0,0 too low!\"\n\
++    exit 1\n\
++  :sigcont\n\
++    print \"Signal Quality:\",$s,\"\\n\"\n\
++    waitquiet 1 0.1\n\
++  :firmware\n\
++    waitquiet 5 0.1\n\
++    print \"Manufacturer\'s Revision: \"\n\
++    send \"AT+GMR^m\"\n\
++    get 2 \"^m\" $s\n\
++    get 2 \"^m\" $s\n\
++    let x=len($s)\n\
++    dec x\n\
++    let $s=$right($s,x)\n\
++    print ,$s,\"\\n\"\n\
++  :apn\n\
++    waitquiet 5 0.1\n\
++    print \"APN:                    \"\n\
++    send \"AT+CGDCONT?^m\"\n\
++    get 2 \" ^m\" $s\n\
++    get 2 \" ^m\" $s\n\
++    get 2 \" ^m\" $s\n\
++    print $s,\"\\n\" \n\
++    waitquiet 5 0.1  \n\
++    exit 0\n";
++
++/* IMEI / Network / Signal strength */
+ char _c200_stats_code[] = \
+     "opengt\n\
+     set com 115200n81\n\
+@@ -837,6 +908,7 @@
+   if (strcmp(name,"directipon")==0) return (_SETDIRECTIPON_code);
+   if (strcmp(name,"directipoff")==0) return (_SETDIRECTIPOFF_code);
+   if (strcmp(name,"c200_stats")==0) return (_c200_stats_code);
++  if (strcmp(name,"PH8_2")==0) return (_ph8_stats_code);
+   if (strcmp(name,"stats")==0) return (_stats_code);
+   if (strcmp(name,"cdcon")==0) return (_SETCDCON_code);
+   if (strcmp(name,"cdcoff")==0) return (_SETCDCOFF_code);

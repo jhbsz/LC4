@@ -1,0 +1,33 @@
+--- lighttpd-1.4.30/src/chunk.c	2014-01-20 17:15:30.503939749 +0800
++++ lighttpd-1.4.30/src/chunk.c	2014-01-20 17:15:23.619940057 +0800
+@@ -333,14 +333,22 @@
+                 /* we have several tempdirs, only if all of them fail we jump out */
+                 for (i = 0; i < cq->tempdirs->used; i++) {
+                         buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
+-			char *pch = strstr(dst_file, "cgi-bin");
+-			if (pch != NULL) {
+-				// Dst file contains cgi-bin characters
+-				char *cgi_tmp = "/USB/.upload";
+-				buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
+-			} else {
+-				buffer_append_string_len(template, dst_file, strlen(dst_file));
+-			}
++                        // Support cgi-bin upload file path
++                        char *pch = strstr(dst_file, "cgi-bin");
++                        if (pch != NULL) {
++                            // Dst file contains cgi-bin characters
++                            char *root_dir = strstr(dst_file, "upload_root_dir");
++                            char *dest_tmp_file = malloc(sizeof(char) * strlen(root_dir) + 1);
++                            sprintf(dest_tmp_file, "%s", root_dir);
++                            dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
++                            char cgi_tmp[512];
++                            strcpy(cgi_tmp, "/");
++                            strcat(cgi_tmp, dest_tmp_file);
++                            strcat(cgi_tmp, "/.upload");
++                            buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
++                        } else {
++                            buffer_append_string_len(template, dst_file, strlen(dst_file));
++                        }
+                         buffer_urldecode_path(template);
+                         buffer_append_string_len(template, CONST_STR_LEN("-XXXXXX"));
+                         mktemp(template->ptr);

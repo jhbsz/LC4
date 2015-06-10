@@ -1,0 +1,14 @@
+Source-Makefile: package/rt305x-tools/Makefile
+Package: rt305x-tools
+Version: 1.0-1
+Depends: @TARGET_ralink
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Tool for RT305X
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Tool for RT305X
+@@
+

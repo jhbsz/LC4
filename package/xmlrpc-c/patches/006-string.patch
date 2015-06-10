@@ -1,0 +1,16 @@
+--- xmlrpc-c-old/tools/lib/dumpvalue.c	2009-04-20 21:52:02.000000000 +0800
++++ xmlrpc-c-new/tools/lib/dumpvalue.c	2009-04-20 21:52:02.000000000 +0800
+@@ -189,8 +187,11 @@
+             printf("\n");
+             dumpMultilineString(prefix2, value, length);
+             strfree(prefix2);
+-        } else
+-            dumpSimpleString(value, length);
++        } else {
++            /* EZP: we do not change value format type to ASCII 
++             *      dumpSimpleString(value, length); */
++            printf("'%s'\n", value); 
++        }
+ 
+         strfree(value);
+     }

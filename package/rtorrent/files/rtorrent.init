@@ -1,0 +1,116 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+CONF=/var/rtorrent/rtorrent.rc
+. /etc/functions.sh
+
+USBSTORAGE=99
+log_msg="BT-client"
+local dev=$(nvram show storage_state_rule 0 dev_name)
+rtorrent_header() {
+    local min_peers=$(nvram show rtorrent_rule 0 min_peers)
+    local max_peers=$(nvram show rtorrent_rule 0 max_peers)
+    local max_uploads=$(nvram show rtorrent_rule 0 max_uploads)
+    local download_rate=$(nvram show rtorrent_rule 0 download_rate)
+    local upload_rate=$(nvram show rtorrent_rule 0 upload_rate)
+    local directory=$(nvram show rtorrent_rule 0 directory)
+    local session=$(nvram show rtorrent_rule 0 session)
+    local load_start=$(nvram show rtorrent_rule 0 load_start)
+    local port_range_start=$(nvram show rtorrent_rule 0 port_range_start)
+    local port_range_end=$(nvram show rtorrent_rule 0 port_range_end)
+    local dht_port=$(nvram show rtorrent_rule 0 dht_port)
+    local check_hash=$(nvram show rtorrent_rule 0 check_hash)
+    local enable=$(nvram show rtorrent_rule 0 enable)
+
+[ "$enable" = 0 -o  -z "$dev" ] && exit
+    [ -d "/tmp/$dev/download/session"  ] || mkdir -m 777 -p /tmp/$dev/download/session
+    [ -d "/tmp/$dev/download/temp"  ] || mkdir -m 777 -p /tmp/$dev/download/temp
+    
+    [ ! -d "/var/rtorrent" ] && mkdir -p /var/rtorrent
+    cp /etc/rtorrent/rtorrent.rc.template $CONF
+    sed -i "s/|MNT-POINT|/$dev/g" $CONF
+    sed -i "s/|MIN-PEERS|/$min_peers/g" $CONF
+    sed -i "s/|MAX-PEERS|/$max_peers/g" $CONF
+    sed -i "s/|MAX-UPLOAD|/$max_uploads/g" $CONF
+    sed -i "s/|DOWNLOAD-RATE|/$download_rate/g" $CONF
+    sed -i "s/|UPLOAD-RATE|/$upload_rate/g" $CONF
+    sed -i "s/|DIRECTORY|/$directory/g" $CONF
+    sed -i "s/|SESSION|/$session/g" $CONF
+    sed -i "s/|LOAD-START|/$load_start/g" $CONF
+    sed -i "s/|PORT-RANGE|/$port_range_start-$port_range_end/g" $CONF
+    sed -i "s/|DHT-PORT|/$dht_port/g" $CONF
+    sed -i "s/|CHECK-HASH|/$check_hash/g" $CONF
+    sed -i "s/!/\//g" $CONF
+}
+swap_mount() {
+    # If usb storage contain swap partition, we use swap partition.
+    [ -d "/sys/block/sda/sda4" ] && {
+        id=$(fdisk -l /dev/sda | awk '/sda4/{print $5}')
+        [ "$id" = "82" ] && {
+            mkswap /dev/sda4 && swapon /dev/sda4
+            while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+            do 
+                sleep 5
+            done
+            return
+        }
+    } 
+    # If usb storage do not contain swap partition, we use swap file.
+    local swapsize=$(nvram show storage_rule 0 swap_size)
+    [ -f "/tmp/$dev/download/temp/.swapfile" ] && {
+        rm -rf /tmp/$dev/download/temp/.swapfile
+    }
+    dd if=/dev/zero of=/tmp/$dev/download/temp/.swapfile bs=4k count=$swapsize
+    mkswap /tmp/$dev/download/temp/.swapfile
+    swapon /tmp/$dev/download/temp/.swapfile
+    while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+    do 
+        sleep 5
+    done
+}
+
+start() {
+    [ -n "$(pidof rtorrent)" ] && exit
+    [ -f "$CONF" ] && rm $CONF
+    rtorrent_header
+    swap_mount
+    # allow all user delete file or directory that rtorrent create.
+    umask 0000
+    screen -dmUS rtorrent nice -n 19 rtorrent -n -o import=$CONF
+}
+
+stop() {
+    rpid=$(pidof rtorrent)
+    [ -z "$rpid" ] && exit
+# use killall to terminate rtorrent normal or rtorrent will hash at next start
+    killall rtorrent
+    while [ -d "/proc/$rpid" ]
+    do
+        count=$(($count +1))
+        [ "$count" -gt "10" ] && {
+            kill -9 $rpid
+            break
+        }
+        sleep 2
+    done
+
+    [ -d "/sys/block/sda/sda4" ] && {
+        id=$(fdisk -l /dev/sda | awk '/sda4/{print $5}')
+        [ "$id" = "82" ] && {
+            swapoff /dev/sda4 && return
+            while [ "$(free | awk '/Swap/{print $2}')" != "0" ]
+            do 
+                sleep 5
+            done
+        }
+    }
+    [ -f "/tmp/$dev/download/temp/.swapfile" ] && {
+        swapoff /tmp/$dev/download/temp/.swapfile
+        while [ "$(free | awk '/Swap/{print $2}')" != "0" ]
+        do 
+            sleep 5
+        done
+        rm -rf /tmp/$dev/download/temp/.swapfile
+    }
+}
+
+

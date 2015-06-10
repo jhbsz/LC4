@@ -1,0 +1,533 @@
+/*.* custom stuff */
+
+html {
+  height: 120%;
+  margin-bottom: 1px;
+}
+fieldset {
+    border: 2px;
+    border-color: #FF6500;
+    border-style: solid;
+    padding: 5px 0;
+    margin: 5px;
+    width: auto;
+}
+.setting {
+    line-height: 2.3em;
+    width: auto;
+    font-size: 12px;
+    postition: relative;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+fieldset .setting {
+    line-height: 2.3em;
+    width: auto;
+    font-size: 12px;
+    postition: relative;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.input-window fieldset .setting {
+    line-height: 1.7em;
+}
+#controls {
+    font-size: 12px;
+}
+.label,
+fieldset .setting .label {
+    float: left;
+    width: 380px;
+    color: #000000;
+}
+fieldset .setting .ilabel {
+    float: left;
+    width: 250px;
+    color: #000000;
+}
+fieldset legend {
+    font-size: 12px;
+    font-weight: bold;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+    margin-left: 0.5em;
+    color: #000000;
+}
+textarea {
+    margin-left: 20px;
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+input {
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+select {
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+#contentsInfo {
+    padding: 5px;
+    width: auto;
+}
+/* small column */
+#contentsInfo div.scol2l {
+    float: left; 
+    width: 260px
+}
+#contentsInfo div.scol2r {
+    float: left; 
+    margin-left: 6px;
+    width: 260px
+}
+/* large column */
+#contentsInfo div.lcol2l {
+    float: left; 
+    width: 480px
+}
+#contentsInfo div.lcol2l .setting .label {
+    width: 140px;
+}
+#contentsInfo div.lcol2r {
+    float: left; 
+    margin-left: 6px;
+    width: 480px
+}
+#contentsInfo div.lcol2r .setting .label {
+    width: 140px;
+}
+body {
+    line-height: 1.3em;
+    font-family: arial, helvetica, sans-serif;
+    background: #333333;
+    color:#222222;
+    margin: 0;
+    padding: 0;
+}
+
+.nav li a {
+    font-size: 12px;
+    float: right;
+}
+#statusinfo {
+    font-size: 12px;
+    color: gray;
+    text-align: left
+}
+
+div#wrapper {
+    margin: auto;
+    position: relative;
+    width: 1024px;
+}
+
+div#header {
+    background: url(images/head_shad_r.png) 100% 0 repeat-y;
+}
+
+div#header .hd1 {
+    background: url(images/head_shad_l.png) 0 0 repeat-y;
+}
+
+div#header .hd2 {
+    background: url(images/head_shad_b.png) 0 100% repeat-x;
+    border: 0px;
+}
+
+div#header .hd3 {
+    background: url(images/head_shad_br.png) 100% 100% no-repeat;
+}
+
+div#header .hd4 {
+    background: url(images/head_shad_bl.png) 0 100% no-repeat;
+    padding: 0 9px 18px 9px;
+}
+
+div#header div#header-body {
+    height: 50px;
+    background: #000 url(images/head_carbon.png) 0 0 no-repeat;
+}
+
+#logo {
+    width: 160px;
+    height: 50px;
+    background: transparent url(images/head_logo.png) 0 0 no-repeat;
+    position: absolute;
+    border: 0;
+    top: 20px;
+    left: 10px;
+    cursor: pointer;                          
+}
+
+div#mainbox {
+    background: #FFF url(images/mbox_shad_r.png) 100% 0 repeat-y;
+}
+
+div#mainbox .mb1 {
+    background: url(images/mbox_shad_l.png) 0 0 repeat-y;
+}
+
+div#mainbox .mb2 {
+    background: url(images/mbox_shad_b.png) 0 100% repeat-x;
+}
+
+div#mainbox .mb3 {
+    background: url(images/mbox_shad_br.png) 100% 100% no-repeat;
+}
+
+div#mainbox .mb4 {
+    background: url(images/mbox_shad_bl.png) 0 100% no-repeat;
+}
+
+div#mainbox .mb5 {
+    background: url(images/mbox_shad_t.png) 0 0 repeat-x;
+}
+
+div#mainbox .mb6 {
+    background: url(images/mbox_shad_tr.png) 100% 0 no-repeat;
+}
+
+div#mainbox .mb7 {
+    background: url(images/mbox_shad_tl.png) 0 0 no-repeat;
+    padding: 9px;
+}
+
+div#reflectbox {
+    background: url(images/reflect_m.png) 0 0 repeat-x;
+}
+
+div#reflectbox div {
+    background: url(images/reflect_r.png) 100% 0 no-repeat;
+}
+
+div#reflectbox div div {
+    background: url(images/reflect_l.png) 0 0 no-repeat;
+    height: 100px;
+    overflow: hidden;
+}
+
+div.modulebox-silver {
+    background: url(images/box_br.png) 100% 100% no-repeat;
+}
+
+div.modulebox-silver div.bx1 {
+    background: url(images/box_bl.png) 0 100% no-repeat;
+}
+
+div.modulebox-silver div.bx2 {
+    background: url(images/box_tr.png) 100% 0 no-repeat;
+}
+
+div.modulebox-silver div.bx3 {
+    background: url(images/box_tl.png) 0 0 no-repeat;
+    padding: 0;
+    margin: 0;
+}
+
+div.modulebox-white {
+    background: #f7f7f7 url(images/box_r.png) 100% 0 repeat-y;
+}
+
+div.modulebox-white div.bx1 {
+    background: url(images/box_l.png) 0 0 repeat-y;
+}
+
+div.modulebox-white div.bx2 {
+    background: url(images/box_br.png) 100% 100% no-repeat;
+}
+
+div.modulebox-white div.bx3 {
+    background: url(images/box_bl.png) 0 100% no-repeat;
+}
+
+div.modulebox-white div.bx4 {
+    background: url(images/box_tr.png) 100% 0 no-repeat;
+}
+
+div.modulebox-white div.bx5 {
+    background: url(images/box_tl.png) 0 0 no-repeat;
+    padding: 0;
+    margin: 0;
+}
+
+div.modulebox-silver div.moduletable h3 {
+    margin: 0 -9px;
+    background: url(images/box_h3_divider.png) 0 100% repeat-x;
+    margin-bottom: 5px;
+}
+
+div#bot-padding {
+    padding-top: 4px;
+}
+
+div#whitebox-padding {
+    padding-top: 1px;
+    padding-right: 2px;
+    padding-bottom: 0px;
+}
+
+div#whitebox-padding div.padding {
+    padding: 10px;
+}
+
+div.sidenav {
+     width: 230px;
+}
+
+.nav {
+    margin: 0;
+    padding: 0;
+    height: 50px;
+    background: url(images/head_menu_sep.png) 0 0 no-repeat;
+}
+
+.nav ul {
+    float: right;
+    padding: 0;
+    margin: 0;
+}
+
+.nav ul li {
+    float: left;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: block;
+}
+.nav ul li .sub li {
+    background: #000000 url(images/item.png) no-repeat;
+    border: 2.5px solid;
+    /* border-color: #666666; */
+    width: 125px;
+    line-height: 20px;
+    height: auto;
+}
+.nav li .menu-item {
+    background: transparent url(images/head_menu_sep.png) no-repeat scroll 0pt;
+    display: block;
+    float: left;
+    height: 50px;
+    padding: 0 10px;
+    font-weight: normal;
+    font-size: 12px;
+    color: #FFF;
+    line-height: 60px;
+}
+.sub li .menu-subitem {
+    margin-left: 1px;
+    margin-bottom: 7px;
+}
+
+/* some page content things */
+
+form {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+div#header div#orange-bar {
+  height: 16px;
+  background: url(images/head_bar.png) 0 0 repeat-x;
+}
+div.action {                                  
+    cursor: pointer;                          
+}       
+.nav li a,
+.nav li a:hover {
+    padding-top: 3px;
+    float: left;
+    color: #FF6500; 
+    text-decoration: none;
+    verticle-align: middle;
+}
+.nav ul li .menu-item:hover {
+  color: #FF6500; 
+}
+.nav li:hover .sub {
+    display: block
+}
+.nav ul li .sub {
+    background: #666666;
+    display: none; 
+    width: 128px; 
+    position: absolute;
+    left: 0px; 
+    top: 50px;
+    z-index: 10;
+}
+.nav li ul {
+    width: 100%; 
+    height: auto
+}
+.nav li:hover li {
+    margin-bottom: 0.5px;
+    width: 100%;
+}
+.nav li:hover li a {
+    padding-top: 6px; 
+    padding-right: 0px; 
+    padding-left: 0px; 
+    padding-bottom: 0px;         
+    text-align: left;
+    color: white; 
+    text-indent: 1px; 
+    line-height: normal; 
+}
+.nav li:hover li:hover {
+    width: 125px;
+}
+.nav li:hover li a:hover {
+    color: #FF6500;
+}
+.submitFooter {
+    margin: 0px;
+    text-align: center;
+}
+.widgetinfo {
+    font-size: 11px;
+    color: gray;
+}
+#page-path {
+    text-align:left;
+    margin:5px;
+    padding-left:10px;
+    color: #FF6500;
+    font-weight: bold;
+}
+.cap-info {
+    text-align: left;
+    color: black;
+}
+.data-info {
+    text-align: left;
+}
+#background-cover {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: black;  
+    opacity: 0.5;
+    filter: alpha(opacity=50);
+}
+.input-window {
+    width: 650px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+}
+#waiting-window {
+    width: 300px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+    top:25%;
+    left:35%
+}
+#upgrade-window {
+    width: 300px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+    top:30%;
+    left:30%
+}
+#return-window {
+    width: 300px;
+    position: fixed;
+    margin: auto; 
+    text-align: center;
+    z-index: 100; 
+    top:25%;
+    left:30%
+}
+
+#radial {
+    background: url(images/radial.gif);
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    left: 125px;
+    top: 40px;
+}
+#floatkiller {
+    clear:both;
+    width:1px;
+    height:1px;
+    font-size:1px;
+}
+.navigation li a.menu-item:hover {
+    background: url(images/item.png) no-repeat; 
+    color: #FF6500;
+    line-height: 55px;
+}
+.navigation li a.menu-item .sub {
+    display: block;
+    position: absolute;
+    left: -9999px; 
+    top: -9999px;
+}
+.navigation li a.menu-item:hover .sub {
+    display: block;
+    width: auto;
+    height: auto;
+    left: 0px;
+    top: 60px;
+}
+.navigation table {
+    left: 0px; 
+    width: 0px; 
+    position: 
+    absolute; 
+    top: 0px; 
+    height: 0px
+}
+.navigation ul {
+    padding-right: 0px; 
+    padding-left: 0px; 
+    padding-top: 0px; 
+    padding-bottom: 0px; 
+    left: -9999px; 
+    margin: 0px; 
+    width: 0px; 
+    list-style-type: none; 
+    position: absolute; 
+    top: -9999px; 
+    height: 0px
+}
+.navigation iframe {
+    left: -9999px; 
+    margin: 0px; 
+    width: 0px; 
+    list-style-type: none; 
+    position: absolute; 
+    top: -9999px; 
+    height: 0px;
+    -moz-opacity: 0.80; opacity: 80; 
+    filter:alpha(opacity=0);
+}
+.navigation :hover iframe {
+    left: 0px; 
+    width: 300px;
+    position: absolute; 
+    top: 60px; 
+    height: 300px
+}
+.navigation :hover ul li {
+    font-weight: normal; 
+    width: 128px; 
+    position: relative;
+}
+.navigation :hover ul li a {
+    display: block; 
+    width: auto; 
+    color: white;
+    height: 25px; 
+    text-decoration: none
+}
+.navigation :hover ul li a:hover {
+    color: #FF6500;
+}

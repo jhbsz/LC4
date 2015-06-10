@@ -1,0 +1,732 @@
+[CONFIDENTIAL]
+----------------------------------------------------------------------
+exFAT File System Specification Document
+
+Base System Development Department
+
+Copyright 2013 Sony Corporation
+
+----------------------------------------------------------------------
+
+# Contents #
+  1. Overview
+  2. exFAT file system distributed object list
+  3. Usage through fuse
+     3.1. Pre-requisites for exfatfuse command
+        3.1.1. Necessary rpm install
+        3.1.2. Enabling fuse for Sony CE Linux
+        3.1.3. exFAT file system rpm install
+     3.2. exfatfuse command
+        3.2.1. Method of specifying mount option of exfatfuse command
+        3.2.2. Method of specifying mount option of exFAT file system
+        3.2.3. Method of specifying option of fuse itself
+        3.2.4. exfatfuse command help
+     3.3. Mounting exFAT file system
+     3.4. exfatfuse operation confirmation method
+     3.5. Method of unmounting exFAT file system
+  4. Discrimination method of FAT file system and exFAT file system
+  5. Mount option list of exFAT file system
+  6. Others, precautionary items
+        6.1. Error processing when invalid file name is received
+        6.2. Max length of file name which can be handled
+        6.3. "-s" option of fuse itself
+        6.4. File access item
+        6.5. Unusable operation
+        6.6. Regarding mount of read only device
+        6.7. "checkroot" mount option
+        6.8. cooperating with k3d
+  7. Version history
+
+
+1. Overview
+======================================================================
+This document is the collection of exFAT file system specification.
+
+
+2. exFAT file system distributed object list
+======================================================================
+(a) ${arch}-sony-linux-{srel,dev}-exfat-${TARGET}_${YYYYMMDD}-${RELEASE}.${arch}.rpm
+    This is the format of rpm package of exFAT file.
+	
+    where,
+      "arch" is any of mips, mips_nfp, arm.
+      "TARGET" is the string which differs according to
+	       business department of release destination.
+      "YYYYMMDD" is the exFAT file system released date.
+      "RELEASE" is the release number.
+
+    (*) In case that it is NOT Sony CE Linux, release package will not
+        be a rpm package.
+        (How to release it will be discussed separately.)
+
+(b) exfat_usage_en.txt
+    This document.
+
+
+3. Usage through fuse
+======================================================================
+This section describes about usage of exFAT file system through 
+fuse.
+	
+"fuse" forms the assembly of userland filesystem (a filesystem 
+operated by user process through VFS of Linux Kernel).
+In addition to this, the filesystem implemented in userland
+can be handled as equivalent to the filesystem in kernel.
+	
+For details, refer to: http://fuse.sourceforge.net/
+	
+When mounting exFAT filesystem through fuse, the command
+used is "exfatfuse".
+	
+The below sections describe about the "exfatfuse" command:
+
+
+3.1. Pre-requisites for exfatfuse command
+-----------------------------------------
+Pre-requisite tasks for exfatfuse command are described below:
+
+
+3.1.1. Necessary rpm install
+----------------------------
+Install necessary rpm package.
+
+"fuse" package is included by default in Sony CE Linux
+full-package. When it is not included by default, it
+should be installed manually.
+In addition, rpm package of l10n is also necessary,
+so install it.
+(*) In case that it is NOT Sony CE Linux, release packages will not be
+    a rpm package.
+    (How to release them will be discussed separately.)
+
+
+3.1.2. Enabling fuse for Sony CE Linux
+--------------------------------------
+To enable "fuse" in Sony CE Linux, the kernel configuration
+CONFIG_FUSE_FS must be selected while building the kernel.
+For this, 
+  1. Execute "make menuconfig"
+  2. Select the below option:
+
+	 -------------------------------------
+	 File systems  --->
+	 [*] Filesystem in Userspace support
+	 ------------------------------------- 
+
+Next, boot target and create device file /dev/fuse.
+
+ # mknod -m 666 /dev/fuse c 10 229
+
+Note: It is not necessary to create device file on each target boot.
+
+
+3.1.3. exFAT file system rpm install
+------------------------------------
+Install exFAT file system rpm.
+
+ # rpm -Uvh --ignorearch ${arch}-sony-linux-{srel,dev}-exfat-${TARGET}_${YYYYMMDD}-${RELEASE}.${arch}.rpm
+
+(*) In case that it is NOT Sony CE Linux, release package will not be
+    a rpm package.
+    (How to install it will be discussed separately.)
+
+3.2. exfatfuse command
+----------------------
+The syntax of exfatfuse command is:
+		
+  # exfatfuse exfat <device> <mntpoint> [exfatfuseoptions] [-o mntoptions][-- fuseoptions...]
+
+Note: Be careful exfat has three kinds of options,
+     - for exfatfuse command
+     - for exFAT file system
+     - for fuse itself.
+	
+where,
+	First argument is mandatory. Specify "exfat" always.
+	<device> is mandatory. Specify a device to be mounted
+	<mntpoint> is mandatory. Specify a mount point (directory).
+	[exfatfuseoptions] is optional. Specify options of exfatfuse command.
+	[-o mntoptions] is optional. Specify options of exFAT file system.
+	[-- fuseoptions...] is optional. Specify options of fuse itself.
+
+
+3.2.1. Method of specifying mount option of exfatfuse command
+-------------------------------------------------------------
+In exfatfuseoptions, options of exfatfuse command can be
+specified.
+Available options are as below.
+
+--mnt_result=VALUE
+  This option is specified for confirming completion and
+  result of mount operation.
+  Specify fd, file descriptor for writing data, to VALUE.
+  The result of mount operation is written to specified file
+  descriptor. 0 is written to file descriptor if the mount
+  was successful, otherwise the error number is written to
+  file descriptor, The error number is same as errno
+  returned by exfat_mount().
+  
+  When applications execute exfatfuse command, applications call
+  fork() and exec() typically. The exfatfuse command which is
+  executed by exec() is running in background after completing mount
+  operation. For this reason, applications can not notice that
+  exfatfuse command has completed mount operation.
+  By specifying this option and performing following procedures, above
+  problem will be solved.
+
+  (a) To receive the execution result from exfatfuse command, The
+      application creates a pair of file descriptors pointing to a
+      pipe.
+  (b) The application executes fork() to create the child process.
+  (c) The application(child process) executes exfatfuse command with
+      this option to specify file descriptor(for write) pointing to
+      pipe.
+      exfatfuse command starts mount operation.
+  (d) The application(parent process) prepares the int-sized buffer to
+      store the result from exfatfuse command.
+      The application(parent process) reads int-sized data from file
+      descriptor(for read) pointing to pipe.
+  (e) The exfatfuse command writes the result of mount operation to
+      file descriptor(for write) specified with this option. And
+      exfatfuse command gives notice of completion of mount operation.
+
+  Following sequence represents above (a) - (e) processes.
+
+                        |
+                        | (a) pipe() to create pair of fd_read(for read)
+                        |     and fd_write(for write).
+                        | (b) fork()
+       [parent process] +------------+ [child process]
+                        |            |
+ (d) read(fd_read, ...) |            | (c) execute exfatfuse command with
+                        .            |     specifying --mnt_result=fd_write
+                        .            | |
+                        .            | |
+                        .            | | (mount operation)
+                        .            | |
+                        .            | V
+                        .            | complete mount operation
+       complete reading | <========= | (e) exfatfuse command writes
+                        |            |     the result.
+                        |            |
+                        V            V run in background.
+
+
+3.2.2. Method of specifying mount option of exFAT file system
+-------------------------------------------------------------
+In -o mntoptions, mount option of exFAT file system
+can be specified.
+
+For mount option details, refer to "List of mount
+options of exFAT file system".
+When specifying multiple mount options,
+specify them by separating comma or by 
+-o mntoptions.
+
+(Example) -o sync,rdonly
+          -o sync -o rdonly
+
+
+3.2.3. Method of specifying option of fuse itself
+-------------------------------------------------
+Options of fuse itself can be specified after "--".
+
+Operation confirmed fuse options are as below.
+
+-f
+   Foreground operation.
+
+-s
+   Operate by single thread. The default is
+   multi-threaded operation.
+
+-o direct_io
+   Enables direct_io.
+   We recommend to specify this option since the number of memory copy
+   decreases. exFAT implementation provides the best performance by
+   satisfying the following two conditions.
+    1. Specify this direct_io option
+    2. Use read/write system calls with 4KB page align
+   On the other hand, exFAT with this direct_io option may give lower
+   performance if some apps use read/write system calls without 4KB
+   page align.
+
+-o hard_remove
+   this option is mandatory.
+
+   Fuse delete a file directly when this option is set.
+   If this option is not set, fuse process "rename" -> "unlink"
+   in case of delete a file.
+
+In addition, prohibited fuse options are as below.
+
+-o from_code=CHARSET
+   Since it conflicts with l10n in exFAT file system,
+   do not specify. To specify character code, use iocharset of exFAT
+   mount option.
+
+-o to_code=CHARSET
+   Since it conflicts with l10n in exFAT file system,
+   do not specify. To specify character code, use iocharset of exFAT
+   mount option.
+
+
+3.2.4. exfatfuse command help
+-----------------------------
+exfatfuse command help can be displayed by
+specifying -h option as below.
+
+ # exfatfuse -h
+
+Options of exfatfuse command are displayed under "exfat_options:".
+Mount options of exFAT file system are displayed
+under "exfat mount options:".
+In addition, options of fuse itself are
+displayed under "FUSE options:".
+
+
+3.3. Mounting exFAT file system
+-------------------------------
+When mounting exFAT file system by exfatfuse command,
+be careful about below 3 points:
+
+(a) batch_sync should be specified. 
+
+(b) Execute exfatfuse command in background-mode by using '&' 
+    and with -f option of fuse.
+(c) It is recommended to specify -o direct_io option.
+
+Actual used exfatfuse command (When executing in shell)
+is as below.
+
+ # exfatfuse exfat <device> <mntpoint> [exfatfuseoptions] -o batch_sync,waitonfat[,mntoptions] -- -o direct_io,hard_remove -f [fuseoptions] &
+
+
+3.4. exfatfuse operation confirmation method
+--------------------------------------------
+To confirm whether exFAT filesystem is mounted or not, execute
+the below command :
+ # mount
+ exfatfuse on <mntpoint> type fuse.exfatfuse (rw,nosuid,nodev,user_id=0,group_id=0)
+ 
+If you get the console message as above, then exFAT filesystem is mounted.
+
+
+3.5. Method of unmounting exFAT file system
+-------------------------------------------
+Stop execution of exfatfuse by below command, and unmount exFAT
+file system.
+
+ # fusermount -u <mntpoint>
+
+
+4. Discrimination method of FAT file system and exFAT file system
+======================================================================
+To decide whether the device to be mounted is FAT file system or exFAT
+file system, use below 2 conditions:
+
+(a) Value of total 8byte from offset 3byte to offset 10byte of
+    partition header should be (BS_OEMName in FAT specification)
+    "EXFAT   " (last 3 characters are spaces) in ASCII.
+(b) Value of total 2byte from offset 11byte to 12byte of partition
+    header (BPB_BytePerSec in FAT specification) should be 0.
+
+When both (a) and (b) are satisfied, decide the device as exFAT file system,
+and in other cases, decide it as FAT file system.
+The implementation of exFAT file system supplied by Base System
+Development Department also checks the conditions at the time of
+mount.
+
+
+5. Mount option list of exFAT file system
+======================================================================
+"The list of mount options for exFAT file system" are as below.
+
+
+- [ro|rdonly]
+  Mounts in read only mode.
+
+- rw
+  Mounts in read write mode.
+  This option is specified by default.
+
+- sync
+  All I/O are performed synchronously.
+
+- batch_sync
+  This mode is fast write by writing data asynchronously.
+  Meta data is written synchronously.
+  This option should be specified.
+
+- noatime
+  File access time is not updated.
+
+- iocharset=IOCHARSET
+  Specify IOCHARSET by matching with character code which
+  is represented in file name by application.
+  When this option is not specified, UTF-8
+  is specified as default.
+
+  The character codes and specification methods which
+  can be specified in IOCAHRSET are as below.
+  * UTF-8
+    => iocharset=[UTF-8|utf-8|UTF8|utf8]
+
+  * Shift-JIS
+    => iocharset=[SHIFT-JIS|shift-jis|SJIS|sjis]
+
+  * EUC-JP
+    => iocharset=[EUC_JP|euc_jp|EUCJP|eucjp]
+
+  * GB18030
+    => iocharset=[GB18030|gb18030]
+
+  * ISO-8859-1
+    => iocharset=iso-8859-1
+
+  * ISO-8859-2
+    => iocharset=iso-8859-2
+
+  * ISO-8859-3
+    => iocharset=iso-8859-3
+
+  * ISO-8859_4
+    => iocharset=iso-8859-4
+
+  * ISO-8859-5
+    => iocharset=iso-8859-5
+
+  * ISO-8859-6
+    => iocharset=iso-8859-6
+
+  * ISO-8859-7
+    => iocharset=iso-8859-7
+
+  * ISO-8859-8
+    => iocharset=iso-8859-8
+
+  * ISO-8859-9
+    => iocharset=iso-8859-9
+
+  * ISO-8859-10
+    => iocharset=iso-8859-10
+
+  * ISO-8859-11
+    => iocharset=iso-8859-11
+
+  * ISO-8859-13
+    => iocharset=iso-8859-13
+
+  * ISO-8859-14
+    => iocharset=iso-8859-14
+
+  * ISO-8859-15
+    => iocharset=iso-8859-15
+
+  * ISO-8859-16
+    => iocharset=iso-8859-16
+
+- count_free
+  Count up the number of free clusters in mounting.
+  The time of counting the number of free clusters depends on devices
+  access speed and total number of clusters.
+  Therefore, in specifying this option, the time of mount varies
+  depending on devices.
+  Alternatively, if you do not specify this option, exfat file
+  system will count up the number of free clusters when you call
+  statvfs() for the first time.
+  Be careful that it may take long time to complete first statvfs
+  after mount.
+
+- checkroot
+  Check if the root directory has an entry that is not defined in exFAT
+  specification.
+  If there is an undefined entry, mount() fails.
+  See 7.3 for more details.
+
+- waitonfat
+  The cluster allocation information is written synchronously
+  when this option is set.
+  If removable medium is used, we recommend to specify this
+  option.
+  This option can be specified only when fuse is used.
+
+- max_bsize=MAX_BSIZE
+  Set MAX_BSIZE[KiB] as st_blksize that is a return value of stat()
+  system call.
+  The valid MAX_BSIZE satisfies the following two conditions;
+   * a power of 2
+   * no less than 4
+
+- EB=ERASEBLOCK_SIZE
+  Set ERASEBLOCK_SIZE[KiB] as an erase block size.
+  The following options use erase block size. The erase block size
+  automatically set to 4096[KiB] if you use the following options
+  without specifying this option.
+   * count_free_EB
+   * alloc_EB
+   * ap=[FF_EB|R_EB]
+
+- count_free_EB
+  exFAT implementation counts up free-space in an erase block unit.
+  exFAT implementation considers that all clusters in the erase block
+  are allocated when more than one cluster is allocated in the erase
+  block.
+
+- alloc_EB
+  exFAT implementation allocates new cluster in an erase block unit.
+  exFAT implementation allocates the first cluster in the erase block
+  when all clusters in the erase block are not allocated.
+
+- eraseblock=ERASEBLOCK
+  Set ERASEBLOCK in sector-size unit as an erase block size.
+  For example, when sector-size is 512 byte, erase block size is set
+  to 2M byte by specifying "eraseblock=4096".
+  A valid value as an erase block size satisfies the following both
+  conditions.
+   * a power of 2
+   * a bigger number than cluster size
+  Specifying this option is equivalent to specifying both
+  count_free_EB and alloc_EB options.
+  If both this option and EB option are specified at once, erase block
+  size is set to the value that specified by EB option.
+
+- ap=[FF|FF_EB|R|R_EB]
+  Change the cluster allocation policy when exFAT implementation
+  creates new files.
+   * FF
+     allocate the cluster in order from the first cluster.
+   * FF_EB
+     In the first cluster allocation after mount, allocate the
+     erase-block-aligned cluster from the first cluster.
+     The next time, allocate the cluster in order from the cluster
+     that was allocated previous time.
+   * R
+     allocate the cluster at random each time.
+   * R_EB
+     allocate the erase-block-aligned cluster at random each time.
+
+- checkdirty
+  Check the field that describes whether exfat file system probably
+  keeps the consistency or not. The mount operation will fail if this
+  field shows that the file system is probably not in a consistent
+  state.
+  It is recommended that you repair the file system by executing
+  chkdsk MS-DOS command or other fsck if the file system is not in a
+  consistent state.
+
+- updatedirty
+  Update the field that describes whether exfat file system probably
+  keep the consistency or not before and after write and other
+  operations.
+  For example, a value remains set to this field after sudden blackout
+  occurs during a write operation. And then we are enable to judge
+  whether the file system keeps the consistency or not on the next
+  mount operation.
+  It is strongly recommended you also specify checkdirty option when
+  you specify updatedirty option. You mount the file system that be
+  not in a consistent state and update this field. Since then, we
+  cannot judge the consistency of the file system by checking this
+  field.
+  In addition, Mounting a flash memory with this option may reduce its
+  lifetime.
+
+
+6. Others, precautionary items
+======================================================================
+This chapter describes regarding the cautions related to exFAT file
+system supplied by Base System Development Department.
+
+
+6.1. Error processing when invalid file name is received
+----------------------------------------------------------
+When exFAT file system receives invalid file name
+which includes unusable characters, it performs the below process.
+
+a) When exFAT file system receives inconvertible characters or invalid file names 
+   (characters which cannot be converted according to the destination character
+   code), it performs the following processing:
+		    
+   (i) When inconvertible characters are received from file system
+       (storage side), such as readdir() is called, it replaces them with '?'.
+
+   (ii) When inconvertible characters are received from user
+        application, such as an argument of stat(), it stops the
+        process and exits with returning EINVAL.
+				
+b) When exFAT file system receives '.' at the end of file name, it deletes '.' and proceeds.
+   And when ' ' is received at the end of file name, it considers the file name as
+   invalid and exits with returning EINVAL.
+
+
+6.2. Max length of file name which can be handled
+-------------------------------------------------
+Max length of file name which can be handled is described.
+
+Max length of file name in exFAT file system is 255 characters.
+However, depending on character code used by application,
+1 character becomes several numbers of bytes. For example, in
+case of using UTF-8, 1 character is represented by up to 6byte.
+On the other hand, Linux standard restricts max length of file name
+to 256 byte which can be handled including terminating
+character. Accordingly, after converting file name to
+character code used in application, if the file name after
+conversion crosses 256byte including terminating character
+then it cannot be handled.
+
+
+6.3. "-s" option of fuse itself
+-------------------------------
+When "-s" option of fuse itself is not specified,
+exfatfuse creates around 10 threads.
+It depends on implementation of pthread, but in case
+of glibc, 8MB of virtual memory is allocated for every threads as a
+stack. By specifying "-s" option of fuse itself, exfatfuse will not
+create any
+threads, hence the memory quantity allocated as a
+stack becomes lower. However, the size of memory,
+which is actually used, hardly changes irrespective of
+whether "-s" option of fuse itself is specified or not.
+
+
+6.4. File access time
+---------------------
+This subsection describes update timing of file access time.
+
+When fetching access item through fuse, stat command is used.
+When stat command of Linux standard is used, access time
+becomes POSIX-compliant. Accordingly, when a file
+is written, the access time is not updated. Access time is
+updated only when a file is read.
+
+On the other hand, access time recorded in exFAT file
+system is compliant with exFAT specification. Accordingly,
+the time file is written is recorded in device
+as access time. Through above, after unmounting and re-mounting
+exFAT file system, access time got
+by doing stat of the same file is the last time
+that the file is written.
+And access time is written in even second according to exfat
+specification. Be careful that odd second is rounded off to even
+second.
+
+In addition, access time is re-read from device in the following cases.
+* unmount and re-mount after creating a file or a directory.
+* rename a file or a directory, after creating a file or a directory.
+
+
+6.5. Unusable operation
+-----------------------
+Fuse package included in Sony CE Linux does not support ioctl
+operation. Therefore, the below operations implemented by ioctl
+operations are unable to execute.
+
+(a) Set or get volume level of exFAT file system.
+(b) Set or get file attributes of exFAT file system.
+
+
+6.6. Regarding mount of read only device
+------------------------------------------
+This subsection describes cautions when read only device will be
+mounted.
+
+If read/write possible mode
+is specified and read only device is mounted,
+exfatfuse command returns error code EROFS and mount fails.
+When you are going to mount read only device, specify read only mode in
+exFAT file system option.
+
+It does not retry mounting in read only mode after discriminating an
+error code like a mount command of Linux standard, so be careful.
+
+
+6.7. "checkroot" mount option
+-----------------------------
+According to exFAT specification, implementations should not mount any
+media that have any unknown directory entries in the root directory.
+There are some possible cases:
+
+ - The medium is broken
+ - exFAT specification is renewed, and new directory entries are added
+ - Other implementation wrote uniquely-defined entries
+
+You should not mount such a medium to definitely follow exFAT 
+specification.
+But it takes a long time to check whole directory entries if the root
+directory is big.
+And Windows accepts media that have unknown directory entries in the
+root directory (as of Nov. 2010).
+
+Our exFAT implementation skips enumerating the root directory by
+default to mount the medium quickly.
+Specify "checkroot" option to enumerate the root directory while
+mounting and to mount only media that definitely follow exFAT
+specification.
+
+
+6.8. cooperating with k3d
+-------------------------
+The exFAT can cooperate with k3d to detect medium removal.
+
+It is required to set the following config to enable.
+
+    block/Kconfig.snsc:
+    config SNSC_BLOCK_CHECK_DISK
+
+You can see the status of checking device.
+
+    % cat /proc/removabledisk/status
+
+Our exFAT filesystem can not detect the event that medium such as SD
+card or MemoryStick was removed from a Memory Card reader/writer.
+When another medium is inserted while the previous one is still mounted,
+it will be accessed as the previous one.
+Therefore, the filesystem on the inserted medium can be corrupted by
+wrong write access.
+
+If you use k3d, you can avoid unexpected writing data to the new
+medium when users replace the medium without remounting, and the
+medium access after medium removal/replace returns error.
+So, when you use k3d and face this error, please unmount old medium
+and mount new medium again.
+(*) k3d is the original feature in Sony CE Linux.
+
+
+7. Version history
+======================================================================
+2013/01/17 Issued Version 16	Removed the description on library
+                                APIs
+2013/01/16 Issued Version 15	Changed the option when linked with
+                                applications
+2012/12/14 Issued Version 14	Added descriptions about checkdirty
+                                and updatedirty options
+2012/11/28 Issued Version 13	Added descriptions about max_bsize,
+                                EB, count_free_EB, alloc_EB and ap
+                                options
+2012/10/05 Issued Version 12	Added constraint about direct_io
+                                option
+2012/10/04 Issued Version 11	Added descriptions about eraseblock
+                                option
+2011/11/30 Issued Version 10	Added descriptions about k3d
+2011/05/31 Issued Version 9	Added descriptions about batch_sync
+                                option
+                                Added descriptions about hard_remove
+                                option
+                                Added descriptions about waitonfat
+                                option
+2010/11/29 Issued Version 8	Added descriptions about checkroot
+                                option
+2010/06/09 Issued Version 7	Corrections of description regarding
+	   	  	  	exfatfuse command
+2010/05/28 Issued Version 6     Corrections of link method with
+	   	  	  	application
+2010/05/26 Issued Version 5	Added descriptions about mnt_result and
+	   	  	  	count_free options
+2010/04/15 Issued Version 4	Corrections of the program example by
+	   	  	  	using library API
+2010/04/13 Issued Version 3	Corrections of header file name 
+	   	  	  	mistakes
+2010/04/02 Issued Version 2	Added description regarding the max
+	   	  	  	length of file name which can be
+				handled.
+2010/03/26 Issued Version 1

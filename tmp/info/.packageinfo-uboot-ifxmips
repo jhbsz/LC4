@@ -1,0 +1,16 @@
+Source-Makefile: package/uboot-ifxmips/Makefile
+Package: uboot-ifxmips
+Version: 1.1.5-1
+Depends: @TARGET_ifxmips
+Provides: 
+Build-Depends: 
+Section: boot
+Category: Boot Loaders
+Title: U-Boot for Infineon MIPS boards
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: bin
+Description: 	U-Boot for Infineon MIPS boards
+
+http://www.denx.de/wiki/UBoot/WebHome
+@@
+

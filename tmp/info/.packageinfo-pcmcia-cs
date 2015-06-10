@@ -1,0 +1,16 @@
+Source-Makefile: package/pcmcia-cs/Makefile
+Package: pcmcia-cs
+Version: 3.2.8-1
+Depends: @LINUX_2_4 @PCMCIA_SUPPORT
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: PCMCIA/Cardbus management utilities
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	PCMCIA/Cardbus management utilities
+
+http://pcmcia-cs.sourceforge.net/
+@@
+

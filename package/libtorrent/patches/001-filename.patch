@@ -1,0 +1,74 @@
+--- libtorrent.old/src/torrent/data/file_list.cc	2008-11-20 00:50:37.000000000 +0800
++++ libtorrent.new/src/torrent/data/file_list.cc	2009-08-24 14:28:33.659695775 +0800
+@@ -46,7 +46,7 @@
+ #include <rak/file_stat.h>
+ #include <rak/fs_stat.h>
+ #include <rak/functional.h>
+-
++#include <string.h>
+ #include "data/chunk.h"
+ #include "data/memory_chunk.h"
+ #include "data/socket_file.h"
+@@ -175,8 +175,22 @@
+ 
+   if (last == std::string::npos)
+     m_rootDir = ".";
+-  else
+-    m_rootDir = path.substr(0, last + 1);
++  else {
++      /* EZP Change directory name to lowercase if file system is vfat. */
++      std::string temp = path.substr(0, last + 1);
++      FILE *fd;
++      char fs[16];
++      fd = popen("nvram show storage_state_rule 0 format", "r");
++      if (fd != NULL) {
++          fgets(fs, sizeof(fs),fd);
++          if(strcmp(fs, "vfat\n") == 0) {
++              std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
++          }
++      }
++      m_rootDir = temp;
++      pclose(fd);
++      /* EZP */
++  }
+ }
+ 
+ void
+@@ -421,8 +435,22 @@
+       // and file paths are properly handled.
+       if (entry->path()->back().empty())
+         entry->set_frozen_path(std::string());
+-      else
+-        entry->set_frozen_path(m_rootDir + entry->path()->as_string());
++      else {
++          /* EZP Change directory name to lowercase if file system is vfat. */
++          FILE *fd;
++          char fs[16];
++          std::string temp = entry->path()->as_string();
++          fd = popen("nvram show storage_state_rule 0 format", "r");
++          if (fd != NULL) {
++              fgets(fs, sizeof(fs),fd);
++              if(strcmp(fs, "vfat\n") == 0) {
++                  std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
++              } 
++          }
++          entry->set_frozen_path(m_rootDir + temp);
++          pclose(fd);
++          /* EZP */
++      }
+ 
+       if (!pathSet.insert(entry->frozen_path().c_str()).second)
+         throw storage_error("Found a duplicate filename.");
+@@ -437,6 +465,12 @@
+       // it here if necessary.
+ 
+       entry->set_flags_protected(File::flag_active);
++      /* EZP Avoid to create a filename too long file */
++      std::string temp = entry->path()->as_string();
++      if(temp.size() > 255) {
++          continue;
++      }
++      /* EZP */
+ 
+       if (!open_file(&*entry, lastPath, flags)) {
+         // This needs to check if the error was due to open_no_create

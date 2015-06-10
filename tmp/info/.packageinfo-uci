@@ -1,0 +1,38 @@
+Source-Makefile: package/uci/Makefile
+Package: uci
+Version: 0.6.2-1
+Depends: +libuci
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: Utility for the Unified Configuration Interface (UCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Utility for the Unified Configuration Interface (UCI)
+@@
+Package: libuci
+Version: 0.6.2-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: C library for the Unified Configuration Interface (UCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	C library for the Unified Configuration Interface (UCI)
+@@
+Package: libuci-lua
+Version: 0.6.2-1
+Depends: +libuci +lua
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Lua plugin for UCI
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Lua plugin for UCI
+@@
+

@@ -1,0 +1,75 @@
+--- a/drivers/net/Makefile
++++ b/drivers/net/Makefile
+@@ -237,6 +237,10 @@
+ obj-$(CONFIG_USB_KAWETH)        += usb/
+ obj-$(CONFIG_USB_PEGASUS)       += usb/
+ obj-$(CONFIG_USB_RTL8150)       += usb/
++obj-$(CONFIG_USB_HSO)		     += usb/
++obj-$(CONFIG_USB_SIERRA_NET)	 += usb/
++obj-$(CONFIG_USB_IPHETH)		 += usb/
++obj-$(CONFIG_USB_IBURST)	     += usb/
+ obj-$(CONFIG_USB_USBNET)        += usb/
+ obj-$(CONFIG_USB_ZD1201)        += usb/
+ 
+--- a/drivers/net/usb/Kconfig
++++ b/drivers/net/usb/Kconfig
+@@ -154,6 +154,46 @@
+ 	  This driver creates an interface named "ethX", where X depends on
+ 	  what other networking devices you have in use.
+ 
++config USB_HSO
++	tristate "Option USB High Speed Mobile Devices"
++	depends on USB && RFKILL
++	default n
++	help
++	  Choose this option if you have an Option HSDPA/HSUPA card.
++	  These cards support downlink speeds of 7.2Mbps or greater.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called hso.
++
++config USB_SIERRA_NET
++	tristate "Sierra Direct IP USB High Speed Mobile Devices"
++	depends on USB && RFKILL
++	default n
++	help
++	  Choose this option if you have an Sierra HSDA+ card.
++	  These cards support downlink speeds of 7.2Mbps or greater.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called sierra_net.
++
++config USB_IPHETH
++	tristate "iPhone Devices"
++	depends on USB
++	default n
++	help
++	  To compile this driver as a module, choose M here: the
++	  module will be called iphone.
++
++config USB_IBURST
++	tristate "iBurst USB High Speed Mobile Devices"
++	depends on USB 
++	default n
++	help
++	  Choose this option if you have an iBurst card.
++	  These cards support downlink speeds of 2Mbps or greater.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called hso.
+ 
+ config USB_NET_CDCETHER
+ 	tristate "CDC Ethernet support (smart devices such as cable modems)"
+--- a/drivers/net/usb/Makefile
++++ b/drivers/net/usb/Makefile
+@@ -6,6 +6,10 @@
+ obj-$(CONFIG_USB_KAWETH)	+= kaweth.o
+ obj-$(CONFIG_USB_PEGASUS)	+= pegasus.o
+ obj-$(CONFIG_USB_RTL8150)	+= rtl8150.o
++obj-$(CONFIG_USB_HSO)		+= hso.o
++obj-$(CONFIG_USB_SIERRA_NET)		+= sierra_net.o
++obj-$(CONFIG_USB_IPHETH)		+= ipheth.o
++obj-$(CONFIG_USB_IBURST)		+= ib-net.o ib-usb.o
+ obj-$(CONFIG_USB_NET_AX8817X)	+= asix.o
+ obj-$(CONFIG_USB_NET_CDCETHER)	+= cdc_ether.o
+ obj-$(CONFIG_USB_NET_DM9601)	+= dm9601.o

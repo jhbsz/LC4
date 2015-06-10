@@ -1,0 +1,11 @@
+--- barry-0.16/src/iconv.cc	2009-10-01 12:16:17.000000000 +0800
++++ barry-0.16/src/iconv.cc.new	2010-10-29 14:39:45.327330074 +0800
+@@ -92,7 +92,7 @@
+ 		outbytesleft = m_buffer.GetBufSize();
+ 
+ 		iconv(cd, NULL, NULL, NULL, NULL);	// reset cd's state
+-		size_t status = iconv(cd, (ICONV_CONST char**) &in, &inbytesleft, &out, &outbytesleft);
++		size_t status = iconv(cd, (const char**) &in, &inbytesleft, &out, &outbytesleft);
+ 
+ 		if( status == (size_t)(-1) ) {
+ 			if( errno == E2BIG && tries < 2 ) {

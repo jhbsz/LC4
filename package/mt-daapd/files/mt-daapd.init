@@ -1,0 +1,98 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+USBSTORAGE=80
+log_msg="iTunes-server"
+
+BIN=mt-daapd
+BINMDNS=mDNSResponder
+DEFAULT=/etc/default/$BIN
+
+swap_mount() {
+    # If usb storage contain swap partition, we use swap partition.
+    [ -d "/sys/block/sda/sda4" ] && {
+        id=$(fdisk -l /dev/sda | awk '/sda4/{print $5}')
+        [ "$id" = "82" ] && {
+            mkswap /dev/sda4 && swapon /dev/sda4
+            while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+            do 
+                sleep 5
+            done
+            return
+        }
+    } 
+    # If usb storage do not contain swap partition, we use swap file.
+    local swapsize=$(nvram show storage_rule 0 swap_size)
+    [ -f "/tmp/$dev/download/temp/.swapfile" ] && {
+        rm -rf /tmp/$dev/download/temp/.swapfile
+    }
+    dd if=/dev/zero of=/tmp/$dev/download/temp/.swapfile bs=4k count=$swapsize
+    mkswap /tmp/$dev/download/temp/.swapfile
+    swapon /tmp/$dev/download/temp/.swapfile
+    while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+    do 
+        sleep 5
+    done
+}
+
+start() {
+	[ -f $DEFAULT ] && . $DEFAULT
+    local enabled=$(nvram show itunes_rule 0 enable)
+    local port="$(nvram show itunes_rule 0 port)"
+    local adminpasswd="$(nvram show itunes_rule 0 adminpasswd)"
+    local mp3dir="$(nvram show itunes_rule 0 mp3dir)"
+    local servername="$(nvram show itunes_rule 0 servername)"
+    local runas="$(nvram show itunes_rule 0 runas)"
+    local password="$(nvram show itunes_rule 0 password)"
+    local extensions="$(nvram show itunes_rule 0 extensions)"
+    local mnt_point=$(nvram show storage_state_rule 0 dev_name)
+
+    [ "$enabled" -eq "0" -o -z "$mnt_point" ] && exit
+    $BINMDNS $OPTIONS
+    local countt=0
+    local count_internal=0
+    while [ -z "$(pidof mDNSResponder)" ]
+    do
+        sleep 1
+        countt=$(($countt + 1))
+        [ "$countt" -gt "20" ] && {
+            [ "$count_internal" -gt "5" ] && {
+                err=1
+                return
+            }
+            count_internal=$(($count_internal + 1))
+            $BINMDNS $OPTIONS
+        }
+    done
+        [ -d "/tmp/$mnt_point/$mp3dir" ] || mkdir -p /tmp/$mnt_point/$mp3dir
+        chmod 777 /tmp/$mnt_point/$mp3dir 
+    echo -n "" > /tmp/mt-daapd.conf
+    echo "web_root	/usr/share/mt-daapd/admin-root" >> /tmp/mt-daapd.conf
+    echo "port		$port" >> /tmp/mt-daapd.conf
+    echo "admin_pw	$adminpasswd" >> /tmp/mt-daapd.conf
+    echo "db_dir	/tmp/cache/mt-daapd" >> /tmp/mt-daapd.conf
+    echo "mp3_dir	/tmp/$mnt_point/$mp3dir" >> /tmp/mt-daapd.conf
+    echo "servername $servername" >> /tmp/mt-daapd.conf
+    echo "runas	 $runas" >> /tmp/mt-daapd.conf
+    echo "playlist	/tmp/mt-daapd.playlist" >> /tmp/mt-daapd.conf
+    echo "password	$password" >> /tmp/mt-daapd.conf
+    echo "extensions $extensions" >> /tmp/mt-daapd.conf
+    echo "logfile /tmp/log/mt-daapd.log" >> /tmp/mt-daapd.conf
+	$BIN $OPTIONS
+}
+
+stop() {
+	[ -n "$(pidof $BIN)" ] && killall $BIN
+    [ -n "$(pidof $BINMDNS)" ] && killall $BINMDNS
+    local count=0
+    while [ -n "$(pidof $BIN)" -o -n "$(pidof $BINMDNS)" ]
+    do
+         sleep 1
+         count=$(($count + 1))
+         [ "$count" -gt "20" ] && {
+             err=1
+             return
+         }
+    done
+}
+

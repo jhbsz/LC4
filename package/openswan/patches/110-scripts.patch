@@ -1,0 +1,19 @@
+--- /dev/null
++++ b/programs/loggerfix
+@@ -0,0 +1,5 @@
++#!/bin/sh
++# use filename instead of /dev/null to log, but dont log to flash or ram
++# pref. log to nfs mount
++echo "$*" >> /dev/null
++exit 0
+--- a/programs/_plutorun/_plutorun.in
++++ b/programs/_plutorun/_plutorun.in
+@@ -155,7 +155,7 @@ then
+ 			exit 1
+ 		fi
+ 	else
+-		if test ! -w "`dirname $stderrlog`"
++		if test ! -w "`echo $stderrlog | sed -r 's/(^.*\/)(.*$)/\1/'`"
+ 		then
+ 			echo Cannot write to directory to create \"$stderrlog\".
+ 			exit 1

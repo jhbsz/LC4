@@ -1,0 +1,11 @@
+#!/bin/sh
+
+awk -f /usr/lib/common.awk -f - $* <<EOF
+BEGIN {
+	# ipaddr addition calculations:
+	# ipadd <num>
+	ipaddr=ip2int(ARGV[1])
+
+	print "NEXT="int2ip(ipaddr+ARGV[2])
+}
+EOF

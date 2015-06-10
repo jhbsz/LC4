@@ -1,0 +1,1904 @@
+diff -Naur linux-2.6.24.4/drivers/ata/Makefile linux-2.6.24.4-oxnas/drivers/ata/Makefile
+--- linux-2.6.24.4/drivers/ata/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/ata/Makefile	2009-05-08 16:27:07.000000000 +0800
+@@ -18,6 +18,8 @@
+ obj-$(CONFIG_SATA_INIC162X)	+= sata_inic162x.o
+ obj-$(CONFIG_PDC_ADMA)		+= pdc_adma.o
+ obj-$(CONFIG_SATA_FSL)		+= sata_fsl.o
++obj-$(CONFIG_SATA_OX800)	+= ox800sata.o
++obj-$(CONFIG_SATA_OX810)	+= ox810sata.o
+ 
+ obj-$(CONFIG_PATA_ALI)		+= pata_ali.o
+ obj-$(CONFIG_PATA_AMD)		+= pata_amd.o
+diff -Naur linux-2.6.24.4/drivers/i2c/algos/Kconfig linux-2.6.24.4-oxnas/drivers/i2c/algos/Kconfig
+--- linux-2.6.24.4/drivers/i2c/algos/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/i2c/algos/Kconfig	2009-05-08 16:27:09.000000000 +0800
+@@ -34,6 +34,10 @@
+ 	  This support is also available as a module.  If so, the module 
+ 	  will be called i2c-algo-pca.
+ 
++config I2C_ALGOOXSEMI
++	tristate "OXNAS I2C interface"
++	depends on I2C
++
+ config I2C_ALGO_SGI
+ 	tristate "I2C SGI interfaces"
+ 	depends on SGI_IP22 || SGI_IP32 || X86_VISWS
+diff -Naur linux-2.6.24.4/drivers/i2c/algos/Makefile linux-2.6.24.4-oxnas/drivers/i2c/algos/Makefile
+--- linux-2.6.24.4/drivers/i2c/algos/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/i2c/algos/Makefile	2009-05-08 16:27:09.000000000 +0800
+@@ -5,6 +5,7 @@
+ obj-$(CONFIG_I2C_ALGOBIT)	+= i2c-algo-bit.o
+ obj-$(CONFIG_I2C_ALGOPCF)	+= i2c-algo-pcf.o
+ obj-$(CONFIG_I2C_ALGOPCA)	+= i2c-algo-pca.o
++obj-$(CONFIG_I2C_ALGOOXSEMI)	+= i2c-algo-oxnas.o
+ obj-$(CONFIG_I2C_ALGO_SGI)	+= i2c-algo-sgi.o
+ 
+ ifeq ($(CONFIG_I2C_DEBUG_ALGO),y)
+diff -Naur linux-2.6.24.4/drivers/i2c/busses/Kconfig linux-2.6.24.4-oxnas/drivers/i2c/busses/Kconfig
+--- linux-2.6.24.4/drivers/i2c/busses/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/i2c/busses/Kconfig	2009-05-08 16:27:09.000000000 +0800
+@@ -321,6 +321,15 @@
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called i2c-nforce2.
+ 
++config I2C_OXNAS_BITBASH
++	tristate "OXNAS bitbashed I2C interface"
++	depends on I2C_ALGOBIT
++	help
++	  Say Y here if you want to use I2C GPIO bit-bash interface
++
++	  This driver can also be built as a module.  If so, the module
++	  will be called i2c-oxnas-bitbash.
++
+ config I2C_OCORES
+ 	tristate "OpenCores I2C Controller"
+ 	depends on EXPERIMENTAL
+diff -Naur linux-2.6.24.4/drivers/i2c/busses/Makefile linux-2.6.24.4-oxnas/drivers/i2c/busses/Makefile
+--- linux-2.6.24.4/drivers/i2c/busses/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/i2c/busses/Makefile	2009-05-08 16:27:09.000000000 +0800
+@@ -28,6 +28,7 @@
+ obj-$(CONFIG_I2C_OCORES)	+= i2c-ocores.o
+ obj-$(CONFIG_I2C_OMAP)		+= i2c-omap.o
+ obj-$(CONFIG_I2C_PARPORT)	+= i2c-parport.o
++obj-$(CONFIG_I2C_OXNAS_BITBASH) 	+= i2c-oxnas-bitbash.o
+ obj-$(CONFIG_I2C_PARPORT_LIGHT)	+= i2c-parport-light.o
+ obj-$(CONFIG_I2C_PASEMI)	+= i2c-pasemi.o
+ obj-$(CONFIG_I2C_PCA_ISA)	+= i2c-pca-isa.o
+diff -Naur linux-2.6.24.4/drivers/leds/Kconfig linux-2.6.24.4-oxnas/drivers/leds/Kconfig
+--- linux-2.6.24.4/drivers/leds/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/leds/Kconfig	2009-05-08 16:26:38.000000000 +0800
+@@ -62,6 +62,20 @@
+ 	  This option enables support for LEDs connected to GPIO lines
+ 	  on Samsung S3C24XX series CPUs, such as the S3C2410 and S3C2440.
+ 
++config WDC_LEDS_OXNAS800
++	tristate "LED Support for WDC OXNAS800 GPIO LEDs"
++	depends on LEDS_CLASS && ARCH_OXNAS
++	help
++	  This option enables support for LEDs connected to GPIO lines on
++	  Oxford Semiconductor NAS800 in the Western Digital My Book NAS.
++
++config OXNAS_WD810_LEDS
++	tristate "LED Support for 810 based WD NAS"
++	depends on LEDS_CLASS && ARCH_OXNAS
++	help
++	  This option enables support for LEDs connected to GPIO lines on the
++	  Oxford Semiconductor OX810 in the Western Digital NAS
++
+ config LEDS_AMS_DELTA
+ 	tristate "LED Support for the Amstrad Delta (E3)"
+ 	depends on LEDS_CLASS && MACH_AMS_DELTA
+@@ -137,6 +151,13 @@
+ 	  This allows LEDs to be controlled by IDE disk activity.
+ 	  If unsure, say Y.
+ 
++config WDC_LEDS_TRIGGER_SATA_DISK
++	bool "WDC LED SATA Disk Trigger"
++	depends on LEDS_TRIGGERS
++	help
++	  This allows WDC LEDs to be controlled by SATA disk activity.
++	  If unsure, say Y.
++
+ config LEDS_TRIGGER_HEARTBEAT
+ 	tristate "LED Heartbeat Trigger"
+ 	depends on LEDS_TRIGGERS
+diff -Naur linux-2.6.24.4/drivers/Makefile linux-2.6.24.4-oxnas/drivers/Makefile
+--- linux-2.6.24.4/drivers/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/Makefile	2009-05-08 16:27:10.000000000 +0800
+@@ -6,6 +6,7 @@
+ #
+ 
+ obj-$(CONFIG_PCI)		+= pci/
++obj-$(CONFIG_WIX_EVENT)	+= wixevent/
+ obj-$(CONFIG_PARISC)		+= parisc/
+ obj-$(CONFIG_RAPIDIO)		+= rapidio/
+ obj-y				+= video/
+diff -Naur linux-2.6.24.4/drivers/md/Kconfig linux-2.6.24.4-oxnas/drivers/md/Kconfig
+--- linux-2.6.24.4/drivers/md/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/md/Kconfig	2009-05-08 16:26:51.000000000 +0800
+@@ -229,6 +229,22 @@
+ 
+ 	  If unsure, say N.
+ 
++config DM_OX_CRYPT
++	tristate "OX800 Hardware Cryptograpy target support"
++	depends on BLK_DEV_DM && EXPERIMENTAL && CRYPTO_OXAESLRW
++	---help---
++      Based on dm-crypt by Fruhwirth & Saout it has been modified
++      to work with the LRW-AES core in the OX800 NAS chip from
++      Oxford Semiconductor Ltd.
++      
++	  This device-mapper target allows you to create a device that
++	  transparently encrypts the data on it.
++      
++	  To compile this code as a module, choose M here: the module will
++	  be called dm-ox-crypt.
++
++	  If unsure, say N.
++
+ config DM_SNAPSHOT
+        tristate "Snapshot target (EXPERIMENTAL)"
+        depends on BLK_DEV_DM && EXPERIMENTAL
+diff -Naur linux-2.6.24.4/drivers/md/Makefile linux-2.6.24.4-oxnas/drivers/md/Makefile
+--- linux-2.6.24.4/drivers/md/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/md/Makefile	2009-05-08 16:26:51.000000000 +0800
+@@ -33,6 +33,7 @@
+ obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
+ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
++obj-$(CONFIG_DM_OX_CRYPT)   += dm-ox-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
+diff -Naur linux-2.6.24.4/drivers/md/raid0.c linux-2.6.24.4-oxnas/drivers/md/raid0.c
+--- linux-2.6.24.4/drivers/md/raid0.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/md/raid0.c	2009-05-08 16:26:51.000000000 +0800
+@@ -20,11 +20,118 @@
+ 
+ #include <linux/module.h>
+ #include <linux/raid/raid0.h>
++#ifdef CONFIG_SATA_OX800
++#include <asm/arch/sata.h>
++#endif
++#ifdef CONFIG_SATA_OX810
++#include <asm/arch/ox810sata.h>
++#endif
+ 
+ #define MAJOR_NR MD_MAJOR
+ #define MD_DRIVER
+ #define MD_PERSONALITY
+ 
++/**
++ * Assesses if the current raid configuration is suitable for implementation
++ * by the raid HW, if so, will enable it in the mddev
++ */
++static void raid0_hw_raidable(mddev_t *mddev)
++{
++    mdk_rdev_t *rdev0;
++    mdk_rdev_t *rdev1;
++    raid0_conf_t *conf = mddev_to_conf(mddev);
++
++    /*default to SW RAID */
++    conf->hw_raid0_settings = 0;
++
++#if defined(CONFIG_SATA_OX810)
++    /* if this drive is suitable for HW raid then enable it */
++    if (mddev->raid_disks != 2) {
++        printk(KERN_NOTICE"raid0 not hw raidable %d disks (needs to be 2)\n",
++            mddev->raid_disks);
++        return;
++    }
++
++    if (conf->nr_strip_zones != 1) {
++        printk(KERN_NOTICE"raid0 not hw raidable %d zone (needs to be 1)\n",
++            conf->nr_strip_zones);
++        return;
++    }
++    
++    if (conf->strip_zone->nb_dev != 2) {
++        printk(KERN_NOTICE"raid0 not hw raidable %d disks (needs to be 2)\n",
++            conf->strip_zone->nb_dev);
++        return;
++    }
++    
++    rdev0 = rcu_dereference(conf->strip_zone->dev[0]);
++    rdev1 = rcu_dereference(conf->strip_zone->dev[1]);
++    
++    /* are there two working disks */
++    if (!rdev0 ||
++        !rdev1 ||
++        test_bit(Faulty, &rdev0->flags) ||
++        test_bit(Faulty, &rdev1->flags) ) {
++        printk(KERN_NOTICE"raid0 not hw raidable, needs two working disks.\n");
++        return;
++    }
++    
++    if (!rdev0->bdev ||
++        !rdev1->bdev ||
++        !rdev0->bdev->bd_part ||
++        !rdev1->bdev->bd_part ) {
++        printk(KERN_NOTICE"raid0 not hw raidable, disks not ready\n");
++        return;
++	}
++	
++	if (rdev0->bdev->bd_part->start_sect != rdev1->bdev->bd_part->start_sect) {
++#ifdef CONFIG_LBD
++        printk(KERN_NOTICE"raid0 not hw raidable, partition start sectors differ %llu, %llu\n",
++#else
++        printk(KERN_NOTICE"raid0 not hw raidable, partition start sectors differ %lu, %lu\n",
++#endif // CONFIG_LBD
++            rdev0->bdev->bd_part->start_sect,
++            rdev1->bdev->bd_part->start_sect);
++        return;
++    }
++	if (rdev0->bdev->bd_part->start_sect & 255) {
++            printk(KERN_NOTICE"raid0 not hw raidable, partitions need"
++                " to start on a multiple of 256 sectors\n");
++        return;
++    }
++
++    if (!rdev0->bdev->bd_disk || 
++		!rdev0->bdev->bd_disk->queue ||
++		(oxnassata_get_port_no(rdev0->bdev->bd_disk->queue) != 0)) {
++        printk(KERN_NOTICE"raid0 not hw raidable, RAID disk 0 not on internal SATA port.\n"); 
++        return;
++    }
++
++    if (!rdev1->bdev->bd_disk || 
++		!rdev1->bdev->bd_disk->queue ||
++		(oxnassata_get_port_no(rdev1->bdev->bd_disk->queue) != 1)) {
++        printk(KERN_NOTICE"raid1 not hw raidable, RAID disk 1 not on internal SATA port.\n"); 
++        return;
++    }
++
++	/* cannot mix 28 and 48-bit LBA devices */    
++	if (!oxnassata_LBA_schemes_compatible()) {
++        printk(KERN_NOTICE"raid0 not hw raidable, disks need to use same LBA size (28 vs 48)\n"); 
++		return;
++	}
++    
++    /* OX810 can only manage 64K chunk size (128 sectors) */
++    if ((mddev->chunk_size >> 9) != 128 ) {
++        printk(KERN_NOTICE"raid0 not hw raidable, needs to have a chunk size of"
++            " 128 sectors/64K. (currently %d)\n", mddev->chunk_size >> 9); 
++		return;
++    }
++    
++    conf->hw_raid0_settings = OXNASSATA_RAID0;
++    printk(KERN_NOTICE"raid0 using hardware RAID 0x%08x\n",conf->hw_raid0_settings);
++#endif /*CONFIG_SCSI_OX810SATA*/
++}
++
+ static void raid0_unplug(struct request_queue *q)
+ {
+ 	mddev_t *mddev = q->queuedata;
+@@ -66,7 +173,8 @@
+ 	struct strip_zone *zone;
+ 	int cnt;
+ 	char b[BDEVNAME_SIZE];
+- 
++    unsigned int max_sectors = ~0;
++    
+ 	/*
+ 	 * The number of 'same size groups'
+ 	 */
+@@ -151,6 +259,8 @@
+ 
+ 		if (!smallest || (rdev1->size <smallest->size))
+ 			smallest = rdev1;
++        
++        max_sectors = min(max_sectors,rdev1->bdev->bd_disk->queue->max_sectors);
+ 		cnt++;
+ 	}
+ 	if (cnt != mddev->raid_disks) {
+@@ -232,6 +342,17 @@
+ 	mddev->queue->backing_dev_info.congested_fn = raid0_congested;
+ 	mddev->queue->backing_dev_info.congested_data = mddev;
+ 
++    raid0_hw_raidable(mddev);
++    
++    /* if we're using hardware RAID acceleration, increase the max_sectors
++    * to the bigest that the target disks can handle */
++    if(conf->hw_raid0_settings) {
++        max_sectors = max(max_sectors, mddev->queue->max_sectors);
++        printk(KERN_INFO"%s: adjusting maxsectors to %d\n",mdname(mddev),max_sectors);
++        blk_queue_max_sectors(mddev->queue, max_sectors);
++    }
++    
++
+ 	printk("raid0: done.\n");
+ 	return 0;
+  abort:
+@@ -396,7 +517,7 @@
+ 	sector_t chunk;
+ 	sector_t block, rsect;
+ 	const int rw = bio_data_dir(bio);
+-
++    
+ 	if (unlikely(bio_barrier(bio))) {
+ 		bio_endio(bio, -EOPNOTSUPP);
+ 		return 0;
+@@ -405,12 +526,34 @@
+ 	disk_stat_inc(mddev->gendisk, ios[rw]);
+ 	disk_stat_add(mddev->gendisk, sectors[rw], bio_sectors(bio));
+ 
++#if defined(CONFIG_SATA_OX810)
++    if (conf->hw_raid0_settings) {
++        struct block_device* bdev;
++
++        /* get underlying storage */
++        bdev = conf->strip_zone[0].dev[0]->bdev;
++        
++        /* If underlying storage is a partition, we need to offset the sector 
++        to allow for the raid hardware starting from the beginning of the disk
++        and dividing by two. */
++        if ( bdev != bdev->bd_contains ) {
++            bio->bi_sector += bdev->bd_part->start_sect << 1;
++            bdev = bdev->bd_contains;
++        }
++        
++        /* redirect the request to the underlying storage and set the RAID mode */
++        bio->bi_bdev = bdev;
++        bio->bi_raid = conf->hw_raid0_settings;
++        
++        /* return a positive non-zero value to re-submit the request */
++        return 1;
++    }
++#endif
+ 	chunk_size = mddev->chunk_size >> 10;
+ 	chunk_sects = mddev->chunk_size >> 9;
+ 	chunksize_bits = ffz(~chunk_size);
+ 	block = bio->bi_sector >> 1;
+ 	
+-
+ 	if (unlikely(chunk_sects < (bio->bi_sector & (chunk_sects - 1)) + (bio->bi_size >> 9))) {
+ 		struct bio_pair *bp;
+ 		/* Sanity check -- queue functions should prevent this happening */
+@@ -527,3 +670,4 @@
+ MODULE_ALIAS("md-personality-2"); /* RAID0 */
+ MODULE_ALIAS("md-raid0");
+ MODULE_ALIAS("md-level-0");
++
+diff -Naur linux-2.6.24.4/drivers/md/raid1.c linux-2.6.24.4-oxnas/drivers/md/raid1.c
+--- linux-2.6.24.4/drivers/md/raid1.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/md/raid1.c	2009-05-08 16:26:51.000000000 +0800
+@@ -34,6 +34,12 @@
+ #include "dm-bio-list.h"
+ #include <linux/raid/raid1.h>
+ #include <linux/raid/bitmap.h>
++#ifdef CONFIG_SATA_OX800
++#include <asm/arch/sata.h>
++#endif
++#ifdef CONFIG_SATA_OX810
++#include <asm/arch/ox810sata.h>
++#endif
+ 
+ #define DEBUG 0
+ #if DEBUG
+@@ -67,6 +73,82 @@
+ 	return r1_bio;
+ }
+ 
++/**
++ * Assesses if the current raid configuration is suitable for implementation
++ * by the raid HW, if so, will enable it 
++ */
++static void raid1_hw_raidable(mddev_t *mddev)
++{
++    mdk_rdev_t *rdev0;
++    mdk_rdev_t *rdev1;
++    conf_t *conf = mddev_to_conf(mddev);
++
++    /*default to SW RAID */
++    conf->hw_raid1_settings = 0;
++
++#if defined(CONFIG_SATA_OX800) || defined(CONFIG_SATA_OX810)
++    /* if this drive is suitable for HW raid then enable it */
++    if (mddev->raid_disks != 2) {
++        printk(KERN_NOTICE"raid1 not hw raidable %d disks (needs to be 2)\n",mddev->raid_disks);
++        return;
++    }
++    
++    rdev0 = rcu_dereference(conf->mirrors[0].rdev);
++    rdev1 = rcu_dereference(conf->mirrors[1].rdev);
++    
++    /* are there two working disks */
++    if (!rdev0 ||
++        !rdev1 ||
++        test_bit(Faulty, &rdev0->flags) ||
++        test_bit(Faulty, &rdev1->flags) ) {
++        printk(KERN_NOTICE"raid1 not hw raidable, needs two working disks.\n");
++        return;
++    }
++    
++    if (!rdev0->bdev ||
++        !rdev1->bdev ||
++        !rdev0->bdev->bd_part ||
++        !rdev1->bdev->bd_part ) {
++        printk(KERN_NOTICE"raid1 not hw raidable, mirrors not ready\n");
++        return;
++	}
++	
++	if (rdev0->bdev->bd_part->start_sect != rdev1->bdev->bd_part->start_sect) {
++#ifdef CONFIG_LBD
++        printk(KERN_NOTICE"raid1 not hw raidable, partition start sectors differ %llu, %llu\n",
++#else
++        printk(KERN_NOTICE"raid1 not hw raidable, partition start sectors differ %lu, %lu\n",
++#endif // CONFIG_LBD
++            rdev0->bdev->bd_part->start_sect,
++            rdev1->bdev->bd_part->start_sect);
++        return;
++    }
++
++    if (!rdev0->bdev->bd_disk || 
++		!rdev0->bdev->bd_disk->queue ||
++		(oxnassata_get_port_no(rdev0->bdev->bd_disk->queue) < 0)) {
++        printk(KERN_NOTICE"raid1 not hw raidable, RAID disk 0 not on internal SATA port.\n"); 
++        return;
++    }
++
++    if (!rdev1->bdev->bd_disk || 
++		!rdev1->bdev->bd_disk->queue ||
++		(oxnassata_get_port_no(rdev1->bdev->bd_disk->queue) < 0)) {
++        printk(KERN_NOTICE"raid1 not hw raidable, RAID disk 1 not on internal SATA port.\n"); 
++        return;
++    }
++
++	/* cannot mix 28 and 48-bit LBA devices */    
++	if (!oxnassata_LBA_schemes_compatible()) {
++        printk(KERN_NOTICE"raid0 not hw raidable, disks need to use same LBA size (28 vs 48)\n"); 
++		return;
++	}
++
++    conf->hw_raid1_settings = OXNASSATA_RAID1;
++    printk(KERN_NOTICE"raid1 using hardware RAID 0x%08x\n",conf->hw_raid1_settings);
++#endif /*CONFIG_SCSI_OX800SATA*/
++}
++
+ static void r1bio_pool_free(void *r1_bio, void *data)
+ {
+ 	kfree(r1_bio);
+@@ -325,9 +407,29 @@
+ 		r1_bio->bios[mirror] = NULL;
+ 		to_put = bio;
+ 		if (!uptodate) {
++#if defined(CONFIG_SATA_OX800) || defined(CONFIG_SATA_OX810)
++            if ((mirror == 0) && (bio->bi_raid)) {
++                /* command was sent to part 0 for both drives, need to find 
++                * which drive caused the error */
++                int device = oxnassata_RAID_faults();
++
++                /* it's unlikely, but both disks could fail at once */
++                if (device & 1) md_error(r1_bio->mddev, conf->mirrors[0].rdev);
++                if (device & 2) md_error(r1_bio->mddev, conf->mirrors[1].rdev);
++
++                /* an I/O failed, we can't clear the bitmap */
++                set_bit(R1BIO_Degraded, &r1_bio->state);
++                
++                if (!(device & 3)) 
++                    set_bit(R1BIO_Uptodate, &r1_bio->state);
++            } else {
++#endif // CONFIG_SCSI_OX800SATA
+ 			md_error(r1_bio->mddev, conf->mirrors[mirror].rdev);
+ 			/* an I/O failed, we can't clear the bitmap */
+ 			set_bit(R1BIO_Degraded, &r1_bio->state);
++#if defined(CONFIG_SATA_OX800) || defined(CONFIG_SATA_OX810)
++            }
++#endif // CONFIG_SCSI_OX800SATA
+ 		} else
+ 			/*
+ 			 * Set R1BIO_Uptodate in our master bio, so that
+@@ -781,6 +883,7 @@
+ 	const int do_sync = bio_sync(bio);
+ 	int do_barriers;
+ 	mdk_rdev_t *blocked_rdev;
++        mdk_rdev_t *rdev; 
+ 
+ 	/*
+ 	 * Register the new request and wait if the reconstruction
+@@ -867,6 +970,53 @@
+  retry_write:
+ 	blocked_rdev = NULL;
+ 	rcu_read_lock();
++
++    /* start of oxsemi hw raid code */
++    if ((rcu_dereference(conf->mirrors[0].rdev)) &&
++        (rcu_dereference(conf->mirrors[1].rdev)) &&
++        !test_bit(Faulty, &rcu_dereference(conf->mirrors[0].rdev)->flags) &&
++        !test_bit(Faulty, &rcu_dereference(conf->mirrors[1].rdev)->flags) &&
++        (conf->hw_raid1_settings) )
++    {
++        struct bio *mbio;
++
++        rdev = rcu_dereference(conf->mirrors[0].rdev);
++        atomic_inc(&rdev->nr_pending);
++        r1_bio->bios[0] = bio;
++        targets++;
++
++        rcu_read_unlock();
++
++        /* do behind I/O ? */
++        if (bitmap &&
++            atomic_read(&bitmap->behind_writes) < bitmap->max_write_behind &&
++            (behind_pages = alloc_behind_pages(bio)) != NULL)
++            set_bit(R1BIO_BehindIO, &r1_bio->state);
++
++        atomic_set(&r1_bio->remaining, 0);
++        atomic_set(&r1_bio->behind_remaining, 0);
++
++        do_barriers = bio_barrier(bio);
++        if (do_barriers)
++            set_bit(R1BIO_Barrier, &r1_bio->state);
++
++        bio_list_init(&bl);
++
++        mbio = bio_clone(bio, GFP_NOIO);
++        r1_bio->bios[0] = mbio;
++
++        mbio->bi_sector	= r1_bio->sector + conf->mirrors[0].rdev->data_offset;
++        mbio->bi_bdev = conf->mirrors[0].rdev->bdev;
++        mbio->bi_end_io	= raid1_end_write_request;
++        mbio->bi_rw = WRITE | do_barriers | do_sync;
++        mbio->bi_private = r1_bio;
++        mbio->bi_raid = conf->hw_raid1_settings ;
++
++        atomic_inc(&r1_bio->remaining);
++
++        bio_list_add(&bl, mbio);
++        /* end of hw_raid code */
++    } else {
+ 	for (i = 0;  i < disks; i++) {
+ 		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
+ 		if (rdev && unlikely(test_bit(Blocked, &rdev->flags))) {
+@@ -958,6 +1108,8 @@
+ 
+ 		bio_list_add(&bl, mbio);
+ 	}
++    }
++    
+ 	kfree(behind_pages); /* the behind pages are attached to the bios now */
+ 
+ 	bitmap_startwrite(bitmap, bio->bi_sector, r1_bio->sectors,
+@@ -1034,6 +1186,9 @@
+ 	printk(KERN_ALERT "raid1: Disk failure on %s, disabling device.\n"
+ 		"raid1: Operation continuing on %d devices.\n",
+ 		bdevname(rdev->bdev,b), conf->raid_disks - mddev->degraded);
++
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
+ }
+ 
+ static void print_conf(conf_t *conf)
+@@ -1092,6 +1247,9 @@
+ 		}
+ 	}
+ 
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
++
+ 	print_conf(conf);
+ 	return 0;
+ }
+@@ -1129,6 +1287,9 @@
+ 			break;
+ 		}
+ 
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
++
+ 	print_conf(conf);
+ 	return found;
+ }
+@@ -1165,6 +1326,8 @@
+ 		}
+ 	}
+ abort:
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
+ 
+ 	print_conf(conf);
+ 	return err;
+@@ -1789,6 +1952,7 @@
+ 		bio->bi_size = 0;
+ 		bio->bi_end_io = NULL;
+ 		bio->bi_private = NULL;
++        bio->bi_raid = 0;
+ 
+ 		rdev = rcu_dereference(conf->mirrors[i].rdev);
+ 		if (rdev == NULL ||
+@@ -2040,6 +2204,9 @@
+ 	 */
+ 	mddev->array_size = mddev->size;
+ 
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
++
+ 	mddev->queue->unplug_fn = raid1_unplug;
+ 	mddev->queue->backing_dev_info.congested_fn = raid1_congested;
+ 	mddev->queue->backing_dev_info.congested_data = mddev;
+@@ -2109,6 +2276,9 @@
+ 	}
+ 	mddev->size = mddev->array_size;
+ 	mddev->resync_max_sectors = sectors;
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
++
+ 	return 0;
+ }
+ 
+@@ -2212,6 +2382,9 @@
+ 	mddev->delta_disks = 0;
+ 
+ 	conf->last_used = 0; /* just make sure it is in-range */
++    /* check to see if this new configuration is supported by hardware RAID */
++    raid1_hw_raidable(mddev);
++
+ 	lower_barrier(conf);
+ 
+ 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+diff -Naur linux-2.6.24.4/drivers/mtd/nand/Kconfig linux-2.6.24.4-oxnas/drivers/mtd/nand/Kconfig
+--- linux-2.6.24.4/drivers/mtd/nand/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/mtd/nand/Kconfig	2009-05-08 16:25:18.000000000 +0800
+@@ -306,4 +306,11 @@
+ 	  These two (and possibly other) Alauda-based cardreaders for
+ 	  SmartMedia and xD allow raw flash access.
+ 
++config MTD_OX810
++	tristate "MTD driver NAND flash on OX810 demo board"
++	depends on MTD_NAND
++	help
++	  Implements the low level driver for the NAND flash on the
++	  Oxford Semiconductor demo board
++
+ endif # MTD_NAND
+diff -Naur linux-2.6.24.4/drivers/mtd/ubi/debug.c linux-2.6.24.4-oxnas/drivers/mtd/ubi/debug.c
+--- linux-2.6.24.4/drivers/mtd/ubi/debug.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/mtd/ubi/debug.c	2009-05-08 16:25:17.000000000 +0800
+@@ -24,7 +24,7 @@
+  * changes.
+  */
+ 
+-#ifdef CONFIG_MTD_UBI_DEBUG_MSG
++#ifdef CONFIG_MTD_UBI_DEBUG
+ 
+ #include "ubi.h"
+ 
+@@ -34,14 +34,19 @@
+  */
+ void ubi_dbg_dump_ec_hdr(const struct ubi_ec_hdr *ec_hdr)
+ {
+-	dbg_msg("erase counter header dump:");
+-	dbg_msg("magic          %#08x", be32_to_cpu(ec_hdr->magic));
+-	dbg_msg("version        %d",    (int)ec_hdr->version);
+-	dbg_msg("ec             %llu",  (long long)be64_to_cpu(ec_hdr->ec));
+-	dbg_msg("vid_hdr_offset %d",    be32_to_cpu(ec_hdr->vid_hdr_offset));
+-	dbg_msg("data_offset    %d",    be32_to_cpu(ec_hdr->data_offset));
+-	dbg_msg("hdr_crc        %#08x", be32_to_cpu(ec_hdr->hdr_crc));
+-	dbg_msg("erase counter header hexdump:");
++	printk(KERN_DEBUG "Erase counter header dump:\n");
++	printk(KERN_DEBUG "\tmagic          %#08x\n",
++	       be32_to_cpu(ec_hdr->magic));
++	printk(KERN_DEBUG "\tversion        %d\n", (int)ec_hdr->version);
++	printk(KERN_DEBUG "\tec             %llu\n",
++	       (long long)be64_to_cpu(ec_hdr->ec));
++	printk(KERN_DEBUG "\tvid_hdr_offset %d\n",
++	       be32_to_cpu(ec_hdr->vid_hdr_offset));
++	printk(KERN_DEBUG "\tdata_offset    %d\n",
++	       be32_to_cpu(ec_hdr->data_offset));
++	printk(KERN_DEBUG "\thdr_crc        %#08x\n",
++	       be32_to_cpu(ec_hdr->hdr_crc));
++	printk(KERN_DEBUG "erase counter header hexdump:\n");
+ 	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 32, 1,
+ 		       ec_hdr, UBI_EC_HDR_SIZE, 1);
+ }
+@@ -52,22 +57,23 @@
+  */
+ void ubi_dbg_dump_vid_hdr(const struct ubi_vid_hdr *vid_hdr)
+ {
+-	dbg_msg("volume identifier header dump:");
+-	dbg_msg("magic     %08x", be32_to_cpu(vid_hdr->magic));
+-	dbg_msg("version   %d",   (int)vid_hdr->version);
+-	dbg_msg("vol_type  %d",   (int)vid_hdr->vol_type);
+-	dbg_msg("copy_flag %d",   (int)vid_hdr->copy_flag);
+-	dbg_msg("compat    %d",   (int)vid_hdr->compat);
+-	dbg_msg("vol_id    %d",   be32_to_cpu(vid_hdr->vol_id));
+-	dbg_msg("lnum      %d",   be32_to_cpu(vid_hdr->lnum));
+-	dbg_msg("leb_ver   %u",   be32_to_cpu(vid_hdr->leb_ver));
+-	dbg_msg("data_size %d",   be32_to_cpu(vid_hdr->data_size));
+-	dbg_msg("used_ebs  %d",   be32_to_cpu(vid_hdr->used_ebs));
+-	dbg_msg("data_pad  %d",   be32_to_cpu(vid_hdr->data_pad));
+-	dbg_msg("sqnum     %llu",
++	printk(KERN_DEBUG "Volume identifier header dump:\n");
++	printk(KERN_DEBUG "\tmagic     %08x\n", be32_to_cpu(vid_hdr->magic));
++	printk(KERN_DEBUG "\tversion   %d\n",   (int)vid_hdr->version);
++	printk(KERN_DEBUG "\tvol_type  %d\n",   (int)vid_hdr->vol_type);
++	printk(KERN_DEBUG "\tcopy_flag %d\n",   (int)vid_hdr->copy_flag);
++	printk(KERN_DEBUG "\tcompat    %d\n",   (int)vid_hdr->compat);
++	printk(KERN_DEBUG "\tvol_id    %d\n",   be32_to_cpu(vid_hdr->vol_id));
++	printk(KERN_DEBUG "\tlnum      %d\n",   be32_to_cpu(vid_hdr->lnum));
++	printk(KERN_DEBUG "\tdata_size %d\n",   be32_to_cpu(vid_hdr->data_size));
++	printk(KERN_DEBUG "\tused_ebs  %d\n",   be32_to_cpu(vid_hdr->used_ebs));
++	printk(KERN_DEBUG "\tdata_pad  %d\n",   be32_to_cpu(vid_hdr->data_pad));
++	printk(KERN_DEBUG "\tsqnum     %llu\n",
+ 		(unsigned long long)be64_to_cpu(vid_hdr->sqnum));
+-	dbg_msg("hdr_crc   %08x", be32_to_cpu(vid_hdr->hdr_crc));
+-	dbg_msg("volume identifier header hexdump:");
++	printk(KERN_DEBUG "\thdr_crc   %08x\n", be32_to_cpu(vid_hdr->hdr_crc));
++	printk(KERN_DEBUG "Volume identifier header hexdump:\n");
++	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 32, 1,
++		       vid_hdr, UBI_VID_HDR_SIZE, 1);
+ }
+ 
+ /**
+@@ -76,27 +82,27 @@
+  */
+ void ubi_dbg_dump_vol_info(const struct ubi_volume *vol)
+ {
+-	dbg_msg("volume information dump:");
+-	dbg_msg("vol_id          %d", vol->vol_id);
+-	dbg_msg("reserved_pebs   %d", vol->reserved_pebs);
+-	dbg_msg("alignment       %d", vol->alignment);
+-	dbg_msg("data_pad        %d", vol->data_pad);
+-	dbg_msg("vol_type        %d", vol->vol_type);
+-	dbg_msg("name_len        %d", vol->name_len);
+-	dbg_msg("usable_leb_size %d", vol->usable_leb_size);
+-	dbg_msg("used_ebs        %d", vol->used_ebs);
+-	dbg_msg("used_bytes      %lld", vol->used_bytes);
+-	dbg_msg("last_eb_bytes   %d", vol->last_eb_bytes);
+-	dbg_msg("corrupted       %d", vol->corrupted);
+-	dbg_msg("upd_marker      %d", vol->upd_marker);
++	printk(KERN_DEBUG "Volume information dump:\n");
++	printk(KERN_DEBUG "\tvol_id          %d\n", vol->vol_id);
++	printk(KERN_DEBUG "\treserved_pebs   %d\n", vol->reserved_pebs);
++	printk(KERN_DEBUG "\talignment       %d\n", vol->alignment);
++	printk(KERN_DEBUG "\tdata_pad        %d\n", vol->data_pad);
++	printk(KERN_DEBUG "\tvol_type        %d\n", vol->vol_type);
++	printk(KERN_DEBUG "\tname_len        %d\n", vol->name_len);
++	printk(KERN_DEBUG "\tusable_leb_size %d\n", vol->usable_leb_size);
++	printk(KERN_DEBUG "\tused_ebs        %d\n", vol->used_ebs);
++	printk(KERN_DEBUG "\tused_bytes      %lld\n", vol->used_bytes);
++	printk(KERN_DEBUG "\tlast_eb_bytes   %d\n", vol->last_eb_bytes);
++	printk(KERN_DEBUG "\tcorrupted       %d\n", vol->corrupted);
++	printk(KERN_DEBUG "\tupd_marker      %d\n", vol->upd_marker);
+ 
+ 	if (vol->name_len <= UBI_VOL_NAME_MAX &&
+ 	    strnlen(vol->name, vol->name_len + 1) == vol->name_len) {
+-		dbg_msg("name            %s", vol->name);
++		printk(KERN_DEBUG "\tname            %s\n", vol->name);
+ 	} else {
+-		dbg_msg("the 1st 5 characters of the name: %c%c%c%c%c",
+-			vol->name[0], vol->name[1], vol->name[2],
+-			vol->name[3], vol->name[4]);
++		printk(KERN_DEBUG "\t1st 5 characters of name: %c%c%c%c%c\n",
++		       vol->name[0], vol->name[1], vol->name[2],
++		       vol->name[3], vol->name[4]);
+ 	}
+ }
+ 
+@@ -109,28 +115,29 @@
+ {
+ 	int name_len = be16_to_cpu(r->name_len);
+ 
+-	dbg_msg("volume table record %d dump:", idx);
+-	dbg_msg("reserved_pebs   %d", be32_to_cpu(r->reserved_pebs));
+-	dbg_msg("alignment       %d", be32_to_cpu(r->alignment));
+-	dbg_msg("data_pad        %d", be32_to_cpu(r->data_pad));
+-	dbg_msg("vol_type        %d", (int)r->vol_type);
+-	dbg_msg("upd_marker      %d", (int)r->upd_marker);
+-	dbg_msg("name_len        %d", name_len);
++	printk(KERN_DEBUG "Volume table record %d dump:\n", idx);
++	printk(KERN_DEBUG "\treserved_pebs   %d\n",
++	       be32_to_cpu(r->reserved_pebs));
++	printk(KERN_DEBUG "\talignment       %d\n", be32_to_cpu(r->alignment));
++	printk(KERN_DEBUG "\tdata_pad        %d\n", be32_to_cpu(r->data_pad));
++	printk(KERN_DEBUG "\tvol_type        %d\n", (int)r->vol_type);
++	printk(KERN_DEBUG "\tupd_marker      %d\n", (int)r->upd_marker);
++	printk(KERN_DEBUG "\tname_len        %d\n", name_len);
+ 
+ 	if (r->name[0] == '\0') {
+-		dbg_msg("name            NULL");
++		printk(KERN_DEBUG "\tname            NULL\n");
+ 		return;
+ 	}
+ 
+ 	if (name_len <= UBI_VOL_NAME_MAX &&
+ 	    strnlen(&r->name[0], name_len + 1) == name_len) {
+-		dbg_msg("name            %s", &r->name[0]);
++		printk(KERN_DEBUG "\tname            %s\n", &r->name[0]);
+ 	} else {
+-		dbg_msg("1st 5 characters of the name: %c%c%c%c%c",
++		printk(KERN_DEBUG "\t1st 5 characters of name: %c%c%c%c%c\n",
+ 			r->name[0], r->name[1], r->name[2], r->name[3],
+ 			r->name[4]);
+ 	}
+-	dbg_msg("crc             %#08x", be32_to_cpu(r->crc));
++	printk(KERN_DEBUG "\tcrc             %#08x\n", be32_to_cpu(r->crc));
+ }
+ 
+ /**
+@@ -139,15 +146,15 @@
+  */
+ void ubi_dbg_dump_sv(const struct ubi_scan_volume *sv)
+ {
+-	dbg_msg("volume scanning information dump:");
+-	dbg_msg("vol_id         %d", sv->vol_id);
+-	dbg_msg("highest_lnum   %d", sv->highest_lnum);
+-	dbg_msg("leb_count      %d", sv->leb_count);
+-	dbg_msg("compat         %d", sv->compat);
+-	dbg_msg("vol_type       %d", sv->vol_type);
+-	dbg_msg("used_ebs       %d", sv->used_ebs);
+-	dbg_msg("last_data_size %d", sv->last_data_size);
+-	dbg_msg("data_pad       %d", sv->data_pad);
++	printk(KERN_DEBUG "Volume scanning information dump:\n");
++	printk(KERN_DEBUG "\tvol_id         %d\n", sv->vol_id);
++	printk(KERN_DEBUG "\thighest_lnum   %d\n", sv->highest_lnum);
++	printk(KERN_DEBUG "\tleb_count      %d\n", sv->leb_count);
++	printk(KERN_DEBUG "\tcompat         %d\n", sv->compat);
++	printk(KERN_DEBUG "\tvol_type       %d\n", sv->vol_type);
++	printk(KERN_DEBUG "\tused_ebs       %d\n", sv->used_ebs);
++	printk(KERN_DEBUG "\tlast_data_size %d\n", sv->last_data_size);
++	printk(KERN_DEBUG "\tdata_pad       %d\n", sv->data_pad);
+ }
+ 
+ /**
+@@ -157,14 +164,13 @@
+  */
+ void ubi_dbg_dump_seb(const struct ubi_scan_leb *seb, int type)
+ {
+-	dbg_msg("eraseblock scanning information dump:");
+-	dbg_msg("ec       %d", seb->ec);
+-	dbg_msg("pnum     %d", seb->pnum);
++	printk(KERN_DEBUG "eraseblock scanning information dump:\n");
++	printk(KERN_DEBUG "\tec       %d\n", seb->ec);
++	printk(KERN_DEBUG "\tpnum     %d\n", seb->pnum);
+ 	if (type == 0) {
+-		dbg_msg("lnum     %d", seb->lnum);
+-		dbg_msg("scrub    %d", seb->scrub);
+-		dbg_msg("sqnum    %llu", seb->sqnum);
+-		dbg_msg("leb_ver  %u", seb->leb_ver);
++		printk(KERN_DEBUG "\tlnum     %d\n", seb->lnum);
++		printk(KERN_DEBUG "\tscrub    %d\n", seb->scrub);
++		printk(KERN_DEBUG "\tsqnum    %llu\n", seb->sqnum);
+ 	}
+ }
+ 
+@@ -176,16 +182,16 @@
+ {
+ 	char nm[17];
+ 
+-	dbg_msg("volume creation request dump:");
+-	dbg_msg("vol_id    %d",   req->vol_id);
+-	dbg_msg("alignment %d",   req->alignment);
+-	dbg_msg("bytes     %lld", (long long)req->bytes);
+-	dbg_msg("vol_type  %d",   req->vol_type);
+-	dbg_msg("name_len  %d",   req->name_len);
++	printk(KERN_DEBUG "Volume creation request dump:\n");
++	printk(KERN_DEBUG "\tvol_id    %d\n",   req->vol_id);
++	printk(KERN_DEBUG "\talignment %d\n",   req->alignment);
++	printk(KERN_DEBUG "\tbytes     %lld\n", (long long)req->bytes);
++	printk(KERN_DEBUG "\tvol_type  %d\n",   req->vol_type);
++	printk(KERN_DEBUG "\tname_len  %d\n",   req->name_len);
+ 
+ 	memcpy(nm, req->name, 16);
+ 	nm[16] = 0;
+-	dbg_msg("the 1st 16 characters of the name: %s", nm);
++	printk(KERN_DEBUG "\t1st 16 characters of name: %s\n", nm);
+ }
+ 
+-#endif /* CONFIG_MTD_UBI_DEBUG_MSG */
++#endif /* CONFIG_MTD_UBI_DEBUG */
+diff -Naur linux-2.6.24.4/drivers/net/Kconfig linux-2.6.24.4-oxnas/drivers/net/Kconfig
+--- linux-2.6.24.4/drivers/net/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/net/Kconfig	2009-05-08 16:26:38.000000000 +0800
+@@ -2368,6 +2368,14 @@
+ 	  To compile this driver as a module, choose M here.  The module
+ 	  will be called atl1.
+ 
++config SYNOPSYS_GMAC
++	tristate "Synopsys Gigabit MAC"
++	select CRC32
++	select MII
++	depends on ARCH_OXNAS
++	help
++		Driver for the Synopsys Gigabit MAC
++
+ endif # NETDEV_1000
+ 
+ #
+diff -Naur linux-2.6.24.4/drivers/net/Makefile linux-2.6.24.4-oxnas/drivers/net/Makefile
+--- linux-2.6.24.4/drivers/net/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/net/Makefile	2009-05-08 16:26:38.000000000 +0800
+@@ -2,6 +2,7 @@
+ # Makefile for the Linux network (ethercard) device drivers.
+ #
+ 
++obj-$(CONFIG_SYNOPSYS_GMAC) += gmac/
+ obj-$(CONFIG_E1000) += e1000/
+ obj-$(CONFIG_E1000E) += e1000e/
+ obj-$(CONFIG_IBM_EMAC) += ibm_emac/
+diff -Naur linux-2.6.24.4/drivers/net/mii.c linux-2.6.24.4-oxnas/drivers/net/mii.c
+--- linux-2.6.24.4/drivers/net/mii.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/net/mii.c	2009-05-08 16:26:38.000000000 +0800
+@@ -46,11 +46,13 @@
+ 	u32 advert, bmcr, lpa, nego;
+ 	u32 advert2 = 0, bmcr2 = 0, lpa2 = 0;
+ 
++	int supports_gmii = mii->mdio_read(dev, mii->phy_id, MII_BMSR) & BMSR_ESTATEN;
++
+ 	ecmd->supported =
+ 	    (SUPPORTED_10baseT_Half | SUPPORTED_10baseT_Full |
+ 	     SUPPORTED_100baseT_Half | SUPPORTED_100baseT_Full |
+ 	     SUPPORTED_Autoneg | SUPPORTED_TP | SUPPORTED_MII);
+-	if (mii->supports_gmii)
++	if (supports_gmii)
+ 		ecmd->supported |= SUPPORTED_1000baseT_Half |
+ 			SUPPORTED_1000baseT_Full;
+ 
+@@ -65,7 +67,7 @@
+ 
+ 	ecmd->advertising = ADVERTISED_TP | ADVERTISED_MII;
+ 	advert = mii->mdio_read(dev, mii->phy_id, MII_ADVERTISE);
+-	if (mii->supports_gmii)
++	if (supports_gmii)
+ 		advert2 = mii->mdio_read(dev, mii->phy_id, MII_CTRL1000);
+ 
+ 	if (advert & ADVERTISE_10HALF)
+@@ -83,7 +85,7 @@
+ 
+ 	bmcr = mii->mdio_read(dev, mii->phy_id, MII_BMCR);
+ 	lpa = mii->mdio_read(dev, mii->phy_id, MII_LPA);
+-	if (mii->supports_gmii) {
++	if (supports_gmii) {
+ 		bmcr2 = mii->mdio_read(dev, mii->phy_id, MII_CTRL1000);
+ 		lpa2 = mii->mdio_read(dev, mii->phy_id, MII_STAT1000);
+ 	}
+@@ -132,6 +134,8 @@
+ {
+ 	struct net_device *dev = mii->dev;
+ 
++	int supports_gmii = mii->mdio_read(dev, mii->phy_id, MII_BMSR) & BMSR_ESTATEN;
++
+ 	if (ecmd->speed != SPEED_10 &&
+ 	    ecmd->speed != SPEED_100 &&
+ 	    ecmd->speed != SPEED_1000)
+@@ -146,7 +150,7 @@
+ 		return -EINVAL;
+ 	if (ecmd->autoneg != AUTONEG_DISABLE && ecmd->autoneg != AUTONEG_ENABLE)
+ 		return -EINVAL;
+-	if ((ecmd->speed == SPEED_1000) && (!mii->supports_gmii))
++	if ((ecmd->speed == SPEED_1000) && (!supports_gmii))
+ 		return -EINVAL;
+ 
+ 	/* ignore supported, maxtxpkt, maxrxpkt */
+@@ -166,7 +170,7 @@
+ 		/* advertise only what has been requested */
+ 		advert = mii->mdio_read(dev, mii->phy_id, MII_ADVERTISE);
+ 		tmp = advert & ~(ADVERTISE_ALL | ADVERTISE_100BASE4);
+-		if (mii->supports_gmii) {
++		if (supports_gmii) {
+ 			advert2 = mii->mdio_read(dev, mii->phy_id, MII_CTRL1000);
+ 			tmp2 = advert2 & ~(ADVERTISE_1000HALF | ADVERTISE_1000FULL);
+ 		}
+@@ -178,7 +182,7 @@
+ 			tmp |= ADVERTISE_100HALF;
+ 		if (ecmd->advertising & ADVERTISED_100baseT_Full)
+ 			tmp |= ADVERTISE_100FULL;
+-		if (mii->supports_gmii) {
++		if (supports_gmii) {
+ 			if (ecmd->advertising & ADVERTISED_1000baseT_Half)
+ 				tmp2 |= ADVERTISE_1000HALF;
+ 			if (ecmd->advertising & ADVERTISED_1000baseT_Full)
+@@ -188,7 +192,7 @@
+ 			mii->mdio_write(dev, mii->phy_id, MII_ADVERTISE, tmp);
+ 			mii->advertising = tmp;
+ 		}
+-		if ((mii->supports_gmii) && (advert2 != tmp2))
++		if (advert2 != tmp2)
+ 			mii->mdio_write(dev, mii->phy_id, MII_CTRL1000, tmp2);
+ 
+ 		/* turn on autonegotiation, and force a renegotiate */
+@@ -312,6 +316,7 @@
+ 	unsigned int old_carrier, new_carrier;
+ 	int advertise, lpa, media, duplex;
+ 	int lpa2 = 0;
++	int supports_gmii = mii->mdio_read(mii->dev, mii->phy_id, MII_BMSR) & BMSR_ESTATEN;
+ 
+ 	/* if forced media, go no further */
+ 	if (mii->force_media)
+@@ -348,7 +353,7 @@
+ 		mii->advertising = advertise;
+ 	}
+ 	lpa = mii->mdio_read(mii->dev, mii->phy_id, MII_LPA);
+-	if (mii->supports_gmii)
++	if (supports_gmii)
+ 		lpa2 = mii->mdio_read(mii->dev, mii->phy_id, MII_STAT1000);
+ 
+ 	/* figure out media and duplex from advertise and LPA values */
+@@ -373,6 +378,148 @@
+ 	return 0; /* duplex did not change */
+ }
+ 
++
++unsigned int mii_check_media_ex(
++    struct mii_if_info *mii,
++    unsigned int ok_to_print,
++    unsigned int init_media,
++    int *has_gigabit_changed,
++	int *has_pause_changed,
++	void (*link_state_change_callback)(int link_state, void* arg),
++	void *link_state_change_arg)
++{
++	unsigned int old_carrier, new_carrier;
++	int advertise, lpa;
++	unsigned int negotiated_10_100;
++	int advertise2 = 0, lpa2 = 0;
++	unsigned int negotiated_1000;
++	int duplex = 0;
++	int using_100 = 0;
++	int using_1000 = 0;
++	int using_pause = 0;
++	int duplex_changed = 0;
++	int changed_100 = 0;
++	int changed_1000 = 0;
++	int changed_pause = 0;
++	int supports_gmii = mii->mdio_read(mii->dev, mii->phy_id, MII_BMSR) & BMSR_ESTATEN;
++
++    // Initialise user's locations for returned gigabit and pause changed values
++	// to no-change
++	*has_gigabit_changed = 0;
++	*has_pause_changed = 0;
++
++	/* if forced media, go no further */
++	if (mii->force_media)
++		return 0; /* duplex did not change */
++
++	/* check current and old link status */
++	old_carrier = netif_carrier_ok(mii->dev) ? 1 : 0;
++	new_carrier = (unsigned int) mii_link_ok(mii);
++
++	/* if carrier state did not change, this is a "bounce",
++	 * just exit as everything is already set correctly
++	 */
++	if ((!init_media) && (old_carrier == new_carrier))
++		return 0; /* duplex did not change */
++
++	/* no carrier, nothing much to do */
++	if (!new_carrier) {
++		netif_carrier_off(mii->dev);
++		if (ok_to_print) {
++			printk(KERN_INFO "%s: link down\n", mii->dev->name);
++		}
++		link_state_change_callback(0, link_state_change_arg);
++		return 0; /* duplex did not change */
++	}
++
++	/*
++	 * we have carrier, see who's on the other end
++	 */
++	netif_carrier_on(mii->dev);
++
++	/* Get our advertise values */
++	if ((!init_media) && (mii->advertising))
++		advertise = mii->advertising;
++	else {
++		advertise = mii->mdio_read(mii->dev, mii->phy_id, MII_ADVERTISE);
++		mii->advertising = advertise;
++	}
++//printk("mii_check_media_ex() MII_ADVERTISE read as 0x%08x\n", advertise);
++	if (supports_gmii) {
++		advertise2 = mii->mdio_read(mii->dev, mii->phy_id, MII_CTRL1000);
++//printk("mii_check_media_ex() MII_CTRL1000 read as 0x%08x\n", advertise2);
++	}
++
++	/* Get link partner advertise values */
++	lpa = mii->mdio_read(mii->dev, mii->phy_id, MII_LPA);
++//printk("mii_check_media_ex() MII_LPA read as 0x%08x\n", lpa);
++	if (supports_gmii) {
++		lpa2 = mii->mdio_read(mii->dev, mii->phy_id, MII_STAT1000);
++//printk("mii_check_media_ex() MII_STAT1000 read as 0x%08x\n", lpa2);
++	}
++
++//printk("Us pause = %d, async pause = %d\n", advertise & ADVERTISE_PAUSE_CAP, advertise & ADVERTISE_PAUSE_ASYM);
++//printk("Link partner pause = %d, async pause = %d\n", lpa & LPA_PAUSE_CAP, lpa & LPA_PAUSE_ASYM);
++
++	/* Determine negotiated mode/duplex from our and link partner's advertise values */
++	negotiated_10_100 = mii_nway_result(lpa & advertise);
++	negotiated_1000   = mii_nway_result_1000(lpa2, advertise2);
++
++    /* Determine the rate we're operating at */
++	if (negotiated_1000 & (LPA_1000FULL | LPA_1000HALF)) {
++		using_1000 = 1;
++		duplex = (negotiated_1000 & LPA_1000FULL) ? 1 : 0;
++	} else {
++		if (negotiated_10_100 & (LPA_100FULL | LPA_100HALF)) {
++			using_100 = 1;
++		}
++		duplex = (negotiated_10_100 & ADVERTISE_FULL) ? 1 : 0;
++	}
++
++	/* Does link partner advertise that we can send pause frames to it? */
++	using_pause = (lpa & LPA_PAUSE_CAP) ? 1 : 0;
++
++	if (ok_to_print)
++		printk(KERN_INFO "%s: link up, %sMbps, %s-duplex, %s pause, lpa 0x%04X\n",
++		       mii->dev->name,
++		       using_1000 ? "1000" :
++		       using_100 ? "100" : "10",
++		       duplex ? "full" : "half",
++			   using_pause ? "using" : "not using",
++		       lpa);
++
++	link_state_change_callback(1, link_state_change_arg);
++
++    if (mii->full_duplex != duplex) {
++        duplex_changed = 1;
++    }
++    if (mii->using_100 != using_100) {
++        changed_100 = 1;
++    }
++    if (mii->using_1000 != using_1000) {
++        changed_1000 = 1;
++    }
++    if (mii->using_pause != using_pause) {
++        changed_pause = 1;
++    }
++
++    if (init_media || changed_100 || changed_1000 || changed_pause || duplex_changed) {
++        mii->full_duplex = duplex;
++        mii->using_100   = using_100;
++        mii->using_1000  = using_1000;
++		mii->using_pause = using_pause;
++        if (init_media || changed_1000) {
++            *has_gigabit_changed = 1;
++        }
++        if (init_media || changed_pause) {
++            *has_pause_changed = 1;
++        }
++        return init_media || duplex_changed;
++    }
++
++	return 0; /* duplex did not change */
++}
++
+ /**
+  * generic_mii_ioctl - main MII ioctl interface
+  * @mii_if: the MII interface
+@@ -465,6 +612,7 @@
+ EXPORT_SYMBOL(mii_ethtool_sset);
+ EXPORT_SYMBOL(mii_check_link);
+ EXPORT_SYMBOL(mii_check_media);
++EXPORT_SYMBOL(mii_check_media_ex);
+ EXPORT_SYMBOL(mii_check_gmii_support);
+ EXPORT_SYMBOL(generic_mii_ioctl);
+
+diff -Naur linux-2.6.24.4/drivers/net/via-velocity.h linux-2.6.24.4-oxnas/drivers/net/via-velocity.h
+--- linux-2.6.24.4/drivers/net/via-velocity.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/net/via-velocity.h	2009-05-08 16:26:38.000000000 +0800
+@@ -25,8 +25,6 @@
+ #ifndef VELOCITY_H
+ #define VELOCITY_H
+ 
+-#define VELOCITY_TX_CSUM_SUPPORT
+-
+ #define VELOCITY_NAME          "via-velocity"
+ #define VELOCITY_FULL_DRV_NAM  "VIA Networking Velocity Family Gigabit Ethernet Adapter Driver"
+ #define VELOCITY_VERSION       "1.14"
+@@ -35,6 +33,8 @@
+ 
+ #define PKT_BUF_SZ          1540
+ 
++#define PKT_BUF_SZ          ETH_ZLEN
++
+ #define MAX_UNITS           8
+ #define OPTION_DEFAULT      { [0 ... MAX_UNITS-1] = -1}
+ 
+@@ -716,6 +716,8 @@
+ /*
+  *	Bits in the CFGA register
+  */
++#define CFGA_PHYLEDS1       0x20
++#define CFGA_PHYLEDS0       0x10
+ 
+ #define CFGA_PMHCTG         0x08
+ #define CFGA_GPIO1PD        0x04
+@@ -766,6 +768,7 @@
+ #define DCFG_XMRM           0x4000
+ #define DCFG_XMRL           0x2000
+ #define DCFG_PERDIS         0x1000
++#define DCFG_MRDPL          0x0800
+ #define DCFG_MRWAIT         0x0400
+ #define DCFG_MWWAIT         0x0200
+ #define DCFG_LATMEN         0x0100
+@@ -1173,7 +1176,7 @@
+ 
+ struct velocity_info_tbl {
+ 	enum chip_type chip_id;
+-	const char *name;
++	char *name;
+ 	int txqueue;
+ 	u32 flags;
+ };
+@@ -1194,8 +1197,12 @@
+ #define mac_disable_int(regs)       	writel(CR0_GINTMSK1,&((regs)->CR0Clr))
+ #define mac_enable_int(regs)    	writel(CR0_GINTMSK1,&((regs)->CR0Set))
+ 
+-#define mac_set_dma_length(regs, n) {\
+-	BYTE_REG_BITS_SET((n),0x07,&((regs)->DCFG));\
++#define mac_hw_mibs_read(regs, MIBs) {\
++	int i;\
++	BYTE_REG_BITS_ON(MIBCR_MPTRINI,&((regs)->MIBCR));\
++	for (i=0;i<HW_MIB_SIZE;i++) {\
++		(MIBs)[i]=readl(&((regs)->MIBData));\
++	}\
+ }
+ 
+ #define mac_set_rx_thresh(regs, n) {\
+@@ -1218,17 +1225,184 @@
+ 	writew(TRDCSR_WAK<<(n*4),&((regs)->TDCSRSet));\
+ }
+ 
+-static inline void mac_eeprom_reload(struct mac_regs __iomem * regs) {
+-	int i=0;
++enum velocity_cam_type {
++	VELOCITY_VLAN_ID_CAM = 0,
++	VELOCITY_MULTICAST_CAM
++};
++
++/**
++ *	mac_get_cam_mask	-	Read a CAM mask
++ *	@regs: register block for this velocity
++ *	@mask: buffer to store mask
++ *	@cam_type: CAM to fetch
++ *
++ *	Fetch the mask bits of the selected CAM and store them into the
++ *	provided mask buffer.
++ */
++
++static inline void mac_get_cam_mask(struct mac_regs __iomem * regs, u8 * mask, enum velocity_cam_type cam_type)
++{
++	int i;
++	/* Select CAM mask */
++	BYTE_REG_BITS_SET(CAMCR_PS_CAM_MASK, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		writeb(CAMADDR_VCAMSL, &regs->CAMADDR);
++	else
++		writeb(0, &regs->CAMADDR);
++
++	/* read mask */
++	for (i = 0; i < 8; i++)
++		*mask++ = readb(&(regs->MARCAM[i]));
++
++	/* disable CAMEN */
++	writeb(0, &regs->CAMADDR);
++
++	/* Select mar */
++	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++
++}
++
++/**
++ *	mac_set_cam_mask	-	Set a CAM mask
++ *	@regs: register block for this velocity
++ *	@mask: CAM mask to load
++ *	@cam_type: CAM to store
++ *
++ *	Store a new mask into a CAM
++ */
++
++static inline void mac_set_cam_mask(struct mac_regs __iomem * regs, u8 * mask, enum velocity_cam_type cam_type)
++{
++	int i;
++	/* Select CAM mask */
++	BYTE_REG_BITS_SET(CAMCR_PS_CAM_MASK, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		writeb(CAMADDR_CAMEN | CAMADDR_VCAMSL, &regs->CAMADDR);
++	else
++		writeb(CAMADDR_CAMEN, &regs->CAMADDR);
++
++	for (i = 0; i < 8; i++) {
++		writeb(*mask++, &(regs->MARCAM[i]));
++	}
++	/* disable CAMEN */
++	writeb(0, &regs->CAMADDR);
++
++	/* Select mar */
++	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++}
++
++/**
++ *	mac_set_cam	-	set CAM data
++ *	@regs: register block of this velocity
++ *	@idx: Cam index
++ *	@addr: 2 or 6 bytes of CAM data
++ *	@cam_type: CAM to load
++ *
++ *	Load an address or vlan tag into a CAM
++ */
++
++static inline void mac_set_cam(struct mac_regs __iomem * regs, int idx, u8 *addr, enum velocity_cam_type cam_type)
++{
++	int i;
++
++	/* Select CAM mask */
++	BYTE_REG_BITS_SET(CAMCR_PS_CAM_DATA, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++
++	idx &= (64 - 1);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		writeb(CAMADDR_CAMEN | CAMADDR_VCAMSL | idx, &regs->CAMADDR);
++	else
++		writeb(CAMADDR_CAMEN | idx, &regs->CAMADDR);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		writew(*((u16 *) addr), &regs->MARCAM[0]);
++	else {
++		for (i = 0; i < 6; i++) {
++			writeb(*addr++, &(regs->MARCAM[i]));
++		}
++	}
++	BYTE_REG_BITS_ON(CAMCR_CAMWR, &regs->CAMCR);
++
++	udelay(10);
++
++	writeb(0, &regs->CAMADDR);
++
++	/* Select mar */
++	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++}
++
++/**
++ *	mac_get_cam	-	fetch CAM data
++ *	@regs: register block of this velocity
++ *	@idx: Cam index
++ *	@addr: buffer to hold up to 6 bytes of CAM data
++ *	@cam_type: CAM to load
++ *
++ *	Load an address or vlan tag from a CAM into the buffer provided by
++ *	the caller. VLAN tags are 2 bytes the address cam entries are 6.
++ */
++
++static inline void mac_get_cam(struct mac_regs __iomem * regs, int idx, u8 *addr, enum velocity_cam_type cam_type)
++{
++	int i;
++
++	/* Select CAM mask */
++	BYTE_REG_BITS_SET(CAMCR_PS_CAM_DATA, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++
++	idx &= (64 - 1);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		writeb(CAMADDR_CAMEN | CAMADDR_VCAMSL | idx, &regs->CAMADDR);
++	else
++		writeb(CAMADDR_CAMEN | idx, &regs->CAMADDR);
++
++	BYTE_REG_BITS_ON(CAMCR_CAMRD, &regs->CAMCR);
++
++	udelay(10);
++
++	if (cam_type == VELOCITY_VLAN_ID_CAM)
++		*((u16 *) addr) = readw(&(regs->MARCAM[0]));
++	else
++		for (i = 0; i < 6; i++, addr++)
++			*((u8 *) addr) = readb(&(regs->MARCAM[i]));
++
++	writeb(0, &regs->CAMADDR);
++
++	/* Select mar */
++	BYTE_REG_BITS_SET(CAMCR_PS_MAR, CAMCR_PS1 | CAMCR_PS0, &regs->CAMCR);
++}
++
++/**
++ *	mac_wol_reset	-	reset WOL after exiting low power
++ *	@regs: register block of this velocity
++ *
++ *	Called after we drop out of wake on lan mode in order to
++ *	reset the Wake on lan features. This function doesn't restore
++ *	the rest of the logic from the result of sleep/wakeup
++ */
++
++static inline void mac_wol_reset(struct mac_regs __iomem * regs)
++{
+ 
+-	BYTE_REG_BITS_ON(EECSR_RELOAD,&(regs->EECSR));
+-	do {
+-		udelay(10);
+-		if (i++>0x1000)
+-			break;
+-	} while (BYTE_REG_BITS_IS_ON(EECSR_RELOAD,&(regs->EECSR)));
++	/* Turn off SWPTAG right after leaving power mode */
++	BYTE_REG_BITS_OFF(STICKHW_SWPTAG, &regs->STICKHW);
++	/* clear sticky bits */
++	BYTE_REG_BITS_OFF((STICKHW_DS1 | STICKHW_DS0), &regs->STICKHW);
++
++	BYTE_REG_BITS_OFF(CHIPGCR_FCGMII, &regs->CHIPGCR);
++	BYTE_REG_BITS_OFF(CHIPGCR_FCMODE, &regs->CHIPGCR);
++	/* disable force PME-enable */
++	writeb(WOLCFG_PMEOVR, &regs->WOLCFGClr);
++	/* disable power-event config bit */
++	writew(0xFFFF, &regs->WOLCRClr);
++	/* clear power status */
++	writew(0xFFFF, &regs->WOLSRClr);
+ }
+ 
++
+ /*
+  * Header for WOL definitions. Used to compute hashes
+  */
+@@ -1515,8 +1689,9 @@
+ 	int numrx;			/* Number of RX descriptors */
+ 	int numtx;			/* Number of TX descriptors */
+ 	enum speed_opt spd_dpx;		/* Media link mode */
+-
+-	int DMA_length;			/* DMA length */
++	int vid;			/* vlan id */
++	int DMA_length_100M;	/* DMA length at 100Mb/s */
++	int DMA_length_1000M;	/* DMA length at 1Gb/s */
+ 	int rx_thresh;			/* RX_THRESH */
+ 	int flow_cntl;
+ 	int wol_opts;			/* Wake on lan options */
+@@ -1541,7 +1716,6 @@
+ 	dma_addr_t tx_bufs_dma;
+ 	u8 *tx_bufs;
+ 
+-	struct vlan_group    *vlgrp;
+ 	u8 ip_addr[4];
+ 	enum chip_type chip_id;
+ 
+@@ -1578,7 +1752,6 @@
+ 	int rx_buf_sz;
+ 	u32 mii_status;
+ 	u32 phy_id;
+-	int multicast_limit;
+ 
+ 	u8 vCAMmask[(VCAM_SIZE / 8)];
+ 	u8 mCAMmask[(MCAM_SIZE / 8)];
+@@ -1623,32 +1796,6 @@
+ }
+ 
+ /**
+- *	velocity_update_hw_mibs	-	fetch MIB counters from chip
+- *	@vptr: velocity to update
+- *
+- *	The velocity hardware keeps certain counters in the hardware
+- * 	side. We need to read these when the user asks for statistics
+- *	or when they overflow (causing an interrupt). The read of the
+- *	statistic clears it, so we keep running master counters in user
+- *	space.
+- */
+-
+-static inline void velocity_update_hw_mibs(struct velocity_info *vptr)
+-{
+-	u32 tmp;
+-	int i;
+-	BYTE_REG_BITS_ON(MIBCR_MIBFLSH, &(vptr->mac_regs->MIBCR));
+-
+-	while (BYTE_REG_BITS_IS_ON(MIBCR_MIBFLSH, &(vptr->mac_regs->MIBCR)));
+-
+-	BYTE_REG_BITS_ON(MIBCR_MPTRINI, &(vptr->mac_regs->MIBCR));
+-	for (i = 0; i < HW_MIB_SIZE; i++) {
+-		tmp = readl(&(vptr->mac_regs->MIBData)) & 0x00FFFFFFUL;
+-		vptr->mib_counter[i] += tmp;
+-	}
+-}
+-
+-/**
+  *	init_flow_control_register 	-	set up flow control
+  *	@vptr: velocity to configure
+  *
+diff -Naur linux-2.6.24.4/drivers/pci/probe.c linux-2.6.24.4-oxnas/drivers/pci/probe.c
+--- linux-2.6.24.4/drivers/pci/probe.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/pci/probe.c	2009-05-08 16:25:39.000000000 +0800
+@@ -991,8 +991,18 @@
+ 	for (func = 0; func < 8; func++, devfn++) {
+ 		struct pci_dev *dev;
+ 
+-		dev = pci_scan_single_device(bus, devfn);
+-		if (dev) {
++#ifdef CONFIG_PCI_OXNAS_CARDBUS
++        // printk(KERN_INFO "pci_scan_slot %u\n", PCI_SLOT(devfn) ); 
++        scan_all_fns = 1;
++        if (  PCI_SLOT(devfn) == 5 ) 
++            dev = pci_scan_single_device(bus, devfn);
++        else
++            dev = 0;
++#else  /* ifndef CONFIG_OXNAS_CARDBUS */
++        dev = pci_scan_single_device(bus, devfn);
++#endif /* CONFIG_OXNAS_CARDBUS */
++
++        if (dev) {
+ 			nr++;
+ 
+ 			/*
+diff -Naur linux-2.6.24.4/drivers/rtc/rtc-ds1307.c linux-2.6.24.4-oxnas/drivers/rtc/rtc-ds1307.c
+--- linux-2.6.24.4/drivers/rtc/rtc-ds1307.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/rtc/rtc-ds1307.c	2009-05-08 16:25:55.000000000 +0800
+@@ -17,7 +17,7 @@
+ #include <linux/rtc.h>
+ #include <linux/bcd.h>
+ 
+-
++#define ACCEPT_UNINITIALIZED_DEVICE_IN_PROBE
+ 
+ /* We can't determine type by probing, but if we expect pre-Linux code
+  * to have set the chip up as a clock (turning on the oscillator and
+@@ -445,6 +445,7 @@
+ 		break;
+ 	}
+ 
++#ifndef ACCEPT_UNINITIALIZED_DEVICE_IN_PROBE
+ 	tmp = ds1307->regs[DS1307_REG_SECS];
+ 	tmp = BCD2BIN(tmp & 0x7f);
+ 	if (tmp > 60)
+@@ -460,6 +461,7 @@
+ 	tmp = BCD2BIN(ds1307->regs[DS1307_REG_MONTH] & 0x1f);
+ 	if (tmp == 0 || tmp > 12)
+ 		goto exit_bad;
++#endif // !ACCEPT_UNINITIALIZED_DEVICE_IN_PROBE
+ 
+ 	tmp = ds1307->regs[DS1307_REG_HOUR];
+ 	switch (ds1307->type) {
+@@ -505,6 +507,7 @@
+ 
+ 	return 0;
+ 
++#ifndef ACCEPT_UNINITIALIZED_DEVICE_IN_PROBE
+ exit_bad:
+ 	dev_dbg(&client->dev, "%s: %02x %02x %02x %02x %02x %02x %02x\n",
+ 			"bogus register",
+@@ -512,6 +515,7 @@
+ 			ds1307->regs[2], ds1307->regs[3],
+ 			ds1307->regs[4], ds1307->regs[5],
+ 			ds1307->regs[6]);
++#endif // ACCEPT_UNINITIALIZED_DEVICE_IN_PROBE
+ 
+ exit_free:
+ 	kfree(ds1307);
+diff -Naur linux-2.6.24.4/drivers/scsi/Kconfig linux-2.6.24.4-oxnas/drivers/scsi/Kconfig
+--- linux-2.6.24.4/drivers/scsi/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/scsi/Kconfig	2009-05-08 16:27:03.000000000 +0800
+@@ -556,6 +556,15 @@
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called arcmsr (modprobe arcmsr).
+ 
++config SCSI_SATA_DISK_DETECTION_TENACITY
++    int "The number of attempts to detect a disk."
++    default 1
++	depends on SCSI_SATA
++	help
++	  Sets the number of times taken to repeat a 700 ms process of detecting a disk. Some disks will not respond to detection until they have spun-up and they won't spin-up untill they receive some communication from the host.
++
++	  If unsure, use 1.
++
+ config SCSI_ARCMSR_AER
+ 	bool "Enable PCI Error Recovery Capability in Areca Driver(ARCMSR)"
+ 	depends on SCSI_ARCMSR && PCIEAER
+diff -Naur linux-2.6.24.4/drivers/scsi/sd.c linux-2.6.24.4-oxnas/drivers/scsi/sd.c
+--- linux-2.6.24.4/drivers/scsi/sd.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/scsi/sd.c	2009-05-08 16:27:03.000000000 +0800
+@@ -376,6 +376,13 @@
+ 					(unsigned long long)block,
+ 					this_count));
+ 
++/* This check is disabled to allow hardware RAID-0 to work. It will send 
++requests that appear to go way beyond the end of the disk, these will be divided
++down by the RAID hardware, so everything's OK. The block layer will impose it's
++own checks for accessing beyond the end of a device that are compatible with 
++hardware RAID
++*/
++#if 0
+ 	if (!sdp || !scsi_device_online(sdp) ||
+  	    block + rq->nr_sectors > get_capacity(disk)) {
+ 		SCSI_LOG_HLQUEUE(2, scmd_printk(KERN_INFO, SCpnt,
+@@ -385,6 +392,7 @@
+ 						"Retry with 0x%p\n", SCpnt));
+ 		goto out;
+ 	}
++#endif
+ 
+ 	if (sdp->changed) {
+ 		/*
+diff -Naur linux-2.6.24.4/drivers/serial/8250.c linux-2.6.24.4-oxnas/drivers/serial/8250.c
+--- linux-2.6.24.4/drivers/serial/8250.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/serial/8250.c	2009-05-08 16:25:14.000000000 +0800
+@@ -2036,7 +2036,6 @@
+ 	if (termios->c_cflag & CMSPAR)
+ 		cval |= UART_LCR_SPAR;
+ #endif
+-
+ 	/*
+ 	 * Ask the core to calculate the divisor for us.
+ 	 */
+@@ -2153,7 +2152,35 @@
+ 		serial_outp(up, UART_LCR, cval | UART_LCR_DLAB);/* set DLAB */
+ 	}
+ 
+-	serial_dl_write(up, quot);
++    if ((up->port.type == PORT_16550A) &&
++        (serial_in(up, UART_XON_CHAR)  == 0x11) &&
++        (serial_in(up, UART_XOFF_CHAR) == 0x13))
++    {
++        /* We should now be dealing with an extended 16550A-type UART from
++         * the Oxsemi 0x800 */
++
++        /* Calculate values for DLM,DLL,DLF divisor registers from clock
++         * frequency in Hz and Baud rate in bits per second, and program them
++         * into the UART */
++        u32  tmp;
++        u8 lcr, dlm, dll, dlf;
++
++        tmp = port->uartclk / baud;
++        tmp = (tmp + 1) / 2;
++        dlm = tmp >> (8 + 3);
++        dll = (tmp >> 3) & 0xFF;
++        dlf = (tmp & 7) << 5;
++
++        lcr = serial_in(up, UART_LSR);  /* Store LCR */
++
++        serial_outp(up, UART_LCR, 0x80); /* Enable access to DLM DLL */ 
++        serial_outp(up, UART_DLL, dll);  /* LS of divisor */
++        serial_outp(up, UART_DLM, dlm);  /* MS of divisor */
++        serial_outp(up, UART_DLF, dlf);  /* Set non-standard fractional divisor */
++        serial_outp(up, UART_LCR, lcr);  /* Restore LCR */
++    } else {
++        serial_dl_write(up, quot);
++    }
+ 
+ 	/*
+ 	 * LCR DLAB must be set to enable 64-byte FIFO mode. If the FCR
+@@ -2519,7 +2546,8 @@
+ static int __init serial8250_console_setup(struct console *co, char *options)
+ {
+ 	struct uart_port *port;
+-	int baud = 9600;
++    int baud = 115200;
++//    int baud = 9600;
+ 	int bits = 8;
+ 	int parity = 'n';
+ 	int flow = 'n';
+diff -Naur linux-2.6.24.4/drivers/usb/core/hcd.h linux-2.6.24.4-oxnas/drivers/usb/core/hcd.h
+--- linux-2.6.24.4/drivers/usb/core/hcd.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/core/hcd.h	2009-05-08 16:26:46.000000000 +0800
+@@ -312,7 +312,9 @@
+ #define SetHubFeature		(0x2000 | USB_REQ_SET_FEATURE)
+ #define SetPortFeature		(0x2300 | USB_REQ_SET_FEATURE)
+ 
+-
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT
++#define ResetHubTT                 (0x2308)             
++#endif
+ /*-------------------------------------------------------------------------*/
+ 
+ /*
+@@ -359,6 +361,11 @@
+ 
+ /*-------------------------------------------------------------------------*/
+ 
++extern int usb_register_root_hub (struct usb_device *usb_dev,
++		struct device *parent_dev);
++
++extern void usb_hcd_release (struct usb_bus *);
++
+ extern void usb_set_device_state(struct usb_device *udev,
+ 		enum usb_device_state new_state);
+
+diff -Naur linux-2.6.24.4/drivers/usb/host/ehci.h linux-2.6.24.4-oxnas/drivers/usb/host/ehci.h
+--- linux-2.6.24.4/drivers/usb/host/ehci.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/host/ehci.h	2009-05-08 16:26:50.000000000 +0800
+@@ -262,14 +262,22 @@
+ 	/* ASYNCLISTADDR: offset 0x18 */
+ 	u32		async_next;	/* address of next async queue head */
+ 
+-	u32		reserved [9];
++	u32 ttctrl;
++	u32 burstsize;
++	u32 txfilltuning;
++	u32 txttfilltuning;
++	u32 reserved_1;
++	u32 ulpi_viewport;
++	u32 reserved_2;
++	u32 endpknack;
++	u32 endptnalek;
+ 
+ 	/* CONFIGFLAG: offset 0x40 */
+ 	u32		configured_flag;
+ #define FLAG_CF		(1<<0)		/* true: we'll support "high speed" */
+ 
+ 	/* PORTSC: offset 0x44 */
+-	u32		port_status [0];	/* up to N_PORTS */
++	u32		port_status [8];	/* up to N_PORTS, max 8 */
+ /* 31:23 reserved */
+ #define PORT_WKOC_E	(1<<22)		/* wake on overcurrent (enable) */
+ #define PORT_WKDISC_E	(1<<21)		/* wake on disconnect (enable) */
+@@ -294,14 +302,22 @@
+ #define PORT_CSC	(1<<1)		/* connect status change */
+ #define PORT_CONNECT	(1<<0)		/* device connected */
+ #define PORT_RWC_BITS   (PORT_CSC | PORT_PEC | PORT_OCC)
+-} __attribute__ ((packed));
+ 
+-#define USBMODE		0x68		/* USB Device mode */
++	u32 otgsc;
++	u32 usbmode;
+ #define USBMODE_SDIS	(1<<3)		/* Stream disable */
+-#define USBMODE_BE	(1<<2)		/* BE/LE endianness select */
++#define USBMODE_BE		(1<<2)		/* BE/LE endianness select */
+ #define USBMODE_CM_HC	(3<<0)		/* host controller mode */
+ #define USBMODE_CM_IDLE	(0<<0)		/* idle state */
+ 
++	u32 endptsetupstack;
++	u32 endptprime;
++	u32 endptflush;
++	u32 endptstat;
++	u32 endptcomplete;
++	u32 endptctrl[8];
++} __attribute__ ((packed));
++
+ /* Appendix C, Debug port ... intended for use with special "debug devices"
+  * that can help if there's no serial console.  (nonstandard enumeration.)
+  */
+@@ -682,6 +698,11 @@
+ 	}
+ 	return (1<<USB_PORT_FEAT_HIGHSPEED);
+ }
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT
++/* TDI transaction translator status register and busy bit */
++#define TT_BUSY 0x1
++#define TT_STATUS  (0x15c-0x140)
++#endif
+ 
+ #else
+
+diff -Naur linux-2.6.24.4/drivers/usb/host/ehci-hcd.c linux-2.6.24.4-oxnas/drivers/usb/host/ehci-hcd.c
+--- linux-2.6.24.4/drivers/usb/host/ehci-hcd.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/host/ehci-hcd.c	2009-05-08 16:26:50.000000000 +0800
+@@ -197,7 +197,7 @@
+ 	u32 __iomem	*reg_ptr;
+ 	u32		tmp;
+ 
+-	reg_ptr = (u32 __iomem *)(((u8 __iomem *)ehci->regs) + USBMODE);
++	reg_ptr = (u32 __iomem *)&ehci->regs->usbmode;
+ 	tmp = ehci_readl(ehci, reg_ptr);
+ 	tmp |= USBMODE_CM_HC;
+ 	/* The default byte access to MMR space is LE after
+@@ -207,6 +207,20 @@
+ 	if (ehci_big_endian_mmio(ehci))
+ 		tmp |= USBMODE_BE;
+ 	ehci_writel(ehci, tmp, reg_ptr);
++
++#ifdef CONFIG_ARCH_OXNAS
++	reg_ptr = (u32 __iomem *)&ehci->regs->txfilltuning;
++	tmp = ehci_readl(ehci, reg_ptr);
++	tmp &= ~0x00ff0000;
++	tmp |= 0x00200000; /* set burst pre load count to 16 */
++	tmp |= 0x16; /* set sheduler overhead to 3 * 1.267us */
++	ehci_writel(ehci, tmp, reg_ptr);
++
++	reg_ptr = (u32 __iomem *)&ehci->regs->txttfilltuning;
++	tmp = readl (reg_ptr);
++	tmp |= 0x2; /* set sheduler overhead to 2 * 6.333us */
++	writel (tmp, reg_ptr);
++#endif // CONFIG_ARCH_OXNAS
+ }
+ 
+ /* reset a non-running (STS_HALT == 1) controller */
+@@ -225,9 +239,17 @@
+ 
+ 	if (retval)
+ 		return retval;
+-
+-	if (ehci_is_TDI(ehci))
+-		tdi_reset (ehci);
++	if (ehci->is_tdi_rh_tt)
++		tdi_reset(ehci); /* set TDI EHCI internal registers */
++#ifdef CONFIG_ARCH_OXNAS
++	command=readl(&ehci->regs->port_status[1]);
++	command |=0xc0000000; /* force use of serial PHY on 1st full speed port */
++	writel(command,&ehci->regs->port_status[1]); 
++
++	command=readl(&ehci->regs->port_status[2]);
++	command |=0xc0000000; /* force use of serial PHY on 2nd full speed port */
++	writel(command,&ehci->regs->port_status[2]); 
++#endif // CONFIG_ARCH_OXNAS
+ 
+ 	return retval;
+ }
+@@ -939,10 +961,15 @@
+ MODULE_AUTHOR (DRIVER_AUTHOR);
+ MODULE_LICENSE ("GPL");
+ 
++#ifdef CONFIG_ARCH_OXNAS
++#include "ehci-oxnas.c"
++#define	PLATFORM_DRIVER		ehci_hcd_oxnas_driver
++#else // CONFIG_ARCH_OXNAS
+ #ifdef CONFIG_PCI
+ #include "ehci-pci.c"
+ #define	PCI_DRIVER		ehci_pci_driver
+-#endif
++#endif // CONFIG_PCI
++#endif // CONFIG_ARCH_OXNAS
+ 
+ #ifdef CONFIG_USB_EHCI_FSL
+ #include "ehci-fsl.c"
+diff -Naur linux-2.6.24.4/drivers/usb/host/ehci-hub.c linux-2.6.24.4-oxnas/drivers/usb/host/ehci-hub.c
+--- linux-2.6.24.4/drivers/usb/host/ehci-hub.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/host/ehci-hub.c	2009-05-08 16:26:50.000000000 +0800
+@@ -769,6 +769,11 @@
+ 		dbg_port (ehci, "GetStatus", wIndex + 1, temp);
+ 		put_unaligned(cpu_to_le32 (status), (__le32 *) buf);
+ 		break;
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT
++        case ResetHubTT :
++                *((u32 *) ((u32)ehci->regs +TT_STATUS)) = 2;
++                break;
++#endif                
+ 	case SetHubFeature:
+ 		switch (wValue) {
+ 		case C_HUB_LOCAL_POWER:
+@@ -825,6 +830,23 @@
+ 				temp |= PORT_RESET;
+ 				temp &= ~PORT_PE;
+ 
++#if defined(CONFIG_USB_EHCI_ROOT_HUB_TT) & defined (CONFIG_ARCH_OXNAS) & 0 
++		printk(KERN_ERR "port using status raw %lx\n",temp);
++		temp &= 0x0fffffffL; /* remove default data source */
++		if (temp & (1 << 27 ))
++		{ 
++			/* set the input to the UTMI input */
++			temp |= 0x20000000L;
++			printk(KERN_ERR "port using UTMI %d\n",wIndex);
++		}
++		else
++		{
++			/* set the input to the serial PHY input */
++			temp |= 0xE0000000L; 
++			printk(KERN_ERR "port using serial PHY %d\n",wIndex);
++		}
++		writel(temp, &ehci->regs->port_status [wIndex]);
++#endif	
+ 				/*
+ 				 * caller must wait, then call GetPortStatus
+ 				 * usb 2.0 spec says 50 ms resets on root
+diff -Naur linux-2.6.24.4/drivers/usb/host/Kconfig linux-2.6.24.4-oxnas/drivers/usb/host/Kconfig
+--- linux-2.6.24.4/drivers/usb/host/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/host/Kconfig	2009-05-08 16:26:50.000000000 +0800
+@@ -41,6 +41,7 @@
+ config USB_EHCI_ROOT_HUB_TT
+ 	bool "Root Hub Transaction Translators (EXPERIMENTAL)"
+ 	depends on USB_EHCI_HCD && EXPERIMENTAL
++	default y if ARCH_OXNAS
+ 	---help---
+ 	  Some EHCI chips have vendor-specific extensions to integrate
+ 	  transaction translators, so that no OHCI or UHCI companion
+diff -Naur linux-2.6.24.4/drivers/usb/misc/usbtest.c linux-2.6.24.4-oxnas/drivers/usb/misc/usbtest.c
+--- linux-2.6.24.4/drivers/usb/misc/usbtest.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/misc/usbtest.c	2009-05-08 16:26:49.000000000 +0800
+@@ -993,6 +993,7 @@
+ 
+ 		u->context = &context;
+ 		u->complete = ctrl_complete;
++		u->transfer_flags |= URB_NO_SETUP_DMA_MAP;
+ 	}
+ 
+ 	/* queue the urbs */
+@@ -1208,7 +1209,7 @@
+ 	int		retval = 0;
+ 	struct urb	*urb;
+ 
+-	urb = simple_alloc_urb (testdev_to_usbdev (dev), 0, 512);
++	urb = simple_alloc_urb (testdev_to_usbdev (dev), 0, 256);
+ 	if (urb == NULL)
+ 		return -ENOMEM;
+ 
+@@ -2101,6 +2102,10 @@
+ 	/* EZ-USB devices which download firmware to replace (or in our
+ 	 * case augment) the default device implementation.
+ 	 */
++	/* generic EZ-USB FX controller */
++	{ USB_DEVICE (0x0547, 0x2131),
++		.driver_info = (unsigned long) &ez1_info,
++		},
+ 
+ 	/* generic EZ-USB FX controller */
+ 	{ USB_DEVICE (0x0547, 0x2235),

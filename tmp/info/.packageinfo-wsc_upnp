@@ -1,0 +1,14 @@
+Source-Makefile: package/wsc_upnp/Makefile
+Package: wsc-upnp
+Version: 1
+Depends: +libupnp +ezp-wps
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: Ralink WPS(WiFi Portected Setup) UPNP Module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink WPS(WiFi Portected Setup) UPNP Module.
+@@
+

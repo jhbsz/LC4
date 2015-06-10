@@ -1,0 +1,148 @@
+<po>
+<message msgid="firewall disable" msgstr="Disable" />
+<message msgid="firewall enable" msgstr="Enable" />
+<message msgid="firewall apply" msgstr="Apply" />
+<message msgid="firewall reset" msgstr="Cancel" />
+<message msgid="firewall del select" msgstr="Delete Selected" />
+<message msgid="firewall no" msgstr=" No." />
+<message msgid="firewall protocol" msgstr="Protocol" />
+<message msgid="firewall comment" msgstr="Comment" />
+<message msgid="firewall default drop" msgstr="Others would be dropped" />
+<message msgid="firewall default accept" msgstr="Others would be accepted" />
+<message msgid="port title" msgstr="MAC/IP/Port Filtering Settings " />
+<message msgid="port introduction" msgstr=" You may setup firewall rules to protect your network from virus,worm and malicious activity on the Internet." />
+<message msgid="port basic setting" msgstr="Basic Settings" />
+<message msgid="port basic filter" msgstr="MAC/IP/Port Filtering" />
+<message msgid="port basic default policy" msgstr="Default Policy -- The packet that don't match with any rules would be:" />
+<message msgid="port basic default policy accepted" msgstr="Accepted." />
+<message msgid="port basic default policy dropped" msgstr="Dropped." />
+<message msgid="port filter setting" msgstr="MAC/IP/Port Filter Settings" />
+<message msgid="port filter macaddr" msgstr="MAC address" />
+<message msgid="port filter source ipaddr" msgstr="Source IP Address" />
+<message msgid="port filter port range" msgstr="Port Range" />
+<message msgid="port filter dest ipaddr" msgstr="Dest IP Address" />
+<message msgid="port filter action" msgstr="Action" />
+<message msgid="port filter action drop" msgstr="Drop" />
+<message msgid="port filter action accept" msgstr="Accept" />
+<message msgid="port current filter" msgstr="Current MAC/IP/Port filtering rules in system: " />
+<message msgid="port filter source port range" msgstr="Source Port Range" />
+<message msgid="port filter dest port range" msgstr="Dest Port Range" />
+<message msgid="port filter packetcount" msgstr="Pkt Cnt" />
+<!--new add-->
+<message msgid="nat setup" msgstr=" NAT Setup " />
+<message msgid="nat translation" msgstr=" Enable Network Address Translation " />
+<message msgid="nat default server setup" msgstr=" Default Server Setup " />
+<message msgid="nat server ip" msgstr=" Server IP Address : " />
+<message msgid="nat apply" msgstr=" Apply " />
+<message msgid="nat reset" msgstr=" Cancel " />
+<message msgid="application add app" msgstr=" Add Application Rule " />
+<message msgid="application active" msgstr=" Active " />
+<message msgid="application service name" msgstr=" Service Name " />
+<message msgid="application port" msgstr=" Port " />
+<message msgid="application server ip" msgstr=" Server IP Address " />
+<message msgid="application app rule sum" msgstr=" Application Rules Summary " />
+<message msgid="application app rule sum2" msgstr=" Application Rules Summary " />  
+<message msgid="application td active" msgstr=" Active " />
+<message msgid="application td name" msgstr=" Name " />
+<message msgid="application td port" msgstr=" Port " />
+<message msgid="application td server ip" msgstr=" Server IP Address " />  
+<message msgid="application td modify" msgstr=" Modify " />
+<message msgid="nat advance app rule sum" msgstr=" Application Rules Summary " />
+<message msgid="nat advance port trigger rule" msgstr=" Port Triggering Rules " />
+<message msgid="nat advance name" msgstr=" Name " />
+<message msgid="nat advance incoming" msgstr=" Incoming " />
+<message msgid="nat advance trigger" msgstr=" Trigger " />
+<message msgid="nat advance port1" msgstr=" Port " />
+<message msgid="nat advance endport1" msgstr=" End Port " />
+<message msgid="nat advance port2" msgstr=" Port " />
+<message msgid="nat advance endport2" msgstr=" End Port " />
+<message msgid="firewall setup" msgstr=" Firewall Setup " />
+<message msgid="firewall enable" msgstr=" Enable Firewall " />
+<message msgid="spi setup" msgstr=" SPI Setup " />
+<message msgid="spi enable" msgstr=" Enable SPI " />
+<message msgid="sc filter restrict" msgstr=" Restrict Web Features  " />
+<message msgid="sc filter keyword blocking" msgstr=" Keyword Blocking " />
+<message msgid="sc filter enable keyword blocking" msgstr=" Enable URL Keyword Blocking " />
+<message msgid="sc filter keyword" msgstr=" Keyword " />
+<message msgid="sc filter keyword list" msgstr=" Keyword List " />
+<message msgid="sc filter add" msgstr=" Add " />
+<message msgid="sc filter delete" msgstr=" Delete " />
+<message msgid="sc filter clear" msgstr=" Clear All " />
+<message msgid="sc filter trusted ip" msgstr=" Trusted IP Setup  " />
+<message msgid="sc filter str1" msgstr=" A trusted computer has full access to all blocked resources. 0.0.0.0 means there is no trusted computer. " />
+<message msgid="sc filter str2" msgstr=" Trusted Computer IP Address: " />
+<message msgid="remote management server port" msgstr=" Server Port :" />
+<message msgid="remote management server access" msgstr=" Server Access : " />
+<message msgid="remote management secured ip" msgstr=" Secured Client IP Address : " />
+<message msgid="remote management secured ip all" msgstr=" All " />
+<message msgid="remote management secured ip sel" msgstr=" Selected " />
+<message msgid="port filter Respon To Ping On" msgstr="Respond to Ping on: " />
+<message msgid="port filter PingFrmWANFilter WAN" msgstr=" WAN " />
+<message msgid="port filter PingFrmWANFilter Disable" msgstr=" Disable " />
+<message msgid="port filter enable firewall rule1" msgstr=" Enable Firewall Rule " />
+<message msgid="port filter enable firewall rule2" msgstr=" Enable Firewall Rule " />
+<message msgid="port filter firewall rule" msgstr=" Firewall Rule " />
+<message msgid="port filter add firewall rule" msgstr=" Add Firewall Rule " />
+<message msgid="port filter service name" msgstr=" Service Name : " />
+<message msgid="port filter apply1" msgstr=" Apply " />
+<message msgid="port filter apply2" msgstr=" Apply " />
+<message msgid="port filter add Rule" msgstr=" Add Rule " />
+<message msgid="port filter table service name" msgstr=" Service Name " />
+<message msgid="port filter table mac address" msgstr=" MAC Address " />
+<message msgid="port filter table dest ip" msgstr=" Dest IP " />
+<message msgid="port filter table source ip" msgstr=" Source IP " />
+<message msgid="port filter table source prorocol" msgstr=" Protocol  " />
+<message msgid="port filter table dest port range" msgstr=" Dest Port Range " />
+<message msgid="port filter table source port range" msgstr=" Source Port Range " />
+<message msgid="port filter table source action" msgstr=" Action " />
+<message msgid="port filter table source delete" msgstr=" Delete " />
+<message msgid="User_Defined" msgstr="User Defined" />
+<message msgid="Services" msgstr="---Service---" />
+
+<!-- alert message -->
+<message msgid="Please input any IP or/and port value." msgstr="Please input any IP or/and port value." />
+<message msgid="Invalid port number: source port." msgstr="Invalid port number: source port." />
+<message msgid="Invalid source port number." msgstr="Invalid source port number." />
+<message msgid="Invalid source port range setting." msgstr="Invalid source port range setting." />
+<message msgid="Invalid port number: dest port." msgstr="Invalid port number: dest port." />
+<message msgid="Invalid dest port number." msgstr="Invalid dest port number." />
+<message msgid="Invalid dest port range setting." msgstr="Invalid dest port range setting." />
+<message msgid="Source IP address format error." msgstr="Source IP address format error." />
+<message msgid="Dest IP address format error." msgstr="Dest IP address format error." />
+<message msgid="Error. IP address is empty." msgstr="Error. IP address is empty." />
+<message msgid="It should be a [0-9] number." msgstr="It should be a [0-9] number." />
+<message msgid="IP adress format error." msgstr="IP adress format error." />
+<message msgid="Incoming End port is error" msgstr="Incoming End port is error" />
+<message msgid="Trigger port should not be zero" msgstr="Trigger port should not be zero" />
+<message msgid="Trigger End port is error" msgstr="Trigger End port is error" />
+<message msgid="Incoming port is exist" msgstr="Incoming port is exist" />
+<message msgid="Incoming End port is exist" msgstr="Incoming End port is exist" />
+<message msgid="Trigger port is exist" msgstr="Trigger port is exist" />
+<message msgid="Port Service is exist" msgstr="Port Service is exist" />
+<message msgid="The value is invalid" msgstr="The value is invalid" />
+<message msgid="Key word is exist" msgstr="Key word is exist" />
+<message msgid="The rule number is exceeded." msgstr="The rule number is exceeded." />
+<!-- alert message -->
+<!-- alert message from c file-->
+<message msgid="MAC is invaild" msgstr="MAC is invaild" />
+<message msgid="IP error" msgstr="IP error" />
+<message msgid="Invaild setting" msgstr="Invaild setting " />
+<message msgid="IP is invaild" msgstr="IP is invaild" />
+<message msgid="Please set port between 1~65535" msgstr="Please set port between 1~65535" />
+<message msgid="Length is too log." msgstr="Length is too log." />
+<!-- alert message from c file-->
+<message msgid="main Ready" msgstr="Ready"/>
+<message msgid="main ConfigurationSuccess" msgstr="Configuration updated successfully."/>
+<message msgid="main ConfigurationProceeding" msgstr="Configuration Update is proceeding. Please Wait..."/>
+<message msgid="main firmware download in progress" msgstr="Firmware download in progress. Please wait . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Firmware upgrade is proceeding. Please wait and do NOT power off your device."/>
+<!-- 4615 SCFilter.asp-->
+<message msgid="sc filter rwf activex" msgstr=" ActiveX " />
+<message msgid="sc filter rwf java" msgstr=" Java " />
+<message msgid="sc filter rwf cookies" msgstr=" Cookies " />
+<message msgid="sc filter rwf web" msgstr=" Web Proxy " />
+<!-- 4615 remote_web.asp-->
+<message msgid="remote management www" msgstr=" WWW " />
+<!--Steve add and reference other page-->
+<message msgid="System do not support specific invalid characters." msgstr="System does not support specific invalid characters." />
+</po>

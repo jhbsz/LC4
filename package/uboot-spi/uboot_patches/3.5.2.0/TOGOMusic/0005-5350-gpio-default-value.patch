@@ -1,0 +1,111 @@
+--- Uboot-spi-3.5.2.0/lib_mips/board.c	2013-03-29 17:29:14.000000000 +0800
++++ Uboot-spi-3.5.2.0/lib_mips/board.c	2013-04-10 10:22:55.287876942 +0800
+@@ -1086,9 +1086,10 @@
+ }
+ #endif
+ 
++#if defined(RT3052_ASIC_BOARD)
+ #define JTAG_GPIO_MODE_BIT      (0x40)
++#define MDIO_GPIO_MODE_BIT      (0x80)
+ #define GOIP_MODE_REGISTER      (0xb0000060)
+-#if defined(RT3052_ASIC_BOARD)
+ 
+ /* EZP : gpio initialize */
+ void rt3052_gpio_init(void)
+@@ -1129,7 +1130,84 @@
+ }
+ #endif
+ 
++#ifdef RT5350_ASIC_BOARD
++#warning "----------------------------------------- RT5350_ASIC_BOARD"
++#define JTAG_GPIO_MODE_BIT      (0x40)
++#define MDIO_GPIO_MODE_BIT      (0x80)
++#define GOIP_MODE_REGISTER      (0xb0000060)
++/* set gpio input/output and value */
++/* gpio_index : 0~23 */
++/* direction : 0:input, 1:output */
++/* value : while output, 0:output low 1:output high */
++inline void rt5350_gpio_set(u32 gpio_index, int direction, int value) {
++    u32 tmp;
++    if(gpio_index > 23) {
++        printf("Applying gpio %d failed, out of bound 0~23\n", gpio_index);
++        return;
++    }
++    /* Set non-invert output */
++    tmp = le32_to_cpu(*((volatile u32 *)0xb0000628));
++    tmp &= ~(1 << gpio_index);
++    *((volatile u32 *)0xb0000628) = cpu_to_le32(tmp);
++    if(direction) {
++        /* Output */
++        /* Set output to value */
++        tmp = le32_to_cpu(*((volatile u32 *)0xb000062c));
++        if(value) {
++            tmp |= (1 << gpio_index);
++        } else {
++            tmp &= ~(1 << gpio_index);
++        }
++        *((volatile u32 *)0xb000062c) = cpu_to_le32(tmp);
++        /* Set direction output */
++        tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
++        tmp |= (1 << gpio_index);
++        *((volatile u32 *)0xb0000624) = cpu_to_le32(tmp);
++    } else {
++        /* Input */
++        /* Set direction input */
++        tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
++        tmp &= ~(1 << gpio_index);
++        *((volatile u32 *)0xb0000624) = cpu_to_le32(tmp);
++    }
++    /* Set GPIO 17, Audio Mute, to output*/
+ 
++}
++void rt5350_gpio_init(void)
++{
++    u32 tmp;
++    /* Turn on full UART, turn off JTAG and MDIO */
++    /* NOTICE: if using giga switch with mdio control, 
++     * need to switch on MDIO. */
++    *((unsigned long*)GOIP_MODE_REGISTER) |= cpu_to_le32(0x1c | JTAG_GPIO_MODE_BIT | MDIO_GPIO_MODE_BIT);
++    /* Set GPIO 18, Audio Enable, to input*/
++    rt5350_gpio_set(18, 0, 0);
++    /* Set GPIO 17, Audio Mute, to output high*/
++    rt5350_gpio_set(17, 1, 1);
++    printf("GPIO Init... 0x%x:0x%x 0x%x:0x%x 0x%x:0x%x 0x%x:0x%x\n", 
++            GOIP_MODE_REGISTER, le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER)),
++            0x624, le32_to_cpu(*((volatile u32 *)0xb0000624)),
++            0x628, le32_to_cpu(*((volatile u32 *)0xb0000628)),
++            0x62c, le32_to_cpu(*((volatile u32 *)0xb000062c)));
++}
++
++u32 rt5350_gpio_get(u32 gpio_index)
++{
++    u32 tmp;
++    u32 mode;
++    /* EZP : set gpio 0 and 10 to input direction */
++    tmp = le32_to_cpu(*((volatile u32 *)0xb0000620));
++    mode = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
++#ifdef DEBUG
++    printf("gpio val:%x mode:%x reset:%x\n", tmp, mode, tmp & (1 << GPIO_RESET_BUTTON));
++#endif
++    if(tmp & (1 << gpio_index)) {
++        /* EZP: when target bit is high, the button is not pushed. */
++        return 0;
++    }
++    return 1;
++}
++#endif
+ /************************************************************************
+  *
+  * This is the next part if the initialization sequence: we are now
+@@ -1565,7 +1642,10 @@
+ /* EZP: gpio init */
+ #ifdef RT3052_ASIC_BOARD
+     rt3052_gpio_init();
+-#else
++#endif
++#ifdef RT5350_ASIC_BOARD
++#warning "----------------------------------------- RT5350_ASIC_BOARD"
++    rt5350_gpio_init();
+ #endif
+ 
+ 	OperationSelect();   

@@ -1,0 +1,58 @@
+--- linux-2.6.26/drivers/usb/core/hcd.c	2010-10-05 23:43:21.506692655 +0800
++++ linux-2.6.26/drivers/usb/core/hcd.c	2010-10-05 23:41:47.119251882 +0800
+@@ -607,9 +607,15 @@
+ 	 * exceed that limit if HZ is 100. The math is more clunky than
+ 	 * maybe expected, this is to make sure that all timers for USB devices
+ 	 * fire at the same time to give the CPU a break inbetween */
++    /* EZP: in HZ=250 mode, wait 250/4 = 62 is too long for some USB 2.0
++     * device, we increase it to 250/8 */
+ 	if (hcd->uses_new_polling ? hcd->poll_rh :
+ 			(length == 0 && hcd->status_urb != NULL))
+-		mod_timer (&hcd->rh_timer, (jiffies/(HZ/4) + 1) * (HZ/4));
++#ifdef HZ_250
++		mod_timer (&hcd->rh_timer, jiffies + (HZ >> 4));
++#else
++		mod_timer (&hcd->rh_timer, jiffies + (HZ >> 2));
++#endif
+ }
+ EXPORT_SYMBOL_GPL(usb_hcd_poll_rh_status);
+ 
+@@ -640,8 +646,14 @@
+ 
+ 	hcd->status_urb = urb;
+ 	urb->hcpriv = hcd;	/* indicate it's queued */
++    /* EZP: in HZ=250 mode, wait 250/4 = 62 is too long for some USB 2.0
++     * device, we increase it to 250/8 */
+ 	if (!hcd->uses_new_polling)
+-		mod_timer(&hcd->rh_timer, (jiffies/(HZ/4) + 1) * (HZ/4));
++#ifdef HZ_250
++		mod_timer (&hcd->rh_timer, jiffies + (HZ >> 4));
++#else
++		mod_timer (&hcd->rh_timer, jiffies + (HZ >> 2));
++#endif
+ 
+ 	/* If a status change has already occurred, report it ASAP */
+ 	else if (hcd->poll_pending)
+--- linux-2.6.26/drivers/usb/core/hub.c	2008-07-14 05:51:29.000000000 +0800
++++ linux-2.6.26/drivers/usb/core/hub.c	2010-10-05 23:41:59.037705055 +0800
+@@ -2808,13 +2811,13 @@
+ 	struct usb_device *hdev;
+ 	struct usb_interface *intf;
+ 	struct usb_hub *hub;
+-	struct device *hub_dev;
+-	u16 hubstatus;
+-	u16 hubchange;
+-	u16 portstatus;
+-	u16 portchange;
+-	int i, ret;
+-	int connect_change;
++	struct device *hub_dev = NULL;
++	volatile u16 hubstatus;
++	volatile u16 hubchange;
++	volatile u16 portstatus;
++	volatile u16 portchange;
++	volatile int i, ret;
++	volatile int connect_change;
+ 
+ 	/*
+ 	 *  We restart the list every time to avoid a deadlock with

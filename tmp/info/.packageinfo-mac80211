@@ -1,0 +1,167 @@
+Source-Makefile: package/mac80211/Makefile
+Package: kmod-ath5k
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT +kmod-mac80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Atheros 5xxx wireless cards support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Atheros 5xxx wireless cards support
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-net-zd1211rw
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends: @LINUX_2_6_24||LINUX_2_6_25 @USB_SUPPORT +kmod-ieee80211-softmac
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Zydas ZD1211 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Zydas ZD1211 support
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-mac80211
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends: @LINUX_2_6 +kmod-crypto-arc4 +kmod-crypto-aes +wireless-tools @!TARGET_avr32
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Linux 802.11 Wireless Networking Stack
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: Linux 802.11 Wireless Networking Stack
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2x00-lib
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT||USB_SUPPORT +kmod-mac80211 +kmod-crc-itu-t
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (LIB)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (LIB)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2x00-pci
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT +kmod-rt2x00-lib +kmod-eeprom-93cx6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (PCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (PCI)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2x00-usb
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @USB_SUPPORT +kmod-rt2x00-lib +kmod-usb-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (USB)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (USB)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2400-pci
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT +kmod-rt2x00-pci
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (RT2400 PCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (RT2400 PCI)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2500-pci
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT +kmod-rt2x00-pci
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (RT2500 PCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (RT2500 PCI)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt2500-usb
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @USB_SUPPORT +kmod-rt2x00-usb
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (RT2500 USB)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (RT2500 USB)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt61-pci
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @PCI_SUPPORT +kmod-rt2x00-pci
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (RT2x61 PCI)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (RT2x61 PCI)
+
+http://www.ralinktech.com.tw/data/
+@@
+Package: kmod-rt73-usb
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+2008-08-06--1
+Depends:  @USB_SUPPORT +kmod-rt2x00-usb
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ralink Drivers for RT2x00 cards (RT73 USB)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Ralink Drivers for RT2x00 cards (RT73 USB)
+
+http://www.ralinktech.com.tw/data/
+@@
+

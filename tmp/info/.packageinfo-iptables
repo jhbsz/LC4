@@ -1,0 +1,314 @@
+Source-Makefile: package/iptables/Makefile
+Package: iptables
+Menu: 1
+Version: <IPTABLES_VERSION>
+Depends:  +kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IPv4 firewall administration tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  IPv4 firewall administration tool.
+ Includes support for:
+ - limit
+ - LOG
+ - mac
+ - multiport
+ - REJECT
+ - TCPMSS
+
+http://netfilter.org/
+@@
+Package: iptables-utils
+Version: <IPTABLES_VERSION>
+Depends: iptables  
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: iptables save and restore utilities
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	iptables save and restore utilities
+
+http://netfilter.org/
+@@
+Package: iptables-mod-conntrack
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-conntrack
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Basic connection tracking extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Basic iptables extensions for connection tracking.
+ Includes:
+ - state
+
+http://netfilter.org/
+@@
+Package: iptables-mod-conntrack-extra
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-conntrack-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Extra connection tracking extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Extra iptables extensions for connection tracking.
+ Includes:
+ - libipt_conntrack
+ - libipt_helper
+ - libipt_connmark/CONNMARK
+
+http://netfilter.org/
+@@
+Package: iptables-mod-extra
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Other extra iptables extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  other extra iptables extensions.
+ Includes:
+ - libipt_owner
+ - libipt_physdev
+ - libipt_pkttype
+ - libipt_recent
+ - iptable_raw
+ - libipt_NOTRACK
+ - libipt_TARPIT
+ - libipt_DELUDE
+ - libipt_CHAOS
+
+http://netfilter.org/
+@@
+Package: iptables-mod-ipset
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-ipset
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IPset extension
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPset extension
+
+http://netfilter.org/
+@@
+Package: iptables-mod-filter
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-filter
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Content inspection extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for packet content inspection.
+ Includes:
+ - libipt_ipp2p
+ - libipt_layer7
+
+http://netfilter.org/
+@@
+Package: iptables-mod-imq
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-imq
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IMQ support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extension for IMQ support.
+ Includes:
+ - libipt_IMQ
+
+http://netfilter.org/
+@@
+Package: iptables-mod-ipopt
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-ipopt
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IP/Packet option extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for matching/changing IP packet options.
+ Includes:
+ - libipt_CLASSIFY
+ - libipt_dscp/DSCP
+ - libipt_ecn/ECN
+ - libipt_length
+ - libipt_mac
+ - libipt_mark/MARK
+ - libipt_statistic
+ - libipt_tcpmms
+ - libipt_tos/TOS
+ - libipt_ttl/TTL
+ - libipt_unclean
+
+http://netfilter.org/
+@@
+Package: iptables-mod-ipsec
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-ipsec
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IPsec extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for matching ipsec traffic.
+ Includes:
+ - libipt_ah
+ - libipt_esp
+ - libipt_policy
+
+http://netfilter.org/
+@@
+Package: iptables-mod-nat
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-nat
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Basic NAT extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for basic NAT targets.
+ Includes:
+ - MASQUERADE
+ - SNAT
+ - DNAT
+
+http://netfilter.org/
+@@
+Package: iptables-mod-nat-extra
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-nat-extra
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: Extra NAT extensions
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for extra NAT targets.
+ Includes:
+ - REDIRECT
+
+http://netfilter.org/
+@@
+Package: iptables-mod-iprange
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-iprange
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: IP range extension
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for matching ip ranges.
+ Includes:
+ - libipt_iprange
+
+http://netfilter.org/
+@@
+Package: iptables-mod-ulog
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-ulog
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: user-space packet logging
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for user-space packet logging.
+ Includes:
+ - libipt_ULOG
+
+http://netfilter.org/
+@@
+Package: iptables-mod-trigger
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-trigger
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: user-space packet logging
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for user-space packet logging.
+ Includes:
+ - libipt_TRIGGER
+
+http://netfilter.org/
+@@
+Package: iptables-mod-webstr
+Version: <IPTABLES_VERSION>
+Depends: iptables  +kmod-ipt-webstr
+Provides: 
+Build-Depends: 
+Section: net
+Category: Base system
+Title: user-space url string matching
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  iptables extensions for user-space url string matching
+ Includes:
+ - libipt_webstr
+
+http://netfilter.org/
+@@
+Package: ip6tables
+Menu: 1
+Version: <IPTABLES_VERSION>
+Depends: +kmod-ip6tables
+Provides: 
+Build-Depends: 
+Section: net
+Category: IPv6
+Title: IPv6 firewall administration tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IPv6 firewall administration tool
+
+http://netfilter.org/
+@@
+Package: ip6tables-utils
+Version: <IPTABLES_VERSION>
+Depends: ip6tables
+Provides: 
+Build-Depends: 
+Section: net
+Category: IPv6
+Title: ip6tables save and restore utilities
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	ip6tables save and restore utilities
+
+http://netfilter.org/
+@@
+

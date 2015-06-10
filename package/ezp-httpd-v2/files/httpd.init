@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+BINSRC=/usr/sbin/httpd
+BIN=/tmp/httpd
+PID_FILE=/var/run/httpd.pid
+. /etc/network.sh
+START=45
+log_msg="WEB-server"
+start () {
+    [ $(nvram show http_rule 0 enable) = 1 ] && {
+        local ipaddr
+        pidof httpd > /dev/null && stop
+        ipaddr=$(nvram show http_rule 0 rmgt_enable)
+        [ "$ipaddr" = "1" ] && ipaddr=""
+        [ "$ipaddr" = "0" ] && ipaddr="-i $(nvram get lan0_ipaddr)"
+        # When doing firmware replacement or file system reconstruction, the
+        # running task may cause kernel panic, so we preserve it in tmpfs
+        cp $BINSRC $BIN
+        nice -n -20 $BIN -p $(nvram show http_rule 0 port) -d /www $ipaddr || err=1
+    }
+    return $err
+}
+stop() {
+    kill -9 $(pidof httpd)
+    while [ -n "$(pidof httpd)" ]; do
+       echo "stopping" 2>&1 > /dev/null
+    done
+}
+

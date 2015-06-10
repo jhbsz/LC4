@@ -1,0 +1,219 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/l2tpd
+PID_FILE=/var/run/l2tpd.pid
+L2TPD_CONFIG_FILE=/etc/l2tpd/l2tpd.conf
+L2TPD_CONFIG_RFILE=/tmp/l2tpd.conf
+PPP_CONFIG_FILE=/etc/ppp/options.l2tpd
+PPP_CONFIG_RFILE=/tmp/options.l2tpd
+PPP_CLIENT_CONFIG_FILE=/etc/ppp/options.l2tpd.client
+PPP_CLIENT_CONFIG_RFILE=/tmp/options.l2tpd.client
+CHAP_FILE=/etc/ppp/chap-secrets
+CHAP_RFILE=/tmp/chap-secrets
+START=70
+log_msg="L2TPD-server"
+l2tp_debug=0
+
+ins_ip (){
+    ip=$1
+    count=$2
+    baseaddr="$(echo $ip | cut -d. -f1-3)"
+    lsv="$(echo $ip | cut -d. -f4)"
+    lsv=$(( $lsv + $count))
+    echo "$baseaddr.$lsv"
+}
+
+check_l2tp_client () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    local l2tpclient=0
+    while [ "$wanidx" -lt "$wannum" ]; do
+        [ "$(nvram get wan${wanidx}_proto)" = "vpnc" -a \
+          "$(nvram show wan_pptp_l2tp_rule $wanidx vpn_type)" = "l2tp" ] && l2tpclient=1
+        wanidx=$(($wanidx + 1))
+    done
+    echo "$l2tpclient"
+}
+
+clear_old_config () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    rm -rf $L2TPD_CONFIG_RFILE
+	rm -rf $PPP_CONFIG_RFILE
+    rm -rf $CHAP_RFILE
+    while [ "$wanidx" -lt "$wannum" ]; do
+	    rm -rf ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        wanidx=$(($wanidx + 1))
+    done
+}
+
+global_config () {
+    # mkdir /var/run/xl2tpd or it won't start correctly
+    [ ! -d /var/run/l2tpd ] && {
+        mkdir /var/run/l2tpd
+        chmod 755 /var/run/l2tpd
+    }
+    echo "[global]" >> $L2TPD_CONFIG_FILE
+    echo "auth file = $CHAP_FILE" >> $L2TPD_CONFIG_FILE
+    echo "" >> $L2TPD_CONFIG_FILE
+}
+
+server_config () {
+    # l2tpd.conf
+    echo "[lns default]" >> $L2TPD_CONFIG_FILE
+    local ip_start=$(nvram show l2tpd_rule 0 remoteip)
+    local ip_count=$(nvram show l2tpd_rule 0 remoteip_range)
+    ip_end=$(ins_ip $ip_start $ip_count)
+    echo "ip range = $ip_start-$ip_end" >> $L2TPD_CONFIG_FILE
+    echo "local ip = $(nvram show l2tpd_rule 0 localip)" >> $L2TPD_CONFIG_FILE
+
+    [ "$(nvram show l2tpd_rule 0 chap_enable)" = "1" ] && \
+        echo "refuse chap = no" >> $L2TPD_CONFIG_FILE
+    [ "$(nvram show l2tpd_rule 0 chap_enable)" = "0" ] && \
+        echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+    [ "$(nvram show l2tpd_rule 0 pap_enable)" = "1" ] && \
+        echo "refuse pap = no" >> $L2TPD_CONFIG_FILE
+    [ "$(nvram show l2tpd_rule 0 pap_enable)" = "0" ] && \
+        echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+    echo "require authentication = yes" >> $L2TPD_CONFIG_FILE
+    echo "name = $(nvram show l2tpd_rule 0 name)" >> $L2TPD_CONFIG_FILE
+    [ "${l2tp_debug}" = "1" ] && \
+        echo "ppp debug = yes" >> $L2TPD_CONFIG_FILE || \
+        echo "ppp debug = no" >> $L2TPD_CONFIG_FILE
+    echo "pppoptfile = $PPP_CONFIG_FILE" >> $L2TPD_CONFIG_FILE
+    echo "length bit = yes" >> $L2TPD_CONFIG_FILE
+}
+
+client_config () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    local auth
+    while [ "$wanidx" -lt "$wannum" ]; do
+        echo "[lac l2tp-client$wanidx]" >> $L2TPD_CONFIG_FILE
+        echo "lns = $(nvram show wan_pptp_l2tp_rule $wanidx host)" >> $L2TPD_CONFIG_FILE
+        echo "redial = yes" >> $L2TPD_CONFIG_FILE
+        echo "length bit = yes" >> $L2TPD_CONFIG_FILE
+        auth="$(nvram show wan_pptp_l2tp_rule $wanidx auth)"
+        [ "$auth" = "pap" ] && {
+            echo "refuse pap = no" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+        } 
+        [ -z "$autn" -o "$auth" = "chap" ] && {
+            echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = no" >> $L2TPD_CONFIG_FILE
+        }
+        [ "$auth" = "none" ] && {
+            echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+        }
+        # For client, we don't use server to authenticate
+        echo "require authentication = no" >> $L2TPD_CONFIG_FILE
+        echo "name = l2tp-client$wanidx" >> $L2TPD_CONFIG_FILE
+        [ "${l2tp_debug}" = "1" ] && \
+            echo "ppp debug = yes" >> $L2TPD_CONFIG_FILE || \
+            echo "ppp debug = no" >> $L2TPD_CONFIG_FILE
+        echo "pppoptfile = ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx" >> $L2TPD_CONFIG_FILE
+        wanidx=$(($wanidx + 1))
+    done
+}
+
+ppp_config() {
+    # options.l2tpd
+    echo "ipcp-accept-local" >> $PPP_CONFIG_FILE
+    echo "ipcp-accept-remote" >> $PPP_CONFIG_FILE
+	[ "$(nvram show l2tpd_rule 0 dns_auto_enable)" = "0" ] && \
+        echo "ms-dns $(nvram show l2tpd_rule 0 dns)" >> $PPP_CONFIG_FILE
+	[ "$(nvram show l2tpd_rule 0 dns_auto_enable)" = "1" ] && \
+        echo "ms-dns $(nvram get lan0_ipaddr)" >> $PPP_CONFIG_FILE
+    echo "noccp" >> $PPP_CONFIG_FILE
+    echo "auth" >> $PPP_CONFIG_FILE
+    echo "crtscts" >> $PPP_CONFIG_FILE
+    echo "idle 1800" >> $PPP_CONFIG_FILE
+    echo "mtu $(nvram show l2tpd_rule 0 mtu)" >> $PPP_CONFIG_FILE
+    echo "mru $(nvram show l2tpd_rule 0 mru)" >> $PPP_CONFIG_FILE
+    echo "nodefaultroute" >> $PPP_CONFIG_FILE
+    [ "${l2tp_debug}" = "1" ] && echo "debug" >> $PPP_CONFIG_FILE
+    echo "lock" >> $PPP_CONFIG_FILE
+	[ "$(nvram show l2tpd_rule 0 proxyarp_enable)" = "0" ] && \
+   	    echo "noproxyarp" >> $PPP_CONFIG_FILE
+    [ "$(nvram show l2tpd_rule 0 proxyarp_enable)" = "1" ] && \
+       	echo "proxyarp" >> $PPP_CONFIG_FILE
+    echo "connect-delay 5000" >> $PPP_CONFIG_FILE
+}
+
+ppp_client_config () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    while [ "$wanidx" -lt "$wannum" ]; do
+        echo "user \"$(nvram show wan_pptp_l2tp_rule $wanidx username)\"" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "password \"$(nvram show wan_pptp_l2tp_rule $wanidx passwd)\"" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "noipdefault" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        [ "$(nvram show wan_pptp_l2tp_rule $wanidx pppiptype)" = "isp" ] && \
+            echo "ipcp-accept-local" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx || \
+            echo "$(nvram show wan_pptp_l2tp_rule $wanidx custom_ipaddr):" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "ipcp-accept-remote" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "lcp-echo-interval 30" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "lcp-echo-failure 6" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        [ "$(nvram show wan_pptp_l2tp_rule $wanidx nailup)" = "0" ] && \
+            echo "demand idle $(nvram show wan_pptp_l2tp_rule $wanidx timeout)" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "unit $(($wannum + $wanidx))" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "ipparam wan$wanidx" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        wanidx=$(($wanidx + 1))
+    done
+}
+
+secrets_config () {
+   	local i=0;
+   	local limit=$(nvram get pptpd_user_rule_num);
+    # chap-secrets
+    echo "# username * password *" >> $CHAP_FILE
+	while [ $i -lt $limit ]; do
+        [ "$(nvram show pptpd_user_rule $i enable)" = "1" ] && {
+            username=$(nvram show pptpd_user_rule $i username)
+            passwd=$(nvram show pptpd_user_rule $i passwd)
+            echo "$username * $passwd *" >> $CHAP_FILE
+       	}
+       	i=$(($i+1))
+   	done
+}
+
+stop () {
+    [ -n "$(pidof l2tpd)" ] && {
+        killall l2tpd
+    	[ "$(nvram show l2tpd_rule 0 nat_enable)" = "1" ] && {
+	    	/usr/sbin/iptables -D EZP_SNAT -t nat -s $(nvram show l2tpd_rule 0 remoteip)/24 -j MASQUERADE
+        } 
+    }
+}
+
+start () {
+    local err; err=0
+    # l2tpd is actived when a. l2tp server start b. l2tp client selected
+    [ "$(nvram show l2tpd_rule 0 enable)" = "1" -o "$(check_l2tp_client)" = "1" ] && {
+        stop
+        clear_old_config
+        global_config
+        secrets_config
+        [ "$(nvram show l2tpd_rule 0 enable)" = "1" ] && {
+            server_config
+            ppp_config
+        }
+        [ "$(check_l2tp_client)" = "1" ] && {
+            client_config
+            ppp_client_config
+        }
+        # kernel modules
+        for m in arc4 sha1 slhc crc-ccitt ppp_generic ppp_async ppp_mppe_mppc;
+        do
+          insmod $m >/dev/null 2>&1
+        done
+
+        # XXX: SNAT for Class C network
+        [ "$(nvram show l2tpd_rule 0 nat_enable)" = "1" ] && \
+            /usr/sbin/iptables -A EZP_SNAT -t nat -s $(nvram show l2tpd_rule 0 remoteip)/24 -j MASQUERADE
+        $BIN || err=1
+    } || {
+        exit
+    }
+    return $err
+}
+

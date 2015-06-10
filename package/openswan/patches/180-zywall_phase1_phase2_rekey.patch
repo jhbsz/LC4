@@ -1,0 +1,15 @@
+--- openswan.old/programs/pluto/timer.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/programs/pluto/timer.c	2009-08-27 11:11:51.678688700 +0800
+@@ -566,6 +566,12 @@
+ 			, openswan_log("replacing stale %s SA"
+ 			    , IS_PHASE1(st->st_state)? "ISAKMP" : "IPsec"));
+ 		    ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
++            if (IS_PHASE1(st->st_state) && c->newest_ipsec_sa != SOS_NOBODY) {
++                struct state *ss;
++                ss  = state_with_serialno(c->newest_ipsec_sa);
++                delete_event(ss);
++                event_schedule(EVENT_SA_REPLACE, 10, ss);
++            }
+ 		}
+ 		delete_dpd_event(st);
+ 		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);

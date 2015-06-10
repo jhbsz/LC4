@@ -1,0 +1,61 @@
+#!/bin/sh -x
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+type=$1
+
+[ "$(nvram get ${type}_proto)" = "barry" ] || {
+	echo "$0: ${type}_proto isn't barry"
+	exit
+}
+
+
+mkdir -p /var/lock
+
+for module in slhc ppp_generic ppp_async; do
+	/sbin/insmod $module 2>&- >&-
+done
+    
+apn=$(nvram show wan_barry_rule $3 apn)
+barrypasswd="$(nvram show wan_barry_rule $3 barrypasswd)"
+[ -z "$barrypasswd" ] || barrypasswd="-P $barrypasswd"
+USERNAME=$(nvram show wan_barry_rule $3 username)
+PASSWORD=$(nvram show wan_barry_rule $3 password)
+[ -z "$USERNAME" -a -z "$PASSWORD" ] && {
+    USERNAME="wap"
+    PASSWORD="wap"
+}
+# dialstr
+dialstr=$(nvram show wan_barry_rule $3 dialstr)
+[ -z "$dialstr" ] && dialstr="*99***1#"
+dialstr="ATD${dialstr}"
+
+chatscript="barry.chat"
+
+# Prevent multiple entry of pppd
+[ -e /var/run/ppp${3}.pid ] && exit
+
+[ -n "$(pidof pppob)" ] && {
+    kill -9 $(pidof pppob)
+    sleep 5
+}
+
+/usr/sbin/pppd \
+    pty "/usr/sbin/pppob $barrypasswd" \
+    115200 \
+    lock \
+    noauth \
+    crtscts \
+    noaccomp \
+    nopcomp \
+    nobsdcomp \
+    noauth \
+    usepeerdns \
+    nodefaultroute \
+    ipparam "$type" \
+    linkname "$type" \
+    unit $3 \
+    user "$USERNAME" \
+    password "$PASSWORD" \
+    mtu 1492 \
+    connect "WWAN_APN=\"$apn\" WWAN_DIALSTR=\"$dialstr\" /usr/sbin/chat -v -E -f /etc/chatscripts/$chatscript"\ 
+    2>&1 >/dev/null

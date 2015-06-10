@@ -1,0 +1,11 @@
+--- linux-2.6.36/arch/mips/ralink/Kconfig	2014-04-15 12:02:19.213855729 +0800
++++ linux-2.6.36/arch/mips/ralink/Kconfig	2014-04-15 12:01:15.373853348 +0800
+@@ -147,6 +147,8 @@
+ 
+     config BOARD_M2E
+         bool "MT-7620 EVB board for M2"
++    config BOARD_ALS
++        bool "MT-7620 ALS board for M2"
+ 
+ endchoice
+ 

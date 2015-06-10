@@ -1,0 +1,105 @@
+.ih_style .dijitToolbar {
+	padding: 2px 0 2px 2px;
+	border-bottom: 1px solid #47a4eb;
+	background: #47a4eb;
+	height:79px !important;
+	overflow:hidden;
+}
+
+.ih_style .dijitToolbar .dijitToolbarSeparator{
+	height:48px;
+}
+
+.ih_style .iconCancel,
+.ih_style .iconOk{
+	background-repeat: no-repeat;
+	width: 16px;
+	height: 16px;
+	text-align: center;
+}
+
+.ih_style .iconView[class~="detailsView"] { background-position: -40px; }
+.ih_style .iconView[class~="thumbMedium"] { background-position: -60px; }
+.ih_style .iconView[class~="thumbLarge"]  { background-position: -80px; }
+.ih_style .iconView[class~="thumbELarge"] { background-position: -100px; }
+
+.ih_style .iconView,
+.ih_style .iconViewDetails,
+.ih_style .iconViewMedium,
+.ih_style .iconViewLarge,
+.ih_style .iconViewExtraLarge,
+.ih_style .iconFolders,
+.ih_style .iconUp,
+.ih_style .iconRefresh,
+.ih_style .iconUpload,
+.ih_style .iconNewFolder,
+.ih_style .iconDownload,
+.ih_style .iconEdit,
+.ih_style .iconFileManager,
+.ih_style .iconCustomProp,
+.ih_style .iconSearch,
+.ih_style .iconUploadFolder,
+.ih_style .iconEditMode,
+.ih_style .iconVersions,
+.ih_style .iconDelete,
+.ih_style .iconUndo,
+.ih_style .iconRedo,
+.ih_style .iconCopy,
+.ih_style .iconCut,
+.ih_style .iconPaste,
+.ih_style .iconLock,
+.ih_style .iconUnlock,
+.ih_style .iconInfo,
+.ih_style .iconLog{
+	background-repeat: no-repeat;
+	width: 72px;
+	height: 72px;
+	text-align: center;
+    background-position: center;
+}
+
+.ih_style .iconCancel   {background-image: url('images/normal/16/dlg_cancel.png');}
+.ih_style .iconOk       {background-image: url('images/normal/16/dlg_ok.png');}
+.ih_style .iconViewDetails    {background-image: url('images/normal/72/view_details.png');}
+.ih_style .iconViewMedium     {background-image: url('images/normal/72/view_medium.png');}
+.ih_style .iconViewLarge      {background-image: url('images/normal/72/view_large.png');}
+.ih_style .iconViewExtraLarge {background-image: url('images/normal/72/view_extra_large.png');}
+.ih_style .iconView     {background-image: url('images/normal/72/view.png');}
+.ih_style .iconFolders  {background-image: url('images/normal/72/_folder.png');}
+.ih_style .iconUp       {background-image: url('images/normal/72/up.png');}
+.ih_style .iconRefresh  {background-image: url('images/normal/72/refresh.png');}
+.ih_style .iconUpload   {background-image: url('images/normal/72/upload.png');}
+.ih_style .iconNewFolder{background-image: url('images/normal/72/new_folder.png');}
+.ih_style .iconDownload {background-image: url('images/normal/72/download.png');}
+.ih_style .iconEdit     {background-image: url('images/normal/72/edit.png');}
+.ih_style .iconFileManager{background-image: url('images/normal/72/file_manager_open.png');}
+.ih_style .iconCustomProp {background-image: url('images/normal/72/custom_prop.png');}
+.ih_style .iconSearch {background-image: url('images/normal/72/search.png');}
+.ih_style .iconUploadFolder {background-image: url('images/normal/72/upload_folder.png');}
+.ih_style .iconEditMode {background-image: url('images/normal/72/edit_mode.png');}
+.ih_style .iconVersions {background-image: url('images/normal/72/versions.png');}
+.ih_style .iconDelete   {background-image: url('images/normal/72/delete.png');}
+.ih_style .iconUndo     {background-image: url('images/normal/72/undo.png');}
+.ih_style .iconRedo     {background-image: url('images/normal/72/redo.png');}
+.ih_style .iconCopy     {background-image: url('images/normal/72/copy.png');}
+.ih_style .iconCut      {background-image: url('images/normal/72/cut.png');}
+.ih_style .iconPaste    {background-image: url('images/normal/72/paste.png');}
+.ih_style .iconLock     {background-image: url('images/normal/72/lock.png');}
+.ih_style .iconUnlock   {background-image: url('images/normal/72/unlock.png');}
+.ih_style .iconInfo     {background-image: url('images/normal/72/info.png');}
+.ih_style .iconLog     {background-image: url('images/normal/72/log.png');}
+
+.ih_style #ithit_interface_item_info_icon,
+.ih_style #ithit_interface_item_info_icon .resource,
+.ih_style #ithit_interface_item_info_icon .folder {
+	width: 32px;
+	height: 32px;
+}
+
+.ih_style #ithit_interface_item_info_icon .folder {
+	background-image: url('images/normal/32/folder.png');
+}
+
+.ih_style #ithit_interface_item_info_icon .resource {
+	background-image: url('images/normal/32/file.png');
+}

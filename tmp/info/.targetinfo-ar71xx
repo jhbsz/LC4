@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/ar71xx/Makefile
+Target: ar71xx
+Target-Board: ar71xx
+Target-Kernel: 2.6
+Target-Name: Atheros AR71xx [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio pci squashfs tgz usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Atheros AR71xx based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi
+

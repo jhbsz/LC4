@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+. /etc/arch.sh
+
+START=17
+log_msg="HOTPLUG-service"
+
+start() {
+	killall -q hotplug2
+	[ -x /sbin/hotplug2 ] && /sbin/hotplug2 --override --persistent \
+			--max-children 16 --no-coldplug &
+}
+
+

@@ -1,0 +1,51 @@
+Source-Makefile: target/linux/rdc/Makefile
+Target: rdc
+Target-Board: rdc
+Target-Kernel: 2.6
+Target-Name: RDC 321x [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: i386
+Target-Features: gpio jffs2 pci pcmcia squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.24.7
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+        Build firmware images for RDC321x based routers
+        (e.g. Airlink101 AR525W, Linksys WRT54R, Sitecom WL-153)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+Target-Profile: ar525w
+Target-Profile-Name: AirLink101 AR525W
+Target-Profile-Packages: kmod-rt61-pci kmod-r6040
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: dir450
+Target-Profile-Name: D-Link DIR-450
+Target-Profile-Packages: kmod-madwifi kmod-pcmcia-core kmod-nozomi
+Target-Profile-Kconfig: yes
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: wl153
+Target-Profile-Name: Sitecom WL-153
+Target-Profile-Packages: kmod-rt61-pci kmod-r6040
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+

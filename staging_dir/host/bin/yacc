@@ -1,0 +1,2 @@
+#! /bin/sh
+exec /home/shane/aximcom/ALS/staging_dir/host/bin/bison -y "$@"

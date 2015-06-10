@@ -1,0 +1,40 @@
+@import "./../_base/params.less";
+@import "params.less";
+@import "../_base/mobile/base.less";
+
+.iconInfo:after { .icon('info_alt'); }
+.mobile-retina .iconInfo:after { .icon2('info_alt'); }
+
+.commands-info {
+    .iconCancel:after { .icon('cancel_alt'); }
+    .mobile-retina & .iconCancel:after { .icon2('cancel_alt'); }
+}
+
+.ui-header {
+    .iconFolders:after { .icon('_folder'); }
+    .mobile-retina & .iconFolders:after { .icon2('_folder'); }
+}
+
+.ui-listview {
+    .iconPause:after { .icon('pause_alt'); }
+    .mobile-retina & .iconPause:after { .icon2('pause_alt'); }
+    .iconResume:after { .icon('resume_alt'); }
+    .mobile-retina & .iconResume:after { .icon2('resume_alt'); }
+}
+
+.button-viewmode.iconSelect:after { .icon('select_alt'); }
+.mobile-retina .button-viewmode.iconSelect:after { .icon2('select_alt'); }
+
+
+.searchBar .ui-input-search:after {
+    background-image: url('images/normal/16/search_alt.png');
+}
+.mobile-retina .searchBar .ui-input-search:after {
+    background-image: url('images/normal/32/search_alt.png');
+}
+.searchBar .ui-icon-delete:after {
+    background-image: url('images/normal/16/clear_alt.png');
+}
+.mobile-retina .searchBar .ui-icon-delete:after {
+    background-image: url('images/normal/32/clear_alt.png');
+}

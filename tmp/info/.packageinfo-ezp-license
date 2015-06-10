@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-license/Makefile
+Package: ezp-license
+Version: 1.0
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: EZP License
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	EZP License
+@@
+

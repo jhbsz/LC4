@@ -1,0 +1,17 @@
+Source-Makefile: package/exfat-sony/Makefile
+Package: exfat-libfuse-sony
+Submenu: Filesystem
+Version: 0.9.5-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: exFAT drivers, libraries and utilities for Sony
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Prebuilt exfat libraries for Sony.
+
+http://code.google.com/p/exfat/
+@@
+

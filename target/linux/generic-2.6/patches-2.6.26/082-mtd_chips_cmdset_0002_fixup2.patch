@@ -1,0 +1,224 @@
+--- linux-2.6.26/drivers/mtd/chips/cfi_cmdset_0002.c	2009-05-07 10:23:21.000000000 +0800
++++ linux-2.6.26/drivers/mtd/chips/cfi_cmdset_0002.c	2009-05-13 12:15:59.000000000 +0800
+@@ -13,11 +13,13 @@
+  * XIP support hooks by Vitaly Wool (based on code for Intel flash
+  * by Nicolas Pitre)
+  *
++ * 25/09/2008 Christopher Moore: TopBottom fixup for many Macronix with CFI V1.0
++ *
+  * Occasionally maintained by Thayne Harbaugh tharbaugh at lnxi dot com
+  *
+  * This code is GPL
+  *
+- * $Id: cfi_cmdset_0002.c,v 1.122 2005/11/07 11:14:22 gleixner Exp $
++ * $Id: cfi_cmdset_0002.c,v 1.10.2.1 2009-03-18 09:19:56 steven Exp $
+  *
+  */
+ 
+@@ -46,12 +48,12 @@
+ 
+ #define MANUFACTURER_AMD	0x0001
+ #define MANUFACTURER_ATMEL	0x001F
++#define MANUFACTURER_MACRONIX	0x00C2
+ #define MANUFACTURER_SST	0x00BF
+ #define SST49LF004B	        0x0060
+ #define SST49LF040B	        0x0050
+ #define SST49LF008A		0x005a
+ #define AT49BV6416		0x00d6
+-#define MANUFACTURER_SAMSUNG	0x00ec
+ 
+ static int cfi_amdstd_read (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
+ static int cfi_amdstd_write_words(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
+@@ -148,12 +150,44 @@
+ 
+ 	if (((major << 8) | minor) < 0x3131) {
+ 		/* CFI version 1.0 => don't trust bootloc */
++
++		DEBUG(MTD_DEBUG_LEVEL1,
++			"%s: JEDEC Vendor ID is 0x%02X Device ID is 0x%02X\n",
++			map->name, cfi->mfr, cfi->id);
++
++		/* AFAICS all 29LV400 with a bottom boot block have a device ID
++		 * of 0x22BA in 16-bit mode and 0xBA in 8-bit mode.
++		 * These were badly detected as they have the 0x80 bit set
++		 * so treat them as a special case.
++		 */
++		if (((cfi->id == 0xBA) || (cfi->id == 0x22BA)) &&
++
++			/* Macronix added CFI to their 2nd generation
++			 * MX29LV400C B/T but AFAICS no other 29LV400 (AMD,
++			 * Fujitsu, Spansion, EON, ESI and older Macronix)
++			 * has CFI.
++			 *
++			 * Therefore also check the manufacturer.
++			 * This reduces the risk of false detection due to
++			 * the 8-bit device ID.
++			 */
++			(cfi->mfr == MANUFACTURER_MACRONIX)) {
++			DEBUG(MTD_DEBUG_LEVEL1,
++				"%s: Macronix MX29LV400C with bottom boot block"
++				" detected\n", map->name);
++			extp->TopBottom = 2;	/* bottom boot */
++		} else
+ 		if (cfi->id & 0x80) {
+ 			printk(KERN_WARNING "%s: JEDEC Device ID is 0x%02X. Assuming broken CFI table.\n", map->name, cfi->id);
+ 			extp->TopBottom = 3;	/* top boot */
+ 		} else {
+ 			extp->TopBottom = 2;	/* bottom boot */
+ 		}
++
++		DEBUG(MTD_DEBUG_LEVEL1,
++			"%s: AMD CFI PRI V%c.%c has no boot block field;"
++			" deduced %s from Device ID\n", map->name, major, minor,
++			extp->TopBottom == 2 ? "bottom" : "top");
+ 	}
+ }
+ #endif
+@@ -182,10 +216,18 @@
+ 	if (atmel_pri.Features & 0x02)
+ 		extp->EraseSuspend = 2;
+ 
+-	if (atmel_pri.BottomBoot)
+-		extp->TopBottom = 2;
+-	else
+-		extp->TopBottom = 3;
++	/* Some chips got it backwards... */
++	if (cfi->id == AT49BV6416) {
++		if (atmel_pri.BottomBoot)
++			extp->TopBottom = 3;
++		else
++			extp->TopBottom = 2;
++	} else {
++		if (atmel_pri.BottomBoot)
++			extp->TopBottom = 2;
++		else
++			extp->TopBottom = 3;
++	}
+ 
+ 	/* burst write mode not supported */
+ 	cfi->cfiq->BufWriteTimeoutTyp = 0;
+@@ -228,7 +270,7 @@
+ 
+ 	if ((cfi->cfiq->EraseRegionInfo[0] & 0xffff) == 0x003f) {
+ 		cfi->cfiq->EraseRegionInfo[0] |= 0x0040;
+-		pr_warning("%s: Bad S29GL064N CFI data, adjust from 64 to 128 sectors\n", mtd->name);
++		printk(KERN_WARNING "%s: Bad S29GL064N CFI data, adjust from 64 to 128 sectors\n", mtd->name);
+ 	}
+ }
+ 
+@@ -239,7 +281,7 @@
+ 
+ 	if ((cfi->cfiq->EraseRegionInfo[1] & 0xffff) == 0x007e) {
+ 		cfi->cfiq->EraseRegionInfo[1] &= ~0x0040;
+-		pr_warning("%s: Bad S29GL032N CFI data, adjust from 127 to 63 sectors\n", mtd->name);
++		printk(KERN_WARNING "%s: Bad S29GL032N CFI data, adjust from 127 to 63 sectors\n", mtd->name);
+ 	}
+ }
+ 
+@@ -247,6 +289,7 @@
+ 	{ CFI_MFR_ATMEL, CFI_ID_ANY, fixup_convert_atmel_pri, NULL },
+ #ifdef AMD_BOOTLOC_BUG
+ 	{ CFI_MFR_AMD, CFI_ID_ANY, fixup_amd_bootblock, NULL },
++	{ MANUFACTURER_MACRONIX, CFI_ID_ANY, fixup_amd_bootblock, NULL },
+ #endif
+ 	{ CFI_MFR_AMD, 0x0050, fixup_use_secsi, NULL, },
+ 	{ CFI_MFR_AMD, 0x0053, fixup_use_secsi, NULL, },
+@@ -261,6 +304,7 @@
+ #if !FORCE_WORD_WRITE
+ 	{ CFI_MFR_ANY, CFI_ID_ANY, fixup_use_write_buffers, NULL, },
+ #endif
++	{ CFI_MFR_ATMEL, CFI_ID_ANY, fixup_convert_atmel_pri, NULL },
+ 	{ 0, 0, NULL, NULL }
+ };
+ static struct cfi_fixup jedec_fixup_table[] = {
+@@ -325,19 +369,12 @@
+ 
+ 		if (extp->MajorVersion != '1' ||
+ 		    (extp->MinorVersion < '0' || extp->MinorVersion > '4')) {
+-		        if (cfi->mfr == MANUFACTURER_SAMSUNG &&
+-			    (extp->MajorVersion == '3' && extp->MinorVersion == '3')) {
+-			    printk(KERN_NOTICE "  Newer Samsung flash detected, "
+-			           "should be compatibile with Amd/Fujitsu.\n");
+-		        }
+-		        else {
+-			    printk(KERN_ERR "  Unknown Amd/Fujitsu Extended Query "
+-			           "version %c.%c.\n",  extp->MajorVersion,
+-			           extp->MinorVersion);
+-			    kfree(extp);
+-			    kfree(mtd);
+-			    return NULL;
+-		        }
++			printk(KERN_ERR "  Unknown Amd/Fujitsu Extended Query "
++			       "version %c.%c.\n",  extp->MajorVersion,
++			       extp->MinorVersion);
++			kfree(extp);
++			kfree(mtd);
++			return NULL;
+ 		}
+ 
+ 		/* Install our own private info structure */
+@@ -376,12 +413,10 @@
+ 		/* Modify the unlock address if we are in compatibility mode */
+ 		if (	/* x16 in x8 mode */
+ 			((cfi->device_type == CFI_DEVICETYPE_X8) &&
+-				(cfi->cfiq->InterfaceDesc ==
+-					CFI_INTERFACE_X8_BY_X16_ASYNC)) ||
++				(cfi->cfiq->InterfaceDesc == 2)) ||
+ 			/* x32 in x16 mode */
+ 			((cfi->device_type == CFI_DEVICETYPE_X16) &&
+-				(cfi->cfiq->InterfaceDesc ==
+-					CFI_INTERFACE_X16_BY_X32_ASYNC)))
++				(cfi->cfiq->InterfaceDesc == 4)))
+ 		{
+ 			cfi->addr_unlock1 = 0xaaa;
+ 			cfi->addr_unlock2 = 0x555;
+@@ -413,10 +448,10 @@
+ {
+ 	struct map_info *map = mtd->priv;
+ 	struct cfi_private *cfi = map->fldrv_priv;
++	struct flchip *chip;
+ 	unsigned long devsize = (1<<cfi->cfiq->DevSize) * cfi->interleave;
+ 	unsigned long offset = 0;
+ 	int i,j;
+-    struct flchip *chip;
+ 
+ 	printk(KERN_NOTICE "number of %s chips: %d\n",
+ 	       (cfi->cfi_mode == CFI_MODE_CFI)?"CFI":"JEDEC",cfi->numchips);
+@@ -440,9 +475,12 @@
+ 			mtd->erasesize = ersize;
+ 		}
+ 		for (j=0; j<cfi->numchips; j++) {
+-            /* EZP: Send the reset command first! (from Ralink SDK). */
+-            chip=&cfi->chips[j];
+-            map_write(map, CMD(0xF0), chip->start);
++			/* 
++			 * patch for Numonyx Flash
++			 * -> send reset command first by Steven
++			 */
++			chip=&cfi->chips[j];
++			map_write( map, CMD(0xF0), chip->start);
+ 
+ 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].offset = (j*devsize)+offset;
+ 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].erasesize = ersize;
+@@ -762,10 +800,10 @@
+ 			chip->erase_suspended = 1;
+ 			map_write(map, CMD(0xf0), adr);
+ 			(void) map_read(map, adr);
+-			xip_iprefetch();
++			asm volatile (".rep 8; nop; .endr");
+ 			local_irq_enable();
+ 			spin_unlock(chip->mutex);
+-			xip_iprefetch();
++			asm volatile (".rep 8; nop; .endr");
+ 			cond_resched();
+ 
+ 			/*
+@@ -1669,7 +1707,7 @@
+ }
+ 
+ 
+-static int cfi_amdstd_erase_varsize(struct mtd_info *mtd, struct erase_info *instr)
++int cfi_amdstd_erase_varsize(struct mtd_info *mtd, struct erase_info *instr)
+ {
+ 	unsigned long ofs, len;
+ 	int ret;

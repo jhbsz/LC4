@@ -1,0 +1,16 @@
+Source-Makefile: package/flac/Makefile
+Package: libflac
+Version: 1.2.1-1
+Depends: 
+Provides: 
+Build-Depends: libtool
+Section: libs
+Category: Libraries
+Title: Free Lossless Audio Codec library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Free Lossless Audio Codec library
+
+http://flac.sourceforge.net/
+@@
+

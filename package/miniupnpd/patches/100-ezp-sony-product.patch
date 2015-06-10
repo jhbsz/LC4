@@ -1,0 +1,99 @@
+--- miniupnpd-1.1/upnpdescgen.c	2012-10-26 11:20:03.055981902 +0800
++++ miniupnpd-1.1/upnpdescgen.c	2012-10-26 11:21:59.795984151 +0800
+@@ -95,6 +95,17 @@
+ 	{"/minor", "0"},
+ /* 5 */
+ 	{"/deviceType", "urn:schemas-upnp-org:device:InternetGatewayDevice:1"},
++#ifdef EZP_PROD_BRAND_SONY
++	{"/friendlyName", EZP_NVRAM_MODEL /* ROOTDEV_FRIENDLYNAME */},	/* required */
++	{"/manufacturer", "Sony Corporation" /* ROOTDEV_MANUFACTURER */},		/* required */
++/* 8 */
++	{"/manufacturerURL", "http://www.sony.net" /* ROOTDEV_MANUFACTURERURL */},	/* optional */
++	{"/modelDescription", "Portable Wireless Sever" /* ROOTDEV_MODELDESCRIPTION */}, /* recommended */
++	{"/modelName", EZP_NVRAM_MODEL /* ROOTDEV_MODELNAME */},	/* required */
++	{"/modelNumber", ""},
++	{"/modelURL", "" /* ROOTDEV_MODELURL */},
++	{"/serialNumber", ""},
++#else
+ 	{"/friendlyName", EZP_NVRAM_BRAND /* ROOTDEV_FRIENDLYNAME */},	/* required */
+ 	{"/manufacturer", EZP_NVRAM_BRAND /* ROOTDEV_MANUFACTURER */},		/* required */
+ /* 8 */
+@@ -104,6 +115,7 @@
+ 	{"/modelNumber", modelnumber},
+ 	{"/modelURL", "" /* ROOTDEV_MODELURL */},
+ 	{"/serialNumber", serialnumber},
++#endif /* EZP_PROD_BRAND_SONY */
+ 	{"/UDN", uuidvalue},	/* required */
+ #if defined(ENABLE_L3F_SERVICE) || defined(HAS_DUMMY_SERVICE)
+ 	{"serviceList", INITHELPER(57,1)},
+@@ -127,7 +139,11 @@
+ 	{"/modelURL", WANDEV_MODELURL},
+ 	{"/serialNumber", serialnumber},
+ 	{"/UDN", uuidvalue},
++#ifdef EZP_PROD_BRAND_SONY
++	{"/UPC", ""},
++#else
+ 	{"/UPC", WANDEV_UPC},
++#endif
+ /* 30 */
+ 	{"serviceList", INITHELPER(32,1)},
+ 	{"deviceList", INITHELPER(38,1)},
+@@ -137,7 +153,11 @@
+ 	{"/serviceType",
+ 			"urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"},
+ 	/*{"/serviceId", "urn:upnp-org:serviceId:WANCommonInterfaceConfig"}, */
++#ifdef EZP_PROD_BRAND_SONY
++	{"/serviceId", ""},
++#else
+ 	{"/serviceId", "urn:upnp-org:serviceId:WANCommonIFC1"}, /* required */
++#endif
+ 	{"/controlURL", WANCFG_CONTROLURL},
+ 	{"/eventSubURL", WANCFG_EVENTURL},
+ 	{"/SCPDURL", WANCFG_PATH},
+@@ -154,14 +174,22 @@
+ 	{"/modelURL", WANCDEV_MODELURL},
+ 	{"/serialNumber", serialnumber},
+ 	{"/UDN", uuidvalue},
++#ifdef EZP_PROD_BRAND_SONY
++	{"/UPC", ""},
++#else
+ 	{"/UPC", WANCDEV_UPC},
++#endif
+ 	{"serviceList", INITHELPER(51,1)},
+ /* 51 */
+ 	{"service", INITHELPER(52,5)},
+ /* 52 */
+ 	{"/serviceType", "urn:schemas-upnp-org:service:WANIPConnection:1"},
+ 	/* {"/serviceId", "urn:upnp-org:serviceId:WANIPConnection"}, */
++#ifdef EZP_PROD_BRAND_SONY
++	{"/serviceId", ""},
++#else
+ 	{"/serviceId", "urn:upnp-org:serviceId:WANIPConn1"},
++#endif
+ 	{"/controlURL", WANIPC_CONTROLURL},
+ 	{"/eventSubURL", WANIPC_EVENTURL},
+ 	{"/SCPDURL", WANIPC_PATH},
+@@ -170,7 +198,11 @@
+ 	{"service", INITHELPER(58,5)},
+ /* 58 */
+ 	{"/serviceType", "urn:schemas-dummy-com:service:Dummy:1"},
++#ifdef EZP_PROD_BRAND_SONY
++	{"/serviceId", ""},
++#else
+ 	{"/serviceId", "urn:dummy-com:serviceId:dummy1"},
++#endif
+ 	{"/controlURL", "/dummy"},
+ 	{"/eventSubURL", "/dummy"},
+ 	{"/SCPDURL", DUMMY_PATH},
+@@ -179,7 +211,11 @@
+ 	{"service", INITHELPER(58,5)},
+ /* 58 */
+ 	{"/serviceType", "urn:schemas-upnp-org:service:Layer3Forwarding:1"},
++#ifdef EZP_PROD_BRAND_SONY
++	{"/serviceId", ""},
++#else
+ 	{"/serviceId", "urn:upnp-org:serviceId:Layer3Forwarding1"},
++#endif
+ 	{"/controlURL", L3F_CONTROLURL}, /* The Layer3Forwarding service is only */
+ 	{"/eventSubURL", L3F_EVENTURL}, /* recommended, not mandatory */
+ 	{"/SCPDURL", L3F_PATH},

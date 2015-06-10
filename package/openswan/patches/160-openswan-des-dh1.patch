@@ -1,0 +1,16 @@
+--- openswan.old/Makefile.inc	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/Makefile.inc	2009-08-27 11:04:10.407627446 +0800
+@@ -359,11 +359,11 @@
+ # should we include all manner of known to be broken/weak?
+ # use this only if you are building some kind of a testing
+ # device. Normal use does not need any of this.
+-USE_WEAKSTUFF?=false
++USE_WEAKSTUFF?=true
+ 
+ # Build algorithms that don't even encrypt (also must set WEAKSTUFF)
+ # unless you are doing negative testing, turning this on is foolish.
+-USE_NOCRYPTO?=false
++USE_NOCRYPTO?=true
+ 
+ # should we include additional (strong) algorithms?  It adds a measureable
+ # amount of code space to pluto, and many of the algorithms have not had

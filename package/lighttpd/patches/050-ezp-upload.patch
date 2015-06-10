@@ -1,0 +1,202 @@
+diff -Naur lighttpd-1.4.30/src/chunk.c _lighttpd-1.4.30/src/chunk.c
+--- lighttpd-1.4.30/src/chunk.c	2010-08-17 17:04:38.000000000 +0800
++++ _lighttpd-1.4.30/src/chunk.c	2013-02-23 10:43:23.969038474 +0800
+@@ -319,6 +319,45 @@
+ 	return c;
+ }
+ 
++chunk *chunkqueue_get_append_directfile(chunkqueue *cq, char *dst_file) {
++        chunk *c;
++        buffer *template = buffer_init_string("/var/tmp/lighttpd-upload-XXXXXX");
++        c = chunkqueue_get_unused_chunk(cq);
++
++        c->type = FILE_CHUNK;
++        c->offset = 0;
++       
++        if (cq->tempdirs && cq->tempdirs->used) {
++                size_t i;
++
++                /* we have several tempdirs, only if all of them fail we jump out */
++                for (i = 0; i < cq->tempdirs->used; i++) {
++                        buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
++                        buffer_append_string_len(template, dst_file, strlen(dst_file));
++                        buffer_urldecode_path(template);
++                        buffer_append_string_len(template, CONST_STR_LEN("-XXXXXX"));
++                        mktemp(template->ptr);
++                        buffer_append_string_len(template, CONST_STR_LEN(".part"));
++                        if (-1 != (c->file.fd = open(template->ptr, O_CREAT | O_RDWR))) {
++                                /* only trigger the unlink if we created the temp-file successfully */
++                                c->file.is_temp = 1;
++                                break;
++                        }
++                }
++        } else {
++                if (-1 != (c->file.fd = mkstemp(template->ptr))) {
++                        /* only trigger the unlink if we created the temp-file successfully */
++                        c->file.is_temp = 1;
++                }
++        }
++        buffer_copy_string_buffer(c->file.name, template);
++        c->file.length = 0;
++        chunkqueue_append_chunk(cq, c);
++        buffer_free(template);
++
++        return c;
++}
++
+ 
+ off_t chunkqueue_length(chunkqueue *cq) {
+ 	off_t len = 0;
+diff -Naur lighttpd-1.4.30/src/chunk.h _lighttpd-1.4.30/src/chunk.h
+--- lighttpd-1.4.30/src/chunk.h	2010-02-02 07:28:20.000000000 +0800
++++ _lighttpd-1.4.30/src/chunk.h	2013-02-23 10:32:10.228701524 +0800
+@@ -58,6 +58,7 @@
+ buffer * chunkqueue_get_append_buffer(chunkqueue *c);
+ buffer * chunkqueue_get_prepend_buffer(chunkqueue *c);
+ chunk * chunkqueue_get_append_tempfile(chunkqueue *cq);
++chunk * chunkqueue_get_append_directfile(chunkqueue *c, char *dst_file);
+ 
+ int chunkqueue_remove_finished_chunks(chunkqueue *cq);
+ 
+diff -Naur lighttpd-1.4.30/src/connections.c _lighttpd-1.4.30/src/connections.c
+--- lighttpd-1.4.30/src/connections.c	2011-12-01 01:42:45.000000000 +0800
++++ _lighttpd-1.4.30/src/connections.c	2013-02-23 10:51:04.599269188 +0800
+@@ -1081,28 +1081,17 @@
+ 				    dst_cq->last->offset == 0) {
+ 					/* ok, take the last chunk for our job */
+ 
+-			 		if (dst_cq->last->file.length < 1 * 1024 * 1024) {
+-						dst_c = dst_cq->last;
++					dst_c = dst_cq->last;
+ 
+-						if (dst_c->file.fd == -1) {
+-							/* this should not happen as we cache the fd, but you never know */
+-							dst_c->file.fd = open(dst_c->file.name->ptr, O_WRONLY | O_APPEND);
++					if (dst_c->file.fd == -1) {
++						/* this should not happen as we cache the fd, but you never know */
++						dst_c->file.fd = open(dst_c->file.name->ptr, O_WRONLY | O_APPEND);
+ #ifdef FD_CLOEXEC
+-							fcntl(dst_c->file.fd, F_SETFD, FD_CLOEXEC);
++						fcntl(dst_c->file.fd, F_SETFD, FD_CLOEXEC);
+ #endif
+-						}
+-					} else {
+-						/* the chunk is too large now, close it */
+-						dst_c = dst_cq->last;
+-
+-						if (dst_c->file.fd != -1) {
+-							close(dst_c->file.fd);
+-							dst_c->file.fd = -1;
+-						}
+-						dst_c = chunkqueue_get_append_tempfile(dst_cq);
+ 					}
+ 				} else {
+-					dst_c = chunkqueue_get_append_tempfile(dst_cq);
++					dst_c = chunkqueue_get_append_directfile(dst_cq, con->request.uri->ptr);
+ 				}
+ 
+ 				/* we have a chunk, let's write to it */
+diff -Naur lighttpd-1.4.30/src/mod_webdav.c _lighttpd-1.4.30/src/mod_webdav.c
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-02-23 10:47:44.849169089 +0800
++++ _lighttpd-1.4.30/src/mod_webdav.c	2013-02-23 10:32:10.158701620 +0800
+@@ -1810,25 +1810,8 @@
+ 
+ 				return HANDLER_FINISHED;
+ 			}
+-			con->http_status = 200; /* modified */
+-		} else {
+-			/* take what we have in the request-body and write it to a file */
+-
+-			/* if the file doesn't exist, create it */
+-			if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
+-				if (errno == ENOENT &&
+-				    -1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
+-					/* we can't open the file */
+-					con->http_status = 403;
+-
+-					return HANDLER_FINISHED;
+-				} else {
+-					con->http_status = 201; /* created */
+-				}
+-			} else {
+-				con->http_status = 200; /* modified */
+-			}
+ 		}
++		con->http_status = 200; /* modified */
+ 
+ 		con->file_finished = 1;
+ 
+@@ -1839,44 +1822,27 @@
+ 			switch(c->type) {
+ 			case FILE_CHUNK:
+ 
+-				if (c->file.mmap.start == MAP_FAILED) {
+-					if (-1 == c->file.fd &&  /* open the file if not already open */
+-					    -1 == (c->file.fd = open(c->file.name->ptr, O_RDONLY))) {
+-						log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));
+-
+-						return HANDLER_ERROR;
+-					}
+-
+-					if (MAP_FAILED == (c->file.mmap.start = mmap(0, c->file.length, PROT_READ, MAP_SHARED, c->file.fd, 0))) {
+-						log_error_write(srv, __FILE__, __LINE__, "ssbd", "mmap failed: ",
+-								strerror(errno), c->file.name,  c->file.fd);
+-						close(c->file.fd);
+-						c->file.fd = -1;
+-
+-						return HANDLER_ERROR;
+-					}
+-
+-					c->file.mmap.length = c->file.length;
+-
+-					close(c->file.fd);
+-					c->file.fd = -1;
+-
+-					/* chunk_reset() or chunk_free() will cleanup for us */
+-				}
+-
+-				if ((r = write(fd, c->file.mmap.start + c->offset, c->file.length - c->offset)) < 0) {
+-					switch(errno) {
+-					case ENOSPC:
+-						con->http_status = 507;
+-
+-						break;
+-					default:
+-						con->http_status = 403;
+-						break;
+-					}
+-				}
++				if(-1 == (rename(c->file.name->ptr,con->physical.path->ptr))) {
++					log_error_write(srv, __FILE__, __LINE__, "ss", "write back failed: ", strerror(errno));
++					return HANDLER_ERROR;
++				}
+ 				break;
+ 			case MEM_CHUNK:
++				/* if the file doesn't exist, create it */
++				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
++					if (errno == ENOENT &&
++							-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
++						/* we can't open the file */
++						con->http_status = 403;
++
++						return HANDLER_FINISHED;
++					} else {
++						con->http_status = 201; /* created */
++					}
++				} else {
++					con->http_status = 200; /* modified */
++				}
++
+ 				if ((r = write(fd, c->mem->ptr + c->offset, c->mem->used - c->offset - 1)) < 0) {
+ 					switch(errno) {
+ 					case ENOSPC:
+@@ -1871,7 +1870,7 @@
+			chunkqueue_remove_finished_chunks(cq);
+		}
+		close(fd);
+-
++		sync();
+		return HANDLER_FINISHED;
+	}
+	case HTTP_METHOD_MOVE:
+

@@ -1,0 +1,77 @@
+Source-Makefile: target/linux/x86/Makefile
+Target: x86
+Target-Board: x86
+Target-Kernel: 2.6
+Target-Name: x86 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: i386
+Target-Features: display ext2 jffs2 pci pcmcia squashfs usb vdi
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-natsemi kmod-ne2k-pci
+Target: x86/generic
+Target-Board: x86
+Target-Kernel: 2.6
+Target-Name: Generic
+Target-Path: target/linux/x86
+Target-Arch: i386
+Target-Features: display ext2 jffs2 pci pcmcia squashfs usb vdi
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: i386
+Target-Description:
+	Build firmware images for x86 based boards 
+	(e.g : Soekris, ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-natsemi kmod-ne2k-pci
+Target-Profile: Generic
+Target-Profile-Name: Generic
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Generic Profile
+@@
+
+Target-Profile: Alix
+Target-Profile-Name: PCEngines Alix
+Target-Profile-Packages: kmod-via-rhine kmod-leds-alix
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+        Package set compatible with the PCEngines Alix. Contains VIA Rhine III VT6105M and LED support
+@@
+
+Target-Profile: Pcengines
+Target-Profile-Name: PCEngines WRAP
+Target-Profile-Packages: kmod-i2c-scx200 kmod-natsemi kmod-leds-wrap kmod-scx200-gpio kmod-scx200-wdt kmod-hwmon-pc87360
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with the PCEngines WRAP. Contains I2C/LEDS/GPIO/Sensors support
+@@
+
+Target-Profile: Soekris
+Target-Profile-Name: Soekris Net4801
+Target-Profile-Packages: kmod-i2c-scx200 kmod-natsemi kmod-leds-net48xx kmod-scx200-gpio kmod-scx200-wdt kmod-hwmon-pc87360
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+        Package set compatible with the Soekris Net4801. Contains I2C/LEDS/GPIO/Sensors support
+@@
+
+

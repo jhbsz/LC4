@@ -1,0 +1,25 @@
+#!/bin/bash
+# Sprint 4G Developer Pack Installer, tlsid-o-tron, 2010-07-20, Robert Burcham
+# Version 1.0
+# GNU Free Documentation License 1.2
+
+if [ $# -ne 1 ]; then                # get interactive input
+  echo -e "passphrase-o-tron, 2010-07-20, Robert Burcham"
+  echo -e "Computes PK passphrase for Sprint 4G split-supplicant capable devices.\n"
+  echo -e "usage: passphrase-o-tron MACID | HEXESN\n"
+  echo -e "For FW U600 use:"
+  echo -e "\ttlsid-o-tron MACID"
+  echo -e "For SW 250U use:"
+  echo -e "\ttlsid-o-tron HEXESN"
+else
+  DATA=`echo "$1" | tr '[:lower:]' '[:upper:]'`
+
+  for I in `seq 0 ${#DATA}`; do
+    CHAR=${DATA:$I:1};
+    if [ ! $CHAR == ":" ]; then
+      printf '%x' `printf '%d' "'$CHAR"`;
+    fi
+  done
+
+  echo 
+fi

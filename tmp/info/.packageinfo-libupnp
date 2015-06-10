@@ -1,0 +1,34 @@
+Source-Makefile: package/libupnp/Makefile
+Package: libupnp
+Menu: 1
+Version: 1.3.1-2
+Depends: 
+Provides: 
+Build-Depends: libtool
+Section: libs
+Category: Libraries
+Title: UPnP SDK library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: The portable SDK for UPnP Devices (libupnp) provides developers with an API and
+open source code for building control points, devices, and bridges that are
+compliant with Version 1.0 of the  Universal Plug and Play Device Architecture
+Specification.
+
+http://pupnp.sourceforge.net/
+@@
+Package: libupnp-sample
+Version: 1.3.1-2
+Depends: libupnp
+Provides: 
+Build-Depends: libtool
+Section: libs
+Category: Libraries
+Title: UPnP sample applications
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: TVcontrolpoint & tvdevice sample applications run inside /etc/upnp-tvdevice/
+
+http://pupnp.sourceforge.net/
+@@
+

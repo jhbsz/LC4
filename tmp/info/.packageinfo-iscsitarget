@@ -1,0 +1,32 @@
+Source-Makefile: package/iscsitarget/Makefile
+Package: iscsitarget
+Version: 0.4.17
+Depends: +libopenssl
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: ISCSI target
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   iSCSI target server
+
+http://www.iscsitarget.org/
+@@
+Package: kmod-iscsitarget
+Submenu: Network Support
+Version: <LINUX_VERSION>+0.4.17--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: iSCSITarget (kernel module)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   iSCSI target package
+ This package contains the iSCSI kernel module.
+
+http://www.iscsitarget.org/
+@@
+

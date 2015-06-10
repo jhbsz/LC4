@@ -1,0 +1,16 @@
+Source-Makefile: package/libdaq/Makefile
+Package: libdaq
+Version: 1.1.1-1
+Depends: +libdnet +libpcap
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:libintl
+Section: libs
+Category: Libraries
+Title: DAQ library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Data Acquisition library for packet I/O.
+
+http://www.snort.org/dl/snort-current/
+@@
+

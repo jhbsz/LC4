@@ -1,0 +1,470 @@
+--- Uboot-spi-1.1.3/lib_mips/board.c	2010-07-21 16:19:13.000000000 +0800
++++ Uboot-spi-1.1.3.new/lib_mips/board.c	2010-09-16 10:44:52.769192123 +0800
+@@ -20,7 +20,7 @@
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  * MA 02111-1307 USA
+  */
+-
++#include <../autoconf.h>
+ #include <common.h>
+ #include <command.h>
+ #include <malloc.h>
+@@ -596,6 +596,7 @@
+ #define SEL_BOOT_FLASH                  3
+ #define SEL_ENTER_CLI                   4
+ #define SEL_LOAD_UCOS_SDRAM		5
++#define SEL_EMERGENCY     6
+ #define SEL_LOAD_CRAMFS_WRITE_FLASH     6
+ #define SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL 7
+ #define SEL_LOAD_BOOT_SDRAM             8
+@@ -610,6 +611,7 @@
+ 	printf("   %d: Boot system code via Flash (default).\n", SEL_BOOT_FLASH);
+ 	printf("   %d: Entr boot command line interface.\n", SEL_ENTER_CLI);
+ 	//printf("   %d: Load ucos code to SDRAM via TFTP. \n", SEL_LOAD_UCOS_SDRAM);
++printf("   %d: To emergency. \n", SEL_EMERGENCY); /* EZP: added emergency mode. */
+ 	//printf("   %d: Load Linux filesystem then write to Flash via TFTP. \n", SEL_LOAD_CRAMFS_WRITE_FLASH);
+ 	printf("   %d: Load Boot Loader code then write to Flash via Serial. \n", SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL);
+ 	//printf("   %d: Load Boot Loader code to SDRAM via TFTP. \n", SEL_LOAD_BOOT_SDRAM);
+@@ -628,6 +630,89 @@
+ 	*dst = '\0';
+ }
+ 
++//RL added for eemergency;
++int emergency_config(int type, char *argv[])
++{
++	//setenv ("ipaddr", "10.10.10.6");
++	setenv ("ipaddr", "123.123.78.178");
++
++	if (type == SEL_EMERGENCY) 
++	{
++		//argv[1] = "0x8a100000";
++	#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++      		argv[1] = "0x8a100000";
++	#else
++	      argv[1] = "0x80100000";
++	#endif
++	}
++    return 0;
++}
++/* EZP : do default configuration for tftp get fw */
++int tftp_config_default(int type, char *argv[])
++{
++	printf(" Please Input new ones /or Ctrl-C to discard\n");
++
++	setenv("ipaddr", MK_STR(CONFIG_IPADDR));
++	printf("\tDevice IP (%s)\n", getenv((uchar*)"ipaddr"));
++    modifies++;
++	setenv("serverip", MK_STR(CONFIG_SERVERIP));
++	printf("\tServer IP (%s)\n", getenv((uchar*)"serverip"));
++    modifies++;
++
++	if(type == SEL_LOAD_BOOT_SDRAM || 
++       type == SEL_LOAD_BOOT_WRITE_FLASH || 
++       type == SEL_LOAD_UCOS_SDRAM) {
++		if(type == SEL_LOAD_BOOT_SDRAM)
++#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++            argv[1] = "0x8a200000";
++#else
++            argv[1] = "0x80200000";
++#endif
++		else if (type == SEL_LOAD_UCOS_SDRAM)
++			argv[1] = "0x88001000";
++		else
++#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++			argv[1] = "0x8a100000";
++#else
++		    argv[1] = "0x80100000";
++#endif
++		printf("\tInput Uboot filename ");
++		//argv[2] = "uboot.bin";
++		strncpy(argv[2], "uboot.bin", ARGV_LEN);
++	}
++	else if (type == SEL_LOAD_LINUX_WRITE_FLASH || 
++             type == SEL_LOAD_CRAMFS_WRITE_FLASH) {
++#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++		argv[1] = "0x8a100000";
++#else
++		argv[1] = "0x80100000";
++#endif
++		if(type == SEL_LOAD_CRAMFS_WRITE_FLASH)
++			printf("\tInput Linux FileSystem filename ");
++		else
++			printf("\tInput Linux Kernel filename ");
++        /* EZP : define default linux image */
++        strncpy(argv[2], CONFIG_DEFAULT_LINUX_IMAGE, ARGV_LEN);
++	}
++	else if (type == SEL_LOAD_LINUX_SDRAM ) {
++		/* bruce to support ramdisk */
++#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++		argv[1] = "0x8a800000";
++#else
++		argv[1] = "0x80800000";
++#endif
++		printf("\tInput Linux Kernel filename ");
++        /* EZP : define default linux image */
++		strncpy(argv[2], CONFIG_DEFAULT_LINUX_IMAGE, ARGV_LEN);
++	}
++    setenv("bootfile", CONFIG_DEFAULT_LINUX_IMAGE);
++	printf("(%s) \n", getenv((uchar*)"bootfile"));
++	printf("\tLoad address %s\n", (char*)argv[1]);
++    modifies++;
++
++	return 0;
++}
++
+ int tftp_config(int type, char *argv[])
+ {
+ 	char *s;
+@@ -1015,8 +1100,45 @@
+ 	return ret;
+ }
+ #endif
+-
+-
++#define JTAG_GPIO_MODE_BIT      (0x40)
++#define GOIP_MODE_REGISTER      (0xb0000060)
++#if defined(RT3052_ASIC_BOARD)
++/* EZP : gpio initialize */
++void rt3052_gpio_init(void)
++{
++    u32 tmp;
++    /* Turn off full UART */
++    *((unsigned long*)GOIP_MODE_REGISTER) |= 0x1c;
++    /* EZP : Disable JTAG on uboot if GPIO 18 is used */
++    if(GPIO_WPS_BUTTON == 18) {
++        tmp = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
++        tmp |= JTAG_GPIO_MODE_BIT;
++        *((volatile u32 *)GOIP_MODE_REGISTER) = tmp;
++    }
++    /* EZP : set gpio wps button and reset button to input direction */
++    tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
++    tmp &= ~cpu_to_le32(1 << GPIO_WPS_BUTTON);
++    *((volatile u32 *)0xb0000624) = tmp;
++    tmp &= ~cpu_to_le32(1 << GPIO_RESET_BUTTON);
++    *((volatile u32 *)0xb0000624) = tmp;
++}
++u32 rt3052_gpio_get(u32 gpio_index)
++{
++    u32 tmp;
++    u32 mode;
++    /* EZP : set gpio 0 and 10 to input direction */
++    tmp = le32_to_cpu(*((volatile u32 *)0xb0000620));
++    mode = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
++#ifdef DEBUG
++    printf("gpio val:%x mode:%x reset:%x\n", tmp, mode, tmp & (1 << GPIO_RESET_BUTTON));
++#endif
++    if(tmp & (1 << gpio_index)) {
++        /* EZP: when target bit is high, the button is not pushed. */
++        return 0;
++    }
++    return 1;
++}
++#endif
+ /************************************************************************
+  *
+  * This is the next part if the initialization sequence: we are now
+@@ -1026,6 +1148,104 @@
+  *
+  ************************************************************************
+  */
++static int write_image_to_flash(int argc, char* argv[], long size, bd_t *bd, cmd_tbl_t *cmdtp) {
++    ulong e_end;
++    unsigned int load_addr = simple_strtoul(argv[1], NULL, 16);
++    /* Kernel size = flash size - bootloader - config - factory */
++    int kernel_size = bd->bi_flashsize - CFG_BOOTLOADER_SIZE - CFG_CONFIG_SIZE - CFG_FACTORY_SIZE;
++    u32 tmp;
++    printf("disable gpio\n");
++    tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
++    tmp |= cpu_to_le32(1 << GPIO_WPS_BUTTON);
++    *((volatile u32 *)0xb0000624) = tmp;
++    tmp |= cpu_to_le32(1 << GPIO_RESET_BUTTON);
++    *((volatile u32 *)0xb0000624) = tmp;
++
++    if (size < kernel_size) {
++        /* Simply built image file */
++#if defined (CFG_ENV_IS_IN_NAND)
++        ranand_erase_write((u8 *)load_addr, CFG_KERN_ADDR - CFG_FLASH_BASE, size);
++#elif defined (CFG_ENV_IS_IN_SPI)
++        raspi_erase_write((u8 *)load_addr, CFG_KERN_ADDR - CFG_FLASH_BASE, size);
++#elif (defined (ON_BOARD_8M_FLASH_COMPONENT) || defined (ON_BOARD_16M_FLASH_COMPONENT)) && (defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD) || defined (RT3052_MP1))
++        //erase linux
++        if (NetBootFileXferSize <= 
++            (0x400000 - (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE))) {
++            e_end = CFG_KERN_ADDR + NetBootFileXferSize;
++            if (0 != get_addr_boundary(&e_end))
++                return 1;
++            printf("Erase linux kernel block !!\n");
++            printf("From 0x%X To 0x%X\n", CFG_KERN_ADDR, e_end);
++            flash_sect_erase(CFG_KERN_ADDR, e_end);
++        }
++        else if (NetBootFileXferSize <= CFG_KERN_SIZE) {
++            e_end = PHYS_FLASH_2 + NetBootFileXferSize - 
++                (0x400000 - (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE));
++            if (0 != get_addr_boundary(&e_end))
++                return 1;
++            printf("Erase linux kernel block !!\n");
++            printf("From 0x%X To 0x%X\n", CFG_KERN_ADDR, CFG_FLASH_BASE+0x3FFFFF);
++            flash_sect_erase(CFG_KERN_ADDR, CFG_FLASH_BASE+0x3FFFFF);
++            printf("Erase linux file system block !!\n");
++            printf("From 0x%X To 0x%X\n", PHYS_FLASH_2, e_end);
++            flash_sect_erase(PHYS_FLASH_2, e_end);
++        }
++#else
++        e_end = CFG_KERN_ADDR + NetBootFileXferSize;
++        if (0 != get_addr_boundary(&e_end))
++            return 1;
++        printf("Erase linux kernel block !!\n");
++        printf("From 0x%X To 0x%X\n", CFG_KERN_ADDR, e_end);
++        flash_sect_erase(CFG_KERN_ADDR, e_end);
++        argc = 4;
++        argv[0]= "cp.linux";
++        do_mem_cp(cmdtp, 0, argc, argv);
++#endif
++    }
++    else if (size == (bd->bi_flashsize + 36)) {
++        /* Whole image dump with ezp added signature */
++        unsigned char *keyptr = (unsigned char*)CFG_LOAD_ADDR;
++        unsigned char len;
++        unsigned char sum = 0;
++        unsigned char i;
++        keyptr += bd->bi_flashsize;
++        len = keyptr[0];
++        for(i=0;i<len;i++) {
++            sum += keyptr[2 + i];
++        }
++        /* Check sum ok*/
++        if(sum != keyptr[1]) {
++            return 1;
++        }
++#if defined (CFG_ENV_IS_IN_NAND)
++        ranand_erase_write((u8 *)load_addr, 0, size - 36);
++#elif defined (CFG_ENV_IS_IN_SPI)
++        raspi_erase_write((u8 *)load_addr, 0, size - 36);
++#elif (defined (ON_BOARD_8M_FLASH_COMPONENT) || defined (ON_BOARD_16M_FLASH_COMPONENT)) && (defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD) || defined (RT3052_MP1))
++        return 1;
++#else
++        /* check Ezpacket signature */
++        NetBootFileXferSize = bd->bi_flashsize;
++        e_end = CFG_FLASH_BASE + NetBootFileXferSize - 1;
++        //protect off uboot
++        printf("protect off from %p to %p\n", CFG_FLASH_BASE, e_end);
++        flash_sect_protect(0, CFG_FLASH_BASE, e_end);
++        printf("erase from %p to %p\n", CFG_FLASH_BASE, e_end);
++        flash_sect_erase(CFG_FLASH_BASE, e_end);
++        argc = 4;
++        argv[0]= "cp.flash";
++        do_mem_cp(cmdtp, 0, argc, argv);
++#endif
++    }
++    else {
++        printf("From 0x%X To 0x%X\n", bd->bi_flashsize, NetBootFileXferSize);
++        printf("***********************************\n");
++        printf("The Linux Image size is too big !! \n");
++        printf("***********************************\n");
++        return 1;
++    }
++    return 0;
++}
+ 
+ gd_t gd_data;
+  
+@@ -1041,12 +1261,14 @@
+ 	bd_t *bd;
+ 	int i;
+ 	int timer1= CONFIG_BOOTDELAY;
++
+ 	unsigned char BootType='3', confirm=0;
+ 	int my_tmp;
+ 	char addr_str[11];
+ #if defined (CFG_ENV_IS_IN_FLASH)
+ 	ulong e_end;
+ #endif
++    u32 gpiodata = 0;
+ 
+ #if defined (RT2880_FPGA_BOARD) || defined (RT2880_ASIC_BOARD)
+ 	u32 value,kk;
+@@ -1342,17 +1564,43 @@
+ #ifdef DUAL_IMAGE_SUPPORT
+ 	check_image_validation();
+ #endif
+-
++    /* EZP: gpio init */
++#ifdef RT3052_ASIC_BOARD
++
++    rt3052_gpio_init();
++
++#else
++#endif
+ 	OperationSelect();   
+ 
+ 	while (timer1 > 0) {
+-		--timer1;
++        /* EZP : If we have button pushed, pause the count down timer. */
++		if(!gpiodata) --timer1;
+ 		/* delay 100 * 10ms */
+ 		for (i=0; i<100; ++i) {
++#ifdef RT3052_ASIC_BOARD
++
++            /* EZP : handle button push */
++            if(rt3052_gpio_get(GPIO_RESET_BUTTON)) {
++                gpiodata ++;
++                if (gpiodata > 75) { /* We got reset button pushed. */
++                    timer1 = 0;	/* no more delay	*/
++                    BootType = 'b'; /* Choose 'b' : retrieve firmware from tftp server */
++                    printf("\n\rYou choosed %c by press a button\n\n", BootType);
++                    break;
++                }
++                continue;
++            }
++            else {
++                gpiodata = 0;
++            }
++
++#else
++#endif
+ 			if ((my_tmp = tstc()) != 0) {	/* we got a key press	*/
+ 				timer1 = 0;	/* no more delay	*/
+ 				BootType = getc();
+-				if ((BootType < '1' || BootType > '5') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
++				if ((BootType < '1' || BootType > '5') && (BootType != '6') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
+ 					BootType = '3';
+ 				printf("\n\rYou choosed %c\n\n", BootType);
+ 				break;
+@@ -1368,9 +1616,13 @@
+ 		sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
+ 		argv[1] = &addr_str[0];
+ 		printf("   \n3: System Boot system code via Flash.\n");
+-		do_bootm(cmdtp, 0, 2, argv);
++        if (do_bootm(cmdtp, 0, 2, argv) == 1)
++        {
++            /* EZP : Boot failed, entering emergency mode. */
++            BootType = 'b'; /* Choose 'b' : retrieve firmware from tftp server */
++        }
+ 	}
+-	else {
++	if (BootType != '3') {
+ 		char *argv[4];
+ 		int argc= 3;
+ 
+@@ -1389,7 +1641,46 @@
+ 			setenv("autostart", "yes");
+ 			do_tftpb(cmdtp, 0, argc, argv);
+ 			break;
++        /* EZP : Indicate button pushed. */
++		case 'b':
++			printf("   \n%d: System Load Linux Kernel then write to Flash via TFTP. \n", SEL_LOAD_LINUX_WRITE_FLASH);
++			printf(" Warning!! Erase Linux in Flash then burn new one.\n");
++			tftp_config_default(SEL_LOAD_LINUX_WRITE_FLASH, argv);
++			argc= 3;
++			setenv("autostart", "no");
++            /* EZP: check tftp failness and do not retry when fail */
++            setenv("netretry","no");
++            /* EZP: set tftp detection timeout to 2 seconds and timeout count
++             *      to 3*/
++            setenv("tftptimeout","2");
++            setenv("tftptimeoutcount","3");
++            /* EZP: tftp returns 1 means do_tftpd failed */
++			if(do_tftpb(cmdtp, 0, argc, argv)) {
++                /* tftp fail, try httpd emergency mode */
++                goto Emergency_start;
++            }
++            /* EZP : write image for 1. linux kernel or 2. whole flash dump */
++            if(write_image_to_flash(argc, argv, NetBootFileXferSize, bd, cmdtp)) {
++                /* Write image fail, try httpd emergency mode */
++                goto Emergency_start;
++            }
++            else {
++#ifdef DUAL_IMAGE_SUPPORT
++                /* Don't do anything to the firmware upgraded in Uboot, since it may be used for testing */
++                setenv("Image1Stable", "1");
++                saveenv();
++#endif
+ 
++                //bootm bc050000
++                argc= 2;
++                sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
++                argv[1] = &addr_str[0];
++                if (do_bootm(cmdtp, 0, argc, argv) == 1) {
++                    /* Boot image fail, try httpd emergency mode */
++                    goto Emergency_start;
++                }
++            }
++			break;
+ 		case '2':
+ 			printf("   \n%d: System Load Linux Kernel then write to Flash via TFTP. \n", SEL_LOAD_LINUX_WRITE_FLASH);
+ 			printf(" Warning!! Erase Linux in Flash then burn new one. Are you sure?(Y/N)\n");
+@@ -1401,7 +1692,17 @@
+ 			tftp_config(SEL_LOAD_LINUX_WRITE_FLASH, argv);
+ 			argc= 3;
+ 			setenv("autostart", "no");
+-			do_tftpb(cmdtp, 0, argc, argv);
++            /* EZP: check tftp failness and do not retry when fail */
++            setenv("netretry","no");
++            /* EZP: set tftp detection timeout to 2 seconds and timeout count
++             *      to 3*/
++            setenv("tftptimeout","2");
++            setenv("tftptimeoutcount","3");
++            /* EZP: tftp returns 1 means do_tftpd failed */
++			if(do_tftpb(cmdtp, 0, argc, argv)) {
++                /* tftp fail, try httpd emergency mode */
++                goto Emergency_start;
++            }
+ 
+ #if defined (CFG_ENV_IS_IN_NAND)
+ 			if (1) {
+@@ -1562,7 +1863,9 @@
+ 			//reset            
+ 			do_reset(cmdtp, 0, argc, argv);
+ 			break;
+-
++        case '6':
++            /* Emergency mode */
++            goto Emergency_start;
+ 		case '8':
+ 			printf("   \n%d: System Load UBoot to SDRAM via TFTP. \n", SEL_LOAD_BOOT_SDRAM);
+ 			tftp_config(SEL_LOAD_BOOT_SDRAM, argv);
+@@ -1630,8 +1933,43 @@
+ 		do_reset(cmdtp, 0, argc, argv);
+ 
+ 	} /* end of else */
++Emergency_start:
++    {
++        int argc= 3;
++        char *argv[3];
++
++        EMERGENCY_MODE=1;
++
++        if(BootType == '3') 
++        {
++            argv[2] =  &file_name_space[0];
++            memset(file_name_space,0,ARGV_LEN);
++#if (CONFIG_COMMANDS & CFG_CMD_NET) && defined(CONFIG_NET_MULTI)
++            puts ("Net:   ");
++            eth_initialize(gd->bd);
++#endif  
++        }
++        printf("   \n%d: System enter emergency mode. \n", SEL_EMERGENCY);
+ 
+-	/* NOTREACHED - no way out of command loop except booting */
++        emergency_config(SEL_EMERGENCY, argv);
++        argc= 3;
++        setenv("autostart", "no");
++        do_emergency(cmdtp, 0, argc, argv);
++        /* EZP : write image for 1. linux kernel or 2. whole flash dump */
++        if(write_image_to_flash(argc, argv, NetBootFileXferSize, bd, cmdtp)) {
++            do_reset(cmdtp, 0, argc, argv); //RL I'm not sure do this.
++        }
++        else {
++            /* Load firmware success, let's boot */
++            argc= 2;
++            sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
++            argv[1] = &addr_str[0];
++            if (do_bootm(cmdtp, 0, 2, argv) == 1) {
++                goto Emergency_start;
++            }
++        }
++    }
++    /* NOTREACHED - no way out of command loop except booting */
+ }
+ 
+ 

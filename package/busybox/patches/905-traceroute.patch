@@ -1,0 +1,30 @@
+--- busybox-1.11.2/networking/traceroute.c	2008-06-25 20:51:14.000000000 +0800
++++ busybox-1.11.2/networking/traceroute.c	2012-02-17 15:28:43.830413848 +0800
+@@ -555,15 +555,16 @@
+ */
+ 
+ static int
+-wait_for_reply(int sock, struct sockaddr_in *fromp)
++wait_for_reply(int sock, struct sockaddr_in *fromp, unsigned t1)
+ {
+ 	struct pollfd pfd[1];
++	signed delta_us = t1 - monotonic_us() + waittime * 1000000;
+ 	int cc = 0;
+ 	socklen_t fromlen = sizeof(*fromp);
+ 
+ 	pfd[0].fd = sock;
+ 	pfd[0].events = POLLIN;
+-	if (safe_poll(pfd, 1, waittime * 1000) > 0)
++	if ((delta_us > 0) && (safe_poll(pfd, 1, delta_us / 1000) > 0))
+ 		cc = recvfrom(sock, packet, sizeof(packet), 0,
+ 			    (struct sockaddr *)fromp, &fromlen);
+ 	return cc;
+@@ -1232,7 +1233,7 @@
+ 			t1 = monotonic_us();
+ 			send_probe(++seq, ttl);
+ 			++sentfirst;
+-			while ((cc = wait_for_reply(rcvsock, from)) != 0) {
++			while ((cc = wait_for_reply(rcvsock, from, t1)) != 0) {
+ 				t2 = monotonic_us();
+ 				i = packet_ok(packet, cc, from, seq);
+ 				/* Skip short packet */

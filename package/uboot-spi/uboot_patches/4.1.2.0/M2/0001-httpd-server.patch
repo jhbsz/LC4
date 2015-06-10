@@ -1,0 +1,2138 @@
+--- Uboot-spi-4.1.2.0/common/cmd_net.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/common/cmd_net.c	2014-05-16 19:24:21.401710983 +0800
+@@ -65,6 +65,30 @@
+ 	"[loadAddress] [bootfilename]\n"
+ );
+ #endif
++int do_emergency (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++#ifdef DEBUG
++    printf("File: %s, Func: %s, Line: %d\n , FLAG: %d\n , CHAR : %s\n", __FILE__,__FUNCTION__ , __LINE__,flag,argv);
++#endif
++    return netboot_common (HTTP, cmdtp, argc, argv);
++}
++
++U_BOOT_CMD(
++        httpd,  3,  1,  do_emergency,
++        "tftpboot- boot image via network using TFTP protocol\n",
++        "[loadAddress] [bootfilename]\n"
++);
++
++int do_http_recover(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++    emergency_config(6, argv);
++    argc= 3;
++    setenv("autostart", "no");
++    do_emergency(cmdtp, 0, argc, argv);
++
++    unsigned int load_address = simple_strtoul(argv[1], NULL, 16);
++    raspi_erase_write((u8 *)load_address, CFG_KERN_ADDR-CFG_FLASH_BASE, NetBootFileXferSize);
++}
+ 
+ #ifdef RT2880_U_BOOT_CMD_OPEN
+ #ifdef RALINK_CMDLINE
+@@ -160,13 +184,10 @@
+ 	int   rcode = 0;
+ 	int   size;
+ 
+-
+-		printf("\n netboot_common, argc= %d \n", argc);
+ 	/* pre-set load_addr */
+ 	if ((s = getenv("loadaddr")) != NULL) {
+ 		load_addr = simple_strtoul(s, NULL, 16);
+ 	}
+-
+ 	switch (argc) {
+ 	case 1:
+ 		break;
+@@ -182,21 +203,18 @@
+ 		}
+ 		break;
+ 
+-	case 3:	load_addr = simple_strtoul(argv[1], NULL, 16);
++	case 3:	
++        load_addr = simple_strtoul(argv[1], NULL, 16);
+ 		copy_filename (BootFile, argv[2], sizeof(BootFile));
+-   #ifdef DEBUG		
+-      printf("load addr= 0x%08x\n", load_addr);
+-      printf("boot file= %s\n", BootFile);
+-   #endif      
+ 		break;
+ 
+-	default: printf ("Usage:\n%s\n", cmdtp->usage);
++	default: 
++        printf ("Usage:\n%s\n", cmdtp->usage);
+ 		return 1;
+ 	}
+ 
+ 	if ((size = NetLoop(proto)) < 0)
+ 		return 1;
+-   printf("NetBootFileXferSize= %08x\n", size);
+    
+ 	/* NetLoop ok, update environment */
+ #if (CONFIG_COMMANDS & CFG_CMD_ENV)
+@@ -219,10 +237,10 @@
+       if(modifies) {
+          setenv("autostart", "no");
+          setenv ("bootfile", BootFile);
+-      #ifdef DEBUG         
++#ifdef DEBUG         
+          s = getenv("bootfile");
+ 	      printf("save bootfile= %s\n", s);
+-      #endif
++#endif
+ #if (CONFIG_COMMANDS & CFG_CMD_ENV)
+          saveenv();		
+ #endif
+--- Uboot-spi-4.1.2.0/drivers/rt2880_eth.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/drivers/rt2880_eth.c	2014-05-16 10:22:03.756839652 +0800
+@@ -2296,17 +2296,14 @@
+ 		if ( (*rxd_info & BIT(31)) == 0 )
+ 		{
+ 			hdr_len =0;
+-			break;
++                break;
+ 		}
+ 
+-		udelay(1);
+ 			length = rx_ring[rx_dma_owner_idx0].rxd_info2.PLEN0;
+-
+-		if(length == 0)
++        if(length == 0)
+ 		{
+ 			printf("\n Warring!! Packet Length has error !!,In normal mode !\n");
+ 		}
+-
+ #if defined (PDMA_NEW)
+ 		if(rx_ring[rx_dma_owner_idx0].rxd_info4.SP == 6)
+ #else
+--- Uboot-spi-4.1.2.0/include/configs/rt2880.h	2014-05-19 10:15:31.000000000 +0800
++++ Uboot-spi-4.1.2.0/include/configs/rt2880.h	2014-05-16 14:48:42.929268096 +0800
+@@ -79,6 +79,14 @@
+ 
+ #define CONFIG_BAUDRATE		57600
+ 
++#ifndef XMK_STR
++#define XMK_STR(x)  #x
++#endif
++#ifndef MK_STR
++#define MK_STR(x)   XMK_STR(x)
++#endif
++
++#define CONFIG_HTTP_IP 192.168.60.1
+ #define CONFIG_SERVERIP 10.10.10.3
+ #define CONFIG_IPADDR 10.10.10.123
+ #define CONFIG_ETHADDR "00:AA:BB:CC:DD:10"
+@@ -138,7 +146,6 @@
+ #define CFG_SDRAM_BASE		0x80000000
+ #endif
+ 
+-
+ /* 
+  * for TEST 
+  */
+--- Uboot-spi-4.1.2.0/include/net.h	2014-05-19 10:15:31.000000000 +0800
++++ Uboot-spi-4.1.2.0/include/net.h	2014-05-14 16:49:24.691178363 +0800
+@@ -60,6 +60,7 @@
+  *	alignment in memory.
+  *
+  */
++#define CONFIG_NET_VLAN
+ 
+ #ifdef CFG_RX_ETH_BUFFER
+ # define PKTBUFSRX	CFG_RX_ETH_BUFFER
+@@ -168,29 +169,131 @@
+ 
+ #define IPPROTO_ICMP	 1	/* Internet Control Message Protocol	*/
+ #define IPPROTO_UDP	17	/* User Datagram Protocol		*/
++#define IPPROTO_TCP    6   /* Transfer Control Protocol        */
+ 
+ /*
+  *	Internet Protocol (IP) header.
+  */
+ typedef struct {
+-	uchar		ip_hl_v;	/* header length and version	*/
+-	uchar		ip_tos;		/* type of service		*/
+-	ushort		ip_len;		/* total length			*/
+-	ushort		ip_id;		/* identification		*/
+-	ushort		ip_off;		/* fragment offset field	*/
+-	uchar		ip_ttl;		/* time to live			*/
+-	uchar		ip_p;		/* protocol			*/
+-	ushort		ip_sum;		/* checksum			*/
+-	IPaddr_t	ip_src;		/* Source IP address		*/
+-	IPaddr_t	ip_dst;		/* Destination IP address	*/
+-	ushort		udp_src;	/* UDP source port		*/
+-	ushort		udp_dst;	/* UDP destination port		*/
+-	ushort		udp_len;	/* Length of UDP packet		*/
+-	ushort		udp_xsum;	/* Checksum			*/
++    uchar		ip_hl_v;	/* header length and version	*/
++    uchar		ip_tos;		/* type of service		*/
++    ushort		ip_len;		/* total length			*/
++    ushort		ip_id;		/* identification		*/
++    ushort		ip_off;		/* fragment offset field	*/
++    uchar		ip_ttl;		/* time to live			*/
++    uchar		ip_p;		/* protocol			*/
++    ushort		ip_sum;		/* checksum			*/
++    IPaddr_t	ip_src;		/* Source IP address		*/
++    IPaddr_t	ip_dst;		/* Destination IP address	*/
++    ushort		udp_src;	/* UDP source port		*/
++    ushort		udp_dst;	/* UDP destination port		*/
++    ushort		udp_len;	/* Length of UDP packet		*/
++    ushort		udp_xsum;	/* Checksum			*/
+ } IP_t;
++#if 1
++typedef struct {
++    uchar       ip_hl_v;    /* header length and version    */
++    uchar       ip_tos;     /* type of service      */
++    ushort      ip_len;     /* total length         */
++    ushort      ip_id;      /* identification       */
++    ushort      ip_off;     /* fragment offset field    */
++    uchar       ip_ttl;     /* time to live         */
++    uchar       ip_p;       /* protocol         */
++    ushort      ip_sum;     /* checksum         */
++    IPaddr_t    ip_src __attribute__ ((packed));        /* Source IP address        */
++    IPaddr_t    ip_dst __attribute__ ((packed));        /* Destination IP address   */
++    ushort      tcp_src;        /* TCP source port      */
++    ushort      tcp_dst;        /* TCP destination port     */
++    uint32_t    tcp_seq __attribute__ ((packed));
++    uint32_t    tcp_ack __attribute__ ((packed));
++#if 0
++    if 0
++#ifdef  __MIPSEB__ //Big endian
++        uchar           tcp_off:4;  /* data offset */
++    uchar           tcp_x2:4;       /* (unused) */  
++#else   //__MIPSEL__
++    uchar           tcp_x2:4;   /* data offset */
++    uchar           tcp_off:4;      /* (unused) */  
++#endif
++#else
++    uchar       tcp_off;
++#endif
++    uchar       tcp_flags;
++    ushort      tcp_win;                                /* window */
++    ushort      tcp_sum;                                /* checksum */
++    ushort      tcp_urgp;
++} TCPIP_t;
++typedef struct {
++    uchar       ip_hl_v;    /* header length and version    */
++    uchar       ip_tos;     /* type of service      */
++    ushort      ip_len;     /* total length         */
++    ushort      ip_id;      /* identification       */
++    ushort      ip_off;     /* fragment offset field    */
++    uchar       ip_ttl;     /* time to live         */
++    uchar       ip_p;       /* protocol         */
++    ushort      ip_sum;     /* checksum         */
++    IPaddr_t    ip_src __attribute__ ((packed));        /* Source IP address        */
++    IPaddr_t    ip_dst __attribute__ ((packed));        /* Destination IP address   */
++    ushort      tcp_src;        /* TCP source port      */
++    ushort      tcp_dst;        /* TCP destination port     */
++    uint32_t    tcp_seq __attribute__ ((packed));
++    uint32_t    tcp_ack __attribute__ ((packed));
++#if 0
++#ifdef  __MIPSEB__ //Big endian
++    uchar           tcp_off:4;  /* data offset */
++    uchar           tcp_x2:4;       /* (unused) */  
++#else   //__MIPSEL__
++    uchar           tcp_x2:4;   /* data offset */
++    uchar           tcp_off:4;      /* (unused) */  
++#endif
++#else
++    uchar       tcp_off;
++#endif
++    uchar       tcp_flags;
++    ushort      tcp_win;                                /* window */
++    ushort      tcp_sum;                                /* checksum */
++    ushort      tcp_urgp;
++    ushort      opt_MSS;
++    ushort      opt_value;
++} TCPIP_Option_t;
++#define     TCP_FIN     0x01
++#define     TCP_SYN 0x02
++#define     TCP_RST     0x04
++#define     TCP_PUSH    0x08
++#define     TCP_ACK     0x10
++#define     TCP_URG 0x20
++#else
++typedef struct {
++    ushort      tcp_src;        /* TCP source port      */
++    ushort      tcp_dst;        /* TCP destination port     */
++    uint32_t    tcp_seq __attribute__ ((packed));
++    uint32_t    tcp_ack __attribute__ ((packed));
++#ifdef  __MIPSEB__ //Big endian
++    uchar           tcp_off:4,  /* data offset */
++                    tcp_x2:4;       /* (unused) */  
++#else   //__MIPSEL__
++    uchar           tcp_x2:4,   /* data offset */
++                    tcp_off:4;      /* (unused) */  
++#endif
++    uchar           tcp_flags;
++#define   TCP_FIN       0x01
++#define     TCP_SYN     0x02
++#define     TCP_RST     0x04
++#define     TCP_PUSH    0x08
++#define     TCP_ACK     0x10
++#define     TCP_URG     0x20
++    ushort      tcp_win;                                /* window */
++    ushort      tcp_sum;                                /* checksum */
++    ushort      tcp_urgp;
++} TCP_t;
++#endif
+ 
+ #define IP_HDR_SIZE_NO_UDP	(sizeof (IP_t) - 8)
+ #define IP_HDR_SIZE		(sizeof (IP_t))
++#define TCPIP_HDR_SIZE      (sizeof (TCPIP_t))
++#define TCPIP_HDR_SIZE_NO_IP        (sizeof (TCPIP_t)-IP_HDR_SIZE_NO_UDP)
++#define TCPIP_OPT_HDR_SIZE      (sizeof (TCPIP_Option_t))
++#define TCPIP_OPT_HDR_SIZE_NO_IP        (sizeof (TCPIP_Option_t)-IP_HDR_SIZE_NO_UDP)
+ 
+ 
+ /*
+@@ -331,11 +434,19 @@
+ #define NETLOOP_SUCCESS		3
+ #define NETLOOP_FAIL		4
+ 
++extern int EMERGENCY_MODE; //check if into EMERGENCY MODE
++extern uchar    NetTcpDestMAC[];
++
++extern uchar *httpdReplyData; //httpd reply web page to client
++extern int Listen_FG;
++extern int sendresult_flag;   //0:start 1:fail 2:reset
++
+ #ifdef CONFIG_NET_MULTI
+ extern int		NetRestartWrap;		/* Tried all network devices	*/
+ #endif
+ 
+-typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS } proto_t;
++//typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS } proto_t;
++typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, HTTP } proto_t;
+ 
+ /* from net/net.c */
+ extern char	BootFile[128];			/* Boot File name		*/
+@@ -368,9 +479,14 @@
+ /* Set IP header */
+ extern void	NetSetIP(volatile uchar *, IPaddr_t, int, int, int);
+ 
++/* Set IP and TCP header */
++extern void    NetSetIP_TCP(volatile uchar *, IPaddr_t, int, int, uchar, int);
++
+ /* Checksum */
+ extern int	NetCksumOk(uchar *, int);	/* Return true if cksum OK	*/
+ extern uint	NetCksum(uchar *, int);		/* Calculate the checksum	*/
++extern uint NetCksum2(uchar *, int, ushort );       /* Calculate the checksum   */
++extern unsigned short cks_partial(void *, unsigned short, long);
+ 
+ /* Set callbacks */
+ extern void	NetSetHandler(rxhand_f *);	/* Set RX packet handler	*/
+@@ -382,6 +498,11 @@
+ /* Transmit UDP packet, performing ARP request if needed */
+ extern int	NetSendUDPPacket(uchar *ether, IPaddr_t dest, int dport, int sport, int len);
+ 
++#if 1
++/* Transmit TCP packet */
++extern int  NetSendTCPPacket(uchar *ether, IPaddr_t dest, int dport, int sport, uchar tcpFlag, int len);
++#endif
++
+ /* Processes a received packet */
+ extern void	NetReceive(volatile uchar *, int);
+ 
+--- Uboot-spi-4.1.2.0/lib_generic/string.c	2014-05-19 10:15:33.000000000 +0800
++++ Uboot-spi-4.1.2.0/lib_generic/string.c	2014-05-14 18:55:41.450922259 +0800
+@@ -26,7 +26,7 @@
+ #define __HAVE_ARCH_STRNICMP
+ #define __HAVE_ARCH_STRCPY
+ #define __HAVE_ARCH_STRNCPY
+-#define __HAVE_ARCH_STRCAT
++//#define __HAVE_ARCH_STRCAT
+ #define __HAVE_ARCH_STRNCAT
+ #define __HAVE_ARCH_STRCMP
+ #define __HAVE_ARCH_STRNCMP
+@@ -38,7 +38,7 @@
+ #define __HAVE_ARCH_STRSWAB
+ #define __HAVE_ARCH_BCOPY
+ #define __HAVE_ARCH_MEMSCAN
+-#define __HAVE_ARCH_STRSTR
++//#define __HAVE_ARCH_STRSTR
+ #define __HAVE_ARCH_MEMCHR
+ 
+ #ifndef __HAVE_ARCH_STRNICMP
+--- Uboot-spi-4.1.2.0/lib_mips/board.c	2014-05-19 10:15:31.000000000 +0800
++++ Uboot-spi-4.1.2.0/lib_mips/board.c	2014-05-16 18:52:07.293659189 +0800
+@@ -802,6 +802,7 @@
+ #define SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL 7
+ #define SEL_LOAD_BOOT_SDRAM             8
+ #define SEL_LOAD_BOOT_WRITE_FLASH       9
++#define SEL_EMERGENCY               6
+ 
+ 
+ void OperationSelect(void)
+@@ -813,12 +814,42 @@
+ #ifdef RALINK_CMDLINE
+ 	printf("   %d: Entr boot command line interface.\n", SEL_ENTER_CLI);
+ #endif // RALINK_CMDLINE //
++    printf("   %d: Load Boot Loader code then write to Flash via HTTP. \n", SEL_EMERGENCY);
+ #ifdef RALINK_UPGRADE_BY_SERIAL
+ 	printf("   %d: Load Boot Loader code then write to Flash via Serial. \n", SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL);
+ #endif // RALINK_UPGRADE_BY_SERIAL //
+ 	printf("   %d: Load Boot Loader code then write to Flash via TFTP. \n", SEL_LOAD_BOOT_WRITE_FLASH);
+ }
+ 
++void filename_copy (uchar *dst, uchar *src, int size)
++{
++    *dst = '"';
++    dst++;
++    while ((size > 0) && *src && (*src != '"')) {
++        *dst++ = *src++;
++        size--;
++    }
++    *dst++ = '"';
++    *dst = '\0';
++}
++
++int emergency_config(int type, char *argv[])
++{
++    /*Set Http Server ip to 192.168.60.1*/
++    //setenv ("ipaddr", MK_STR(CONFIG_IPADDR));
++    setenv ("ipaddr", MK_STR(CONFIG_HTTP_IP));
++
++    if (type == SEL_EMERGENCY)
++    {
++#if defined (RT2880_ASIC_BOARD) || defined (RT2880_FPGA_BOARD)
++        argv[1] = "0x8a100000";
++#else
++        argv[1] = "0x80100000";
++#endif
++    }
++    return 0;
++}
++
+ int tftp_config(int type, char *argv[])
+ {
+ 	char *s;
+@@ -1810,21 +1841,53 @@
+ 	    timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
+ 	}
+ 
+-	OperationSelect();   
+-	while (timer1 > 0) {
+-		--timer1;
+-		/* delay 100 * 10ms */
+-		for (i=0; i<100; ++i) {
+-			if ((my_tmp = tstc()) != 0) {	/* we got a key press	*/
+-				timer1 = 0;	/* no more delay	*/
+-				BootType = getc();
+-				if ((BootType < '0' || BootType > '5') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
+-					BootType = '3';
+-				printf("\n\rYou choosed %c\n\n", BootType);
+-				break;
+-			}
+-			udelay (10000);
+-		}
++    /*Set Power Button input direction*/
++    //rt7620_gpio_init();
++
++#define RALINK_INTCL_BASE 0xB0000200
++#define RALINK_PIO_BASE 0xB0000600
++#define RALINK_IRQ_ADDR         RALINK_INTCL_BASE
++#define RALINK_PRGIO_ADDR       RALINK_PIO_BASE 
++
++#define RALINK_SYSCTL_BASE 0xB0000000
++#define RALINK_SYSCTL_GPIOMODE  (RALINK_SYSCTL_BASE + 0x60)
++
++#define RALINK_REG_PIORESET     (RALINK_PRGIO_ADDR + 0x30)
++#define RALINK_REG_PIO7140RESET     (RALINK_PRGIO_ADDR + 0x70)
++#define RALINK_GPIO_POWER_NUM 41
++#define RALINK_GPIO_RESET_NUM 44
++
++    unsigned long tmp;
++    tmp = le32_to_cpu(*(volatile u32 *)(RALINK_SYSCTL_GPIOMODE));
++    tmp = tmp | 0x00008000;
++    *(volatile u32 *)(RALINK_SYSCTL_GPIOMODE) = tmp;
++    /* Set DIR IN */
++    tmp = le32_to_cpu(*(volatile u32 *)(RALINK_PRGIO_ADDR + 0x74));
++    tmp = tmp & ~(1 << (RALINK_GPIO_RESET_NUM - 40));
++    *(volatile u32 *)(RALINK_PRGIO_ADDR + 0x74) = tmp;
++
++    OperationSelect();   
++    while (timer1 > 0) {
++        --timer1;
++            /* EZP : handle button push */
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_PRGIO_ADDR + 0x70));
++        if ((tmp & (1 << (RALINK_GPIO_RESET_NUM - 40))) == 0)
++        {
++            BootType = '6';
++            break;
++        }
++        /* delay 100 * 10ms */
++        for (i=0; i<100; ++i) {
++            if ((my_tmp = tstc()) != 0) {	/* we got a key press	*/
++                timer1 = 0;	/* no more delay	*/
++                BootType = getc();
++                if ((BootType < '0' || BootType > '5') && (BootType != '6') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
++                	BootType = '3';
++                printf("\n\rYou choosed %c\n\n", BootType);
++                break;
++            }
++            udelay (10000);
++        }
+ 		printf ("\b\b\b%2d ", timer1);
+ 	}
+ 	putc ('\n');
+@@ -1834,8 +1897,9 @@
+ 		argv[1] = &addr_str[0];
+ 		printf("   \n3: System Boot system code via Flash.\n");
+ 		do_bootm(cmdtp, 0, 2, argv);
++        BootType = '6';
+ 	}
+-	else {
++	{
+ 		char *argv[4];
+ 		int argc= 3;
+ 
+@@ -1847,6 +1911,23 @@
+ #endif
+ 
+ 		switch(BootType) {
++        case '6':
++            do_http_recover(cmdtp, 0, argc, argv);
++#if 0            
++            emergency_config(SEL_EMERGENCY, argv);
++            argc= 3;
++            setenv("autostart", "no");
++            do_emergency(cmdtp, 0, argc, argv);
++			if (1) {
++				unsigned int load_address = simple_strtoul(argv[1], NULL, 16);
++				raspi_erase_write((u8 *)load_address, CFG_KERN_ADDR-CFG_FLASH_BASE, NetBootFileXferSize);
++			}
++			argc = 4;
++			argv[0]= "cp.linux";
++			do_mem_cp(cmdtp, 0, argc, argv);
++			argc= 2;
++#endif
++            break;
+ 		case '1':
+ 			printf("   \n%d: System Load Linux to SDRAM via TFTP. \n", SEL_LOAD_LINUX_SDRAM);
+ 			tftp_config(SEL_LOAD_LINUX_SDRAM, argv);           
+--- Uboot-spi-4.1.2.0/net/eth.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/eth.c	2014-05-14 14:23:50.479581470 +0800
+@@ -56,6 +56,7 @@
+ extern int rt2880_eth_initialize(bd_t *bis);
+ 
+ static struct eth_device *eth_devices, *eth_current;
++static char rt2880_gmac1_mac[]=CONFIG_ETHADDR;
+ 
+ void eth_parse_enetaddr(const char *addr, uchar *enetaddr)
+ {
+@@ -126,7 +127,12 @@
+ int eth_initialize(bd_t *bis)
+ {
+ 	unsigned char rt2880_gmac1_mac[6];
+-	int eth_number = 0, regValue=0;
++	int regValue=0;
++
++    unsigned char enetvar[32], env_enetaddr[6];
++    int i, eth_number = 0;
++    char *tmp, *end;
++
+ 
+ 	eth_devices = NULL;
+ 	eth_current = NULL;
+@@ -232,7 +238,15 @@
+ 				eth_current = dev;
+ 				puts (" [PRIME]");
+ 			}
+-
++            sprintf(enetvar, eth_number ? "eth%daddr" : "ethaddr", eth_number);
++            tmp = getenv (enetvar);
++            tmp = rt2880_gmac1_mac;
++            for (i=0; i<6; i++) {
++                env_enetaddr[i] = tmp ? simple_strtoul(tmp, &end, 16) : 0;
++                if (tmp)
++                        tmp = (*end) ? end+1 : end;
++            }
++            printf("\n");
+ #define GMAC0_OFFSET    0x28
+ #define GDMA1_MAC_ADRL  0x2C
+ #define GDMA1_MAC_ADRH  0x30
+@@ -248,7 +262,32 @@
+ 			memmove(rt2880_gmac1_mac, 
+ 				CFG_FACTORY_ADDR + GMAC0_OFFSET, 6);
+ #endif
++            if (memcmp(env_enetaddr, "\0\0\0\0\0\0", 6)) {
++                if (memcmp(dev->enetaddr, "\0\0\0\0\0\0", 6) &&
++                        memcmp(dev->enetaddr, env_enetaddr, 6))
++                {
++                    printf ("\nWarning: %s MAC addresses don't match:\n",
++                            dev->name);
++                    printf ("Address in SROM is         "
++                            "%02X:%02X:%02X:%02X:%02X:%02X\n",
++                            dev->enetaddr[0], dev->enetaddr[1],
++                            dev->enetaddr[2], dev->enetaddr[3],
++                            dev->enetaddr[4], dev->enetaddr[5]);
++                    printf ("Address in environment is  "
++                            "%02X:%02X:%02X:%02X:%02X:%02X\n",
++                            env_enetaddr[0], env_enetaddr[1],
++                            env_enetaddr[2], env_enetaddr[3],
++                            env_enetaddr[4], env_enetaddr[5]);
++                }
++
++                memcpy(dev->enetaddr, env_enetaddr, 6);
++            }
++
++            eth_number++;
++            dev = dev->next;
++        } while(dev != eth_devices);
+ 
++#if 0
+ 			//if flash is empty, use default mac address
+ 			if (memcmp(rt2880_gmac1_mac, empty_mac, 6) == 0)
+ 				eth_parse_enetaddr(CONFIG_ETHADDR, rt2880_gmac1_mac);
+@@ -269,7 +308,7 @@
+ 			eth_number++;
+ 			dev = dev->next;
+ 		} while(dev != eth_devices);
+-
++#endif
+ #ifdef CONFIG_NET_MULTI
+ 		/* update current ethernet name */
+ 		if (eth_current) {
+--- Uboot-spi-4.1.2.0/net/net.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/net.c	2014-05-16 19:11:21.509690098 +0800
+@@ -72,6 +72,7 @@
+ #include <command.h>
+ #include <net.h>
+ #include "bootp.h"
++#include "httpd.h"
+ #include "tftp.h"
+ #include "rarp.h"
+ //#include "nfs.h"
+@@ -94,7 +95,8 @@
+ #if 0
+ #define ET_DEBUG
+ #endif
+-
++#define CONFIG_COMMANDS 1
++#define CFG_CMD_PING 1
+ /** BOOTP EXTENTIONS **/
+ 
+ IPaddr_t	NetOurSubnetMask=0;		/* Our subnet mask (0=unknown)	*/
+@@ -198,7 +200,40 @@
+ //kaiker
+ extern BUFFER_ELEM *rt2880_free_buf_entry_dequeue(VALID_BUFFER_STRUCT *hdr);
+ 
+-
++//==================================================
++/*=======================================
++ *   For TCP using
++ *   =======================================*/
++#define RL_DEBUG 0
++int EMERGENCY_MODE=0;
++/* EZP: do not use unallocated pointer, use array instead. */
++/*uchar *NetTcpDestMAC; */  /* MAC address of destination   */
++uchar    NetTcpDestMAC[12];
++
++static unsigned int seq_num __attribute__ ((packed));
++static unsigned int ack_num __attribute__ ((packed));
++
++typedef struct {
++    uint32_t sa;
++    uint32_t da;
++    uchar mbz;
++    uchar pt;
++    ushort ln;
++}  TCPfakehdr;
++
++TCPfakehdr fh;
++/* EZP: set Listen_FG initial value */
++int Listen_FG = 0;
++int sendresult_flag;   //0:start 1:fail 2:reset
++
++uchar *httpdReplyData; //httpd reply web page to client
++
++extern int      HTTP_FileLen;
++extern int      MaxLen_flag;
++extern int      ip_src_port;
++//extern char   *file;  
++extern int  content_len; //data lengh;
++//===================================================
+ 
+ /*=======================================*/
+ //===================================================
+@@ -293,10 +328,11 @@
+ 	NetArpWaitPacketIP = 0;
+ 	NetArpWaitReplyIP = 0;
+ 	NetArpWaitTxPacket = NULL;
+-#ifdef DEBUG	
+-   printf("File: %s, Func: %s, Line: %d\n", __FILE__,__FUNCTION__ , __LINE__);
+-#endif   
+-//
++#if ET_DEBUG    
++    debug("File: %s, Func: %s, Line: %d\n", __FILE__,__FUNCTION__ , __LINE__);
++#endif
++
++#if 1
+ 	if (!NetTxPacket) {
+ 		int	i;
+ 		BUFFER_ELEM *buf;
+@@ -306,9 +342,10 @@
+ 		buf = rt2880_free_buf_entry_dequeue(&rt2880_free_buf_list); 
+ 		NetTxPacket = buf->pbuf;
+ 
++#if ET_DEBUG    
+ 		debug("\n NetTxPacket = 0x%08X \n",NetTxPacket);
++#endif        
+ 		for (i = 0; i < NUM_RX_DESC; i++) {
+-
+ 			buf = rt2880_free_buf_entry_dequeue(&rt2880_free_buf_list); 
+ 			if(buf == NULL)
+ 			{
+@@ -317,25 +354,36 @@
+ 				return (-1);
+ 			}
+ 			NetRxPackets[i] = buf->pbuf;
+-			//printf("\n NetRxPackets[%d] = 0x%08X\n",i,NetRxPackets[i]);
+ 		}
+ 	}
+-	
+-	NetTxPacket = KSEG1ADDR(NetTxPacket);
++#else
++    if (!NetTxPacket) {
++        int i;
++        NetTxPacket = &PktBuf[0] + (PKTALIGN - 1);
++        NetTxPacket -= (ulong)NetTxPacket % PKTALIGN;
++
++        printf("\n NetTxPacket = 0x%08X \n",NetTxPacket);
++        for (i = 0; i < PKTBUFSRX; i++) {
++            NetRxPackets[i] = NetTxPacket + (i+1)*PKTSIZE_ALIGN;
++            printf("\n NetRxPackets[%d] = 0x%08X\n",i,NetRxPackets[i]);
++        }
++    }
++#endif
+ 
+-	printf("\n KSEG1ADDR(NetTxPacket) = 0x%08X \n",NetTxPacket);
++	NetTxPacket = KSEG1ADDR(NetTxPacket);
+ 
+ 	if (!NetArpWaitTxPacket) {
+ 		NetArpWaitTxPacket = &NetArpWaitPacketBuf[0] + (PKTALIGN - 1);
+ 		NetArpWaitTxPacket -= (ulong)NetArpWaitTxPacket % PKTALIGN;
+ 		NetArpWaitTxPacketSize = 0;
+ 	}
++#if ET_DEBUG
+ 	printf("\n NetLoop,call eth_halt ! \n");
++#endif    
+ 	eth_halt();
+ #ifdef CONFIG_NET_MULTI
+ 	eth_set_current();
+ #endif
+-	printf("\n NetLoop,call eth_init ! \n");
+ 	if (eth_init(bd) < 0)
+ 	{
+ 	    printf("\n eth_init is fail !!\n");
+@@ -358,6 +406,28 @@
+ 	 */
+ 
+ 	switch (protocol) {
++        case HTTP:
++            NetCopyIP(&NetOurIP, &bd->bi_ip_addr);
++            NetOurGatewayIP = getenv_IPaddr ("gatewayip");
++            NetOurSubnetMask= getenv_IPaddr ("netmask");
++            NetOurVLAN = getenv_VLAN("vlan");
++            NetOurNativeVLAN = getenv_VLAN("nvlan");
++            NetServerIP = getenv_IPaddr ("serverip");
++
++#if 0
++            printf("RL trace:NetOurIP=%x\n",NetOurIP);
++            printf("RL trace:NetOurGatewayIP=%x\n",NetOurGatewayIP);
++            printf("RL trace:NetOurSubnetMask=%x\n",NetOurSubnetMask);
++            printf("RL trace:NetOurVLAN=%x\n",NetOurVLAN);
++            printf("RL trace:NetOurNativeVLAN=%x\n",NetOurNativeVLAN);
++            printf("RL trace:NetServerIP=%x\n",NetServerIP);
++#endif
++
++            puts("==================================\n");
++            puts("   Emergency(HTTPD >_<|) START !!\n");
++            puts("==================================\n");
++            break;
++
+ #if (CONFIG_COMMANDS & CFG_CMD_NFS)
+ 	case NFS:
+ #endif
+@@ -373,8 +443,27 @@
+ 		NetOurVLAN = getenv_VLAN("vlan");
+ 		NetOurNativeVLAN = getenv_VLAN("nvlan");
+ #endif
++        switch (protocol) {
++#if (CONFIG_COMMANDS & CFG_CMD_NFS)
++            case NFS:
++#endif
++            case NETCONS:
++            case TFTP:
++                NetServerIP = getenv_IPaddr ("serverip");
++                break;
++#if (CONFIG_COMMANDS & CFG_CMD_PING)
++            case PING:
++                /* nothing */
++                printf("\n Ping,nothing!\n");
++                break;
++#endif
++            default:
++                break;
++        }
++
+ 		NetServerIP = getenv_IPaddr ("serverip");
+ 		break;
++
+ #if 0
+ 	case BOOTP:
+ 	case RARP:
+@@ -547,9 +637,6 @@
+ 		case NETLOOP_SUCCESS:
+ 			if (NetBootFileXferSize > 0) {
+ 				char buf[10];
+-				printf("Bytes transferred = %ld (%lx hex)\n",
+-					NetBootFileXferSize,
+-					NetBootFileXferSize);
+ 				sprintf(buf, "%lx", NetBootFileXferSize);
+ 				setenv("filesize", buf);
+ 
+@@ -699,6 +786,30 @@
+ 
+ 	return 0;	/* transmitted */
+ }
++int
++NetSendTCPPacket(uchar *ether, IPaddr_t dest, int dport, int sport, uchar tcpFlag, int len)
++{
++    uchar *pkt;
++
++    pkt = (uchar *)NetTxPacket;
++    pkt += NetSetEther (pkt, ether, PROT_IP);
++
++    // after trial and error, we seem can't transfer odd number
++    // bytes packet.
++    if ((len%2)==1)
++    {
++        len=len+1;
++    }
++
++    NetSetIP_TCP (pkt, dest, dport, sport, tcpFlag, len);
++    if(tcpFlag == TCP_SYN + TCP_ACK){
++        (void) eth_send(NetTxPacket, (pkt - NetTxPacket) + TCPIP_OPT_HDR_SIZE + len);
++    }else{
++        (void) eth_send(NetTxPacket, (pkt - NetTxPacket) + TCPIP_HDR_SIZE + len);
++    }
++    return 0;   /* transmitted */
++}
++
+ 
+ #if (CONFIG_COMMANDS & CFG_CMD_PING)
+ static ushort PingSeqNo;
+@@ -1150,20 +1261,16 @@
+ #if (CONFIG_COMMANDS & CFG_CMD_CDP)
+ 	int iscdp;
+ #endif
+-	ushort cti = 0;
+-#ifdef CONFIG_NET_VLAN
+-	ushort vlanid = VLAN_NONE, myvlanid, mynvlanid;
+-#endif
++	ushort cti = 0 ,vlanid = VLAN_NONE, myvlanid, mynvlanid;
+ 
+ #ifdef ET_DEBUG
+-	printf("packet received\n");
++    printf("packet received\n");
+ #endif
+ 
+ 	NetRxPkt = inpkt;
+ 	NetRxPktLen = len;
+ 	et = (Ethernet_t *)inpkt;
+ 
+-
+ 	/* too small packet? */
+ 	if (len < ETHER_HDR_SIZE)
+ 	{
+@@ -1298,7 +1405,6 @@
+ 		}
+ 
+ 		if (NetReadIP(&arp->ar_data[16]) != NetOurIP) {
+-			//printf("\n (NetReadIP(&arp->ar_data[16]) != NetOurIP)  \n");
+ 			return;
+ 		}
+ 
+@@ -1337,6 +1443,9 @@
+ #ifdef CONFIG_NETCONSOLE
+ 				(*packetHandler)(0,0,0,0);
+ #endif
++                /* modify header, and transmit it */
++                memcpy(((Ethernet_t *)NetArpWaitTxPacket)->et_dest, NetArpWaitPacketMAC, 6);
++                (void) eth_send(NetArpWaitTxPacket, NetArpWaitTxPacketSize);
+ 
+ 				/* no arp request pending now */
+ 				NetArpWaitPacketIP = 0;
+@@ -1348,7 +1457,7 @@
+ 				 * immediately */
+ 				extern int TftpStarted;
+ 				if(TftpStarted == 1) {
+-				    TftpSend ();
++				    //TftpSend ();
+ 				}
+ 			}
+ 			return;
+@@ -1400,7 +1509,7 @@
+ 		}
+ 		len = ntohs(ip->ip_len);
+ #ifdef ET_DEBUG
+-		printf("len=%d, v=%02x\n", len, ip->ip_hl_v & 0xff);
++		printf("len=%d, v=%02x ,ntohs(ip_len)=%d\n", len, ip->ip_hl_v & 0xff,ntohs(ip->ip_len));
+ #endif
+ 		if ((ip->ip_hl_v & 0xf0) != 0x40) {
+ 			return;
+@@ -1425,58 +1534,361 @@
+ 		 * sees these messages: please contact me
+ 		 * (wd@denx.de), or - even better - send me the
+ 		 * necessary fixes :-)
+-		 *
+-		 * Note: in all cases where I have seen this so far
+-		 * it was a problem with the router configuration,
+-		 * for instance when a router was configured in the
+-		 * BOOTP reply, but the TFTP server was on the same
+-		 * subnet. So this is probably a warning that your
+-		 * configuration might be wrong. But I'm not really
+-		 * sure if there aren't any other situations.
+-		 */
+-		if (ip->ip_p == IPPROTO_ICMP) {
+-			ICMP_t *icmph = (ICMP_t *)&(ip->udp_src);
+-
+-			switch (icmph->type) {
+-			case ICMP_REDIRECT:
+-			if (icmph->code != ICMP_REDIR_HOST)
+-				return;
+-			puts (" ICMP Host Redirect to ");
+-			print_IPaddr(icmph->un.gateway);
+-			putc(' ');
+-				break;
++         *
++         * Note: in all cases where I have seen this so far
++         * it was a problem with the router configuration,
++         * for instance when a router was configured in the
++         * BOOTP reply, but the TFTP server was on the same
++         * subnet. So this is probably a warning that your
++         * configuration might be wrong. But I'm not really
++         * sure if there aren't any other situations.
++         */
++        if (ip->ip_p == IPPROTO_ICMP && EMERGENCY_MODE!=1) {
++            ICMP_t *icmph = (ICMP_t *)&(ip->udp_src);
++
++            switch (icmph->type) {
++                case ICMP_REDIRECT:
++                    if (icmph->code != ICMP_REDIR_HOST)
++                        return;
++                    puts (" ICMP Host Redirect to ");
++                    print_IPaddr(icmph->un.gateway);
++                    putc(' ');
++                    break;
+ #if (CONFIG_COMMANDS & CFG_CMD_PING)
+-			case ICMP_ECHO_REPLY:
+-				/*
+-				 *	IP header OK.  Pass the packet to the current handler.
+-				 */
+-				/* XXX point to ip packet */
+-				(*packetHandler)((uchar *)ip, 0, 0, 0);
+-				break;
++                case ICMP_ECHO_REPLY:
++                    /*
++                     *	IP header OK.  Pass the packet to the current handler.
++                     */
++                    /* XXX point to ip packet */
++                    (*packetHandler)((uchar *)ip, 0, 0, 0);
++                    break;
++#endif
++                default:
++                    return;
++            }
++        } else if (ip->ip_p != IPPROTO_UDP) {	/* Only UDP packets */
++#if 0
++            TCP_t *tcph = (TCP_t *)&(ip->udp_src);
++
++            printf("ntohs(tcph->tcp_src)=%d\n", ntohs(tcph->tcp_src));
++            printf("ntohs(tcph->tcp_dst)=%d\n", ntohs(tcph->tcp_dst));          
++            printf("tcph->tcp_seq)=%08X\n",ntohl(tcph->tcp_seq));
++            printf("tcph->tcp_ack)=%08X\n",ntohl(tcph->tcp_ack));
++            printf("tcph->tcp_off=0x%02x\n", tcph->tcp_off);
++            printf("tcph->tcp_x2=0x%02x\n", tcph->tcp_x2);
++            printf("tcph->tcp_flags=0x%02x\n", tcph->tcp_flags);
++            printf("tcph->tcp_win=0x%04x\n", ntohs(tcph->tcp_win));
++            printf("tcph->tcp_sum=0x%04x\n", ntohs(tcph->tcp_sum));
++            printf("tcph->tcp_urgp=0x%04x\n", ntohs(tcph->tcp_urgp));
++
++            if( tcph->tcp_flags == TCP_SYN )
++            {
++                printf("SYN\n");
++                ack_num = htonl(ntohl(NetReadIP(&tcph->tcp_seq))+1) ;
++                seq_num = 1000;
++                tcph->tcp_flags = TCP_SYN + TCP_ACK ;           
++            }
++            break;
++#else
++            TCPIP_t *tcpPkt = (TCPIP_t *)ip;
++            uchar *httpData;
++            int tcp_seg_len;
++            int tcp_data_len;
++            int nbtry;
++            //Save the src MAC address as we tcp dest MAC.
++            memcpy(NetTcpDestMAC, &et->et_src[0], 6);
++
++            //initiate the reply data;
++            httpdReplyData=NULL;
++            httpData = (char*)(tcpPkt + 1);
++#if 0
++            printf("ntohs(et->et_src)=%08X\n", ntohl(et->et_src));
++            printf("ntohl(tcpPkt->ip_src)=%08X\n", ntohl(tcpPkt->ip_src));
++            printf("ntohl(tcpPkt->ip_dst)=%08X\n", ntohl(tcpPkt->ip_dst));
++            printf("ntohs(tcpPkt->tcp_src)=%d\n", ntohs(tcpPkt->tcp_src));
++            printf("ntohs(tcpPkt->tcp_dst)=%d\n", ntohs(tcpPkt->tcp_dst));
++            printf("tcpPkt->tcp_seq)=%08X\n",ntohl(tcpPkt->tcp_seq));
++            printf("tcpPkt->tcp_ack)=%08X\n",ntohl(tcpPkt->tcp_ack));
++            printf("tcpPkt->tcp_off=0x%0x\n", tcpPkt->tcp_off);
++            printf("tcpPkt->tcp_flags=0x%02x\n", tcpPkt->tcp_flags);
++            printf("tcpPkt->tcp_win=0x%04x\n", ntohs(tcpPkt->tcp_win));
++            printf("tcpPkt->tcp_sum=0x%04x\n", ntohs(tcpPkt->tcp_sum));
++            printf("tcpPkt->tcp_urgp=0x%04x\n", ntohs(tcpPkt->tcp_urgp));
+ #endif
+-			default:
+-				return;
+-			}
+-		} else if (ip->ip_p != IPPROTO_UDP) {	/* Only UDP packets */
+-			return;
+-		}
++            tcp_seg_len = ntohs(tcpPkt->ip_len) - ((tcpPkt->ip_hl_v & 0x0f)*4) ;
++            tcp_data_len = tcp_seg_len - ((tcpPkt->tcp_off >>4)*4);
++#if 0
++            ushort src_sum;
++            ushort chk_sum;
++            tcpPkt->ip_sum=0;
++            sumTmp = ~NetCksum((uchar *) tcpPkt, IP_HDR_SIZE_NO_UDP / 2);
++            printf("recalulate IP checksum=%x\n",sumTmp);
++            if ((tcp_seg_len%2)==1)
++            {
++                tcp_seg_len = tcp_seg_len +1;
++            }   
++            src_sum = tcpPkt->tcp_sum;
++            tcpPkt->tcp_sum=0;  
++
++            fh.sa  = tcpPkt->ip_src;
++            fh.da  = tcpPkt->ip_dst;
++            fh.mbz = 0;
++            fh.pt  = 6;
++            fh.ln  = htons(tcp_seg_len);
++
++            chk_sum = NetCksum( &fh, (sizeof fh)/2);
++            chk_sum = ~NetCksum2( &tcpPkt->tcp_src, tcp_seg_len/2, chk_sum);
++
++            printf("Compare checksum ? =%s\n",src_sum==chk_sum?"***OK***":"===Fail===");
++#endif
++            if(Listen_FG == 0)
++            {
++                if( tcpPkt->tcp_flags == TCP_SYN )
++                {
++                    puts("mode=0, Got SYN\n");
++                    ack_num = ntohl(tcpPkt->tcp_seq)+1 ;
++                    seq_num = 1000;
++                    tcpPkt->tcp_flags = TCP_SYN + TCP_ACK ;
++
++                    NetSendTCPPacket( NetTcpDestMAC, tcpPkt->ip_src, ntohs(tcpPkt->tcp_src), ntohs(tcpPkt->tcp_dst), tcpPkt->tcp_flags, 0);
++                }
++                else if(tcpPkt->tcp_flags == TCP_ACK)
++                {
++                    puts("mode=0, Got ACK\n");
++                    Listen_FG = 1;
++                }
++            }
++            else if(Listen_FG == 1) //Process web page transfer.
++            {
++                if(tcpPkt->tcp_flags == TCP_SYN)
++                    Listen_FG=0;
++
++                if(tcpPkt->tcp_flags == TCP_RST)
++                    Listen_FG=0;
++
++#if 0
++                if(tcpPkt->tcp_flags & TCP_ACK)
++                {
++                    printf("In listen mode, got ACK\n");
++                    ack_num = (ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++                    parser ( tcpPkt, tcp_data_len);                                                           
++                }
++#endif
++                if(tcpPkt->tcp_flags == TCP_ACK + TCP_PUSH)
++                {
++#if RL_DEBUG
++                    puts("In web page mode, got TCP_ACK + TCP_PUSH\n");
++#endif
++                    ack_num = (ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++                    parser ( tcpPkt, tcp_data_len);
++                }
++                else if(tcpPkt->tcp_flags == TCP_ACK + TCP_FIN )
++                {
++#if RL_DEBUG
++                    puts("In web page mode, got TCP_ACK + TCP_FIN\n");
++#endif
++                    ack_num = (ntohl(tcpPkt->tcp_seq)+ 1);
++                    tcpPkt->tcp_flags = TCP_ACK ;
++                    /*Set to standy !!*/
++                    Listen_FG=0;
++                    NetSendTCPPacket( NetTcpDestMAC, tcpPkt->ip_src, ntohs(tcpPkt->tcp_src), ntohs(tcpPkt->tcp_dst), tcpPkt->tcp_flags, 0);                                   
++                }
++                else if(tcpPkt->tcp_flags & TCP_ACK)
++                {
++#if RL_DEBUG
++                    printf("In listen mode, got ACK\n");
++#endif
++                    ack_num = (ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++                    parser ( tcpPkt, tcp_data_len);
++                }
++            }
++            else if(Listen_FG==2 && ip_src_port == ntohs(tcpPkt->tcp_src))
++            //else if(Listen_FG==2)
++            {
++                if(ntohl(tcpPkt->tcp_seq)==ack_num )
++                {
++                    if (tcpPkt->tcp_flags & TCP_ACK)
++                    {
++                        ack_num = (ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++                        tcpPkt->tcp_flags = TCP_ACK ;
++                        for (nbtry = 4; nbtry; --nbtry)
++                        {
++                            if (NetSendTCPPacket( NetTcpDestMAC, tcpPkt->ip_src, ntohs(tcpPkt->tcp_src), ntohs(tcpPkt->tcp_dst), tcpPkt->tcp_flags, 0) == 0) 
++                                break;
++
++                            udelay (10000);
++                        }
++
++                        if(MaxLen_flag ==0)
++                        {
++                            (void)memcpy((void *)(load_addr + HTTP_FileLen), httpData, tcp_data_len);
++
++                        }
++                        HTTP_FileLen=HTTP_FileLen+tcp_data_len;
++                        if(HTTP_FileLen >= content_len)
++                        {
++
++                            puts("Downlaod finish \n");
++#if RL_DEBUG
++                            printf("Receive HTTP Length= %d \n",HTTP_FileLen);
++#endif
++                            int i;
++                            int end_flag;
++                            char *file; //point to received data 
++                            char *org; //point  received data src address
++                            image_header_t  *fwHeader;
++
++                            file  =  (unsigned char *)(load_addr);
++                            org  =  (unsigned char *)(load_addr);
++                            i = HTTP_FileLen;
++                            while ( i--)
++                            {
++                                if (! strncmp(file,"\r\n\r\n",4))
++                                {
++#if RL_DEBUG
++                                    puts("take it !!\n");
++#endif                                    
++                                    break;
++                                }
++                                file++;
++                                HTTP_FileLen --;
++                            }
++                            file += 4 ;//toss "\r\n\r\n"
++                            HTTP_FileLen -= 4;
++
++#if RL_DEBUG
++                            printf("RL:  file head= %x \n", file);
++                            printf("RL:  F/W Length= %d \n", HTTP_FileLen);
++#endif
++
++                            if ( file[0]!=0x27 && file[1]!=0x05 && file[2]!=0x19 && file[3]!=0x56)
++                            {
++#if RL_DEBUG
++                                printf("\npaser two \n");
++#endif
++                                i = HTTP_FileLen;
++                                while ( i--)
++                                {
++                                    if (! strncmp(file,"\r\n\r\n",4))
++                                    {
++#if RL_DEBUG
++                                        puts("take it SONG YY !!");
++#endif                     
++                                        break;
++                                    }
++                                    file++;
++                                    HTTP_FileLen --;
++                                }
++                                file += 4 ;//toss "\r\n\r\n"
++                                HTTP_FileLen -= 4;
++                            }
++
++                            end_flag = 5;
++                            HTTP_FileLen -= 2;
++                            while ( end_flag )
++                            {
++                                if (!strncmp( file+HTTP_FileLen-1,"\r\n",2))
++                                {
++                                    end_flag--;
++                                    HTTP_FileLen -= 1;
++                                }
++                                HTTP_FileLen -= 1;
++                            }
++                            HTTP_FileLen += 1;
++                            for (i = 0 ; i < HTTP_FileLen ; i++)
++                                *org ++ = *file ++;
++                            org  =  (unsigned char *)(load_addr);
++                            fwHeader= (image_header_t  *)org;
++                            if ( ntohl(fwHeader->ih_magic) != IH_MAGIC )
++                            {
++                                puts("Check Run Image Type error.\n\n");
++                                sendresult_flag=1;
++                                parser2(tcpPkt);
++                                Listen_FG=1;
++                                return;
++                            }
++                            if ( ntohl(fwHeader->ih_size) > (HTTP_FileLen-sizeof(image_header_t)))
++                            {
++                                puts("Check Image Length error\n\n");
++                                sendresult_flag=1;//fail
++                                parser2(tcpPkt);
++                                Listen_FG=1;
++                                return;
++                            }
++#if RL_DEBUG
++                            printf("Real F/W Length= %d \n",HTTP_FileLen);
++#endif
++                            puts("Check header OK.\n");
++
++                            sendresult_flag=2;
++                            parser2(tcpPkt);
++
++                            NetBootFileXferSize = HTTP_FileLen;
++                            puts("Writing image to  Flash - wait for a second ... \n");
++
++                            puts ("\ndone\n");
++                            NetState = NETLOOP_SUCCESS;
++
++                        }
++                    }
++                }
++                else
++                {
++                    puts("WHY seq != ACK\n");
++                    sendresult_flag=1;
++                    parser2(tcpPkt);
++                    if (tcpPkt->tcp_flags & TCP_ACK)
++                    {
++                        tcpPkt->tcp_flags =TCP_ACK ;
++                        ack_num =(ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++                        NetSendTCPPacket( NetTcpDestMAC, tcpPkt->ip_src, ntohs(tcpPkt->tcp_src), ntohs(tcpPkt->tcp_dst), tcpPkt->tcp_flags, 0) ;
++
++                    }
++
++                }
++                if (tcpPkt->tcp_flags == TCP_SYN)
++                {
++                    puts("mode=2, GOT SYN\n");
++                    Listen_FG=0;
++                }
++            }
++#if 0
++            if(sendresult_flag==1)
++            {
++                ack_num =(ntohl(tcpPkt->tcp_seq)+ tcp_data_len);            
++            }
++            else if(sendresult_flag==2)
++            {
++                puts("OK!! \n");
++                ack_num =(ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
++            }
++#endif
++            /* EZP: we used array instead */
++            /* NetTcpDestMAC = NULL; */
++            break;
++#endif
++        }
++        else if (ip->ip_p == IPPROTO_UDP && EMERGENCY_MODE!=1)
++        {   /* Only UDP packets */
++
+ #endif
+ 
+ #ifdef CONFIG_NETCONSOLE
+-		nc_input_packet((uchar *)ip +IP_HDR_SIZE,
+-						ntohs(ip->udp_dst),
+-						ntohs(ip->udp_src),
+-						ntohs(ip->udp_len) - 8);
++            nc_input_packet((uchar *)ip +IP_HDR_SIZE,
++                    ntohs(ip->udp_dst),
++                    ntohs(ip->udp_src),
++                    ntohs(ip->udp_len) - 8);
+ #endif
+ 
+-		/*
+-		 *	IP header OK.  Pass the packet to the current handler.
+-		 */
+-		(*packetHandler)((uchar *)ip +IP_HDR_SIZE,
+-						ntohs(ip->udp_dst),
+-						ntohs(ip->udp_src),
+-						ntohs(ip->udp_len) - 8);
+-		break;
++            /*
++             *	IP header OK.  Pass the packet to the current handler.
++             */
++            (*packetHandler)((uchar *)ip +IP_HDR_SIZE,
++                    ntohs(ip->udp_dst),
++                    ntohs(ip->udp_src),
++                    ntohs(ip->udp_len) - 8);
++            break;
++        }
+ 	}
+ }
+ 
+@@ -1571,6 +1983,37 @@
+ 	xsum = (xsum & 0xffff) + (xsum >> 16);
+ 	return (xsum & 0xffff);
+ }
++unsigned
++NetCksum2(uchar * ptr, int len, ushort sum_s)
++{
++    ulong   sum_t;
++    ushort *tptr = (ushort *)ptr;
++
++    sum_t = 0;
++    sum_t += sum_s;
++    while (len-- > 0)
++        sum_t += *tptr++;
++    sum_t = (sum_t & 0xffff) + (sum_t >> 16);
++    sum_t = (sum_t & 0xffff) + (sum_t >> 16);
++    return (sum_t & 0xffff);
++}
++unsigned short cks_partial (void *_buf, unsigned short len, long sum)
++{
++    unsigned short *buf = _buf;
++
++    while (len > 1) {
++        sum += *buf++;
++        if (sum & 0x80000000)
++            sum = (sum & 0xffff) + (sum >> 16);
++        len -= 2;
++    }
++    if (len)
++        sum += (unsigned short) *(unsigned char *) buf;
++    while (sum >> 16)
++        sum = (sum & 0xffff) + (sum >> 16);
++
++    return sum;
++}
+ 
+ int
+ NetEthHdrSize(void)
+@@ -1655,6 +2098,161 @@
+ 	ip->ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2);
+ }
+ 
++#if 1
++void
++NetSetIP_TCP(volatile uchar * xip, IPaddr_t dest, int dport, int sport, uchar tcpFlag, int len)
++{
++    unsigned short sum;
++    unsigned short HTTP_length;
++
++    if(tcpFlag == TCP_SYN + TCP_ACK)
++    {
++        volatile TCPIP_Option_t *ip = (TCPIP_Option_t *)xip;
++        memcpy( (char*)(ip + 1), httpdReplyData, len ); //copy http data to tx packet
++        *(xip + sizeof (TCPIP_Option_t) + len) ='\0';
++        HTTP_length = len;
++
++        len += TCPIP_OPT_HDR_SIZE_NO_IP ; //tcp hdr + http data
++        if (len & 1)
++            xip[IP_HDR_SIZE_NO_UDP + len] = 0;
++        ip->ip_hl_v  = 0x45;        /* IP_HDR_SIZE / 4 (not including UDP) */
++        ip->ip_tos   = 0;
++        ip->ip_len   = htons(IP_HDR_SIZE_NO_UDP+ len); //total IP datagram size;
++        ip->ip_id    = htons(NetIPID++);
++        ip->ip_off   = htons(0x4000);   /* No fragmentation */
++        ip->ip_ttl   = 255;
++        ip->ip_p     = 6;       /* TCP */
++        ip->ip_sum   = 0;
++        NetCopyIP((void*)&ip->ip_src, &NetOurIP); /* already in network byte order */
++        NetCopyIP((void*)&ip->ip_dst, &dest);      /* - "" - */
++        ip->ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2);
++
++        ip->tcp_src = htons(sport);
++        ip->tcp_dst = htons(dport);
++        ip->tcp_flags = tcpFlag;
++
++        ip->tcp_seq = htonl(seq_num);
++        ip->tcp_ack = htonl(ack_num);
++        if(Listen_FG==0)
++        {
++            if(ip->tcp_flags == TCP_SYN + TCP_ACK)
++            {
++                seq_num = (seq_num+1) ;
++            }
++        }
++        else //send page mode
++        {
++            if ( ip->tcp_flags & TCP_SYN)
++            {
++                seq_num = seq_num+1 ;
++            }
++            if ( ip->tcp_flags  & TCP_FIN)
++            {
++                seq_num = seq_num+1 ;
++            }
++
++            if ( ip->tcp_flags & TCP_ACK)
++            {
++                seq_num = seq_num + HTTP_length ;
++            }
++        }
++        ip->tcp_off = 0x60;     //include option, total length 24bytes
++        ip->tcp_win = htons(0x400);     //....correct...1024
++        ip->tcp_sum = 0; //must set 0 before calculate checksum;
++        ip->tcp_urgp = 0;
++        ip->opt_MSS = htons(0x0204);
++        ip->opt_value = htons(0x0400);
++
++#if ET_DEBUG
++        printf("send tcp len =%d\n",len);
++#endif
++
++        fh.sa = ip->ip_src;
++        fh.da = ip->ip_dst;
++        fh.mbz = 0;
++        fh.pt = 6;
++        fh.ln = htons(len);
++
++        sum = NetCksum( (uchar *)&fh, (sizeof fh)/2);
++        sum = ~NetCksum2( (uchar *)&(ip->tcp_src), len/2, sum);
++        ip->tcp_sum = sum;
++
++    }
++    else
++    {
++        volatile TCPIP_t *ip = (TCPIP_t *)xip;
++        memcpy( (char*)(ip + 1), httpdReplyData, len ); //copy http data to tx packet
++        *(xip + sizeof (TCPIP_t) + len) ='\0';
++
++        HTTP_length = len;
++
++        len += TCPIP_HDR_SIZE_NO_IP ; //tcp hdr + http data
++        if (len & 1)
++            xip[IP_HDR_SIZE_NO_UDP + len] = 0;
++
++        ip->ip_hl_v  = 0x45;        /* IP_HDR_SIZE / 4 (not including UDP) */
++        ip->ip_tos   = 0;
++        ip->ip_len   = htons(IP_HDR_SIZE_NO_UDP+ len); //total IP datagram size;
++        ip->ip_id    = htons(NetIPID++);
++        ip->ip_off   = htons(0x4000);   /* No fragmentation */
++        ip->ip_ttl   = 255;
++        ip->ip_p     = 6;       /* TCP */
++        ip->ip_sum   = 0;
++        NetCopyIP((void*)&ip->ip_src, &NetOurIP); /* already in network byte order */
++        NetCopyIP((void*)&ip->ip_dst, &dest);      /* - "" - */
++        ip->ip_sum   = ~NetCksum((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2);
++
++        ip->tcp_src = htons(sport);
++        ip->tcp_dst = htons(dport);
++        ip->tcp_flags = tcpFlag;
++
++        ip->tcp_seq = htonl(seq_num);
++        ip->tcp_ack = htonl(ack_num);
++
++        if(Listen_FG==0)
++        {
++            if(ip->tcp_flags == TCP_SYN + TCP_ACK)
++            {
++                seq_num = (seq_num+1) ;
++                printf("next seq seq_num=%x;\n",seq_num);
++            }
++        }
++        else //send page mode
++        {
++            if ( ip->tcp_flags & TCP_SYN)
++            {
++                seq_num = seq_num+1 ;
++            }
++            if ( ip->tcp_flags  & TCP_FIN)
++            {
++                seq_num = seq_num+1 ;
++            }
++
++            if ( ip->tcp_flags & TCP_ACK)
++            {
++                seq_num = seq_num + HTTP_length ;
++            }
++        }
++        ip->tcp_off = 0x50;
++        ip->tcp_win = htons(0x400);     //....correct...1024
++        ip->tcp_sum = 0; //must set 0 before calculate checksum;
++        ip->tcp_urgp = 0;
++
++        fh.sa = ip->ip_src;
++        fh.da = ip->ip_dst;
++        fh.mbz = 0;
++        fh.pt = 6;
++        fh.ln = htons(len);
++
++        sum = NetCksum( (uchar*)&fh, (sizeof fh)/2);
++        sum = ~NetCksum2( (uchar*)&(ip->tcp_src), len/2, sum);
++        ip->tcp_sum = sum;
++    }
++}
++#endif
++
++
++
+ void copy_filename (uchar *dst, uchar *src, int size)
+ {
+ 	if (*src && (*src == '"')) {
+@@ -1701,7 +2299,7 @@
+ 	return (htonl(addr));
+ }
+ 
+-#ifdef CONFIG_NET_VLAN
++//#ifdef CONFIG_NET_VLAN
+ void VLAN_to_string(ushort x, char *s)
+ {
+ 	x = ntohs(x);
+@@ -1734,7 +2332,7 @@
+ {
+ 	return (string_to_VLAN(getenv(var)));
+ }
+-#endif // CONFIG_NET_VLAN //
++//#endif // CONFIG_NET_VLAN //
+ 
+ void print_IPaddr (IPaddr_t x)
+ {
+--- Uboot-spi-4.1.2.0/net/tftp.c	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/tftp.c	2014-05-14 14:59:28.817705733 +0800
+@@ -96,12 +96,13 @@
+ 		NetBootFileXferSize = newsize;
+ }
+ 
+-void TftpSend (void);
++static void TftpSend (void);
++//void TftpSend (void);
+ static void TftpTimeout (void);
+ 
+ /**********************************************************************/
+-
+-void
++//void
++static void
+ TftpSend (void)
+ {
+ 	volatile uchar *	pkt;
+@@ -307,7 +308,16 @@
+ static void
+ TftpTimeout (void)
+ {
+-	if (++TftpTimeoutCount > TIMEOUT_COUNT) {
++    int timeout_count = TIMEOUT_COUNT;
++    char *timeout_count_env = NULL;
++    if (timeout_count_env = getenv("tftptimeoutcount")){
++        timeout_count = (*timeout_count_env) - '0';
++        if((!timeout_count) || (timeout_count > TIMEOUT_COUNT)) {
++            timeout_count = TIMEOUT_COUNT;
++        }
++    }
++
++	if (++TftpTimeoutCount > timeout_count) {
+ 		puts ("\nRetry count exceeded; starting again\n");
+ 		NetStartAgain ();
+ 	} else {
+@@ -321,17 +331,34 @@
+ void
+ TftpStart (void)
+ {
+-	TftpStarted=1;
++    int timeout = TIMEOUT;
++    int timeout_count = TIMEOUT_COUNT;
++    char *timeout_env = NULL;
++    char *timeout_count_env = NULL;
++
++    TftpStarted=1;
++
++    if (BootFile[0] == '\0') {
++#if 0
++        IPaddr_t OurIP = ntohl(NetOurIP);
++        sprintf(default_filename, "%02lX%02lX%02lX%02lX.img",
++                OurIP & 0xFF,
++                (OurIP >>  8) & 0xFF,
++                (OurIP >> 16) & 0xFF,
++                (OurIP >> 24) & 0xFF    );
++#else
++        sprintf(default_filename, "%s","test.bin");
++#endif
++        tftp_filename = default_filename;
+ 
+-	if (BootFile[0] == '\0') {
+-	    sprintf(default_filename, "%s","test.bin");
+-	    tftp_filename = default_filename;
++        sprintf(default_filename, "%s","test.bin");
++        tftp_filename = default_filename;
+ 
+-		printf ("*** Warning: no boot file name; using '%s'\n",
+-			tftp_filename);
+-	} else {
+-		tftp_filename = BootFile;
+-	}
++        printf ("*** Warning: no boot file name; using '%s'\n",
++                tftp_filename);
++    } else {
++        tftp_filename = BootFile;
++    }
+ 
+ #if defined(CONFIG_NET_MULTI)
+ 	printf ("Using %s device\n", eth_get_name());
+@@ -360,6 +387,23 @@
+ 
+ 	putc ('\n');
+ 
++    if (timeout_env = getenv("tftptimeout")){
++        timeout = (*timeout_env) - '0';
++        if((!timeout) || (timeout > TIMEOUT)) {
++            timeout = TIMEOUT;
++        }
++    }
++    if (timeout_count_env = getenv("tftptimeoutcount")){
++        timeout_count = (*timeout_count_env) - '0';
++        if((!timeout_count) || (timeout_count > TIMEOUT_COUNT)) {
++            timeout_count = TIMEOUT_COUNT;
++        }
++    }
++    printf ("\n TIMEOUT=%d secs TIMEOUT_COUNT=%d,Load address: 0x%lx\n",
++            timeout, timeout_count,load_addr);
++
++
++
+ 	printf ("\n TIMEOUT_COUNT=%d,Load address: 0x%lx\n",TIMEOUT_COUNT,load_addr);
+ 
+ 	puts ("Loading: *\b");
+--- Uboot-spi-4.1.2.0/net/httpd.c	1970-01-01 08:00:00.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/httpd.c	2014-05-16 19:29:05.641718595 +0800
+@@ -0,0 +1,462 @@
++/*
++ *	Copyright 1994, 1995, 2000 Neil Russell.
++ *	(See License)
++ *	Copyright 2000, 2001 DENX Software Engineering, Wolfgang Denk, wd@denx.de
++ */
++
++#include <common.h>
++#include <command.h>
++#include <watchdog.h>
++#include <net.h>
++#include "httpd.h"
++
++#undef	ET_DEBUG
++
++#if (CONFIG_COMMANDS & CFG_CMD_NET)
++
++#define WELL_KNOWN_PORT	69		/* Well known TFTP port #		*/
++#define TIMEOUT		5		/* Seconds to timeout for a lost pkt	*/
++#ifndef	CONFIG_NET_RETRY_COUNT
++# define TIMEOUT_COUNT	10		/* # of timeouts before giving up  */
++#else
++# define TIMEOUT_COUNT  (CONFIG_NET_RETRY_COUNT * 2)
++#endif
++
++
++/*********************************************
++*
++*	HTTPD define
++*
++*********************************************/
++int            HTTP_FileLen;
++int            MaxLen_flag;
++int            ip_src_port;
++#define        MAX_FILESIZE  (1024*1024*11 )
++
++unsigned int strtoint(char *str, unsigned int count);
++//char 		*file;
++int content_len;
++//============================================
++
++char* makeheader(char* content , int len)
++{
++	static char header[1460];
++	char temp[100];
++
++	header[0]='\0';
++	temp[0]='\0';
++
++	strcat(header ,"HTTP/1.1 200 OK\r\n");//19
++	strcat(header,"Server: httpd\r\n");//17
++	strcat(header,"Content-type: text/html\r\n");//27
++	strcat(header,"Date:\r\n");//9
++	strcat(header,"Last-modified:\r\n");//18
++	strcat(header,"Accept-Ranges: bytes\r\n");//24
++	strcat(header,"Expries: Thu, 01 Jan 1970 00:00:00 GMT\r\n");//42
++	strcat(header,"Cache-Control: no-cache\r\n");//27
++	strcat(header,temp);
++	strcat(header,"\r\n");//4 ....187
++	strcat(header,content);
++
++	return header;
++}
++
++void sendpage(void)
++{
++
++	//struct buflist pushdata;
++	char index[1460];
++	char content[1260];
++
++   	content[0]='\0';
++    	index[0]='\0';
++
++	//-------- index page content.....
++	strcat(content,"<html>\n");
++	strcat(content,"<form name=UPGRADE method=post action=/upgrade enctype=multipart/form-data>\n");
++	strcat(content,"<br>\n");
++	strcat(content,"<center>\n");
++
++	strcat(content,"<br><br><br>\n");
++	strcat(content,"<table width=600 cellspacing=0 align=center style=\"border-width:3; border-color:rgb(64,93,7); border-style:solid;\">\n");
++
++	strcat(content,"<tr width=\"580\" >\n");
++	strcat(content,"	<th width = 580 colspan=2>\n");
++
++	strcat(content,"		<font size= 5 color=\"669900\" face=\"Arial, Helvetica, sans-serif\">\n");
++	strcat(content,"			<strong>\n");
++	strcat(content,"				&nbsp; Please upload the recovery image file!<p>\n");
++	strcat(content,"</strong></font></th></tr>\n");
++
++	strcat(content,"<tr>\n");
++	strcat(content,"	<th width=200 height=30><font size= 4 face=\"Arial, Helvetica, sans-serif\" size=2 color=669900>System Upgrade</th>\n");
++	strcat(content,"	<th width=400 height=30><input type=file name=UP_FILE size=24> <input type=submit name=UPGRADE value=UPGRADE></th>\n");
++	strcat(content,"</tr>\n");
++	strcat(content,"</table>\n");
++	strcat(content,"</form></html>\n");
++
++	//--index page end.................
++
++	strcat ( index , makeheader(content,strlen(content)) );
++
++	httpdReplyData = index;
++    //memcpy(httpd,index,strlen(index));
++    //*(httpd + strlen(index)) = '\0';
++}
++
++void sendreset(char * httpd)
++{
++	char reset[1460];
++	char content[1260];
++
++	content[0]='\0';
++	reset[0]='\0';
++
++	//-------- reset.html
++	strcat(content,"<html>\n");
++	strcat(content,"<head>\n");
++	strcat(content,"<title>System Reset Prompt</title>\n");
++	strcat(content,"</head>\n");
++	strcat(content,"<body OnLoad=\"wait();\">\n");
++	strcat(content,"<SCRIPT LANGUAGE=\"JavaScript\">\n");
++	strcat(content,"<!--\n");
++    /*Recover and reboot need 140 sec*/
++	strcat(content,"	i = 150;\n");
++	strcat(content,"	function wait() {\n");
++	strcat(content,"\n");
++	strcat(content,"	document.formnow.ss.value= i;\n");
++	strcat(content,"	i--;\n");
++	strcat(content,"	if (i)\n");
++	strcat(content,"		setTimeout(\"wait();\", 1000);\n");
++	strcat(content,"	else{\n");
++	//strcat(content,"		location.replace('http://10.10.10.254');\n");
++	strcat(content,"		location.replace('http://192.168.60.1');\n");
++	strcat(content,"	}\n");
++	strcat(content,"}\n");
++	strcat(content,"\n");
++	strcat(content,"//-->\n");
++	strcat(content,"</script>\n");
++	strcat(content,"\n");
++	strcat(content,"<center><br><br><br>");
++	strcat(content,"<table width=\"383\" cellspacing=\"0\" height=\"150\">\n");
++	strcat(content,"    <tr>\n");
++	strcat(content,"        <td width=\"373\" height=\"160\" bgcolor=\"#669900\" style=\"border-width:3; border-color:rgb(64,93,7); border-style:solid;\">\n");
++	strcat(content,"            <p align=\"center\"><font size= 5 color=\"white\" face=\"Arial, Helvetica, sans-serif\"><strong>\n");
++	strcat(content,"			Writing flash...<br>\n");
++	strcat(content,"			Please do not turn off the system or unplug the power adaptor!\n");
++	strcat(content,"<form name=\"formnow\">Please wait <input type=\"text\" name=\"ss\" size=2>  seconds....\n");
++	strcat(content,"      <p></td>\n");
++	strcat(content,"    </tr>\n");
++	strcat(content,"</table>\n");
++	strcat(content,"</body>\n");
++	strcat(content,"</html>\n");
++
++	//printf("content-length:%d\n",strlen(content));
++	//--reset.html   end........
++	strcat ( reset , makeheader(content,strlen(content)) );
++    	httpdReplyData = reset;
++
++}
++
++void sendfail(char * httpd)
++{
++	char fail[1460];
++	char content[1260];
++
++	content[0]='\0';
++    	fail[0]='\0';
++
++	//-------- fail.html
++	strcat(content,"<html>\n");
++	strcat(content,"<form name=UPGRADE method=post action=/upgrade enctype=multipart/form-data>\n");
++	strcat(content,"<br>\n");
++	strcat(content,"<center>\n");
++	strcat(content,"<br><br><br>\n");
++	strcat(content,"<table width=600 cellspacing=0 align=center style=\"border-width:3; border-color:rgb(64,93,7); border-style:solid;\">\n");
++
++	strcat(content,"<tr width=\"580\" >\n");
++	strcat(content,"	<th width = 580 colspan=2>\n");
++
++	strcat(content,"		<font size= 5 color=\"669900\" face=\"Arial, Helvetica, sans-serif\">\n");
++	strcat(content,"			<strong>\n");
++	strcat(content,"				&nbsp;Upload Fail...Please check out your image file<br>\n");
++	strcat(content,"				&nbsp;&nbsp;&nbsp;&nbsp; And upload again!<p>\n");
++	strcat(content,"</strong></font></th></tr>\n");
++
++	strcat(content,"<tr>\n");
++	strcat(content,"	<th width=200 height=30><font size= 4 face=\"Arial, Helvetica, sans-serif\" size=2 color=669900>System Upgrade</th>\n");
++	strcat(content,"	<th width=400 height=30><input type=file name=UP_FILE size=24> <input type=submit name=UPGRADE value=UPGRADE></th>\n");
++	strcat(content,"</tr>\n");
++	strcat(content,"</table>\n");
++	strcat(content,"</form></html>\n");
++	//--------------- html file end
++
++	strcat ( fail , makeheader(content,strlen(content)) );
++	httpdReplyData = fail;
++}
++
++
++void parser2(TCPIP_t * gdata)
++{
++	char * httpdata;
++    httpdata = (char*)(gdata +1);
++    if(sendresult_flag==1)
++	{
++	 	sendfail(httpdata);
++		gdata->tcp_flags = TCP_ACK + TCP_FIN;
++	   	NetSendTCPPacket( NetTcpDestMAC, gdata->ip_src, ntohs(gdata->tcp_src), ntohs(gdata->tcp_dst), gdata->tcp_flags, strlen(httpdReplyData));
++	}
++	else if (sendresult_flag==2)
++	{
++		sendreset(httpdata);
++		gdata->tcp_flags = TCP_ACK + TCP_FIN;
++	   	NetSendTCPPacket( NetTcpDestMAC, gdata->ip_src, ntohs(gdata->tcp_src), ntohs(gdata->tcp_dst), gdata->tcp_flags, strlen(httpdReplyData));
++	}
++}
++
++#if 1
++int uploaddata(TCPIP_t * gdata, int size)
++{
++	char *httpdata;
++	char *pLen;
++	char *pLen_tail;
++
++	int http_len;
++#if 0
++	int i;
++	int end_flag;
++	char *org;
++	image_header_t  *fwHeader;
++
++
++	file  =  (unsigned char *)(load_addr);
++	org  =  (unsigned char *)(load_addr);
++#endif
++	httpdata = (char*)(gdata +1);
++	sendresult_flag=0;
++	puts("START TO RECEIVE DATA\n");
++	/*---start to recive data-------*/
++	/*check first packet...         */
++	content_len = 0;
++	MaxLen_flag=0;
++	pLen = strstr(httpdata, "Content-Length:");
++	pLen_tail = strstr(pLen, "\r\n");
++	content_len = strtoint(pLen+15, pLen_tail -(pLen +15)) ;
++
++	//start to recive real data.....
++	Listen_FG=2;
++	HTTP_FileLen = 0;
++	if( content_len > MAX_FILESIZE)
++	{
++	    printf("content_len=%d  MAX_FILESIZE=%d\n",content_len,MAX_FILESIZE);
++		puts("Upload data too big\n");
++		MaxLen_flag=1;
++	}
++	
++	//RL added 2009.1.20
++	//IE and firefox have differnet method for post
++	 if(httpdata[size-4]=='\r' && httpdata[size-3]=='\n' && httpdata[size-2]=='\r'  && httpdata[size-1]=='\n' ){
++		puts("RL: real data at next packet\n"); 	
++	}else{	
++		(void)memcpy((void *)(load_addr + HTTP_FileLen), pLen_tail, size-(pLen_tail-httpdata));
++		
++		//(void)memcpy((void *)(load_addr + HTTP_FileLen), pLen_tail, size);
++		
++		HTTP_FileLen=HTTP_FileLen+ (size-(pLen_tail-httpdata));
++		//HTTP_FileLen=HTTP_FileLen+ size;
++        
++#if ET_DEBUG		
++		printf("RL : now HTTP_FileLen=%d\n", HTTP_FileLen);
++#endif
++	}	
++   return 0;
++	
++#if 0
++	while (1)
++	{
++		WATCHDOG_RESET();
++
++
++		eth_rx();
++
++		if(Listen_FG==0)
++		return 0;
++
++		if(HTTP_FileLen >= content_len )
++		{
++			break;
++		}
++		if( content_len > MAX_FILESIZE)
++		{
++		    MaxLen_flag=1;
++		}
++	}
++	puts("Downlaod finish \n");
++	printf("HTTP Length= %d \n",HTTP_FileLen);
++	//printf("try to find data= %x \n",strstr(file, "\r\n\r\n"));
++
++
++	//parse recive file: handle header and tail......
++	//***********find head*************
++	//to find real header
++	i = HTTP_FileLen;
++	while ( i--)
++	{
++		if (! strncmp(file,"\r\n\r\n",4))
++		{
++			break;
++		}
++		file++;
++		HTTP_FileLen --;
++	}
++
++	file += 4 ;//toss "\r\n\r\n"
++	HTTP_FileLen -= 4;
++	printf("RL:  file head= %x \n", file);
++	//printf("RL:  F/W Length= %d \n", HTTP_FileLen);
++
++
++	if ( file[0]!=0x27 && file[1]!=0x05 && file[2]!=0x19 && file[3]!=0x56)
++	{
++		printf("\npaser two \n");
++		i = HTTP_FileLen;
++		while ( i--)
++		{
++			if (! strncmp(file,"\r\n\r\n",4))
++			{
++				break;
++			}
++		  	file++;
++		     	HTTP_FileLen --;
++		}
++		file += 4 ;//toss "\r\n\r\n"
++		HTTP_FileLen -= 4;
++	 }
++
++	//***********find tail*************
++	// Try to find 5th "\r\n" from tail
++
++	end_flag = 5;
++	HTTP_FileLen -= 2;
++	while ( end_flag )
++	{
++		if (!strncmp( file+HTTP_FileLen-1,"\r\n",2))
++		{
++			end_flag--;
++			HTTP_FileLen -= 1;
++		}
++		HTTP_FileLen -= 1;
++	}
++	HTTP_FileLen += 1;
++
++	printf("RL: Real F/W Length= %d \n",HTTP_FileLen);
++
++
++	//********************************
++	//shift data
++	for (i = 0 ; i < HTTP_FileLen ; i++)
++		*org ++ = *file ++;
++	org  =  (unsigned char *)(load_addr);
++	fwHeader= (image_header_t  *)org;
++
++	//Check Run image type
++	if ( ntohl(fwHeader->ih_magic) != IH_MAGIC )
++	{
++	        printf("Check Run Image Type error.\n");
++		sendresult_flag=1;
++		parser2(gdata);
++		Listen_FG=1;
++		return 1;
++	}
++	//Check Run image length
++	if ( ntohl(fwHeader->ih_size) != (HTTP_FileLen-sizeof(image_header_t)))
++	{
++		printf("Check Image Length error\n");
++		sendresult_flag=1;//fail
++		parser2(gdata);
++		Listen_FG=1;
++		return 1;
++	}
++	puts("Check OK.\n");
++
++	//Send reset.html
++	sendresult_flag=2;
++	parser2(gdata);
++
++
++	//Write to flash ...
++	puts("Writing image to  Flash - wait for a second ... \n");
++
++	puts ("\ndone\n");
++	NetState = NETLOOP_SUCCESS;
++
++	NetBootFileXferSize = HTTP_FileLen;
++#endif
++}
++
++#endif
++
++unsigned int strtoint(char *str, unsigned int count)
++{
++        unsigned int temp = 0;
++        unsigned int total = 0 ;
++
++        while(count)
++        {
++                if (*str == 0x20)
++                {
++					str++;
++					temp = 0 ;
++                }
++				else
++                	temp = *str++ - '0';
++
++                total += temp * power(10,count-1);
++                count--;
++        }
++
++
++        return total;
++}
++
++int power(unsigned int value, unsigned int n)
++{
++        int       count;
++        //u32       result = 0; /* value returned */
++        unsigned int       result = 1; /* value returned *///ken
++
++        if (n < 0)
++             return -1;
++
++        for(count = 1; count <= n; count++)
++               result =  result * value;
++
++        return result;
++}
++
++void parser(TCPIP_t *getdata, int size)
++{
++    int i;
++    char *httpdata;
++    httpdata = getdata +1;
++
++	if (!strncmp(httpdata,"GET / ",6))
++	{
++		sendpage();
++		getdata->tcp_flags = TCP_ACK + TCP_FIN;
++        NetSendTCPPacket( NetTcpDestMAC, getdata->ip_src, ntohs(getdata->tcp_src), ntohs(getdata->tcp_dst), getdata->tcp_flags, strlen(httpdReplyData));
++	}
++	if (!strncmp(httpdata,"POST /upgrade ",14))
++	{
++		getdata->tcp_flags = TCP_ACK ;
++        NetSendTCPPacket( NetTcpDestMAC, getdata->ip_src, ntohs(getdata->tcp_src), ntohs(getdata->tcp_dst), getdata->tcp_flags, 0);
++		Listen_FG=2;
++        ip_src_port = ntohs(getdata->tcp_src);
++		MaxLen_flag=0;
++		HTTP_FileLen = 0;
++		uploaddata( getdata, size);
++	}
++
++}
++
++#endif /* CFG_CMD_NET */
+--- Uboot-spi-4.1.2.0/net/httpd.h	1970-01-01 08:00:00.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/httpd.h	2014-05-14 14:06:32.779553682 +0800
+@@ -0,0 +1,22 @@
++/*
++ *	LiMon - BOOTP/TFTP.
++ *
++ *	Copyright 1994, 1995, 2000 Neil Russell.
++ *	(See License)
++ */
++
++#include <net.h>
++
++/**********************************************************************/
++/*
++ *	Global functions and variables.
++ */
++
++/* httpd.c */
++
++/* Process HTTP Packet*/
++extern void parser(TCPIP_t *, int );
++extern void parser2(TCPIP_t *);
++
++/**********************************************************************/
++
+--- Uboot-spi-4.1.2.0/Makefile	2014-05-19 10:15:31.000000000 +0800
++++ Uboot-spi-4.1.2.0/Makefile	2014-05-14 16:39:57.641867180 +0800
+@@ -178,7 +178,7 @@
+ LIBS += lib_$(ARCH)/lib$(ARCH).a
+ LIBS += net/libnet.a
+ 
+-#LIBS += rtc/librtc.a
++LIBS += rtc/librtc.a
+ LIBS += drivers/libdrivers.a
+ 
+ ifeq ($(RALINK_USB),ON)
+@@ -192,7 +192,7 @@
+ 
+ # Add GCC lib
+ PLATFORM_LIBS += -L $(shell dirname `$(CC) $(CFLAGS)  -print-libgcc-file-name`)
+-
++#KAIKER_LIBS := $(shell dirname $(CC) $(CFLAGS) -lgcc -print-libgcc-file-name)
+ # The "tools" are needed early, so put this first
+ # Don't include stuff already done in $(LIBS)
+ ifneq ($(CFG_ENV_IS), IN_FLASH)
+--- Uboot-spi-4.1.2.0/net/Makefile	2014-05-19 10:15:32.000000000 +0800
++++ Uboot-spi-4.1.2.0/net/Makefile	2014-05-14 14:07:33.211555300 +0800
+@@ -27,7 +27,8 @@
+ 
+ LIB	= libnet.a
+ 
+-OBJS	= net.o tftp.o eth.o 
++#OBJS	= net.o tftp.o eth.o 
++OBJS    = net.o tftp.o bootp.o rarp.o eth.o httpd.o
+ all:	$(LIB)
+ 
+ $(LIB):	$(START) $(OBJS)

@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-storautorun/Makefile
+Package: ezp-storautorun
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Auto Run for usb storage
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A drift framework for usb storage application storautorun
+@@
+

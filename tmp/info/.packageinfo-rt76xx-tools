@@ -1,0 +1,14 @@
+Source-Makefile: package/rt76xx-tools/Makefile
+Package: rt76xx-tools
+Version: 1.0-1
+Depends: @TARGET_ralink_7620
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Tool for RT76XX
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Tool for RT76XX
+@@
+

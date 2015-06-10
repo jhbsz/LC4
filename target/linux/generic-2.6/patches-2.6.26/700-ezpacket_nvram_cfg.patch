@@ -1,0 +1,41 @@
+--- old/drivers/Makefile	2008-12-10 16:41:56.000000000 +0800
++++ new/drivers/Makefile	2008-12-12 20:54:38.000000000 +0800
+@@ -21,6 +21,7 @@
+ 
+ obj-$(CONFIG_XEN)		+= xen/
+ 
++obj-$(CONFIG_MTD)		+= mtd/
+ # char/ comes before serial/ etc so that the VT console is the boot-time
+ # default.
+ obj-y				+= char/
+@@ -46,7 +47,6 @@
+ obj-$(CONFIG_UIO)		+= uio/
+ obj-y				+= cdrom/
+ obj-y				+= auxdisplay/
+-obj-$(CONFIG_MTD)		+= mtd/
+ obj-$(CONFIG_SPI)		+= spi/
+ obj-$(CONFIG_PCCARD)		+= pcmcia/
+ obj-$(CONFIG_DIO)		+= dio/
+--- old/drivers/char/Makefile	2008-12-10 16:41:55.000000000 +0800
++++ new/drivers/char/Makefile	2008-12-12 16:39:33.000000000 +0800
+@@ -83,6 +83,9 @@
+ else
+   obj-$(CONFIG_NVRAM)	+= nvram.o
+ endif
++
++obj-$(CONFIG_NVRAM_CFG)		+= nvram_cfg/
++
+ obj-$(CONFIG_TOSHIBA)		+= toshiba.o
+ obj-$(CONFIG_I8K)		+= i8k.o
+ obj-$(CONFIG_DS1620)		+= ds1620.o
+--- old/drivers/char/Kconfig	2008-12-10 16:57:22.000000000 +0800
++++ new/drivers/char/Kconfig	2008-12-10 16:58:00.000000000 +0800
+@@ -770,6 +770,8 @@
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called nvram.
+ 
++source "drivers/char/nvram_cfg/Kconfig"
++
+ #
+ # These legacy RTC drivers just cause too many conflicts with the generic
+ # RTC framework ... let's not even try to coexist any more.

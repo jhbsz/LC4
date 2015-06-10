@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+START=50
+
+log_msg="TELNET-cli"
+
+start() {
+    [ "$(nvram get license_invalid)" != "0" ] && telnetd -l /usr/sbin/cli -b $(nvram get lan0_ipaddr)
+}
+
+stop() {
+	killall telnetd
+}

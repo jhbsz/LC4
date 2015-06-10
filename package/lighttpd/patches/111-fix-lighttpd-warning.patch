@@ -1,0 +1,176 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 12:35:48.217289944 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 12:34:55.109289316 +0800
+@@ -1407,7 +1407,6 @@
+ 
+ int check_file_existence(char *filename) {
+     FILE *tfp;
+-    DIR *tfpd;
+     int len;
+ 
+     if(filename && *filename) {
+@@ -1691,13 +1690,13 @@
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+                         } else if(de->d_type == 8) {
+                             for (k = 0; k < con->conf.mimetypes->used; k++) {
+-                                data_string *ds = (data_string *)con->conf.mimetypes->data[k];
++                                data_string *ds_tmp = (data_string *)con->conf.mimetypes->data[k];
+ 
+                                 if (ds->key->used == 0) continue;
+ 
+-                                if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
++                                if (buffer_is_equal_right_len(d.path, ds_tmp->key, ds_tmp->key->used - 1)) {
+                                     buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
+-                                    buffer_append_string_buffer(b, ds->value);
++                                    buffer_append_string_buffer(b, ds_tmp->value);
+                                     buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
+                                     break;
+                                 }
+@@ -1711,11 +1710,11 @@
+                                     buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+                                 } else if(S_ISREG(sce->st.st_mode)) {
+                                     for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
+-                                        data_string *ds = (data_string *)con->conf.mimetypes->data[k];
+-                                        if (ds->key->used == 0) continue;
+-                                        if (buffer_is_equal_right_len(d.path, ds->key, ds->key->used - 1)) {
++                                        data_string *ds_tmp = (data_string *)con->conf.mimetypes->data[k];
++                                        if (ds_tmp->key->used == 0) continue;
++                                        if (buffer_is_equal_right_len(d.path, ds_tmp->key, ds_tmp->key->used - 1)) {
+                                             buffer_append_string_len(b,CONST_STR_LEN("<D:getcontenttype>"));
+-                                            buffer_append_string_buffer(b, ds->value);
++                                            buffer_append_string_buffer(b, ds_tmp->value);
+                                             buffer_append_string_len(b, CONST_STR_LEN("</D:getcontenttype>"));
+                                             break;
+                                         }
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:19:37.593363609 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:12:44.361358722 +0800
+@@ -1703,12 +1703,12 @@
+                             }
+                         } else if(de->d_type == 0) { 
+                             /* check unknow type due to opendir can not recognize that file */
+-                            stat_cache_entry *sce = NULL;
+-                            if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, d.path, &sce))) {
+-                                if (S_ISDIR(sce->st.st_mode)) {
++                            stat_cache_entry *sce_tmp = NULL;
++                            if (HANDLER_ERROR != (stat_cache_get_entry(srv, con, d.path, &sce_tmp))) {
++                                if (S_ISDIR(sce_tmp->st.st_mode)) {
+                                     buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+                                     buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+-                                } else if(S_ISREG(sce->st.st_mode)) {
++                                } else if(S_ISREG(sce_tmp->st.st_mode)) {
+                                     for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
+                                         data_string *ds_tmp = (data_string *)con->conf.mimetypes->data[k];
+                                         if (ds_tmp->key->used == 0) continue;
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:26:01.737368152 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:25:51.561368031 +0800
+@@ -1683,12 +1683,12 @@
+ 
+                         char ctime_buf[] = "2005-08-18T07:27:16Z";
+                         char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
+-                        size_t k;
+                         buffer_append_string_len(b,CONST_STR_LEN("<D:getcontentlanguage>en</D:getcontentlanguage>\n"));
+                         if (de->d_type == 4) {
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+                         } else if(de->d_type == 8) {
++                            size_t k;
+                             for (k = 0; k < con->conf.mimetypes->used; k++) {
+                                 data_string *ds_tmp = (data_string *)con->conf.mimetypes->data[k];
+ 
+@@ -1709,7 +1709,8 @@
+                                     buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+                                     buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));
+                                 } else if(S_ISREG(sce_tmp->st.st_mode)) {
+-                                    for (size_t k = 0; k < con->conf.mimetypes->used; k++) {
++                                    size_t k;
++                                    for (k = 0; k < con->conf.mimetypes->used; k++) {
+                                         data_string *ds_tmp = (data_string *)con->conf.mimetypes->data[k];
+                                         if (ds_tmp->key->used == 0) continue;
+                                         if (buffer_is_equal_right_len(d.path, ds_tmp->key, ds_tmp->key->used - 1)) {
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:31:25.025371975 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-11-06 14:31:18.833371901 +0800
+@@ -1681,8 +1681,6 @@
+                         buffer_append_string_len(b,CONST_STR_LEN("<D:propstat>\n"));
+                         buffer_append_string_len(b,CONST_STR_LEN("<D:prop>\n"));
+ 
+-                        char ctime_buf[] = "2005-08-18T07:27:16Z";
+-                        char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
+                         buffer_append_string_len(b,CONST_STR_LEN("<D:getcontentlanguage>en</D:getcontentlanguage>\n"));
+                         if (de->d_type == 4) {
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+ 
+--- lighttpd-1.4.30/src/server.c	2014-11-06 16:17:37.009447326 +0800
++++ lighttpd-1.4.30/src/server.c	2014-11-06 16:17:33.021447279 +0800
+@@ -84,7 +84,7 @@
+     int         server_sockfd;
+     int         client_sockfd;
+     int         server_len;
+-    int         client_len;
++    socklen_t   client_len;
+     struct sockaddr_un server_address;
+     struct sockaddr_un client_address;
+ 
+@@ -108,7 +108,8 @@
+     {
+         char httpd_command_signal[20];
+         client_len = sizeof(client_address);
+-        if (client_sockfd = accept(server_sockfd, (struct sockaddr*)&client_address, &client_len) < 0 ) 
++        client_sockfd = accept(server_sockfd, (struct sockaddr*)&client_address, &client_len);
++        if (client_sockfd < 0 ) 
+             return 0;
+         if (read(client_sockfd, httpd_command_signal, 20) < 0) 
+             return 0;
+--- lighttpd-1.4.30/src/request.c	2014-11-06 16:37:02.185461104 +0800
++++ lighttpd-1.4.30/src/request.c	2014-11-06 16:36:52.253460987 +0800
+@@ -1156,7 +1156,8 @@
+ 	/* check if we have read post data */
+ 	if (con_length_set) {
+ 		/* don't limit content-length */
+-		if (con->request.content_length < 0) {
++//		if (con->request.content_length < 0) {
++		if (0) {
+ 			con->http_status = 413;
+ 			con->keep_alive = 0;
+ 
+--- lighttpd-1.4.30/src/stat_cache.c	2014-11-06 17:26:33.613496243 +0800
++++ lighttpd-1.4.30/src/stat_cache.c	2014-11-06 17:25:56.529495804 +0800
+@@ -482,7 +482,7 @@
+ 	 * - stat() if regular file + open() to see if we can read from it is better
+ 	 *
+ 	 * */
+-    char tmpfile[512];
++    char tmp_file[512];
+     char *dotpos = strchr(name->ptr, '.');
+     int main_name_len, idx;
+ 
+@@ -492,10 +492,10 @@
+     if(dotpos && ((dotpos - name->ptr) < 9) && (strlen(dotpos) < 5)) {
+         main_name_len = strlen(name->ptr) + 1;
+         for(idx = 0;idx < main_name_len; idx ++) {
+-            tmpfile[idx] = tolower(name->ptr[idx]);
++            tmp_file[idx] = tolower(name->ptr[idx]);
+         }
+     }
+-	if ((-1 == stat(name->ptr, &st)) && (-1 == stat(tmpfile, &st))) {
++	if ((-1 == stat(name->ptr, &st)) && (-1 == stat(tmp_file, &st))) {
+ 		return HANDLER_ERROR;
+ 	}
+ 
+@@ -508,7 +508,7 @@
+ 		}
+ 
+ 		/* try to open the file to check if we can read it */
+-		if ((-1 == (fd = open(name->ptr, O_RDONLY))) && (-1 == (fd = open(tmpfile, O_RDONLY)))){
++		if ((-1 == (fd = open(name->ptr, O_RDONLY))) && (-1 == (fd = open(tmp_file, O_RDONLY)))){
+ 			return HANDLER_ERROR;
+ 		}
+ 		close(fd);
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-11-11 14:18:22.162903140 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-11-11 14:18:17.494903085 +0800
+@@ -665,7 +665,6 @@
+ }
+ 
+ #ifdef USE_NATIVE_COPY_FILE
+-#warning "Using native copy file and folder interface"
+ /* Try to use 1024k buffer size */
+ #define BUFFERSIZE  2048*1024
+ static int copy_file( char *in_filename, char *out_filename, int overwrite){

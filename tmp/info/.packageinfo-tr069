@@ -1,0 +1,16 @@
+Source-Makefile: package/tr069/Makefile
+Package: tr069
+Version: 1.0.0-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: TR069 client server
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	TR069 client server
+
+http://www.poptop.org/
+@@
+

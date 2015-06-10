@@ -1,0 +1,155 @@
+--- pptp_old/defaults.h	2004-04-28 19:36:07.000000000 +0800
++++ pptp_new/defaults.h	2009-07-20 10:44:44.594156809 +0800
+@@ -27,12 +27,13 @@
+ #define LOCAL 0
+ #define REMOTE 1
+ 
++#include "nvram_ezpacket.h"
+ /* Default configuration values, mostly configurable */
+ 
+ #if !defined(PPPD_IP_ALLOC)
+-#define MAX_CONNECTIONS			100
+-#define DEFAULT_LOCAL_IP_LIST		"192.168.0.1-100"
+-#define DEFAULT_REMOTE_IP_LIST		"192.168.1.1-100"
++#define MAX_CONNECTIONS			PPTPD_SESSION_MAX
++#define DEFAULT_LOCAL_IP_LIST		"192.168.38.1-100"
++#define DEFAULT_REMOTE_IP_LIST		"192.168.39.1-100"
+ #endif
+ 
+ #define MAX_CALLS_PER_TCP_LINK		128
+--- pptp_old/pptpmanager.c	2005-07-29 20:10:48.000000000 +0800
++++ pptp_new/pptpmanager.c	2009-07-20 10:44:44.594156809 +0800
+@@ -408,6 +408,7 @@
+ 	char ctrl_noipparam[2];
+ 	char pppdoptfile_argv[2];
+ 	char speedgiven_argv[2];
++	char ctrl_order[8];
+ 	extern char **environ;
+ 
+ 	char callid_argv[16];
+@@ -461,6 +462,9 @@
+ 	ctrl_argv[pptpctrl_argc++] = "1";
+ 	ctrl_argv[pptpctrl_argc++] = remoteIP[clientNumber];
+ #endif
++	/* interface order */
++	sprintf(ctrl_order, "%d", clientNumber + WAN_NUM);
++	ctrl_argv[pptpctrl_argc++] = ctrl_order;
+ 
+ 	/* our call id to be included in GRE packets the client
+ 	 * will send to us */
+--- pptp_old/pptpctrl.c	2005-07-29 21:00:40.000000000 +0800
++++ pptp_new/pptpctrl.c	2009-07-23 18:33:17.782758449 +0800
+@@ -78,10 +78,10 @@
+ 
+ /* Local function prototypes */
+ static void bail(int sigraised);
+-static void pptp_handle_ctrl_connection(char **pppaddrs, struct in_addr *inetaddrs);
++static void pptp_handle_ctrl_connection(char **pppaddrs, struct in_addr *inetaddrs, char *order);
+ 
+-static int startCall(char **pppaddrs, struct in_addr *inetaddrs);
+-static void launch_pppd(char **pppaddrs, struct in_addr *inetaddrs);
++static int startCall(char **pppaddrs, struct in_addr *inetaddrs, char *order);
++static void launch_pppd(char **pppaddrs, struct in_addr *inetaddrs, char *order);
+ 
+ /* Oh the horror.. lets hope this covers all the ones we have to handle */
+ #if defined(O_NONBLOCK) && !defined(__sun__) && !defined(__sun)
+@@ -101,6 +101,7 @@
+ {
+ 	char pppLocal[16];		/* local IP to pass to pppd */
+ 	char pppRemote[16];		/* remote IP address to pass to pppd */
++	char order[8];			/* interface order */
+ 	struct sockaddr_in addr;	/* client address */
+ 	socklen_t addrlen;
+ 	int arg = 1;
+@@ -132,6 +133,7 @@
+ 	GETARG(pppLocal);
+ 	GETARG(pppRemote);
+ 
++	if (arg < argc) strcpy(order, argv[arg++]);
+ 	if (arg < argc) unique_call_id = atoi(argv[arg++]);
+ 	if (arg < argc) ppp_binary = strdup(argv[arg++]);
+ 	if (arg < argc) pptp_logwtmp = atoi(argv[arg++]);
+@@ -186,7 +188,7 @@
+ 	NOTE_VALUE(PNS, call_id_pair, htons(-1));
+ 
+ 	syslog(LOG_INFO, "CTRL: Client %s control connection started", inet_ntoa(addr.sin_addr));
+-	pptp_handle_ctrl_connection(pppaddrs, inetaddrs);
++	pptp_handle_ctrl_connection(pppaddrs, inetaddrs, order);
+ 	syslog(LOG_DEBUG, "CTRL: Reaping child PPP[%i]", pppfork);
+ 	if (pppfork > 0)
+ 		waitpid(pppfork, NULL, 0);
+@@ -210,9 +212,10 @@
+  *
+  * args: pppaddrs - ppp local and remote addresses (strings)
+  *       inetaddrs - local and client socket address
++ *       order - interface order
+  * retn: 0 success, -1 failure
+  */
+-static void pptp_handle_ctrl_connection(char **pppaddrs, struct in_addr *inetaddrs)
++static void pptp_handle_ctrl_connection(char **pppaddrs, struct in_addr *inetaddrs, char * order)
+ {
+ 
+ 	/* For echo requests used to check link is alive */
+@@ -374,16 +377,18 @@
+ 						pty_fd = -1;
+ 					}
+ 				}
+-                                /* change process title for accounting and status scripts */
++				/* Start the call */
++				syslog(LOG_INFO, "CTRL: Starting call (launching pppd, opening GRE)");
++
++                                /* Fiddle with argv */
+                                 my_setproctitle(gargc, gargv,
+                                       "pptpd [%s:%04X - %04X]",
+                                       inet_ntoa(inetaddrs[1]),
+                                       ntohs(((struct pptp_out_call_rply *) (rply_packet))->call_id_peer),
+                                       ntohs(((struct pptp_out_call_rply *) (rply_packet))->call_id));
+-				/* start the call, by launching pppd */
+-				syslog(LOG_INFO, "CTRL: Starting call (launching pppd, opening GRE)");
+-				pty_fd = startCall(pppaddrs, inetaddrs);
+-				if (pty_fd > maxfd) maxfd = pty_fd;
++
++				if ((pty_fd = startCall(pppaddrs, inetaddrs, order)) > maxfd)
++					maxfd = pty_fd;
+ 				/* wait for first packet from ppp before proceeding, thus
+ 				   delaying outgoing call reply, and avoiding traffic 
+ 				   injection into the pty before echo has been turned off
+@@ -556,7 +561,7 @@
+  * retn:        pty file descriptor
+  *
+  */
+-static int startCall(char **pppaddrs, struct in_addr *inetaddrs)
++static int startCall(char **pppaddrs, struct in_addr *inetaddrs, char *order)
+ {
+ 	/* PTY/TTY pair for talking to PPPd */
+ 	int pty_fd, tty_fd;
+@@ -631,7 +636,7 @@
+ #elif clientSocket > 1
+ 		close(clientSocket);
+ #endif
+-		launch_pppd(pppaddrs, inetaddrs);
++		launch_pppd(pppaddrs, inetaddrs, order);
+ 		syslog(LOG_ERR, "CTRL: PPPD launch failed! (launch_pppd did not fork)");
+ 		_exit(1);
+ 	}
+@@ -652,7 +657,7 @@
+  * retn: 0 on success, -1 on failure.
+  *
+  */
+-static void launch_pppd(char **pppaddrs, struct in_addr *inetaddrs)
++static void launch_pppd(char **pppaddrs, struct in_addr *inetaddrs, char *order)
+ {
+ 	char *pppd_argv[14];
+ 	int an = 0;
+@@ -775,6 +780,11 @@
+                  pppd_argv[an++] = inet_ntoa(inetaddrs[1]);
+         }
+ 
++	if (order) {
++                 pppd_argv[an++] = "unit";
++                 pppd_argv[an++] = order;
++	}
++
+ 	/* argv arrays must always be NULL terminated */
+ 	pppd_argv[an++] = NULL;
+ 	/* make sure SIGCHLD is unblocked, pppd does not expect it */

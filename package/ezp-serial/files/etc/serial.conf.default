@@ -1,0 +1,43 @@
+#-------------serial-------------
+device=
+baudrate=57600
+data_bits=8
+stop_bit=1
+parity=none
+flow_control=none
+fifo=0
+#------------operating-----------
+mode=0
+tcp_alive=7
+inactivity_time=0
+ignore_ip=0
+max_connect=4
+allow_control=0
+packing_length=0
+delimiter_1=0
+delimiter_enable_1=0
+delimiter_2=0
+delimiter_enable_2=0
+face_transmit=700
+#------------option-------------
+#----------tcp server-----------
+local_tcp_port=100
+command_port=966
+#----------tcp client-----------
+ip_addr_1=
+ip_addr_2=
+ip_addr_3=
+ip_addr_4=
+port_1=4001
+port_2=4001
+port_3=4001
+port_4=4001
+local_port_1=5011
+local_port_2=5012
+local_port_3=5013
+local_port_4=5014
+connect_control=0
+#----------udp mode------------
+local_listen_port=100
+
+

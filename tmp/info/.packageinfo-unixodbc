@@ -1,0 +1,48 @@
+Source-Makefile: package/unixodbc/Makefile
+Package: unixodbc
+Submenu: database
+Version: 2.3.1-1
+Depends: +libltdl +libpthread
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: unixODBC (libraries)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   unixODBC is an Open Source ODBC sub-system and an ODBC SDK for Linux,
+  Mac OSX, and UNIX.
+
+http://www.unixodbc.org/
+@@
+Package: unixodbc-tools
+Submenu: database
+Version: 2.3.1-1
+Depends: +unixodbc +libncurses +libreadline
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: unixODBC Tools
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   Command Line Tools to help install a driver and work with SQL.
+
+http://www.unixodbc.org/
+@@
+Package: pgsqlodbc
+Submenu: database
+Version: 2.3.1-1
+Depends: +unixodbc +libpq
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Postgresql driver for ODBC
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Postgresql driver for ODBC.
+
+http://www.unixodbc.org/
+@@
+

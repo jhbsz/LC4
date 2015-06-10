@@ -1,0 +1,477 @@
+﻿
+<po>
+	<message msgid="general on" msgstr="Activé"/>
+	<message msgid="general off" msgstr="Désactivé"/>
+	<message msgid="general apply" msgstr="Apply (Appliquer)"/>
+	<message msgid="general reset" msgstr="Réinitialiser"/>
+	<message msgid="general wireless setup" msgstr="Installation sans fil"/>
+	<message msgid="general wireless lan" msgstr="LAN sans fil :"/>
+	<message msgid="general wireless ssid" msgstr="Nom réseau (SSID) :"/>
+	<message msgid="general hide ssid1" msgstr="Masquer SSID"/>
+	<message msgid="general mssid hide" msgstr="Masquer"/>
+	<message msgid="general channel select" msgstr="Sélection du canal :"/>
+	<message msgid="general autochannel select" msgstr="Auto sélection du canal"/>
+	<message msgid="general operating channel" msgstr="Canal actif :"/>
+	<message msgid="general ssid choice" msgstr="Choix de SSID"/>
+	<message msgid="general security title" msgstr="Sécurité"/>
+	<message msgid="general security mode" msgstr="Mode de sécurité"/>
+	<message msgid="general nosecurity" msgstr="Pas de sécurité"/>
+	<message msgid="general static wep" msgstr="WEP statique"/>
+	<message msgid="general wpapsk" msgstr="WPA-PSK"/>
+	<message msgid="general wpa" msgstr="WPA"/>
+	<message msgid="general wpa2psk" msgstr="WPA2-PSK"/>
+	<message msgid="general wpa2" msgstr="WPA2"/>
+	<message msgid="general wep passphrase" msgstr="Phrase de passe"/>
+	<message msgid="general wep encryp" msgstr="Cryptage WEP"/>
+	<message msgid="general auth method" msgstr="Méthode d'authentification"/>
+	<message msgid="general wep generate" msgstr="Générer"/>
+	<message msgid="general wep encryp64" msgstr="64 bits"/>
+	<message msgid="general wep encryp128" msgstr="128 bits"/>
+	<message msgid="general encryp sharedkey" msgstr="Clé partagée"/>
+	<message msgid="general encryp auto" msgstr="Auto"/>
+	<message msgid="general note1_1" msgstr="Remarque :"/>
+	<message msgid="general note1_2" msgstr="WEP 64 bits : Entrez 5 caractères ASCII ou 10 caractères hexadécimaux (&quot;0-9&quot;, &quot;A-F&quot;) pour chaque Clé(1-4)."/>
+	<message msgid="general note1_3" msgstr="WEP 128 bits : Entrez 13 caractères ASCII ou 26 caractères hexadécimaux (“0-9”, “A-F”) pour chaque clé (1-4)."/>
+	<message msgid="general note1_4" msgstr="(Sélectionnez une clé WEP comme clé active pour crypter la transmission de données sans fil.)"/>
+	<message msgid="general wep ascii" msgstr="ASCII"/>
+	<message msgid="general wep hex" msgstr="HEX"/>
+	<message msgid="general wep key1" msgstr="Clé 1"/>
+	<message msgid="general wep key2" msgstr="Clé 2"/>
+	<message msgid="general wep key3" msgstr="Clé 3"/>
+	<message msgid="general wep key4" msgstr="Clé 4"/>
+	<message msgid="general wpapsk compatible" msgstr="Compatible WPA-PSK"/>
+	<message msgid="general wpa compatible" msgstr="Compatible WPA"/>
+	<message msgid="general wpapsk presharedkey" msgstr="Clé prépartagée"/>
+	<message msgid="general wpa keyrenewinterval" msgstr="Programmateur de mise à jour de clé de groupe"/>
+	<message msgid="general wpa pmkcacheperiod" msgstr="Période de cache PMK"/>
+	<message msgid="general wpa keyrenewalintervalunit" msgstr="secondes"/>
+	<message msgid="general wpa pmkcacheperiodunit" msgstr="minute"/>
+	<message msgid="general wpa preauth" msgstr="Pré-authentification"/>
+	<message msgid="general wpa preauthdisable" msgstr="Désactiver"/>
+	<message msgid="general wpa preauthenable" msgstr="Activer"/>
+	<message msgid="general ieee8021x settings" msgstr="Paramètres IEEE 802.1x"/>
+	<message msgid="general ieee8021x wep" msgstr="WEP"/>
+	<message msgid="general ieee8021x wepdisable" msgstr="Désactiver"/>
+	<message msgid="general ieee8021x wepenable" msgstr="Activer"/>
+	<message msgid="general auth server" msgstr="Serveur d’authentification"/>
+	<message msgid="general radius ipaddr" msgstr="Adresse IP"/>
+	<message msgid="general radius port" msgstr="Numéro de port"/>
+	<message msgid="general radius sharedsecret" msgstr="Secret partagé"/>
+	<message msgid="general radius sessiontimeout" msgstr="Délai d'expiration de session"/>
+	<message msgid="general radius idletimeout" msgstr="Délai d'inactivité"/>
+	<message msgid="general note_2" msgstr="Remarque : WPA-PSK et WPA2-PSK peuvent être configurés quand WPS est activé"/>
+	<message msgid="general encryp open" msgstr="Ouvert"/>
+	<message msgid="secure access policy" msgstr="Stratégie d'accès"/>
+	<message msgid="secure mac filter summary" msgstr="Récapitulatif de filtre MAC"/>
+	<message msgid="wireless enable" msgstr="Activer"/>
+	<message msgid="wireless disable" msgstr="Désactiver"/>
+	<message msgid="wireless allow" msgstr="Autoriser"/>
+	<message msgid="wireless reject" msgstr="Rejeter"/>
+	<message msgid="secure access policy capable" msgstr="Stratégie"/>
+	<message msgid="secure access policy new" msgstr="Ajouter une adresse Mac de station :"/>
+	<message msgid="secure access policy del" msgstr="Suppr"/>
+	<message msgid="secure mac delete" msgstr="Supprimer"/>
+	<message msgid="secure mac address" msgstr="Adresse MAC"/>
+	<message msgid="advance title" msgstr="Installation avancée sans fil"/>
+	<message msgid="advance rts cts" msgstr="Seuil RTS/CTS"/>
+	<message msgid="advance frag" msgstr="Seuil de fragmentation"/>
+	<message msgid="advance intra bss" msgstr="Activer le trafic Intra-BSS"/>
+	<message msgid="advance tx power" msgstr="Puissance de sortie"/>
+	<message msgid="advance net mode" msgstr="Mode Réseau"/>
+	<message msgid="advance ht phymode" msgstr="Mode physique HT"/>
+	<message msgid="advance ht opmode" msgstr="Mode de fonctionnement"/>
+	<message msgid="advance ht mixed" msgstr="Mixte"/>
+	<message msgid="advance ht green" msgstr="Vert"/>
+	<message msgid="advance ht channelbw" msgstr="Bande passante du canal"/>
+	<message msgid="advance ht gi" msgstr="Intervalle de protection"/>
+	<message msgid="advance ht longgi" msgstr="long"/>
+	<message msgid="advance ht autogi" msgstr="Auto"/>
+	<message msgid="advance mcs" msgstr="MCS"/>
+	<message msgid="advance ht automcs" msgstr="Auto"/>
+	<message msgid="advance ht rdg" msgstr="Reverse Direction Grant(RDG)"/>
+	<message msgid="advance rdg disable" msgstr="Désactiver"/>
+	<message msgid="advance rdg enable" msgstr="Activer"/>
+	<message msgid="advance ht extchannel" msgstr="Canal d'extension"/>
+	<message msgid="advance ht amsdu" msgstr="Agrégation MSDU(A-MSDU)"/>
+	<message msgid="advance ht amsdudisable" msgstr="Désactiver"/>
+	<message msgid="advance ht amsduenable" msgstr="Activer"/>
+	<message msgid="advance ht addba" msgstr="Blocage auto ACK"/>
+	<message msgid="advance ht addbadisable" msgstr="Désactiver"/>
+	<message msgid="advance ht amsduenable" msgstr="Activer"/>
+	<message msgid="advance ht delba" msgstr="Décliner une requête BA"/>
+	<message msgid="advance ht delbadisable" msgstr="Désactiver"/>
+	<message msgid="advance ht delbaenable" msgstr="Activer"/>
+	<message msgid="advance other" msgstr="Autre"/>
+	<message msgid="advance ht txstream" msgstr="HT TxStream"/>
+	<message msgid="advance ht rxstream" msgstr="HT RxStream"/>
+	<message msgid="qos qostitle" msgstr="Configuration WMM"/>
+	<message msgid="qos wmm enable" msgstr="Activer WMM QoS"/>
+	<message msgid="wps wpstitle" msgstr="Installation de WPS"/>
+	<message msgid="wps wpsenable" msgstr="Activer WPS"/>
+	<message msgid="wps wpsstatus" msgstr="État"/>
+	<message msgid="wps unconfig1" msgstr="Non configuré"/>
+	<message msgid="wps unconfig2" msgstr="Non configuré"/>
+	<message msgid="wps config1" msgstr="Configuré"/>
+	<message msgid="wps config2" msgstr="Configuré"/>
+	<message msgid="wps unknown1" msgstr="Inconnu"/>
+	<message msgid="wps unknown2" msgstr="Inconnu"/>
+	<message msgid="wps pin number" msgstr="Numéro de PIN :"/>
+	<message msgid="wps generate pincode" msgstr="Générer"/>
+	<message msgid="wps oob reset" msgstr="Publier_Configuration"/>
+	<message msgid="wps config status1" msgstr="État :"/>
+	<message msgid="wps config status2" msgstr="État :"/>
+	<message msgid="wps config mode" msgstr="Mode 802.11:"/>
+	<message msgid="wps config ssid" msgstr="SSID :"/>
+	<message msgid="wps config security" msgstr="Sécurité :"/>
+	<message msgid="wps config note1" msgstr="Remarque : Si vous activez WPS, le"/>
+	<message msgid="wps config note2" msgstr="service sera activé automatiquement."/>
+	<message msgid="wps station title" msgstr="Ajouter une station par WPS"/>
+	<message msgid="wps station note1_0" msgstr="Cliquez sur le bouton Push (Pousser) ci-dessous"/>
+	<message msgid="wps station note1_1" msgstr="Bouton"/>
+	<message msgid="wps station note1_2" msgstr="pour ajouter des stations WPS au réseau sans fil."/>
+	<message msgid="wps station pbc" msgstr="Appuyer sur le bouton"/>
+	<message msgid="wps station pinnum" msgstr="Ou entrez le numéro PIN des stations :"/>
+	<message msgid="wps station pincode" msgstr="début"/>
+	<message msgid="wps station note2_0" msgstr="Remarque :"/>
+	<message msgid="wps station note2_1" msgstr="1. La PBC (Push Button Configuration) nécessite d'appuyer sur un bouton à la fois sur la station et sur l'AP en moins de 120 secondes."/>
+	<message msgid="wps station note2_2" msgstr="2. Vous pouvez trouver le numéro PIN dans l'utilitaire de la station."/>
+	<message msgid="scheduling title" msgstr="Planification du LAN sans fil"/>
+	<message msgid="scheduling wlan enable" msgstr="Activer la programmation LAN sans fil"/>
+	<message msgid="scheduling wlan schedule" msgstr="Planification"/>
+	<message msgid="scheduling wlan status" msgstr="Etat du WLAN"/>
+	<message msgid="scheduling wlan day" msgstr="Jour"/>
+	<message msgid="scheduling wlan except" msgstr="Pour les heures suivantes   (Format de 24 heures) "/>
+	<message msgid="scheduling day0 on" msgstr="Activé"/>
+	<message msgid="scheduling day0 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day0 everyday" msgstr="Tous les jours"/>
+	<message msgid="scheduling day0 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day0 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day0 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day0 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day1 on" msgstr="Activé"/>
+	<message msgid="scheduling day1 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day1 mon" msgstr="Lun"/>
+	<message msgid="scheduling day1 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day1 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day1 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day1 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day2 on" msgstr="Activé"/>
+	<message msgid="scheduling day2 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day2 tue" msgstr="Mar"/>
+	<message msgid="scheduling day2 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day2 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day2 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day2 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day3 on" msgstr="Activé"/>
+	<message msgid="scheduling day3 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day3 wed" msgstr="Mer"/>
+	<message msgid="scheduling day3 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day3 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day3 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day3 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day4 on" msgstr="Activé"/>
+	<message msgid="scheduling day4 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day4 thu" msgstr="Jeu"/>
+	<message msgid="scheduling day4 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day4 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day4 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day4 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day5 on" msgstr="Activé"/>
+	<message msgid="scheduling day5 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day5 fri" msgstr="Ven"/>
+	<message msgid="scheduling day5 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day5 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day5 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day5 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day6 on" msgstr="Activé"/>
+	<message msgid="scheduling day6 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day6 sat" msgstr="Sam"/>
+	<message msgid="scheduling day6 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day6 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day6 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day6 endmin" msgstr="(min)"/>
+	<message msgid="scheduling day7 on" msgstr="Activé"/>
+	<message msgid="scheduling day7 off" msgstr="Désactivé"/>
+	<message msgid="scheduling day7 sun" msgstr="Dim"/>
+	<message msgid="scheduling day7 starthour" msgstr="(heure)"/>
+	<message msgid="scheduling day7 startmin" msgstr="(min)"/>
+	<message msgid="scheduling day7 endhour" msgstr="(heure)"/>
+	<message msgid="scheduling day7 endmin" msgstr="(min)"/>
+	<message msgid="wds title" msgstr="Installation de WDS"/>
+	<message msgid="wds mode" msgstr="Paramètres de base :"/>
+	<message msgid="wds self mac" msgstr="Adresse MAC locale :"/>
+	<message msgid="wds mode disable" msgstr="Désactiver"/>
+	<message msgid="wds mode apbridge" msgstr="AP+Pont"/>
+	<message msgid="wds mode bridge" msgstr="Pont"/>
+	<message msgid="wds phy mode" msgstr="Mode Phy"/>
+	<message msgid="wds ap macaddr1" msgstr="Adresse MAC distante"/>
+	<message msgid="wds ap macaddr2" msgstr="Adresse MAC distante"/>
+	<message msgid="wds ap macaddr3" msgstr="Adresse MAC distante"/>
+	<message msgid="wds ap macaddr4" msgstr="Adresse MAC distante"/>
+	<message msgid="wds security title" msgstr="Sécurité"/>
+	<message msgid="wds encryp type" msgstr="Type de cryptage"/>
+	<message msgid="wds encryp key" msgstr="Clé de cryptage"/>
+	<message msgid="wds encryp no" msgstr="Pas de sécurité"/>
+	<message msgid="wds encryp wep" msgstr="WEP"/>
+	<message msgid="wds encryp tkip" msgstr="TKIP"/>
+	<message msgid="wds encryp aes" msgstr="AES"/>
+	<message msgid="wds phy ofdm" msgstr="OFDM"/>
+	<message msgid="wds phy htmix" msgstr="HTMIX"/>
+	<message msgid="wds phy greenfield" msgstr="GREENFIELD"/>
+	<message msgid="wds phy cck" msgstr="CCK"/>
+	<message msgid="addprof system config" msgstr="Installation sans fil"/>
+	<message msgid="addprof advance config" msgstr="Installation avancée sans fil"/>
+	<message msgid="addprof profile name" msgstr="Nom du profil"/>
+	<message msgid="addprof station ssid" msgstr="Nom réseau (SSID)"/>
+	<message msgid="addprof network type" msgstr="Type de réseau"/>
+	<message msgid="addprof adhoc" msgstr="802.11 Ad Hoc"/>
+	<message msgid="addprof infrastructure" msgstr="Infrastructure"/>
+	<message msgid="addprof power save" msgstr="Mode d’économie d'énergie"/>
+	<message msgid="addprof station channel" msgstr="Canal"/>
+	<message msgid="addprof cam" msgstr="CAM (Mode constamment éveillé)"/>
+	<message msgid="addprof preamble type" msgstr="Type de préambule 11B"/>
+	<message msgid="addprof wireless auto" msgstr="Auto"/>
+	<message msgid="addprof wireless long" msgstr="Long"/>
+	<message msgid="addprof rts threshold" msgstr="Seuil RTS"/>
+	<message msgid="addprof fragment threshold" msgstr="Seuil de fragmentation"/>
+	<message msgid="addprof secure policy" msgstr="Sécurité"/>
+	<message msgid="addprof secure open" msgstr="OUVERT"/>
+	<message msgid="addprof secure shared" msgstr="WEP PARTAGE"/>
+	<message msgid="addprof secure wpapsk" msgstr="WPA-PSK"/>
+	<message msgid="addprof secure wpa2psk" msgstr="WPA2-PSK"/>
+	<message msgid="addprof security mode" msgstr="Mode de sécurité"/>
+	<message msgid="addprof wep key length" msgstr="Longueur de clé Wep"/>
+	<message msgid="addprof wep bit64" msgstr="64 bits"/>
+	<message msgid="addprof wep bit128" msgstr="128 bits"/>
+	<message msgid="addprof wep key entry method" msgstr="Méthode d'entrée de clé WEP"/>
+	<message msgid="addprof hex" msgstr="HEX"/>
+	<message msgid="addprof ascii" msgstr="ASCII"/>
+	<message msgid="addprof secure wep key" msgstr="Clés WEP"/>
+	<message msgid="addprof secure wep key1" msgstr="Clé 1"/>
+	<message msgid="addprof secure wep key2" msgstr="Clé 2"/>
+	<message msgid="addprof secure wep key3" msgstr="Clé 3"/>
+	<message msgid="addprof secure wep key4" msgstr="Clé 4"/>
+	<message msgid="addprof secure wpa" msgstr="WPA"/>
+	<message msgid="addprof secure wpa algorithm" msgstr="Algorithmes WPA"/>
+	<message msgid="addprof wpa tkip" msgstr="TKIP"/>
+	<message msgid="addprof wpa aes" msgstr="AES"/>
+	<message msgid="addprof secure wpa pass phrase" msgstr="Phrase de passe"/>
+	<message msgid="op mode title" msgstr="Mode Configuration"/>
+	<message msgid="op mode router" msgstr="Mode Routeur"/>
+	<message msgid="op mode ap" msgstr="Mode Point d'accès"/>
+	<message msgid="op mode wisp" msgstr="Mode WISP"/>
+	<message msgid="op mode note1_0" msgstr="Remarque :"/>
+	<message msgid="op mode note1_1" msgstr="Routeur : Dans ce mode, l'appareil est pris en charge pour se connecter à Internet via un modem ADSL/Câble. Des PC en ports LAN partagent la même IP sur l'ISP à travers le port WAN."/>
+	<message msgid="op mode note1_2" msgstr="Point d'accès :  Dans ce mode, tous les ports Ethernet sont pontés les uns aux autres. L'appareil permet à un ordinateur équipé sans fil de communiquer avec un réseau câblé."/>
+	<message msgid="op mode note1_3" msgstr="WISP Mode: In this mode, the device acts as a wireless client. It can connect to an existing network via an access point. Also router functions are added between the wireless WAN and the LAN."/>
+	<message msgid="wireless assoc title" msgstr="Liste d'associations"/>
+	<message msgid="wireless assoc number" msgstr="#"/>
+	<message msgid="wireless assoc macaddr" msgstr="Adresse MAC"/>
+	<message msgid="wireless assoc time" msgstr="Durée d’association"/>
+	<message msgid="wireless assoc refresh" msgstr="Actualiser"/>
+	<message msgid="packet statis title" msgstr="Statistiques des paquets"/>
+	<message msgid="packet statis tabletitle" msgstr="Statistiques des paquets"/>
+	<message msgid="packet statis port" msgstr="Port"/>
+	<message msgid="packet statis status" msgstr="État"/>
+	<message msgid="packet statis txpkts" msgstr="TxPkts"/>
+	<message msgid="packet statis rxpkts" msgstr="RxPkts"/>
+	<message msgid="packet statis collis" msgstr="Collisions"/>
+	<message msgid="packet statis txbs" msgstr="Tx B/s"/>
+	<message msgid="packet statis rxbs" msgstr="Rx B/s"/>
+	<message msgid="packet statis uptime" msgstr="Temps utilisable"/>
+	<message msgid="packet statis wan" msgstr="WAN"/>
+	<message msgid="packet statis lan" msgstr="LAN"/>
+	<message msgid="packet statis wlan" msgstr="WLAN"/>
+	<message msgid="packet statis systime" msgstr="Durée d'activité du système :"/>
+	<message msgid="packet statis opllinterval" msgstr="Intervalle(s) d’interrogation :"/>
+	<message msgid="packet statis timesec" msgstr="sec"/>
+	<message msgid="packet statis set interval" msgstr="Définir l’intervalle"/>
+	<message msgid="packet statis set stop" msgstr="Arrêter"/>
+	<message msgid="Giving up :( Cannot create an XMLHTTP instance" msgstr="Abandon: (Impossible de créer une instance XMLHTTP"/>
+	<message msgid="There was a problem with the request." msgstr="Un problème a été rencontré avec la requête."/>
+	<message msgid="The mac address in Access Policy form is invalid." msgstr="L'adresse MAC dans le formulaire de stratégie d'accès n'est pas valide."/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="You cannot set scheduling in this mode" msgstr="Vous ne pouvez pas définir de planification dans ce mode"/>
+	<message msgid="Error : Start Time greater than End Time" msgstr="Erreur : L'heure de début est supérieure à l'heure de fin"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="Please fill WDS remote AP MAC Address in correct format! (XX:XX:XX:XX:XX:XX)" msgstr="Renseignez l'adresse MAC AP distante WDS au format correct! (XX:XX:XX:XX:XX:XX)"/>
+	<message msgid="WDS remote AP MAC Address are empty !!!" msgstr="L'adresse Mac des points d'accès distants ne sont pas renseignés !!!"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="Vous DEVEZ sélectionner le mode Utilisation système sur WISP ou Client"/>
+	<message msgid="Pleaes input the Profile Name!" msgstr="Veuillez entrer le nom du profil!"/>
+	<message msgid="Pleaes input the SSID!" msgstr="Veuillez entrer le SSID!"/>
+	<message msgid="Please input wpapsk key!" msgstr="Veuillez entrer la clé wpapsk!"/>
+	<message msgid="Please input at least 8 character of wpapsk key !" msgstr="Veuillez entrer au moins 8 caractères de la clé wpapsk!"/>
+	<message msgid="Please input the 802.1x identity !" msgstr="Veuillez entrer l'identité de 802.1x !"/>
+	<message msgid="Please input the 802.1x password !" msgstr="Veuillez entrer le mot de passe de 802.1x !"/>
+	<message msgid="Please input the 802.1x Client Certificate Path !" msgstr="Veuillez entrer le chemin du certificat client de 802.1x!"/>
+	<message msgid="Please input the 802.1x Private Key Path !" msgstr="Veuillez entrer le chemin de la clé privée de 802.1x!"/>
+	<message msgid="Please input the 802.1x Private Key Password !" msgstr="Veuillez entrer le mot de passe de la clé privée de 802.1x!"/>
+	<message msgid="Please input the 802.1x CA Certificate Path !" msgstr="Veuillez entrer le chemin du certificat CA de 802.1x!"/>
+	<message msgid="Duplicate Profile Name!" msgstr="Dupliquer le nom du profil!"/>
+	<message msgid="Invalid RTS Threshold" msgstr="Seuil RTS non valide"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="Veuillez spécifier la longueur de fragmentation"/>
+	<message msgid="Please input wep key" msgstr="Entrez la clé wep"/>
+	<message msgid="Please input" msgstr="Veuillez entrer le caractère"/>
+	<message msgid="character of wep key !" msgstr="de la clé wep !"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="Vous DEVEZ sélectionner le mode Utilisation système sur WISP ou Client"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="Vous DEVEZ sélectionner le mode Utilisation système sur WISP ou Client"/>
+	<message msgid="Pleaes input the Profile Name!" msgstr="Veuillez entrer le nom du profil!"/>
+	<message msgid="Pleaes input the SSID!" msgstr="Veuillez entrer le SSID!"/>
+	<message msgid="Please input wpapsk key!" msgstr="Veuillez entrer la clé wpapsk!"/>
+	<message msgid="Please input at least 8 character of wpapsk key !" msgstr="Veuillez entrer au moins 8 caractères de la clé wpapsk!"/>
+	<message msgid="Please input the 802.1x identity !" msgstr="Veuillez entrer l'identité de 802,1x !"/>
+	<message msgid="Please input the 802.1x password !" msgstr="Veuillez entrer le mot de passe de 802,1x !"/>
+	<message msgid="Please input the 802.1x Client Certificate Path !" msgstr="Veuillez entrer le chemin du certificat client de 802,1x!"/>
+	<message msgid="Please input the 802.1x Private Key Path !" msgstr="Veuillez entrer le chemin de la clé privée de 802,1x!"/>
+	<message msgid="Please input the 802.1x Private Key Password !" msgstr="Veuillez entrer le mot de passe de la clé privée de 802,1x!"/>
+	<message msgid="Please input the 802.1x CA Certificate Path !" msgstr="Veuillez entrer le chemin du certificat CA de 802,1x!"/>
+	<message msgid="Duplicate Profile Name!" msgstr="Dupliquer le nom du profil!"/>
+	<message msgid="Invalid RTS Threshold" msgstr="Seuil RTS non valide"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="Veuillez spécifier la longueur de fragmentation"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="Vous DEVEZ sélectionner le mode Utilisation système sur WISP ou Client"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="Please specify RTS Threshold" msgstr="Veuillez spécifier le seuil RTS"/>
+	<message msgid="Invalid RTS Threshold" msgstr="Seuil RTS non valide"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="Veuillez spécifier la longueur de fragmentation"/>
+	<message msgid="Invalid Fragmentation Length" msgstr="Longueur de fragmentation non valide"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA" msgstr="Impossible d'activer WPS, quand le mode de sécurité est WPA"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA2" msgstr="Impossible d'activer WPS, quand le mode de sécurité est WPA2"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA-WPA2" msgstr="Impossible d'activer WPS, quand le mode de sécurité est WPA-WPA2"/>
+	<message msgid="Giving up :( Cannot create an XMLHTTP instance" msgstr="Abandon: ( Impossible de créer une instance XMLHTTP"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+	<message msgid="Please enable WPS !!!" msgstr="Veuillez activer WPS !!!"/>
+	<message msgid="PIN number validation failed" msgstr="La validation du code PIN a échouée"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="Vous NE POUVEZ PAS sélectionner le mode WISP ou Client pour configurer cette page"/>
+<!-- for Sys OP Mode web pages alert message--> 
+<message msgid="- Ports are LAN 4 Ethernet LAN ports, WLAN, WAN" msgstr="- Les ports sont LAN (4 ports LAN Ethernet), WLAN, WAN" />
+<message msgid="- Ports are LAN 5 Ethernet LAN ports, WLAN as WAN" msgstr="- Les ports sont LAN (5 ports LAN Ethernet), WLAN comme WAN" />
+<message msgid="- LAN DHCP server is configurable" msgstr="- Le serveur DHCP LAN est configurable" />
+<message msgid="- LAN IP is" msgstr="- L`IP du LAN est" />
+<message msgid="- WAN IP is configurable" msgstr="- L`IP WAN est configurable" />
+<message msgid="- Ports are LAN 5 Ethernet LAN ports,WLAN" msgstr="- Les ports sont LAN (5 ports LAN Ethernet), WLAN" />
+<message msgid="- LAN DHCP server is disabled &amp; unconfigurable" msgstr="- Le serveur DHCP LAN est désactivé &amp; non configurable" />
+<message msgid="- LAN IPb is" msgstr="- L`IP du LAN est" />
+<message msgid="- WAN IP is unreachable" msgstr="- L`IP WAN ne peut être atteinte" />
+<!-- for Sys OP Mode web pages alert message--> 
+<message msgid="main Ready" msgstr="Prêt"/>
+<message msgid="main ConfigurationSuccess" msgstr="Mise à jour de la configuration réussie"/>
+<message msgid="main ConfigurationProceeding" msgstr="Mise à jour de la configuration en cours.  Veuillez patienter..."/>
+<message msgid="main firmware download in progress" msgstr="Téléchargement du microprogramme en cours. Patientez . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Mise à niveau du microprogramme en cours. Patientez et N'ÉTEIGNEZ PAS votre appareil."/>
+	<message msgid="dash ref none" msgstr="Aucun"/>
+	<message msgid="dash ref 5s" msgstr="60 secondes"/>
+	<message msgid="dash ref 10s" msgstr="120 secondes"/>
+	<message msgid="dash ref 15s" msgstr="180 secondes"/>
+	<message msgid="dash ref 20s" msgstr="240 secondes"/>
+	<message msgid="dash ref 25s" msgstr="300 secondes"/>
+<!-- wisp_sute_survey.asp-->
+<message msgid="scan title" msgstr="Station Site Survey" />
+<message msgid="station ssid" msgstr="SSID" /> 
+<message msgid="scan bssid" msgstr="BSSID" />
+<message msgid="scan rssi" msgstr="Signal Strength" />
+<message msgid="scan rescan" msgstr="Rescan" />
+<message msgid="scan add profile" msgstr=" Setting " />
+<!-- wisp_sute_survey.asp-->
+<!-- wds.asp 20090624 add-->
+<message msgid="WDS WEP Key should be a 10/26 hexdecimal or a 5/13 ascii" msgstr="WDS Clé WEP doit être un 10/26 en hexdecimal ou 5 / 13 en ASCII" />
+<message msgid="WDS TKIP or AES Key should be with length 8~64" msgstr="clés WDS TKIP ou AES devraient être de longueur 8 ~ 64" />
+<message msgid="WDS TKIP or AES Key should be a 64 hexdecimal" msgstr="clés WDS TKIP ou AES devraient être de longueur 64 en hexadecimal " />
+<message msgid="Do you wish to continue with this process ?" msgstr="Voulez-vous continuer avec ce processus?" />
+<message msgid="scheduling title note" msgstr="Programmer le fonctionnement du WiFi avec le tableau ci-dessous." />
+
+<!-- added by NBG4615 -->
+	<message msgid="op mode ur" msgstr="Mode Répéteur universel"/>
+	<message msgid="secure ssid choice" msgstr="SSID"/>
+	<message msgid="APClient MAC" msgstr="Adresse MAC (Facultative)"/>
+	<message msgid="general wireless ssid1" msgstr="Nom du réseau (SSID1):"/>
+	<message msgid="general wireless ssid2" msgstr="Nom du réseau (SSID2):"/>
+	<message msgid="general wireless ssid3" msgstr="Nom du réseau (SSID3):"/>
+	<message msgid="main advance intra bss" msgstr="Communication entre clients sans fil avec SSID différents"/>
+	<message msgid="channel selection" msgstr="Sélection du canal"/>
+	<message msgid="encryption type" msgstr="Type de cryptage"/>
+	<message msgid="WISP Title" msgstr="Paramètres WISP"/>
+	<message msgid="Please input at least 8 character of wpapsk key!" msgstr="Veuillez entrer au moins 8 caractères de la clé wpapsk!"/>
+	<message msgid="Invalid characters in Pass Phrase." msgstr="Caractères non valides dans la phrase de passe."/>
+	<message msgid="Please input a valid key renewal interval" msgstr="Veuillez entrer un intervalle de renouvellement de clé valide"/>
+	<message msgid="Warning: A short key renewal interval." msgstr="Avertissement: Un intervalle de renouvellement de clé court."/>
+	<message msgid="Please choose the 802.1x WEP option." msgstr="Veuillez choisir l'option WEP 802.1x."/>
+	<message msgid="Please choose the Pre-Authentication options." msgstr="Veuillez choisir les options de pré-authentification."/>
+	<message msgid="Please input the PMK Cache Period." msgstr="Veuillez entrer la période de cache PMK."/>
+	<message msgid="Please input 5 characters of wep key1 !" msgstr="Veuillez entrer 5 caractères de la clé wep1! "/>
+	<message msgid="Wep key1 contains invalid characters." msgstr="La clé wep1 contient des caractères invalides."/>
+	<message msgid="Please input 13 characters of wep key1 !" msgstr="Veuillez entrer 13 caractères de la clé wep1! "/>
+	<message msgid="Please input 10 characters of wep key1 !" msgstr="Veuillez entrer 10 caractères de la clé wep1! "/>
+	<message msgid="Invalid Wep key1 format!" msgstr="Format de clé wep1 invalide!"/>
+	<message msgid="Please input 26 characters of wep key1 !" msgstr="Veuillez entrer 26 caractères de la clé wep1! "/>
+	<message msgid="Please input 5 characters of wep key2 !" msgstr="Veuillez entrer 5 caractères de la clé wep2! "/>
+	<message msgid="Wep key2 contains invalid characters." msgstr="La clé wep2 contient des caractères invalides."/>
+	<message msgid="Please input 13 characters of wep key2 !" msgstr="Veuillez entrer 13 caractères de la clé wep2! "/>
+	<message msgid="Please input 10 characters of wep key2 !" msgstr="Veuillez entrer 10 caractères de la clé wep2! "/>
+	<message msgid="Invalid Wep key2 format!" msgstr="Format de clé wep2 invalide!"/>
+	<message msgid="Please input 26 characters of wep key2 !" msgstr="Veuillez entrer 26 caractères de la clé wep2! "/>
+	<message msgid="Please input 5 characters of wep key3 !" msgstr="Veuillez entrer 5 caractères de la clé wep3! "/>
+	<message msgid="Wep key3 contains invalid characters." msgstr="La clé wep3 contient des caractères invalides."/>
+	<message msgid="Please input 13 characters of wep key3 !" msgstr="Veuillez entrer 13 caractères de la clé wep3! "/>
+	<message msgid="Please input 10 characters of wep key3 !" msgstr="Veuillez entrer 10 caractères de la clé wep3! "/>
+	<message msgid="Invalid Wep key3 format!" msgstr="Format de clé wep3 invalide!"/>
+	<message msgid="Please input 26 characters of wep key3 !" msgstr="Veuillez entrer 26 caractères de la clé wep3! "/>
+	<message msgid="Please input 5 characters of wep key4 !" msgstr="Veuillez entrer 5 caractères de la clé wep4! "/>
+	<message msgid="Wep key4 contains invalid characters." msgstr="La clé wep4 contient des caractères invalides."/>
+	<message msgid="Please input 13 characters of wep key4 !" msgstr="Veuillez entrer 13 caractères de la clé wep4! "/>
+	<message msgid="Please input 10 characters of wep key4 !" msgstr="Veuillez entrer 10 caractères de la clé wep4! "/>
+	<message msgid="Invalid Wep key4 format!" msgstr="Format de clé wep4 invalide!"/>
+	<message msgid="Please input 26 characters of wep key4 !" msgstr="Veuillez entrer 26 caractères de la clé wep4! "/>
+	<message msgid="SSID field cannot empty when you select hide function." msgstr="Le champ SSID ne peut pas être vide lorsque vous sélectionnez la fonction cacher."/>
+	<message msgid="SSID field cannot empty when you select Enable Intra-BSS Traffic function." msgstr="Le champ SSID ne peut pas être vide lorsque vous sélectionnez la fonction Activer le trafic intra-BSS."/>
+	<message msgid="Please enter SSID!" msgstr="Entrez le SSID!"/>
+	<message msgid="Please input 5 or 13 characters of wep key" msgstr="Veuillez entrer 5 ou 13 caractères de la clé wep "/>
+	<message msgid="contains invalid characters" msgstr="contient des caractères invalides"/>
+	<message msgid="Please input 10 or 26 characters of wep key" msgstr="Veuillez entrer 10 ou 26 caractères de la clé wep "/>
+	<message msgid="Pass Phrase length should be larger than 8!" msgstr="La longueur de la Phrase de passe doit être supérieure à 8!"/>
+	<message msgid="Please input at least 8 character wpapsk key!" msgstr="Veuillez entrer au moins 8 caractères de la clé wpapsk!"/>
+	<message msgid="Please input 8 - 63 characters of wpapsk key!" msgstr="Veuillez entrer 8 - 63 caractères de la clé wpapsk! "/>
+	<message msgid="empty SSID!" msgstr="SSID vide!"/>
+	<message msgid="BSSID format error!" msgstr="Erreur de format de BSSID!"/>
+	<message msgid="Unknown Security Mode!" msgstr="Mode de sécurité inconnu!"/>
+	<message msgid="MAC Address has existed." msgstr="L'adresse MAC existe déjà."/>
+	<message msgid="Duplicate Remote Mac Address!" msgstr="Dupliquer l'adresse Mac distante!"/>
+	<message msgid="System do not support specific invalid characters." msgstr="Le système ne prend pas en charge les caractères spécifiques non valides."/>
+
+<message msgid="wlan guest IP" msgstr=" Adresse IP :"/>
+<message msgid="wlan guest Subnet" msgstr=" Masque de sous-réseau P :"/>
+
+<message msgid="The value of bandwitdth can not accept empty." msgstr="La valeur de la bande passante ne peut être vide."/>
+<message msgid="Error. IP address is empty." msgstr="Erreur. L'adresse IP est vide."/>
+<message msgid="IP address format error." msgstr="Erreur de format d'adresse IP."/>
+<message msgid="Error. Invalid Subnet Mask." msgstr="Erreur. Masque de sous-réseau non-valide."/>
+<message msgid="wlan guest priority" msgstr=" Priorité : " />
+
+<message msgid="scheduling note" msgstr="Remarque : Spécifier 00:00 comme heure de début et 24:00 comme heure de fin signifie un horaire s'étendant sur toute la journée." />
+<message msgid="op mode note1_4" msgstr="Mode Répéteur universel: Dans ce mode, l'appareil agit à la fois comme un point d'accès et un client sans fil. Il peut transmettre le trafic sans fil entre deux réseaux sans fil." />
+
+<!-- Universal Repeater -->
+<message msgid="WEPKey Title" msgstr="WEP Key" />
+<message msgid="WEPKey Default" msgstr="WEP Default Key" />
+<message msgid="apcli WEPkey1" msgstr="WEP Key 1 :" />
+<message msgid="apcli WEPkey2" msgstr="WEP Key 2 :" />
+<message msgid="apcli WEPkey3" msgstr="WEP Key 3 :" />
+<message msgid="apcli WEPkey4" msgstr="WEP Key 4 :" />
+
+<!-- need to translate -->
+<!-- MAC filter -->
+<message msgid="Table Full." msgstr="Table Full." />
+
+<message msgid="wlan guest enable" msgstr="Enable Guest WLAN" />
+<message msgid="wlan guest BWControl" msgstr="Enable Bandwidth Management for Guest WLAN" />
+<message msgid="wlan guest High" msgstr="High" />
+<message msgid="wlan guest Middle" msgstr="Middle" />
+<message msgid="wlan guest Low" msgstr="Low" />
+<message msgid="wlan guest maxBW" msgstr=" Maximum Bandwidth : " />
+<message msgid="wlan guest BW_unit" msgstr="(kbps)" />
+
+<message msgid="Please set value between 64~32768" msgstr="Please set value between 64~32768" />
+</po>

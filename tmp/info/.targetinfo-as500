@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/as500/Makefile
+Target: as500
+Target-Board: as500
+Target-Kernel: 2.6
+Target-Name: Acrospeed AS500 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: 
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Acrospeed AS500 based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+

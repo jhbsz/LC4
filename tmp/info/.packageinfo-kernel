@@ -1,0 +1,3635 @@
+Source-Makefile: package/kernel/Makefile
+Package: kmod-rt2860v2_ap
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RT3052 AP support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for RT305X AP wireless support
+@@
+Package: kmod-raeth
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RT305X Ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for RT305X ethernet support
+@@
+Package: kmod-rt2860v2_sta
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RT3052 STA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for RT305X STA wireless support
+@@
+Package: kmod-dwc_otg
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RT305X DWC OTG
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_DWC_OTG
+Description:  Kernel modules for RT305X DWC OTG
+@@
+Package: kmod-hw_nat
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RT305X hardware NAT support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for RT305X hardware NAT support
+@@
+Package: kmod-ata-core
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT @LINUX_2_6 +kmod-scsi-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Serial and Parallel ATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ATA
+Description: 	Serial and Parallel ATA support
+@@
+Package: kmod-ata-ahci
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AHCI Serial ATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SATA_AHCI
+Description:  Support for AHCI Serial ATA controllers.
+@@
+Package: kmod-ata-artop
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ARTOP 6210/6260 PATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PATA_ARTOP
+Description:  PATA support for ARTOP 6210/6260 host controllers.
+@@
+Package: kmod-ata-ixp4xx-cf
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IXP4XX Compact Flash support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PATA_IXP4XX_CF
+Description:  IXP4XX Compact Flash support.
+@@
+Package: kmod-ata-nvidia-sata
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Nvidia Serial ATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SATA_NV
+Description: 	Nvidia Serial ATA support
+@@
+Package: kmod-ata-piix
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel PIIX PATA/SATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ATA_PIIX
+Description:  SATA support for Intel ICH5/6/7/8 series host controllers and
+ PATA support for Intel ESB/ICH/PIIX3/PIIX4 series host controllers.
+@@
+Package: kmod-ata-via-sata
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: VIA SATA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SATA_VIA
+Description:  This option enables support for VIA Serial ATA.
+@@
+Package: kmod-ide-core
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IDE (ATA/ATAPI) device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IDE CONFIG_IDE_GENERIC CONFIG_BLK_DEV_GENERIC CONFIG_BLK_DEV_IDE CONFIG_BLK_DEV_IDEDISK CONFIG_BLK_DEV_IDEDMA_PCI=y CONFIG_BLK_DEV_IDEPCI=y
+Description:  Kernel support for IDE, useful for usb mass storage devices (e.g. on WL-HDD)
+ Includes:
+ - ide-core
+ - ide-detect
+ - ide-disk
+@@
+Package: kmod-ide-aec62xx
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT +kmod-ide-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Acard AEC62xx IDE driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLK_DEV_AEC62XX
+Description:  Support for Acard AEC62xx (Artop ATP8xx) IDE controllers.
+@@
+Package: kmod-ide-magicbox
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_magicbox +kmod-ide-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Magicbox 2.0 IDE CF driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLK_DEV_MAGICBOX_IDE
+Description:  Support for Magicbox 2.0 onboard CF slot.
+@@
+Package: kmod-ide-pdc202xx
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_4 +kmod-ide-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Promise PDC202xx IDE driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLK_DEV_PDC202XX_OLD
+Description:  Support for the Promise Ultra 33/66/100 (PDC202{46|62|65|67|68}) IDE
+ controllers.
+@@
+Package: kmod-scsi-core
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: SCSI device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SCSI CONFIG_BLK_DEV_SD
+Description: 	SCSI device support
+@@
+Package: kmod-scsi-generic
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel support for SCSI generic
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CHR_DEV_SG
+Description: 	Kernel support for SCSI generic
+@@
+Package: kmod-loop
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Loopback device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLK_DEV_LOOP CONFIG_BLK_DEV_CRYPTOLOOP=n
+Description:  Kernel module for loopback device support
+@@
+Package: kmod-nbd
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Network block device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLK_DEV_NBD
+Description:  Kernel module for network block device support
+@@
+Package: kmod-pata-rb153-cf
+Submenu: Block Devices
+Version: <LINUX_VERSION>--1
+Depends: kmod-ata-core @TARGET_adm5120_router_le
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RouterBOARD 153 CF Slot support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PATA_RB153_CF
+Description:   Kernel support for the RouterBoard 153 CF slot.
+@@
+Package: kmod-crypto-core
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Core CryptoAPI modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO=y CONFIG_CRYPTO_ALGAPI CONFIG_CRYPTO_BLKCIPHER CONFIG_CRYPTO_CBC CONFIG_CRYPTO_DEFLATE CONFIG_CRYPTO_ECB CONFIG_CRYPTO_HASH CONFIG_CRYPTO_HMAC CONFIG_CRYPTO_MANAGER
+Description: 	Core CryptoAPI modules
+@@
+Package: kmod-crypto-hw-padlock
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: VIA PadLock ACE with AES/SHA hw crypto module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_DEV_PADLOCK CONFIG_CRYPTO_DEV_PADLOCK_AES CONFIG_CRYPTO_DEV_PADLOCK_SHA
+Description: 	VIA PadLock ACE with AES/SHA hw crypto module
+@@
+Package: kmod-crypto-hw-geode
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AMD Geode hardware crypto module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_DEV_GEODE
+Description: 	AMD Geode hardware crypto module
+@@
+Package: kmod-crypto-hw-hifn-795x
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core +kmod-crypto-des
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: HIFN 795x crypto accelerator
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_DEV_HIFN_795X CONFIG_CRYPTO_DEV_HIFN_795X_RNG=y
+Description: 	HIFN 795x crypto accelerator
+@@
+Package: kmod-crypto-aes
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AES cipher CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_AES
+Description: 	AES cipher CryptoAPI module
+@@
+Package: kmod-crypto-arc4
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ARC4 (RC4) cipher CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_ARC4
+Description: 	ARC4 (RC4) cipher CryptoAPI module
+@@
+Package: kmod-crypto-aead
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Authenticated Encryption with Associated Data
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_AEAD
+Description: 	Authenticated Encryption with Associated Data
+@@
+Package: kmod-crypto-authenc
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core +kmod-crypto-aead
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Combined mode wrapper for IPsec
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_AUTHENC
+Description: 	Combined mode wrapper for IPsec
+@@
+Package: kmod-crypto-des
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: DES/3DES cipher CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_DES
+Description: 	DES/3DES cipher CryptoAPI module
+@@
+Package: kmod-crypto-hmac
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: HMAC digest CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_HMAC
+Description: 	HMAC digest CryptoAPI module
+@@
+Package: kmod-crypto-md5
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: MD5 digest CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_MD5
+Description: 	MD5 digest CryptoAPI module
+@@
+Package: kmod-crypto-michael-mic
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Michael MIC keyed digest CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_MICHAEL_MIC
+Description: 	Michael MIC keyed digest CryptoAPI module
+@@
+Package: kmod-crypto-sha1
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: SHA1 digest CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_SHA1
+Description: 	SHA1 digest CryptoAPI module
+@@
+Package: kmod-crypto-misc
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Other CryptoAPI modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_ANUBIS CONFIG_CRYPTO_BLOWFISH CONFIG_CRYPTO_CAMELLIA CONFIG_CRYPTO_CAST5 CONFIG_CRYPTO_CAST6 CONFIG_CRYPTO_CRC32C CONFIG_CRYPTO_FCRYPT CONFIG_CRYPTO_KHAZAD CONFIG_CRYPTO_MD4 CONFIG_CRYPTO_SERPENT CONFIG_CRYPTO_SHA256 CONFIG_CRYPTO_SHA512 CONFIG_CRYPTO_TEA CONFIG_CRYPTO_TGR192 CONFIG_CRYPTO_TWOFISH CONFIG_CRYPTO_TWOFISH_586 CONFIG_CRYPTO_WP512
+Description: 	Other CryptoAPI modules
+@@
+Package: kmod-crypto-ocf
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core @!TARGET_uml
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: OCF modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_OCF_OCF CONFIG_OCF_CRYPTODEV CONFIG_OCF_CRYPTOSOFT CONFIG_OCF_FIPS=y CONFIG_OCF_RANDOMHARVEST=y
+Description: 	OCF modules
+@@
+Package: kmod-crypto-null
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Null CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_NULL
+Description: 	Null CryptoAPI module
+@@
+Package: kmod-crypto-test
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Test CryptoAPI module
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_TEST
+Description: 	Test CryptoAPI module
+@@
+Package: kmod-fs-cifs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CIFS support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CIFS
+Description:  Kernel module for CIFS support
+@@
+Package: kmod-fs-minix
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Minix filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MINIX_FS
+Description:  Kernel module for Minix filesystem support
+@@
+Package: kmod-fs-mini_fo
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: mini_fo filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MINI_FO
+Description:  Kernel module for mini_fo filesystem support
+@@
+Package: kmod-fs-ntfs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: NTFS filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NTFS_FS
+Description:  Kernel module for NTFS filesystem support
+@@
+Package: kmod-fs-mbcache
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: mbcache (used by ext2/ext3)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_FS_MBCACHE
+Description: 	mbcache (used by ext2/ext3)
+@@
+Package: kmod-fs-ext2
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-fs-mbcache
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: EXT2 filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_EXT2_FS
+Description:  Kernel module for EXT2 filesystem support
+@@
+Package: kmod-fs-ext3
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-fs-mbcache
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: EXT3 filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_EXT3_FS CONFIG_JBD
+Description:  Kernel module for EXT3 filesystem support
+@@
+Package: kmod-fs-ext4
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: EXT4 filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_EXT4_FS CONFIG_JBD2
+Description:  Kernel module for EXT4 filesystem support
+@@
+Package: kmod-fs-hfs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: HFS+ filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HFS_FS
+Description:  Kernel module for HFS filesystem support
+@@
+Package: kmod-fs-hfsplus
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: HFS+ filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HFSPLUS_FS
+Description:  Kernel module for HFS+ filesystem support
+@@
+Package: kmod-fs-isofs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ISO9660 filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ISO9660_FS CONFIG_JOLIET=y CONFIG_ZISOFS=n
+Description:  Kernel module for ISO9660 filesystem support
+@@
+Package: kmod-fs-udf
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: UDF filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_UDF_FS
+Description:  Kernel module for UDF filesystem support
+@@
+Package: kmod-fs-nfs-common
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Common NFS filesystem modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LOCKD CONFIG_SUNRPC
+Description: 	Common NFS filesystem modules
+@@
+Package: kmod-fs-nfs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: kmod-fs-nfs-common
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: NFS filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NFS_FS
+Description:  Kernel module for NFS support
+@@
+Package: kmod-fs-nfsd
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: kmod-fs-nfs-common
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: NFS kernel server support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NFSD
+Description:  Kernel module for NFS kernel server support
+@@
+Package: kmod-fs-msdos
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: MSDOS filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MSDOS_FS
+Description:  Kernel module for MSDOS filesystem support
+@@
+Package: kmod-fs-reiserfs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ReiserFS filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_REISERFS_FS
+Description:  Kernel module for ReiserFS support
+@@
+Package: kmod-fs-vfat
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: VFAT filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_FAT_FS CONFIG_VFAT_FS
+Description:  Kernel module for VFAT filesystem support
+@@
+Package: kmod-fs-xfs
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: XFS filesystem support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_XFS_FS
+Description:  Kernel module for XFS support
+@@
+Package: kmod-nls-base
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Native Language Support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS
+Description:  Kernel module for NLS (Native Language Support)
+@@
+Package: kmod-nls-cp437
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 437 (United States, Canada)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_437
+Description:  Kernel module for NLS Codepage 437 (United States, Canada)
+@@
+Package: kmod-nls-cp850
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 850 (Europe)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_850
+Description:  Kernel module for NLS Codepage 850 (Europe)
+@@
+Package: kmod-nls-cp936
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 936 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_936
+Description:  Kernel module for NLS Codepage 936 
+@@
+Package: kmod-nls-cp950
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 950 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_950
+Description:  Kernel module for NLS Codepage 950 (Traditional Chinese)
+@@
+Package: kmod-nls-cp932
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 932 (Japanese) 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_932
+Description:  Kernel module for NLS Codepage 932 (Japanese)
+@@
+Package: kmod-nls-cp949
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 949 (Korean) 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_949
+Description:  Kernel module for NLS Codepage 949 (Korean)
+@@
+Package: kmod-nls-cp1250
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 1250 (Eastern Europe)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_1250
+Description:  Kernel module for NLS Codepage 1250 (Eastern Europe)
+@@
+Package: kmod-nls-cp1251
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Codepage 1251 (Russian)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_CODEPAGE_1251
+Description:  Kernel module for NLS Codepage 1251 (Russian)
+@@
+Package: kmod-nls-iso8859-1
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ISO 8859-1 (Latin 1; Western European Languages)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_ISO8859_1
+Description:  Kernel module for NLS ISO 8859-1 (Latin 1)
+@@
+Package: kmod-nls-iso8859-2
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ISO 8859-2 (Latin 2; Central European Languages)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_ISO8859_2
+Description:  Kernel module for NLS ISO 8859-2 (Latin 2)
+@@
+Package: kmod-nls-iso8859-15
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ISO 8859-15 (Latin 9; Western, with Euro symbol)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_ISO8859_15
+Description:  Kernel module for NLS ISO 8859-15 (Latin 9)
+@@
+Package: kmod-nls-koi8r
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: KOI8-R (Russian)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_KOI8_R
+Description:  Kernel module for NLS KOI8-R (Russian)
+@@
+Package: kmod-nls-utf8
+Submenu: Filesystems
+Version: <LINUX_VERSION>--1
+Depends: +kmod-nls-base
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: UTF-8
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NLS_UTF8
+Description:  Kernel module for NLS UTF-8
+@@
+Package: kmod-hwmon-core
+Submenu: Hardware Monitoring Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Hardware monitoring support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HWMON CONFIG_HWMON_DEBUG_CHIP=n
+Description:  Kernel modules for hardware monitoring
+@@
+Package: kmod-hwmon-lm77
+Submenu: Hardware Monitoring Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-hwmon-core +kmod-i2c-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: LM77 monitoring support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SENSORS_LM77
+Description:  Kernel module for LM77 thermal monitor chip 
+@@
+Package: kmod-hwmon-lm90
+Submenu: Hardware Monitoring Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-hwmon-core +kmod-i2c-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: LM90 monitoring support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SENSORS_LM90
+Description:  Kernel module for LM90 thermal monitor chip 
+@@
+Package: kmod-hwmon-pc87360
+Submenu: Hardware Monitoring Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-hwmon-core @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PC87360 monitoring support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SENSORS_PC87360 CONFIG_HWMON_VID
+Description:  Kernel modules for PC87360 chips
+@@
+Package: kmod-i2c-core
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: I2C support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_I2C CONFIG_I2C_CHARDEV
+Description:  Kernel modules for I2C support
+@@
+Package: kmod-i2c-algo-bit
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: kmod-i2c-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: I2C bit-banging interfaces
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_I2C_ALGOBIT
+Description:  Kernel modules for I2C bit-banging interfaces.
+@@
+Package: kmod-i2c-algo-pca
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: kmod-i2c-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: I2C PCA 9564 interfaces
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_I2C_ALGOPCA
+Description:  Kernel modules for I2C PCA 9564 interfaces.
+@@
+Package: kmod-i2c-algo-pcf
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: kmod-i2c-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: I2C PCF 8584 interfaces
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_I2C_ALGOPCF
+Description:  Kernel modules for I2C PCF 8584 interfaces
+@@
+Package: kmod-i2c-gpio
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: @GPIO_SUPPORT kmod-i2c-core +kmod-i2c-algo-bit
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: GPIO-based bitbanging I2C
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_I2C_GPIO
+Description:  Kernel modules for a very simple bitbanging I2C driver utilizing the
+ arch-neutral GPIO API to control the SCL and SDA lines.
+@@
+Package: kmod-i2c-scx200
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT @TARGET_x86 kmod-i2c-core +kmod-i2c-algo-bit
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Geode SCx200 I2C using GPIO pins
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SCx200_I2C
+Description:  Kernel module for I2C using GPIO pins on the Geode SCx200 processors.
+@@
+Package: kmod-i2c-scx200-acb
+Submenu: I2C support
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT @TARGET_x86 kmod-i2c-core +kmod-i2c-algo-bit
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Geode SCx200 ACCESS.bus support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SCx200_ACB
+Description:  Kernel module for I2C using the ACCESS.bus controllers on the Geode SCx200
+ and SC1100 processors and the CS5535 and CS5536 Geode companion devices.
+@@
+Package: kmod-ipt-core
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Netfilter core
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NETFILTER_XTABLES CONFIG_IP_NF_IPTABLES CONFIG_IP_NF_FILTER CONFIG_IP_NF_MANGLE CONFIG_IP_NF_MATCH_LIMIT CONFIG_NETFILTER_XT_MATCH_LIMIT CONFIG_IP_NF_MATCH_MAC CONFIG_NETFILTER_XT_MATCH_MAC CONFIG_IP_NF_MATCH_MULTIPORT CONFIG_NETFILTER_XT_MATCH_MULTIPORT CONFIG_IP_NF_TARGET_LOG CONFIG_IP_NF_TARGET_TCPMSS CONFIG_NETFILTER_XT_TARGET_TCPMSS CONFIG_IP_NF_TARGET_REJECT
+Description:  Netfilter core kernel modules
+ Includes:
+ - limit
+ - LOG
+ - mac
+ - multiport
+ - TCPMSS
+ - REJECT
+@@
+Package: kmod-ipt-conntrack
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Basic connection tracking modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NF_CONNTRACK CONFIG_IP_NF_CONNTRACK CONFIG_NF_CONNTRACK_IPV4 CONFIG_IP_NF_MATCH_STATE CONFIG_NETFILTER_XT_MATCH_STATE
+Description:  Netfilter (IPv4) kernel modules for connection tracking
+ Includes:
+ - state
+@@
+Package: kmod-ipt-conntrack-extra
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core +kmod-ipt-conntrack
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Extra connection tracking modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_MATCH_CONNBYTES CONFIG_NETFILTER_XT_MATCH_CONNBYTES CONFIG_IP_NF_MATCH_CONNMARK CONFIG_NETFILTER_XT_MATCH_CONNMARK CONFIG_IP_NF_MATCH_CONNTRACK CONFIG_NETFILTER_XT_MATCH_CONNTRACK CONFIG_IP_NF_MATCH_HELPER CONFIG_NETFILTER_XT_MATCH_HELPER CONFIG_IP_NF_MATCH_RECENT CONFIG_IP_NF_TARGET_CONNMARK CONFIG_NETFILTER_XT_TARGET_CONNMARK CONFIG_NETFILTER_XT_TARGET_NOTRACK CONFIG_NETFILTER_XT_MATCH_WEBSTR
+Description:  Netfilter (IPv4) extra kernel modules for connection tracking
+ Includes:
+ - connbytes
+ - connmark/CONNMARK
+ - conntrack
+ - helper
+ - recent
+ - NOTRACK
+@@
+Package: kmod-ipt-filter
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Modules for packet content inspection
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_MATCH_IPP2P CONFIG_IP_NF_MATCH_LAYER7 CONFIG_NETFILTER_XT_MATCH_LAYER7 CONFIG_IP_NF_MATCH_STRING CONFIG_NETFILTER_XT_MATCH_STRING
+Description:  Netfilter (IPv4) kernel modules for packet content inspection
+ Includes:
+ - ipt_ipp2p
+ - ipt_layer7
+@@
+Package: kmod-ipt-ipopt
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Modules for matching/changing IP packet options
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_MATCH_DSCP CONFIG_NETFILTER_XT_MATCH_DSCP CONFIG_NETFILTER_XT_TARGET_DSCP CONFIG_IP_NF_MATCH_ECN CONFIG_IP_NF_MATCH_LENGTH CONFIG_NETFILTER_XT_MATCH_LENGTH CONFIG_IP_NF_MATCH_MARK CONFIG_NETFILTER_XT_MATCH_MARK CONFIG_NETFILTER_XT_MATCH_STATISTIC CONFIG_IP_NF_MATCH_TCPMSS CONFIG_NETFILTER_XT_MATCH_TCPMSS CONFIG_IP_NF_MATCH_TIME CONFIG_NETFILTER_XT_MATCH_TIME CONFIG_IP_NF_MATCH_TTL CONFIG_IP_NF_MATCH_UNCLEAN CONFIG_IP_NF_TARGET_CLASSIFY CONFIG_NETFILTER_XT_TARGET_CLASSIFY CONFIG_IP_NF_TARGET_DSCP CONFIG_IP_NF_TARGET_ECN CONFIG_IP_NF_TARGET_MARK CONFIG_NETFILTER_XT_TARGET_MARK CONFIG_IP_NF_TARGET_TTL CONFIG_IP_NF_MATCH_TOS CONFIG_IP_NF_TARGET_TOS
+Description:  Netfilter (IPv4) modules for matching/changing IP packet options
+ Includes:
+ - ipt_CLASSIFY
+ - ipt_dscp/DSCP
+ - ipt_ecn/ECN
+ - ipt_length
+ - ipt_tos/TOS
+ - ipt_tcpmms
+ - ipt_ttl/TTL
+ - ipt_unclean
+@@
+Package: kmod-ipt-ipsec
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Modules for matching IPSec packets
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_MATCH_AH_ESP CONFIG_IP_NF_MATCH_AH CONFIG_NETFILTER_XT_MATCH_ESP CONFIG_NETFILTER_XT_MATCH_POLICY
+Description:  Netfilter (IPv4) modules for matching IPSec packets
+ Includes:
+ - ipt_ah
+ - ipt_esp
+@@
+Package: kmod-ipt-nat
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core +kmod-ipt-conntrack
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Basic NAT targets
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_NAT CONFIG_NF_NAT CONFIG_IP_NF_TARGET_MASQUERADE
+Description:  Netfilter (IPv4) kernel modules for basic NAT targets
+ Includes:
+ - MASQUERADE
+@@
+Package: kmod-ipt-nat-extra
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core +kmod-ipt-nat
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Extra NAT targets
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_TARGET_MIRROR CONFIG_IP_NF_TARGET_NETMAP CONFIG_IP_NF_TARGET_REDIRECT
+Description:  Netfilter (IPv4) kernel modules for extra NAT targets
+ Includes:
+ - MIRROR
+ - NETMAP
+ - REDIRECT
+@@
+Package: kmod-ipt-nathelper
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core +kmod-ipt-nat
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Basic Conntrack and NAT helpers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_FTP CONFIG_IP_NF_NAT_FTP CONFIG_NF_CONNTRACK_FTP CONFIG_NF_NAT_FTP CONFIG_IP_NF_IRC CONFIG_IP_NF_NAT_IRC CONFIG_NF_CONNTRACK_IRC CONFIG_NF_NAT_IRC CONFIG_IP_NF_TFTP CONFIG_NF_CONNTRACK_TFTP CONFIG_NF_NAT_TFTP
+Description:  Default Netfilter (IPv4) Conntrack and NAT helpers
+ Includes:
+ - conntrack_ftp
+ - nat_ftp
+ - conntrack_irc
+ - nat_irc
+ - conntrack_tftp
+ - nat_tftp
+@@
+Package: kmod-ipt-nathelper-extra
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core +kmod-ipt-nat
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Extra Conntrack and NAT helpers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_AMANDA CONFIG_NF_CONNTRACK_AMANDA CONFIG_NF_NAT_AMANDA CONFIG_IP_NF_CT_PROTO_GRE CONFIG_IP_NF_NAT_PROTO_GRE CONFIG_NF_CT_PROTO_GRE CONFIG_NF_NAT_PROTO_GRE CONFIG_IP_NF_H323 CONFIG_IP_NF_NAT_H323 CONFIG_NF_CONNTRACK_H323 CONFIG_NF_NAT_H323 CONFIG_IP_NF_MMS CONFIG_IP_NF_NAT_MMS CONFIG_IP_NF_PPTP CONFIG_IP_NF_NAT_PPTP CONFIG_NF_CONNTRACK_PPTP CONFIG_NF_NAT_PPTP CONFIG_IP_NF_RTSP CONFIG_IP_NF_NAT_RTSP CONFIG_NF_CONNTRACK_RTSP CONFIG_NF_NAT_RTSP CONFIG_IP_NF_SIP CONFIG_IP_NF_NAT_SIP CONFIG_NF_CONNTRACK_SIP CONFIG_NF_NAT_SIP CONFIG_IP_NF_NAT_SNMP_BASIC CONFIG_NF_NAT_SNMP_BASIC
+Description:  Extra Netfilter (IPv4) Conntrack and NAT helpers
+ Includes:
+ - ip_conntrack_amanda
+ - ip_conntrack_proto_gre
+ - ip_nat_proto_gre
+ - ip_conntrack_pptp
+ - ip_nat_pptp
+ - ip_conntrack_sip
+ - ip_nat_sip
+ - ip_nat_snmp_basic
+@@
+Package: kmod-ipt-imq
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intermediate Queueing support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IMQ CONFIG_IMQ_BEHAVIOR_BA=y CONFIG_IMQ_NUM_DEVS=2 CONFIG_IP_NF_TARGET_IMQ CONFIG_NETFILTER_XT_TARGET_IMQ
+Description:  Kernel support for Intermediate Queueing devices
+@@
+Package: kmod-ipt-queue
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Module for user-space packet queueing
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_QUEUE
+Description:  Netfilter (IPv4) module for user-space packet queueing
+ Includes:
+ - QUEUE
+@@
+Package: kmod-ipt-ulog
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Module for user-space packet logging
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_TARGET_ULOG
+Description:  Netfilter (IPv4) module for user-space packet logging
+ Includes:
+ - ipt_ULOG
+@@
+Package: kmod-ipt-webstr
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Module for web string
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Netfilter (IPv4) module for web string
+@@
+Package: kmod-ipt-iprange
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Module for matching ip ranges
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Netfilter (IPv4) module for matching ip ranges
+ Includes:
+ - ipt_IPRANGE
+@@
+Package: kmod-ipt-ipset
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPSET Modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_SET CONFIG_IP_NF_SET_IPHASH CONFIG_IP_NF_SET_IPMAP CONFIG_IP_NF_SET_IPPORTHASH CONFIG_IP_NF_SET_IPTREE CONFIG_IP_NF_SET_IPTREEMAP CONFIG_IP_NF_SET_MACIPMAP CONFIG_IP_NF_SET_NETHASH CONFIG_IP_NF_SET_PORTMAP CONFIG_IP_NF_MATCH_SET CONFIG_IP_NF_TARGET_SET
+Description:  Netfilter kernel modules for ipset
+ Includes:
+ - ip_set
+ - ip_set_iphash
+ - ip_set_ipmap
+ - ip_set_ipporthash
+ - ip_set_iptree
+ - ip_set_iptreemap
+ - ip_set_macipmap
+ - ip_set_nethash
+ - ip_set_portmap
+ - ipt_set
+ - ipt_SET
+@@
+Package: kmod-ipt-extra
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipt-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Extra modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_RAW CONFIG_IP_NF_MATCH_CONDITION CONFIG_IP_NF_MATCH_OWNER CONFIG_NETFILTER_XT_MATCH_PHYSDEV CONFIG_IP_NF_MATCH_PKTTYPE CONFIG_NETFILTER_XT_MATCH_PKTTYPE CONFIG_NETFILTER_XT_MATCH_PORTSCAN CONFIG_NETFILTER_XT_MATCH_QUOTA CONFIG_NETFILTER_XT_TARGET_TARPIT CONFIG_NETFILTER_XT_TARGET_DELUDE CONFIG_NETFILTER_XT_TARGET_CHAOS CONFIG_IP_NF_TARGET_ROUTE
+Description:  Other Netfilter (IPv4) kernel modules
+ Includes:
+ - ipt_owner
+ - ipt_physdev
+ - ipt_pkttype
+ - ipt_recent
+ - iptable_raw
+ - xt_NOTRACK
+ - xt_TARPIT
+ - xt_DELUDE
+ - xt_CHAOS
+@@
+Package: kmod-ip6tables
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: +kmod-ipv6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPv6 modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP6_NF_IPTABLES
+Description:  Netfilter IPv6 firewalling support
+@@
+Package: kmod-arptables
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ARP firewalling modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_NF_ARPTABLES
+Description:  Kernel modules for ARP firewalling
+@@
+Package: kmod-ebtables
+Submenu: Netfilter Extensions
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Bridge firewalling modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BRIDGE_NETFILTER=y CONFIG_BRIDGE_NF_EBTABLES
+Description:  Kernel modules for Ethernet Bridge firewalling
+@@
+Package: kmod-ezp-nat
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Turbo NAT support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for TurboNAT support
+@@
+Package: kmod-atm
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ATM support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ATM CONFIG_ATM_BR2684
+Description:  Kernel modules for ATM support
+@@
+Package: kmod-atmtcp
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 kmod-atm
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ATM over TCP
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ATM_TCP CONFIG_ATM_DRIVERS=y
+Description:  Kernel module for ATM over TCP support
+@@
+Package: kmod-bonding
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Ethernet bonding driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BONDING
+Description:  Kernel module for NIC bonding.
+@@
+Package: kmod-capi
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CAPI (ISDN) Support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ISDN CONFIG_ISDN_CAPI CONFIG_ISDN_CAPI_CAPI20 CONFIG_ISDN_CAPIFS
+Description:  Kernel module for basic CAPI (ISDN) support
+@@
+Package: kmod-ipip
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: +kmod-iptunnel4
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IP-in-IP encapsulation
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_IPIP
+Description:  Kernel modules for IP-in-IP encapsulation
+@@
+Package: kmod-ipsec
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 +kmod-crypto-core +kmod-crypto-des +kmod-crypto-hmac +kmod-crypto-md5 +kmod-crypto-sha1
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPsec related modules (IPv4 and IPv6)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_KEY CONFIG_XFRM_USER
+Description:  Kernel modules for IPsec support in both IPv4 and IPv6.
+ Includes:
+ - af_key
+ - xfrm_user
+@@
+Package: kmod-ipsec4
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipsec +kmod-iptunnel4 +kmod-crypto-aead
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPsec related modules (IPv4)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INET_AH CONFIG_INET_ESP CONFIG_INET_IPCOMP CONFIG_INET_XFRM_MODE_BEET CONFIG_INET_XFRM_MODE_TRANSPORT CONFIG_INET_XFRM_MODE_TUNNEL CONFIG_INET_XFRM_TUNNEL
+Description:  Kernel modules for IPsec support in IPv4.
+ Includes:
+ - ah4
+ - esp4
+ - ipcomp
+ - xfrm4_mode_beet
+ - xfrm4_mode_transport
+ - xfrm4_mode_tunnel
+ - xfrm4_tunnel
+@@
+Package: kmod-ipsec6
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ipsec +kmod-iptunnel6 +kmod-crypto-aead
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPsec related modules (IPv6)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INET6_AH CONFIG_INET6_ESP CONFIG_INET6_IPCOMP CONFIG_INET6_XFRM_MODE_BEET CONFIG_INET6_XFRM_MODE_TRANSPORT CONFIG_INET6_XFRM_MODE_TUNNEL CONFIG_INET6_XFRM_TUNNEL
+Description:  Kernel modules for IPsec support in IPv6.
+ Includes:
+ - ah6
+ - esp6
+ - ipcomp6
+ - xfrm6_mode_beet
+ - xfrm6_mode_transport
+ - xfrm6_mode_tunnel
+ - xfrm6_tunnel
+@@
+Package: kmod-iptunnel4
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPv4 tunneling
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_IPIP CONFIG_INET_TUNNEL
+Description:  Kernel modules for IPv4 tunneling
+@@
+Package: kmod-iptunnel6
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 +kmod-ipv6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPv6 tunneling
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INET6_TUNNEL
+Description:  Kernel modules for IPv6 tunneling
+@@
+Package: kmod-ipv6
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPv6 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IPV6 CONFIG_IPV6_PRIVACY=y CONFIG_IPV6_MULTIPLE_TABLES=y CONFIG_IPV6_SUBTREES=y
+Description:  Kernel modules for IPv6 support
+@@
+Package: kmod-sit
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: +kmod-iptunnel4
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPv6-in-IPv4 tunnelling
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel modules for IPv6-in-IPv4 tunnelling
+@@
+Package: kmod-ip6-tunnel
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 +kmod-ipv6 +kmod-iptunnel6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IP-in-IPv6 tunnelling
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IPV6_TUNNEL
+Description:  Kernel modules for IPv6-in-IPv6 and IPv4-in-IPv6 tunnelling
+@@
+Package: kmod-gre
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: GRE support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_IPGRE CONFIG_NET_IPGRE_BROADCAST=y
+Description:  Generic Routing Encapsulation support
+@@
+Package: kmod-tun
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Universal TUN/TAP driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_TUN
+Description:  Kernel support for the TUN/TAP tunneling device
+@@
+Package: kmod-ppp
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PPP modules
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PPP CONFIG_PPP_ASYNC CONFIG_SLHC CONFIG_CRC_CCITT
+Description:  Kernel modules for PPP support
+@@
+Package: kmod-ppp-synctty
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ppp
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PPP sync tty support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PPP_SYNC_TTY
+Description:  Kernel modules for PPP sync tty support
+@@
+Package: kmod-pppoe
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ppp
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PPPoE support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PPPOE
+Description:  Kernel modules for PPPoE (PPP over Ethernet) support
+@@
+Package: kmod-pppoa
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ppp +kmod-atm
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PPPoA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PPPOATM CONFIG_ATM_DRIVERS=y
+Description:  Kernel modules for PPPoA (PPP over ATM) support
+@@
+Package: kmod-ipoa
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-atm
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IPoA support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_ATM_CLIP
+Description:   Kernel modules for IPoA (IP over ATM) support
+@@
+Package: kmod-mppe
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-ppp +kmod-crypto-arc4 +kmod-crypto-sha1
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Microsoft PPP compression/encryption
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PPP_MPPE_MPPC CONFIG_PPP_MPPE
+Description:  Kernel modules for Microsoft PPP compression/encryption
+@@
+Package: kmod-sched
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Traffic schedulers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_SCHED=y CONFIG_NET_SCH_DSMARK CONFIG_NET_SCH_ESFQ CONFIG_NET_SCH_FIFO CONFIG_NET_SCH_GRED CONFIG_NET_SCH_HFSC CONFIG_NET_SCH_HTB CONFIG_NET_SCH_INGRESS CONFIG_NET_SCH_PRIO CONFIG_NET_SCH_RED CONFIG_NET_SCH_SFQ CONFIG_NET_SCH_TBF CONFIG_NET_SCH_TEQL
+Description:  Kernel schedulers for IP traffic
+@@
+Package: kmod-ax25
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AX25 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_AX25 CONFIG_MKISS
+Description:  Kernel modules for AX25 support
+@@
+Package: kmod-mp-alg
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ECMP caching algorithms
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IP_ROUTE_MULTIPATH_RR CONFIG_IP_ROUTE_MULTIPATH_RANDOM CONFIG_IP_ROUTE_MULTIPATH_WRANDOM CONFIG_IP_ROUTE_MULTIPATH_DRR
+Description:  Kernel modules that provide several different algorithms for multipath 
+ route selection from the route cache. The iproute "mpath" argument allows 
+ specifying which algorithm to use for routes. 
+ quagga (at least <=0.99.6) requires a multipath patch to support this 
+ cached mp route feature.
+@@
+Package: kmod-pktgen
+Submenu: Network Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Network packet generator
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NET_PKTGEN
+Description:   Kernel modules for the Network Packet Generator
+@@
+Package: kmod-natsemi
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: National Semiconductor DP8381x series 
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NATSEMI
+Description:  Kernel modules for National Semiconductor DP8381x series PCI Ethernet 
+ adapters.
+@@
+Package: kmod-r6040
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_rdc
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RDC Fast-Ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_R6040
+Description:  Kernel modules for RDC Fast-Ethernet adapters.
+@@
+Package: kmod-sis900
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: SiS 900 Ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SIS900
+Description:  Kernel modules for Sis 900 Ethernet adapters.
+@@
+Package: kmod-sky2
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: SysKonnect Yukon2 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SKY2
+Description:   This driver supports Gigabit Ethernet adapters based on the
+  Marvell Yukon 2 chipset:
+  Marvell 88E8021/88E8022/88E8035/88E8036/88E8038/88E8050/88E8052/
+  88E8053/88E8055/88E8061/88E8062, SysKonnect SK-9E21D/SK-9S21
+
+  There is companion driver for the older Marvell Yukon and
+  Genesis based adapters: skge.
+@@
+Package: kmod-via-rhine
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Via Rhine ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIA_RHINE
+Description:  Kernel modules for Via Rhine Ethernet chipsets.
+@@
+Package: kmod-via-velocity
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_ixp4xx
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: VIA Velocity Gigabit Ethernet Adapter kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIA_VELOCITY
+Description:  Kernel modules for VIA Velocity Gigabit Ethernet chipsets.
+@@
+Package: kmod-8139too
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RealTek RTL-8139 PCI Fast Ethernet Adapter kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_8139TOO
+Description:  Kernel modules for RealTek RTL-8139 PCI Fast Ethernet adapters.
+@@
+Package: kmod-r8169
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: RealTek RTL-8169 PCI Gigabit Ethernet Adapter kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_R8169 CONFIG_R8169_NAPI=y CONFIG_R8169_VLAN=n
+Description:  Kernel modules for RealTek RTL-8169 PCI Gigabit Ethernet adapters.
+@@
+Package: kmod-ne2k-pci
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ne2k-pci Ethernet Adapter kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NE2K_PCI
+Description:  Kernel modules for NE2000 PCI Ethernet Adapter kernel.
+@@
+Package: kmod-ixp4xx-npe
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_ixp4xx
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel(R) IXP4xx ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IXP4XX_MAC
+Description:  Kernel modules for Intel(R) IXP4xx onboard ethernet.
+@@
+Package: kmod-e100
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel(R) PRO/100+ cards kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_E100
+Description:  Kernel modules for Intel(R) PRO/100+ Ethernet adapters.
+@@
+Package: kmod-e1000
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel(R) PRO/1000 cards kernel support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_E1000
+Description:  Kernel modules for Intel(R) PRO/1000 Ethernet adapters.
+@@
+Package: kmod-b44
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86 @BROKEN
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom 44xx driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_B44
+Description:  Kernel modules for Broadcom 44xx Ethernet adapters.
+@@
+Package: kmod-3c59x
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: 3Com 3c590/3c900 series (592/595/597) Vortex/Boomerang
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VORTEX
+Description:  This option enables driver support for a large number of 10mbps and 
+ 10/100mbps EISA, PCI and PCMCIA 3Com Ethernet adapters: 
+ - "Vortex"    (Fast EtherLink 3c590/3c592/3c595/3c597) EISA and PCI 
+ - "Boomerang" (EtherLink XL 3c900 or 3c905)            PCI 
+ - "Cyclone"   (3c540/3c900/3c905/3c980/3c575/3c656)    PCI and Cardbus 
+ - "Tornado"   (3c905)                                  PCI  
+ - "Hurricane" (3c555/3cSOHO)                           PCI 
+@@
+Package: kmod-pcnet32
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AMD PCnet32 PCI support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PCNET32
+Description:  Kernel modules for AMD PCnet32 Ethernet adapters.
+@@
+Package: kmod-tg3
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom Tigon3 Gigabit Ethernet
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_TIGON3
+Description:  Kernel modules for Broadcom Tigon3 Gigabit Ethernet adapters.
+@@
+Package: kmod-ssb-gige
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_brcm47xx +kmod-tg3
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom SSB Gigabit Ethernet
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SSB_DRIVER_GIGE=y
+Description:  Kernel modules for Broadcom SSB Gigabit Ethernet adapters.
+@@
+Package: kmod-crc-itu-t
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CRC ITU-T V.41 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRC_ITU_T
+Description:  Kernel module for CRC ITU-T V.41 support
+@@
+Package: kmod-crc7
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CRC7 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRC7
+Description:  Kernel module for CRC7 support
+@@
+Package: kmod-eeprom-93cx6
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: EEPROM 93CX6 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_EEPROM_93CX6
+Description:  Kernel module for EEPROM 93CX6 support
+@@
+Package: kmod-lp
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_4
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Parallel port and line printer support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PARPORT CONFIG_PRINTER CONFIG_PPDEV
+Description: 	Parallel port and line printer support
+@@
+Package: kmod-pcmcia-core
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @PCMCIA_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PCMCIA/CardBus support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PCMCIA CONFIG_CARDBUS CONFIG_PCCARD CONFIG_YENTA CONFIG_PCCARD_NONSTATIC PCMCIA_DEBUG=n
+Description:  Kernel support for PCMCIA/CardBus controllers
+@@
+Package: kmod-pcmcia-serial
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: kmod-pcmcia-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Serial devices support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PCMCIA_SERIAL_CS CONFIG_SERIAL_8250_CS
+Description:  Kernel support for PCMCIA/CardBus serial devices
+@@
+Package: kmod-bluetooth
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @USB_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Bluetooth support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BLUEZ CONFIG_BLUEZ_L2CAP CONFIG_BLUEZ_SCO CONFIG_BLUEZ_RFCOMM CONFIG_BLUEZ_BNEP CONFIG_BLUEZ_HCIUART CONFIG_BLUEZ_HCIUSB CONFIG_BT CONFIG_BT_L2CAP CONFIG_BT_SCO CONFIG_BT_RFCOMM CONFIG_BT_BNEP CONFIG_BT_HCIUSB CONFIG_BT_HCIUART
+Description:  Kernel support for Bluetooth devices
+@@
+Package: kmod-mmc
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: MMC/SD Card Support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MMC CONFIG_MMC_BLOCK CONFIG_MMC_DEBUG=n CONFIG_MMC_UNSAFE_RESUME=n CONFIG_MMC_BLOCK_BOUNCE=y CONFIG_MMC_SDHCI=n CONFIG_MMC_TIFM_SD=n CONFIG_MMC_WBSD=n CONFIG_SDIO_UART=n
+Description:  Kernel support for MMC/SD cards
+@@
+Package: kmod-mmc-at91
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_at91 +kmod-mmc
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: MMC/SD Card Support on AT91
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MMC_AT91
+Description:  Kernel support for MMC/SD cards on the AT91 target
+@@
+Package: kmod-atmel-wdt
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_avr32
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: AT32AP700x watchdog
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_AT32AP700X_WDT
+Description:  AT32AP700x watchdog
+@@
+Package: kmod-softdog
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Software watchdog driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SOFT_WATCHDOG
+Description:  Software watchdog driver
+@@
+Package: kmod-leds-gpio
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @GPIO_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: GPIO LED support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_GPIO
+Description:  Kernel module for LEDs on GPIO lines
+@@
+Package: kmod-ledtrig-adm5120-switch
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_adm5120
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: LED ADM5120 Switch Port Status Trigger
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_TRIGGER_ADM5120_SWITCH
+Description:  Kernel module to allow LEDs to be controlled by the port states
+ of the ADM5120 built-in ethernet switch.
+@@
+Package: kmod-leds-net48xx
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Soekris Net48xx LED support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_NET48XX
+Description:  Kernel module for Soekris Net48xx LEDs
+@@
+Package: kmod-leds-wrap
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PCengines WRAP LED support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_WRAP
+Description:  Kernel module for PCengines WRAP LEDs
+@@
+Package: kmod-leds-alix
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PCengines ALIX LED support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_ALIX
+Description:  Kernel module for PCengines ALIX LEDs
+@@
+Package: kmod-ledtrig-netdev
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: LED NETDEV Trigger
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_TRIGGER_NETDEV
+Description:  Kernel module to drive LEDs based on network activity.
+@@
+Package: kmod-ledtrig-morse
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: LED Morse Trigger
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_LEDS_TRIGGER_MORSE
+Description:  Kernel module to show morse coded messages on LEDs.
+@@
+Package: kmod-gpio-dev
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @GPIO_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Generic GPIO char device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_GPIO_DEVICE
+Description:   Kernel module to allows control of GPIO pins using a character device.
+@@
+Package: kmod-nsc-gpio
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Natsemi GPIO support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_NSC_GPIO
+Description:  Kernel module for Natsemi GPIO
+@@
+Package: kmod-scx200-gpio
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86 kmod-nsc-gpio
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Natsemi SCX200 GPIO support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SCx200_GPIO
+Description:  Kernel module for SCX200 GPIO
+@@
+Package: kmod-scx200-wdt
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Natsemi SCX200 Watchdog support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SC1200_WDT
+Description:  Kernel module for SCX200 Watchdog
+@@
+Package: kmod-input-core
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Input device core
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INPUT
+Description:  Kernel modules for support of input device
+@@
+Package: kmod-input-evdev
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-input-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Input even device
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INPUT_EVDEV
+Description:  Kernel modules for support of input device events
+@@
+Package: kmod-hid
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-input-core +kmod-input-evdev
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Input even device
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HID
+Description:  Kernel modules for HID devices
+@@
+Package: kmod-input-polldev
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: +kmod-input-core @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Polled Input device support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INPUT_POLLDEV
+Description:  Kernel module for support of polled input devices
+@@
+Package: kmod-input-gpio-buttons
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @GPIO_SUPPORT +kmod-input-polldev
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Polled GPIO buttons input device
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_INPUT_GPIO_BUTTONS CONFIG_INPUT_MISC=y
+Description:  Kernel module for support polled GPIO buttons input device
+@@
+Package: kmod-mmc-spi
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 +kmod-mmc +kmod-crc-itu-t +kmod-crc7
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: MMC/SD over SPI Support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MMC_SPI CONFIG_SPI=y CONFIG_SPI_MASTER=y
+Description:  Kernel support for MMC/SD over SPI
+@@
+Package: kmod-mmc-atmelmci
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_avr32 +kmod-mmc
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Amtel MMC Support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MMC_ATMELMCI
+Description:  Kernel support for  Atmel Multimedia Card Interface.
+@@
+Package: kmod-spi-bitbang
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Serial Peripheral Interface bitbanging library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SPI_BITBANG CONFIG_SPI=y CONFIG_SPI_MASTER=y
+Description:  This package contains the SPI bitbanging library
+@@
+Package: kmod-spi-gpio
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @GPIO_SUPPORT +kmod-spi-bitbang
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: GPIO based bitbanging SPI controller
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SPI_GPIO
+Description:  This package contains the GPIO based bitbanging SPI controller driver
+@@
+Package: kmod-spi-dev
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: User mode SPI device driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SPI_SPIDEV CONFIG_SPI=y CONFIG_SPI_MASTER=y
+Description:  This package contains the user mode SPI device driver
+@@
+Package: kmod-crypto-dev-ixp4xx
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_ixp4xx +kmod-crypto-core +kmod-crypto-des +kmod-crypto-aead +kmod-crypto-authenc
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: IXP4xx crypto driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_CRYPTO_HW=y CONFIG_CRYPTO_DEV_IXP4XX
+Description:  Kernel support for the IXP4xx HW crypto engine.
+@@
+Package: kmod-sound-core
+Submenu: Sound Support
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT||USB_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Sound support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SOUND CONFIG_SND CONFIG_SND_HWDEP CONFIG_SND_RAWMIDI CONFIG_SND_TIMER CONFIG_SND_PCM CONFIG_SND_SEQUENCER CONFIG_SND_VIRMIDI CONFIG_SND_SEQ_DUMMY CONFIG_SND_SEQUENCER_OSS=y CONFIG_HOSTAUDIO
+Description:  Kernel modules for sound support
+@@
+Package: kmod-sound-i8x0
+Submenu: Sound Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-sound-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel/SiS/nVidia/AMD/ALi AC97 Controller
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SND_INTEL8X0
+Description:  support for the integrated AC97 sound device on motherboards
+ with Intel/SiS/nVidia/AMD chipsets, or ALi chipsets using 
+ the M5455 Audio Controller.
+@@
+Package: kmod-sound-cs5535audio
+Submenu: Sound Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-sound-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CS5535 PCI Controller
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_SND_CS5535AUDIO
+Description:  support for the integrated AC97 sound device on olpc
+@@
+Package: kmod-usb-core
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: @USB_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Kernel support for USB
+@@
+Package: kmod-usb-uhci
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for UHCI controllers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_UHCI_ALT CONFIG_USB_UHCI_HCD
+Description:  Kernel support for USB UHCI controllers
+@@
+Package: kmod-usb-uhci-iv
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_4
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Intel/VIA UHCI controllers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_UHCI
+Description:  Kernel support for Intel/VIA USB UHCI controllers
+@@
+Package: kmod-usb-ohci
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for OHCI controllers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_OHCI CONFIG_USB_OHCI_HCD
+Description:  Kernel support for USB OHCI controllers
+@@
+Package: kmod-usb-adm5120
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @TARGET_adm5120_router_be||@TARGET_adm5120_router_le
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for the ADM5120 HCD controller
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_ADM5120_HCD
+Description:  Kernel support for the ADM5120 HCD USB controller
+@@
+Package: kmod-usb2
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB2 controllers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_EHCI_HCD
+Description:  Kernel support for USB2 (EHCI) controllers
+@@
+Package: kmod-usb-acm
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for modems/isdn controllers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_ACM
+Description:  Kernel support for USB ACM devices (modems/isdn controllers)
+@@
+Package: kmod-usb-audio
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core +kmod-sound-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB audio devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_AUDIO CONFIG_SND_USB_AUDIO CONFIG_SND CONFIG_SND_TIMER CONFIG_SND_PCM CONFIG_SND_HWDEP CONFIG_SND_RAWMIDI CONFIG_SND_SEQUENCER CONFIG_SND_SEQ_DUMMY CONFIG_SND_OSSEMUL=y CONFIG_SND_MIXER_OSS CONFIG_SND_PCM_OSS CONFIG_SND_PCM_OSS_PLUGINS=y CONFIG_SND_SEQUENCER_OSS=y CONFIG_SND_DYNAMIC_MINORS=y CONFIG_SND_SUPPORT_OLD_API=y CONFIG_SND_VERBOSE_PROCFS=y CONFIG_SND_VERBOSE_PRINTK=y CONFIG_SND_DEBUG=y CONFIG_SND_DEBUG_DETECT=y CONFIG_SND_PCM_XRUN_DEBUG=y CONFIG_SND_USB_CAIAQ_INPUT=n CONFIG_SND_MPU401_UART CONFIG_SND_DUMMY CONFIG_SND_VIRMIDI CONFIG_SND_MTPAV CONFIG_SND_SERIAL_U16550 CONFIG_SND_MPU401 CONFIG_SND_USB_AUDIO CONFIG_SND_USB_CAIAQ CONFIG_SOUND_PRIME=n CONFIG_SND_SOC CONFIG_HIGH_RES_TIMERS=y
+Description:  Kernel support for USB audio devices
+@@
+Package: kmod-usb-printer
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for printers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_PRINTER
+Description:  Kernel support for USB printers
+@@
+Package: kmod-usb-serial
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB-to-Serial converters
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL
+Description:  Kernel support for USB-to-Serial converters
+@@
+Package: kmod-usb-serial-airprime
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Airprime (EVDO)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_AIRPRIME
+Description:  Kernel support for Airprime (EVDO)
+@@
+Package: kmod-usb-serial-belkin
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Belkin devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_BELKIN
+Description:  Kernel support for Belkin USB-to-Serial converters
+@@
+Package: kmod-usb-serial-ch341
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6&&@!LINUX_2_6_23
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for CH341 devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_CH341
+Description: 	Support for CH341 devices
+@@
+Package: kmod-usb-serial-ftdi
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for FTDI devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_FTDI_SIO
+Description:  Kernel support for FTDI USB-to-Serial converters
+@@
+Package: kmod-usb-serial-mct
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Magic Control Tech. devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_MCT_U232
+Description:  Kernel support for Magic Control Technology USB-to-Serial converters
+@@
+Package: kmod-usb-serial-pl2303
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Prolific PL2303 devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_PL2303
+Description:  Kernel support for Prolific PL2303 USB-to-Serial converters
+@@
+Package: kmod-usb-serial-cp2101
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Silicon Labs cp2101 devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_CP2101
+Description:  Kernel support for Silicon Labs cp2101 USB-to-Serial converters
+@@
+Package: kmod-usb-serial-ark3116
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for ArkMicroChips ARK3116 devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_ARK3116
+Description:  Kernel support for ArkMicroChips ARK3116 USB-to-Serial converters
+@@
+Package: kmod-usb-serial-oti6858
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Ours Technology OTI6858 devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_OTI6858
+Description:  Kernel support for Ours Technology OTI6858 USB-to-Serial converters
+@@
+Package: kmod-usb-serial-sierrawireless
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Sierra Wireless devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_SIERRAWIRELESS
+Description:  Kernel support for Sierra Wireless devices
+@@
+Package: kmod-usb-serial-visor
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Handspring Visor devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_VISOR
+Description:  Kernel support for Handspring Visor PDAs
+@@
+Package: kmod-usb-serial-keyspan
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Keyspan USB-to-Serial devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_KEYSPAN CONFIG_USB_SERIAL_KEYSPAN_USA28 CONFIG_USB_SERIAL_KEYSPAN_USA28X CONFIG_USB_SERIAL_KEYSPAN_USA28XA CONFIG_USB_SERIAL_KEYSPAN_USA28XB CONFIG_USB_SERIAL_KEYSPAN_USA19 CONFIG_USB_SERIAL_KEYSPAN_USA18X CONFIG_USB_SERIAL_KEYSPAN_USA19W CONFIG_USB_SERIAL_KEYSPAN_USA19QW CONFIG_USB_SERIAL_KEYSPAN_USA19QI CONFIG_USB_SERIAL_KEYSPAN_MPR CONFIG_USB_SERIAL_KEYSPAN_USA49W CONFIG_USB_SERIAL_KEYSPAN_USA49WLC
+Description:  Kernel support for Keyspan USB-to-Serial devices
+@@
+Package: kmod-usb-GobiSerial
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Option HSDPA modems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_GOBI_SERIAL
+Description:  Kernel support for Keyspan USB-to-Serial devices
+@@
+Package: kmod-usb-GobiNet
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Option HSDPA modems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_GOBI_NET
+Description:  Kernel support for Keyspan USB-to-Serial devices
+@@
+Package: kmod-usb-serial-option-2-6-36
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6_36
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Option HSDPA modems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_WWAN CONFIG_USB_SERIAL_OPTION 
+Description:  Kernel support for Option HSDPA modems
+@@
+Package: kmod-usb-serial-option
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-serial @LINUX_2_6 !@LINUX_2_6_36
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for Option HSDPA modems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SERIAL_OPTION
+Description:  Kernel support for Option HSDPA modems
+@@
+Package: kmod-usb-storage
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core +kmod-scsi-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: USB Storage support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_STORAGE
+Description:  Kernel support for USB Mass Storage devices
+@@
+Package: kmod-usb-video
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB video devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIDEO_USBVIDEO
+Description:  Kernel support for USB video devices
+@@
+Package: kmod-usb-atm
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_6 +kmod-atm
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for ATM on USB bus
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_ATM
+Description:  Kernel support for USB DSL modems
+@@
+Package: kmod-usb-atm-speedtouch
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-atm @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: SpeedTouch USB ADSL modems support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_SPEEDTOUCH
+Description:  Kernel support for SpeedTouch USB ADSL modems
+@@
+Package: kmod-usb-atm-ueagle
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-atm @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Eagle 8051 based USB ADSL modems support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_UEAGLEATM
+Description:  Kernel support for Eagle 8051 based USB ADSL modems
+@@
+Package: kmod-usb-atm-cxacru
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-atm @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: cxacru
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_CXACRU
+Description:  Kernel support for cxacru based USB ADSL modems
+@@
+Package: kmod-usb-net
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel modules for USB-to-Ethernet convertors
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_USBNET
+Description:  Kernel modules for USB-to-Ethernet convertors
+@@
+Package: kmod-usb-net-asix
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for USB-to-Ethernet Asix convertors
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_NET_AX8817X
+Description:  Kernel module for USB-to-Ethernet Asix convertors
+@@
+Package: kmod-usb-net-hso
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6_26
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for Option USB High Speed Mobile Devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_RFKILL CONFIG_RFKILL_INPUT CONFIG_USB_HSO
+Description:  Kernel module for Option USB High Speed Mobile Devices
+@@
+Package: kmod-usb-net-sierra
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6_26
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for Sierra USB High Speed Mobile Devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_RFKILL CONFIG_RFKILL_INPUT CONFIG_USB_SIERRA_NET
+Description:  Kernel module for Sierra USB High Speed Mobile Devices
+@@
+Package: kmod-usb-net-iphone
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for iPhone Devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_IPHETH
+Description:  Kernel module for iPhone Devices
+@@
+Package: kmod-usb-net-iburst
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6_26
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for iBurst USB High Speed Mobile Devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_IBURST
+Description:  Kernel module for iBurst USB High Speed Mobile Devices
+@@
+Package: kmod-usb-net-kaweth
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for USB-to-Ethernet Kaweth convertors
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_KAWETH
+Description:  Kernel module for USB-to-Ethernet Kaweth convertors
+@@
+Package: kmod-usb-net-pegasus
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel module for USB-to-Ethernet Pegasus convertors
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_PEGASUS
+Description:  Kernel module for USB-to-Ethernet Pegasus convertors
+@@
+Package: kmod-usb-net-cdc-ether
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core kmod-usb-net @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for cdc ethernet connections
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_NET_CDCETHER
+Description:  Kernel support for USB CDC Ethernet devices
+@@
+Package: kmod-usb-net-rndis
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: +kmod-usb-net-cdc-ether
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for RNDIS connections
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_NET_RNDIS_HOST
+Description:  Kernel support for USB RNDIS connections
+@@
+Package: kmod-usb-hid
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_6 +kmod-input-core +kmod-input-evdev +kmod-hid
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Support for USB Human Input Devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HID_SUPPORT=y CONFIG_USB_HID
+Description:  Kernel support for USB HID devices such as keyboards and mice
+@@
+Package: kmod-usb-beceem-wimax
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core  @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: USB Beceem WiMAX Driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_BECEEM_WIMAX=m
+Description:  Kernel support for Beceem WiMAX Driver
+@@
+Package: kmod-usb-yealink
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_6 +kmod-input-core +kmod-input-evdev
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: USB Yealink VOIP phone
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_YEALINK CONFIG_INPUT_YEALINK CONFIG_INPUT=m CONFIG_INPUT_MISC=y
+Description:  Kernel support for Yealink VOIP phone
+@@
+Package: kmod-usb-test
+Submenu: USB Support
+Version: <LINUX_VERSION>--1
+Depends: kmod-usb-core @LINUX_2_6 @DEVEL
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: USB Testing Driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_TEST
+Description:  Kernel support for testing USB Host Controller software.
+@@
+Package: kmod-video-core
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT||USB_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Video4Linux support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_MEDIA_SUPPORT=m CONFIG_VIDEO_DEV CONFIG_VIDEO_V4L1=y CONFIG_VIDEO_ALLOW_V4L1=y CONFIG_VIDEO_CAPTURE_DRIVERS=y CONFIG_V4L_USB_DRIVERS=y 
+Description:  Kernel modules for Video4Linux support
+@@
+Package: kmod-video-cpia2
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-usb-core +kmod-video-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: CPIA2 video driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIDEO_CPIA2
+Description:  Kernel modules for supporting CPIA2 USB based cameras.
+@@
+Package: kmod-video-konica
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-usb-video +kmod-video-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Konica USB webcam support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_KONICAWC
+Description:  Kernel support for webcams based on a Konica chipset. This is known to 
+ work with the Intel YC76 webcam.
+@@
+Package: kmod-video-ov511
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-usb-core +kmod-video-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: OV511 USB webcam support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIDEO_OV511
+Description:  Kernel modules for supporting OmniVision OV511 USB webcams.
+@@
+Package: kmod-video-ovcamchip
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-i2c-core +kmod-video-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: OV6xxx/OV7xxx Camera Chip support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_VIDEO_OVCAMCHIP
+Description:  Kernel modules for supporting OmniVision OV6xxx and OV7xxx series of 
+ camera chips.
+@@
+Package: kmod-video-pwc
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-usb-core +kmod-video-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Philips USB webcam support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_PWC CONFIG_USB_PWC_DEBUG=n
+Description:  Kernel modules for supporting Philips USB based cameras.
+@@
+Package: kmod-video-uvc
+Submenu: Video Support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @USB_SUPPORT +kmod-usb-video +kmod-video-core +kmod-input-core
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: USB Video Class (UVC) support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_USB_VIDEO_CLASS 
+Description:  Kernel modules for supporting USB Video Class (UVC) devices.
+@@
+Package: kmod-w1
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Dallas's 1-wire support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1
+Description:   Kernel module for Dallas's 1-wire support
+@@
+Package: kmod-w1-master-gpio
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: kmod-w1 @GPIO_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: GPIO 1-wire bus master driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1_MASTER_GPIO
+Description:   Kernel module for the GPIO 1-wire bus master driver
+@@
+Package: kmod-w1-slave-therm
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: kmod-w1 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Thermal family implementation
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1_SLAVE_THERM
+Description:   Kernel module for 1-wire thermal sensors
+@@
+Package: kmod-w1-slave-smem
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: kmod-w1 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Simple 64bit memory family implementation
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1_SLAVE_SMEM
+Description:   Kernel module for 1-wire simple 64bit memory rom(ds2401/ds2411/ds1990*)
+@@
+Package: kmod-w1-slave-ds2433
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: kmod-w1 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Simple 64bit memory family implementation
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1_SLAVE_DS2433 CONFIG_W1_SLAVE_DS2433_CRC=n
+Description:   Kernel module for 1-wire simple 64bit memory rom(ds2401/ds2411/ds1990*)
+@@
+Package: kmod-w1-slave-ds2760
+Submenu: W1 support
+Version: <LINUX_VERSION>--1
+Depends: kmod-w1 
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Dallas 2760 battery monitor chip (HP iPAQ & others)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_W1_SLAVE_DS2760 CONFIG_W1_SLAVE_DS2433_CRC=n
+Description:   Kernel module for 1-wire DS2760 battery monitor chip support
+@@
+Package: kmod-ieee80211
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: +kmod-crypto-arc4 +kmod-crypto-aes +kmod-crypto-michael-mic
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: 802.11 Networking stack
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IEEE80211 CONFIG_IEEE80211_CRYPT_WEP CONFIG_IEEE80211_CRYPT_CCMP CONFIG_IEEE80211_CRYPT_TKIP
+Description:  Kernel modules for 802.11 Networking stack
+ Includes:
+ - ieee80211_crypt
+ - ieee80211
+ - ieee80211_crypt_wep
+ - ieee80211_crypt_tkip
+ - ieee80211_crytp_ccmp
+@@
+Package: kmod-ieee80211-softmac
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: +kmod-ieee80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: ieee80211 SoftMAC support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IEEE80211_SOFTMAC
+Description:  Kernel modules for 802.11 SoftMAC support
+@@
+Package: kmod-net-bcm43xx
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_brcm47xx||TARGET_brcm63xx +kmod-ieee80211-softmac
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom BCM43xx driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_BCM43XX
+Description:  Kernel support for Broadcom BCM43xx
+ Includes:
+ - bcm43xx
+@@
+Package: kmod-net-ipw2100
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT +kmod-ieee80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel IPW2100 driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IPW2100
+Description:  Kernel support for Intel IPW2100
+ Includes:
+ - ipw2100
+@@
+Package: kmod-net-ipw2200
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT +kmod-ieee80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intel IPW2200 driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_IPW2200
+Description:  Kernel support for Intel IPW2200
+ Includes:
+ - ipw2200
+@@
+Package: kmod-net-airo
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Cisco Aironet driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_AIRO
+Description:  Kernel support for Cisco Aironet cards
+@@
+Package: kmod-net-hermes
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @PCI_SUPPORT||PCMCIA_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Hermes 802.11b chipset support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_HERMES
+Description:  Kernel support for Hermes 802.11b chipsets
+@@
+Package: kmod-net-hermes-pci
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT kmod-net-hermes
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intersil Prism 2.5 PCI support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PCI_HERMES
+Description:  Kernel modules for Intersil Prism 2.5 PCI support
+@@
+Package: kmod-net-hermes-plx
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT kmod-net-hermes
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: PLX9052 based PCI adaptor
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PLX_HERMES
+Description:  Kernel modules for Hermes in PLX9052 based PCI adaptors
+@@
+Package: kmod-net-prism54
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @PCI_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Intersil Prism54 support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_PRISM54
+Description:  Kernel modules for Intersil Prism54 support
+@@
+

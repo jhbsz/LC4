@@ -1,0 +1,26 @@
+#!/bin/sh
+
+case "$ACTION" in
+        add) 
+                [ -n ${PRODUCT} ] &&
+                [ -n ${INTERFACE} ] &&
+                [ "${PRODUCT}" = "4e8/6761/1" ] &&
+                [ "${INTERFACE}" = "255/0/0" ] && {
+                        /usr/sbin/madwimax -qofd
+                        /sbin/wanupnp start wimax
+                        /sbin/wandetect start
+                }
+                ;;
+        remove)
+                [ -n ${PRODUCT} ] &&
+                [ -n ${INTERFACE} ] &&
+                [ "${PRODUCT}" = "4e8/6761/1" ] &&
+                [ "${INTERFACE}" = "255/0/0" ] && {
+                        /usr/bin/killall madwimax
+                        /sbin/wanupnp stop
+                        /sbin/usb-remove start
+                        return 0
+                }
+                ;;
+esac
+

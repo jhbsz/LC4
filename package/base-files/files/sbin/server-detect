@@ -1,0 +1,279 @@
+#!/bin/sh
+. /etc/functions.sh
+. /etc/network.sh
+
+vpn_start_tunnel_idx=0
+vpn_stop_tunnel_idx=0
+ipsec_vpn_apply_one_tunnel() {
+    [ -z "$1" ] && return
+    local tunnel_index="$1"
+    local ipsec_split_tunnel_state
+    local ipsec_split_tunnel_state_old="$(nvram get ipsec_split_tunnel_state)"
+    [ -z "$ipsec_split_tunnel_state_old" ] && \
+        $ipsec_split_tunnel_state_old=off
+    [ "$(nvram show ipsec_rule $tunnel_index enable)" = "1" -a \
+      "$(nvram show ipsec_rule $tunnel_index mode)" = "net2net" ] && {
+        local REMOTE=$(nvram show ipsec_rule $tunnel_index remote_inipaddr)
+        local NETMASK=$(nvram show ipsec_rule $tunnel_index remote_netmask)
+        local LOCAL_SUBNET=$(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask)
+        # if ipsec is enabled, connected, net-to-net and being a initiator but no
+        # route, then apply route and remove iptables MASQUERADE
+        # nvram fset ipsec_split_tunnel_state="off"
+        ipsec_split_tunnel_state="off"
+        [ "$(nvram show ipsec_rule $tunnel_index split_tunnel)" = "initiator" ] \
+            && {
+            [ -z "$(ip route ls | sed -n '/default.*ipsec/p')" ] && {
+                ip route replace default dev ipsec${vpn_start_tunnel_idx}
+                /usr/sbin/iptables -t nat -D EZP_SNAT -s \
+                    $(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) -j MASQUERADE
+                # Change the "old" status to enabled since the route is
+                # changed externally
+                ipsec_split_tunnel_state_old="enabled"
+            }
+            ipsec_split_tunnel_state="initiator"
+            [ "$ipsec_split_tunnel_state" != "$ipsec_split_tunnel_state_old" ] && {
+                local wanidx="$(nvram show ipsec_rule $tunnel_index local_extif)"
+                nvram fset ipsec_split_tunnel_state=$ipsec_split_tunnel_state
+                set_wan_vpn $wanidx ipsec${vpn_start_tunnel_idx} up
+                set_wan_vpn_conn_detail $wanidx \
+                    $(nvram get ${wanidx}_ipaddr) \
+                    $(nvram get ${wanidx}_gateway) \
+                    $(nvram get ${wanidx}_mask) \
+                    $(nvram get ${wanidx}_dns)
+            }
+        }
+        [ "$(nvram show ipsec_rule $tunnel_index split_tunnel)" = "responder" ] \
+            && ipsec_split_tunnel_state="responder"
+        [ "$ipsec_split_tunnel_state" != "$ipsec_split_tunnel_state_old" ] && {
+            nvram fset ipsec_split_tunnel_state=$ipsec_split_tunnel_state
+        }
+    }
+}
+
+ipsec_vpn_dismiss_one_tunnel() {
+    [ -z "$1" ] && return
+    local tunnel_index="$1"
+    local ipsec_split_tunnel_state
+    local ipsec_split_tunnel_state_old="$(nvram get ipsec_split_tunnel_state)"
+    [ "$(nvram show ipsec_rule $tunnel_index enable)" = "1" -a \
+      "$(nvram show ipsec_rule $tunnel_index mode)" = "net2net" ] && {
+        local REMOTE=$(nvram show ipsec_rule $tunnel_index remote_inipaddr)
+        local NETMASK=$(nvram show ipsec_rule $tunnel_index remote_netmask)
+        local LOCAL_SUBNET=$(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask)
+        # if a ipsec is "not online" and being a initiator, recover to normal
+        # route and NAT
+        [ "$(nvram show ipsec_rule $tunnel_index split_tunnel)" = "initiator" \
+          -a -n "$(ip route ls | sed -n '/default.*ipsec/p')" ] && {
+            /usr/sbin/iptables -t nat -A EZP_SNAT -s \
+                $(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) -j MASQUERADE
+            # ip route replace default dev $(nvram get wan0_ifname)
+            set_wan_vpn "$(nvram show ipsec_rule $tunnel_index local_extif)" ipsec${vpn_stop_tunnel_idx} down
+            set_wan_vpn_conn_detail $wanidx \
+                $(nvram get ${wanidx}_ipaddr) \
+                $(nvram get ${wanidx}_gateway) \
+                $(nvram get ${wanidx}_mask) \
+                $(nvram get ${wanidx}_dns)
+            iface_update_default_route_and_dns
+        }
+        # Globally turn off split tunneling
+        nvram fset ipsec_split_tunnel_state="off"
+    }
+}
+
+lock_check(){
+    /bin/ps -ef|grep lock|grep net
+    [ $? != 0 ] && {
+    	[ -e "/tmp/lock.flag" ] && {
+	    /bin/cat /tmp/lock.flag 
+	    count=$?
+	    [ $count -ge 30 ] && {
+		lock -u /tmp/.net.lock
+		killall -9 lock
+		echo 0 > /tmp/lock.flag
+	    }
+	    echo $((count+1)) > /tmp/lock.flag
+	} || {
+    	    echo 1 > /tmp/lock.flag 
+	}
+    } || {
+	echo 0 > /tmp/lock.flag
+   }
+}
+
+local_start() {
+    local PLATFORM="$(nvram get platform)"
+
+    # Function detect
+    # DHCP server
+    [ "$(nvram show lan_dhcps_rule 0 enable)" = "1" ] && {
+        [ -z "$(pidof dnsmasq)" ] && {
+            /etc/rc.common /etc/init.d/dnsmasq start
+        }
+    }
+    # HTTP server
+    [ "$(nvram show http_rule 0 enable)" = "1" ] && {
+        [ -z "$(pidof httpd)" ] && {
+            sh /etc/rc.common /etc/init.d/httpd start
+        }
+    }
+    # Webdav server
+    #[ "$(nvram show drive_rule 0 enable)" = "1" ] && {
+    #    [ -z "$(pidof lighttpd)" ] && {
+    #        sh /etc/rc.common /etc/init.d/lighttpd start
+    #    }
+    #}
+    # Bonjour server
+    #[ -z "$(pidof mDNSResponder)" ] && sh /etc/rc.common /etc/init.d/mDNSResponder start
+    # Samba server
+    [ "$(nvram show smbd_rule 0 enable)" = "1" ] && {
+        [ -z "$(pidof smbd)" -o -z "$(pidof nmbd)" ] && sh /etc/rc.common /etc/init.d/samba restart
+    }
+
+
+    #reboot countdown
+    REBOOT_COUNTDOWN="$(nvram show cron_rule 0 reboot_countdown)"
+    [ -n "$REBOOT_COUNTDOWN" ] && {
+        REBOOT_COUNTDOWN=$(expr $REBOOT_COUNTDOWN - 1)
+        [ "$REBOOT_COUNTDOWN" -le "0" ] && {
+            INTERVAL="$(nvram show cron_rule 0 reboot_interval)"
+            nvram replace attr cron_rule 0 reboot_countdown $INTERVAL 
+            nvram commit
+            [ "$PLATFORM" = "AXA" ] && ezp-i2c gauge host booting 
+            reboot
+        } || nvram replace attr cron_rule 0 reboot_countdown $REBOOT_COUNTDOWN
+    }
+    #aximddns update countdown
+    local AXIMDDNS_COUNTDOWN="$(nvram show aximddns_rule 0 trycnnt_countdown)"
+    [ -n "$AXIMDDNS_COUNTDOWN" ] && {
+        AXIMDDNS_COUNTDOWN=$(expr $AXIMDDNS_COUNTDOWN - 1)
+         if [ "$AXIMDDNS_COUNTDOWN" -le "1" ] ; then
+            if [ "$AXIMDDNS_COUNTDOWN" = "0" ] ; then
+                nvram replace attr aximddns_rule 0 trycnnt_countdown ""
+            else
+                nvram replace attr aximddns_rule 0 trycnnt_countdown $AXIMDDNS_COUNTDOWN
+            fi
+            TYPE=wan sh /etc/init.d/aximddns all
+        else
+            nvram replace attr aximddns_rule 0 trycnnt_countdown $AXIMDDNS_COUNTDOWN
+        fi
+    }
+
+
+    #ddns update countdown
+    DDNS_COUNTDOWN="$(nvram show cron_rule 0 ddns_countdown)"
+    [ -n "$DDNS_COUNTDOWN" ] && {
+        DDNS_COUNTDOWN=$(expr $DDNS_COUNTDOWN - 1)
+        [ "$DDNS_COUNTDOWN" -le "0" ] && {
+            nvram replace attr cron_rule 0 ddns_countdown ""
+            TYPE=wan sh /etc/init.d/ddns all
+        } || nvram replace attr cron_rule 0 ddns_countdown $DDNS_COUNTDOWN
+    }
+
+    #[ "$PLATFORM" = "ALS" ] && {
+#	lock_check
+#    }
+
+    [ "$PLATFORM" = "LIS" -o "$PLATFORM" = "AXA" -o "$PLATFORM" = "M2E" -o "$PLATFORM" = "ALS" ] && {
+        #power countdown
+        local p_reset=0
+        local w_client="$(iwpriv ra0 get_mac_table | awk /[0-9a-fA-F]{12}/ | grep -c .)"
+        local p_count="$(nvram show countdown_rule 0 p_count)"
+        ezp-i2c gauge client
+        local client_status=$?
+        [ $(($client_status & 40)) != "0" ] && p_reset=1 # 0x08 or 0x20 
+        [ "$(nvram show countdown_rule 0 p_enable)" = "1" -a \
+          "$p_reset" = "0" ] && {
+            [ "$w_client" = "0" ] && {
+                p_count=$(expr $p_count - 1)
+                nvram replace attr countdown_rule 0 p_count $p_count
+                [ "$p_count" -le "0" ] &&  POWER_LEVEL 2
+            }
+            [ "$w_client" -gt "0" ] &&  p_reset=1
+        }
+        [ "$p_reset" = "1" ] && {
+            local p_countdown="$(nvram show countdown_rule 0 p_countdown)"
+            nvram replace attr countdown_rule 0 p_count $p_countdown
+        }
+    }
+
+    #license lock
+    # [ "$PLATFORM" = "AXB" -o "$PLATFORM" = "AXM" ] && {
+    [ "$PLATFORM" = "AXB" ] && {
+        /usr/sbin/ezp-i2c security
+        LICENSE_VALID="$(nvram show license_status_rule 0 state)"
+        [ "$LICENSE_VALID" != "1" ] && {
+            LICENSE_COUNT="$(nvram show license_status_rule 0 trycount)"
+            LICENSE_COUNT=$(expr $LICENSE_COUNT + 1)
+            [ "$LICENSE_COUNT" -ge "10" ] && {
+                gpioctl led 13 0 1 0 0 0
+                ifconfig apcli0 down
+                ifconfig ra0 down
+                ifconfig vlan1 down
+                ifconfig vlan2 down
+                ifconfig eth2 down
+                nvram fset license_invalid=0
+                killall cli
+            } || {
+                nvram replace attr license_status_rule 0 trycount $LICENSE_COUNT
+            }
+        }
+    }
+
+    # check bt engine is running
+    local enable=$(nvram show bt_rule 0 enable)
+    [ "$enable" -eq "1" ] && {
+        [ -z "$(pidof transmission-daemon)" -a -f "/tmp/run/transmission-daemon.pid" ] && {
+            # if bt engine is not running ,start bt engine
+             /etc/rc.common /etc/init.d/bt start
+        }
+    }
+    BRAND=$(nvram get brand)
+    [ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+        # check for ipsec
+        [ "$(nvram get ipsec_enable)" = "1" ] && {
+            local ipsecnum=$(nvram get ipsec_rule_num)
+            local idx=0
+            local ipsecsetupnum="0"
+            local ipsecname=""
+            vpn_start_tunnel_idx=0
+            vpn_stop_tunnel_idx=0
+            while [ "$idx" -lt "$ipsecnum" ]; do
+                [ "$(nvram show ipsec_rule $idx enable)" = "1" ] && {
+                    ipsecname="$(nvram show ipsec_rule $idx name)"
+                    ipsecenabled=$(ipsec auto status | grep "ISAKMP SA established" | grep -c "$ipsecname")
+                    [ "$ipsecenabled" = "0" -a  "$(nvram show ipsec_rule $idx mode)" = "net2net" ] && {
+                        ipsec auto --down "$ipsecname"
+                        ipsec auto --up "$ipsecname"
+                    }
+                    [ "$(nvram get brand)" = "PROX" ] && {
+                        [ "$ipsecenabled" = "0" ] && {
+                            ipsec_vpn_dismiss_one_tunnel $idx
+                        } || {
+                            ipsec_vpn_apply_one_tunnel $idx
+                        }
+                    }
+                    vpn_start_tunnel_idx=$(($vpn_start_tunnel_idx + 1))
+                    vpn_stop_tunnel_idx=$(($vpn_stop_tunnel_idx + 1))
+                }
+                idx=$(($idx + 1))
+            done
+        }
+    }
+}
+
+# main
+[ -z "$1" ] && usage;
+err=0
+for action in $*; do
+        case $action in
+                config)         ;;
+                start)          local_start;;
+                stop)           stop;;
+                reload)         ;;
+                restart)        stop; sleep 1; local_start;;
+                *)              usage;;
+        esac
+        [ "$?" != "0" ] && err=1
+done
+
+exit $err

@@ -1,0 +1,140 @@
+--- linux-2.6.36/drivers/net/raeth/mii_mgr.c	2015-06-10 16:32:53.357300719 +0800
++++ linux-2.6.36/drivers/net/raeth/mii_mgr.c	2015-06-10 16:34:40.081302449 +0800
+@@ -309,6 +309,118 @@
+ 
+ #endif
+ 
++static uint32_t
++athrs16_reg_read(uint32_t reg_addr)
++{
++    uint32_t reg_word_addr;
++    uint32_t phy_addr, tmp_val, reg_val;
++    uint32_t phy_val;
++    uint32_t phy_reg;
++
++    /* change reg_addr to 16-bit word address, 32-bit aligned */
++    reg_word_addr = (reg_addr & 0xfffffffc) >> 1;
++
++    phy_addr = 0x18;
++    phy_reg = 0x0;
++    phy_val = ((reg_word_addr >> 8) & 0x3ff);  /* A18-A9 of reg address */
++
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    mii_mgr_read(phy_addr, phy_reg, &reg_val);
++
++    /* read register in higher address */
++    reg_word_addr++;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    mii_mgr_read(phy_addr, phy_reg, &tmp_val);
++    reg_val |= (tmp_val << 16);
++
++    return reg_val;
++}
++
++
++static void
++athrs16_reg_write(uint32_t reg_addr, uint32_t reg_val)
++{
++    uint32_t reg_word_addr;
++    uint32_t phy_addr;
++    uint32_t phy_val;
++    uint32_t phy_reg;
++
++    /* change reg_addr to 16-bit word address, 32-bit aligned
++       +     * */
++    reg_word_addr = (reg_addr & 0xfffffffc) >> 1;
++
++    /* configure register high address */
++    phy_addr = 0x18;
++    phy_reg = 0x0;
++    phy_val = ((reg_word_addr >> 8) & 0x3ff);  /* A18-A9 of reg address */
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++    /* read register in higher address */
++    reg_word_addr++;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    phy_val = ((reg_val >> 16) & 0xffff);
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++    /* write register in lower address */
++    reg_word_addr--;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    phy_val = (reg_val & 0xffff);
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++}
++
++int QCA8337_VLAN_SET(void)
++{
++    static int athr16_init_flag=0;
++    uint32_t po_reg_val;
++
++    printk("QCA Support VLAN Start!!\n");
++
++    if (athr16_init_flag){
++        printk("QCA Already Supported!!\n");
++        return -1;
++    }
++    //set check mode
++    athrs16_reg_write(0x0660, 0x0014027e);
++    athrs16_reg_write(0x066c, 0x0014027e);
++    athrs16_reg_write(0x0678, 0x0014027e);
++    athrs16_reg_write(0x0684, 0x0014027e);
++    athrs16_reg_write(0x0690, 0x0014027e);
++    athrs16_reg_write(0x069c, 0x0014027e);
++
++    //set CVID WAN=2 LAN=1 
++    athrs16_reg_write(0x0420, 0x00020001);
++    athrs16_reg_write(0x0428, 0x00020001);
++    athrs16_reg_write(0x0430, 0x00010001);
++    athrs16_reg_write(0x0438, 0x00010001);
++    athrs16_reg_write(0x0440, 0x00010001);
++    athrs16_reg_write(0x0448, 0x00010001);
++
++    //set VLAN
++    athrs16_reg_write(0x0610, 0x001bff60);
++    athrs16_reg_write(0x0614, 0x00020002);
++    udelay(1000);  //The delay can be optimized.
++    athrs16_reg_write(0x0610, 0x001b55e0);
++    athrs16_reg_write(0x0614, 0x00010001);
++    udelay(1000);  //The delay can be optimized.
++
++    //set Tag 
++    athrs16_reg_write(0x0424, 0x00002040);
++    athrs16_reg_write(0x042c, 0x00001040);
++    athrs16_reg_write(0x0434, 0x00001040);
++    athrs16_reg_write(0x043c, 0x00001040);
++    athrs16_reg_write(0x0444, 0x00001040);
++    athrs16_reg_write(0x044c, 0x00001040);
++
++    printk("QCA Support VLAN end!!\n");
++    athr16_init_flag = 1;
++
++}
+ 
+ 
+ 
+--- linux-2.6.36/drivers/net/raeth/raether.c	2015-06-10 16:31:03.697298941 +0800
++++ linux-2.6.36/drivers/net/raeth/raether.c	2015-06-10 16:32:11.061300033 +0800
+@@ -92,7 +92,7 @@
+ #else
+ int ra_mtd_read_nm(char *name, loff_t from, size_t len, u_char *buf);
+ #endif
+-
++extern QCA8337_VLAN_SET(void);
+ /* gmac driver feature set config */
+ #if defined (CONFIG_RAETH_NAPI) || defined (CONFIG_RAETH_QOS)
+ #undef DELAY_INT
+@@ -3876,6 +3876,7 @@
+ #else
+ 	rt305x_esw_init();
+ #endif
++     QCA8337_VLAN_SET();
+ #endif 
+ 	// Case4:  RT288x/RT388x GE1 + GigaSW
+ #if defined (CONFIG_GE1_RGMII_FORCE_1000)

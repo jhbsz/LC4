@@ -1,0 +1,26 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2014-03-03 15:35:57.612872699 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2014-03-03 15:38:46.452877220 +0800
+@@ -49,7 +49,7 @@
+  */
+ 
+ #define USE_NATIVE_COPY_FILE
+-#define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
++#define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH
+ #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
+ 
+ /* plugin config for all request/connections */
+@@ -1988,12 +1988,13 @@
+ 
+ 			/* copy all chunks */
+ 			switch(c->type) {
+-			case FILE_CHUNK:
+ 
++            case FILE_CHUNK:
+ 				if(-1 == (rename(c->file.name->ptr,con->physical.path->ptr))) {
+ 					log_error_write(srv, __FILE__, __LINE__, "ss", "write back failed: ", strerror(errno));
+ 					return HANDLER_ERROR;
+ 				}
++                chmod(con->physical.path->ptr, WEBDAV_FILE_MODE);
+ 				break;
+ 			case MEM_CHUNK:
+ 				/* if the file doesn't exist, create it */

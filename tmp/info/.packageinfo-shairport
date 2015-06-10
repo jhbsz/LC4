@@ -1,0 +1,16 @@
+Source-Makefile: package/shairport/Makefile
+Package: shairport
+Version: 0.05-1
+Depends: +salsa-lib +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: sound
+Category: Sound
+Title: AirPlay speakers
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	AirPlay speakers
+
+http://mafipulation.org/blagoblig  
+@@
+

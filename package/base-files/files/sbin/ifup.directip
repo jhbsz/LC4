@@ -1,0 +1,190 @@
+#!/bin/sh
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+type=$1
+
+[ "$(nvram get ${type}_proto)" = "directip" ] || {
+	echo "$0: ${type}_proto isn't directip"
+	exit
+}
+
+switch_3g_card_340U () {
+local cnt="10"
+[ -n "$(nvram show wan_wwan_probe_rule $num product | grep 340U)" ] && return 0
+while [ -z "$(ezpcom-mode | sed -n '/.*found .* 340U.*/p')" -a "$cnt" -ne "0" ]; do
+	sleep 3
+	cnt=$(($cnt - 1))
+done
+}
+
+local UML295="$(cat /proc/bus/usb/devices | grep "Vendor=10a9 ProdID=6064")"
+
+[ -n "$UML295" ] && {
+    nvram replace attr wan_status_rule $3 trycount 0
+    ifconfig up usb0
+    sleep 1
+    udhcpc -i usb0
+    #curl http://192.168.32.2/condata > /tmp/conn.info
+    #Get 3G Stats
+    curl http://192.168.32.2/condata?action=disconnect
+    sleep 2
+    curl http://192.168.32.2/condata?action=connect
+    sleep 2
+    curl http://192.168.32.2/condata?action=connect
+
+    get_3g_stats UML295 $3
+    nvram replace attr wan_status_rule $3 trycount 0
+    exit
+}
+
+
+# XXX: even in directip mode, wan_wwan_probe_rule is still used
+# XXX: ifdata_num is not used here!
+ifdata_num=$(nvram show wan_wwan_probe_rule $3 datatty)
+[ -z "$ifdata_num" ] && {
+    ifdata_num=$(nvram show wan_wwan_rule $3 datatty)
+}
+
+ifctrl_num=$(nvram show wan_wwan_probe_rule $3 ctrltty)
+[ -z "$ifctrl_num" ] && {
+    ifctrl_num=$(nvram show wan_wwan_rule $3 ctrltty)
+}
+
+dev_name=$(nvram show wan_wwan_probe_rule $3 devname)
+[ -z "$dev_name" ] && {
+    dev_name=$(nvram show wan_wwan_rule $3 devname)
+}
+
+dev_flag=$(nvram show wan_wwan_probe_rule $3 flag)
+
+[ -e /sys/class/tty/${dev_name}${ifctrl_num} ] || exit 1
+
+mkdir -p /var/lock
+
+# XXX: sierra net
+for module in sierra sierra_net GobiNet GobiSerial; do
+	/sbin/insmod $module 2>&- >&-
+done
+
+ip link set dev $(nvram get wan${3}_ifname) down
+
+# pin
+pin=$(nvram show wan_wwan_rule $3 pin)
+[ -n "$pin" ] && env -i EZPCOMPIN="$pin" /usr/sbin/ezpcom PIN \
+    -d /dev/${dev_name}${ifctrl_num} 
+# apn
+APN_TYPE="$(nvram show wan_wwan_rule $3 apn_type)"
+apn=$(nvram show wan_wwan_rule $3 apn)
+local NOVA_551L="$(cat /proc/bus/usb/devices | grep "Vendor=1410 ProdID=b001")"
+
+[ "$APN_TYPE" != "2" -a -n "$apn" -a -z "$NOVA_551L" ] && {
+ env -i EZPCOMAPN="$apn" /usr/sbin/ezpcom APN -d /dev/${dev_name}${ifctrl_num} 
+}
+
+[ "$APN_TYPE" != "2" -a -n "$apn" -a -n "$NOVA_551L" ] && \
+    SCRIPT="AT+CGDCONT=3,\"IP\",\"$apn\",\"0.0.0.0\",0,0" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+
+# turn on radio 
+/usr/sbin/ezpcom radioon -d /dev/${dev_name}${ifctrl_num} 
+sleep 5 
+
+# For reset trycount to zero.
+nvram replace attr wan_status_rule $3 trycount 0
+
+#Get 3G Stats
+get_3g_stats ${dev_name}${ifctrl_num} $3
+
+case "${dev_flag}" in
+2)
+    [ "$(/usr/sbin/ezpcom directipon -a -d /dev/${dev_name}${ifctrl_num})" = "Direct IP mode ready" ] || {
+        /usr/sbin/ezpcom -b
+        exit 1
+    }
+;;
+3)
+    [ "$(/usr/sbin/ezpcom cdcon -a -d /dev/${dev_name}${ifctrl_num})" = "CDC mode ready" ] || {
+        /usr/sbin/ezpcom -b
+        exit 1
+    }
+;;
+4)
+    local count=0
+    LTE_STATUS=""
+    LTE_SIG="$(nvram show wan_wwan_probe_rule 1 signal)"
+    while [ "$LTE_STATUS" != "CONNECTED" -a \
+            "$LTE_STATUS" != "QMI_WDS_PKT_DATA_CONNECTED" -o \
+            "$LTE_SIG" == "0" ]
+    do
+        nvram replace attr wan_status_rule $3 trycount 0
+        SCRIPT='At$nwqmiconnect=,,' ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom > /tmp/ltestatus
+        SCRIPT='At$nwqmistatus' ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom >> /tmp/ltestatus
+        sleep 1
+        LTE_STATUS=$(cat /tmp/ltestatus | sed -n '5p' | awk '{FS=":";print $2}' | tr -d " ")
+        logger EZP_USR "WAN$((${3}+1)) LTE Status: $LTE_STATUS"
+        [ "$LTE_SIG" = "0" ] && get_3g_stats ${dev_name}${ifctrl_num} $3
+        LTE_SIG="$(nvram show wan_wwan_probe_rule 1 signal)"
+        count=$(($count + 1))
+        [ "$count" -gt "10" ] && {
+            SCRIPT='at+cfun=1,1' ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom > /tmp/ltestatus
+            logger EZP_USR "WAN$((${3}+1)) connect fail, reset USB"
+            return
+        }
+    done
+;;
+5)
+    local ifupdownfb="$(nvram show wan_action_style_rule $num upfb)"
+    nvram replace attr wan_action_style_rule $num upfb fg
+    local AC341U_IPT="$(cat /proc/bus/usb/devices | grep "Vendor=1199 ProdID=9057")"
+    local AC341U_NAT="$(cat /proc/bus/usb/devices | grep "Vendor=1199 ProdID=9055")"
+    local AC340U="$(cat /proc/bus/usb/devices | grep "Vendor=1199 ProdID=9051")"
+    [ -n "$AC341U_NAT" ] && {
+        sleep 2
+        # reset and change to IPT mode
+        /usr/sbin/ezpcom -s /etc/chatscripts/script.GobiReset
+        for i in $(seq 1 10)
+        do
+            sleep 5
+            local CHECK_PID="$(cat /proc/bus/usb/devices | grep "Vendor=1199 ProdID=9057")"
+            [ -n "$CHECK_PID" ] && {
+                break
+            }
+        done
+    }
+    [ -z "$(nvram show wan_wwan_probe_rule $num product | grep 340U)" ] && {
+        # 1. after issue cfun=1, we need to wait at least 9 seconds for
+        # netcard startup
+        # 2. then the interface(usb0) will need be switch again
+        # 3. after device switch completely, we wait a while for usb0
+        # successfully started
+        # 4. if usb0 is not started successfully, we wait another 3 seconds
+        # and start it sgain
+        local ac340up="0"
+        local loopidx="0"
+        nvram fset ac340st=setapn
+        SCRIPT='at+cfun=1,1' ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom > /tmp/ltestatus
+        sleep 10
+        nvram replace attr wan_wwan_probe_rule $num product ""
+        switch_3g_card_340U
+        sleep 3
+        ifconfig usb0 up
+        ac340up="$?"
+        while [ "$loopidx" -lt "10" -a "$ac340up" != "0" ]; do
+            sleep 3
+            ifconfig usb0 up
+            ac340up="$?"
+        done
+        # Once ac340u reset with cfun=1, the usb device will be reset and the
+        # upnp state back to "1", which will disturb the upnp state machine.
+        # So we will change to state 2 manually
+        [ "$ac340up" = "0" ] && nvram replace attr wan_upnp_status_rule 0 state "2"
+    }
+    [ -n "$AC341U_IPT" ] || [ -n "$AC340U" ] && {
+        /usr/sbin/ezpcom -s /etc/chatscripts/script.GobiConnect > /tmp/ltestatus
+    }
+    nvram replace attr wan_action_style_rule $num upfb $ifupdownfb
+;;
+esac
+
+# For reset trycount to zero.
+nvram replace attr wan_status_rule $3 trycount 0
+    

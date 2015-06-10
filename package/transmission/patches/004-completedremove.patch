@@ -1,0 +1,105 @@
+--- transmission-1.92/libtransmission/peer-mgr.c	2010-07-30 17:36:50.802511297 +0800
++++ transmission-1.92/libtransmission/peer-mgr.c	2010-07-30 17:36:22.932729839 +0800
+@@ -3137,6 +3137,10 @@
+             tor->torrentPeers->needsCompletenessCheck  = FALSE;
+             tr_torrentRecheckCompleteness( tor );
+         }
++        /* EZP remove the completed torrent */
++        if ( tor->completeness == TR_SEED ) {
++            tr_torrentRemove( tor );
++        }
+     }
+ 
+     /* possibly stop torrents that have an error */
+--- transmission-1.92/libtransmission/torrent.c	2010-07-30 17:36:50.832513144 +0800
++++ transmission-1.92/libtransmission/torrent.c	2010-07-30 17:41:45.586263019 +0800
+@@ -601,6 +601,26 @@
+     return priority;
+ }
+ 
++/* EZP  download complete function */
++static void
++downloadCompletedCallback( tr_torrent       * tor,
++        tr_completeness    completeness,
++        void *             user_data )
++{
++    FILE *fp_bt_cpl = NULL;
++    char download_cpl_file[512];
++
++    snprintf(download_cpl_file, sizeof(download_cpl_file),
++            "/tmp/%s/download/session/bt-cpl", mount_point(NULL));
++    /* open file that save complete task */
++    if ((fp_bt_cpl = fopen(download_cpl_file, "a"))) {
++        fprintf(fp_bt_cpl, "%s^%llu^%llu^100^^^^Completed^%d^%s\n",
++                tor->info.name, tor->stats.sizeWhenDone,
++                tor->stats.sizeWhenDone, COMPLETED, tor->info.hashString);
++        fclose(fp_bt_cpl);
++    }
++}
++
+ static void
+ tr_torrentInitFilePieces( tr_torrent * tor )
+ {
+@@ -790,6 +810,9 @@
+     tr_ctorInitTorrentPriorities( ctor, tor );
+     tr_ctorInitTorrentWanted( ctor, tor );
+ 
++    /* EZP set a callback function for torrent download complete */
++    tr_torrentSetCompletenessCallback( tor, downloadCompletedCallback, NULL);
++
+     refreshCurrentDir( tor );
+ 
+     doStart = tor->isRunning;
+@@ -2735,6 +2758,7 @@
+     const tr_bool do_move = data->move_from_old_location;
+     const char * location = data->location;
+     double bytesHandled = 0;
++    char cmd[256];
+ 
+     assert( tr_isTorrent( tor ) );
+ 
+@@ -2805,6 +2829,9 @@
+             if( verify_needed )
+                 tr_torrentVerify( tor );
+         }
++        /* EZP change permission */
++        snprintf(cmd, sizeof(cmd), "chmod 777 -R %s", location);
++        system(cmd);
+     }
+ 
+     if( !err && do_move )
+--- transmission-1.92/libtransmission/session.c	2010-07-30 17:36:50.842511866 +0800
++++ transmission-1.92/libtransmission/session.c	2010-07-30 17:40:57.882511226 +0800
+@@ -600,6 +600,17 @@
+     return fs_type;
+ }
+ 
++char * mount_point(char * dev_path)
++{
++    static char dev[64];
++    if (dev_path) {
++        strncpy(dev, dev_path, strlen(dev_path));
++        /* remove character '\n'  */
++        dev[strlen(dev) - 1] = '\0';
++    }
++    return dev;
++}
++
+ tr_session *
+ tr_sessionInit( const char  * tag,
+                 const char  * configDir,
+@@ -622,6 +633,14 @@
+         min_free_kbytes(atoi(buf));
+         fclose(fd);
+     }
++    /* EZP setup mount point */
++    fd = popen("nvram show storage_state_rule 0 dev_name", "r");
++    char dev[64];
++    if (fd != NULL) {
++        fgets(dev, sizeof(dev),fd);
++        mount_point(dev);
++        pclose(fd);
++    }
+ 
+     /* EZP setup file system type */
+     char fs[16];

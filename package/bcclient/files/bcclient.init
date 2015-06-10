@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/bcclient
+START=51
+log_msg="QNAP-udp-server"
+TRIGGER=51
+TRIGGER_STOP=51
+
+start () {
+    local platform="$(nvram get platform)"
+    [ "$platform" = "AXA" -o "$platform" = "AXM" -o "$platform" = "M2E" ] && {
+        killall bcclient
+        $BIN
+    }
+}
+stop () {
+    local platform="$(nvram get platform)"
+    [ "$platform" = "AXA" -o "$platform" = "AXM" -o  "$platform" = "M2E" ] && {
+        killall bcclient
+        $BIN
+    }
+}

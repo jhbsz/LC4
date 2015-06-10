@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"  />
+<title>.::Welcome to ZyXEL NBG417N::.</title>
+<link href="images/inside.css" rel="stylesheet" type="text/css" />
+    <link href="images/table.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div id="table">
+      <ul>
+        <li class="table_content">
+            <div class="data">
+              <ul>
+                <li class="title">DNS</li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Server Port : </td>
+                      <td><span class="cfig_word">
+                        <input name="WWWservicePort2" size="5" maxlength="5" value="80" onkeypress="chk_num(event)" type="text" />
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Server Access  : </td>
+                      <td><span class="cfig_word">
+                        <select name="WWWAccessInterface" size="1" onchange="doWWWAccess();">
+                          <option value="00000000">LAN &amp; WAN </option>
+                          <option value="00000001">Disable </option>
+                          <option value="00000002" selected="selected">LAN </option>
+                          <option value="00000003">WAN </option>
+                        </select>
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li class="w_text">
+                  <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="40%">Secured Client IP Address   : </td>
+                      <td><span class="cfig_word">
+                        <input name="btnwww" value="btnwww_0" checked="checked" onclick="decide_www(form,'all');" type="radio" />
+All                  &nbsp;&nbsp;&nbsp;
+<input name="btnwww" value="btnwww_1" onclick="decide_www(form,'selected');" type="radio" />
+Selected                  &nbsp;
+<input name="txtwwwip" size="20" maxlength="15" value="0.0.0.0" onblur="doIPcheck(this);" onfocus="if (this.form.btnwww[0].checked) this.form.btnwww[0].focus();" type="text" />
+                      </span></td>
+                    </tr>
+                  </table>
+                </li>
+                <li></li>
+				<li></li>
+              </ul>
+            </div>
+        </li>
+        <center>
+        <li class="table_button">
+        <input type=button value=Apply>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type=button value=Reset>
+        </li>
+              </center>
+</body>
+
+</html>

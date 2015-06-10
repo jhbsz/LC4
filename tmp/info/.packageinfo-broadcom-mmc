@@ -1,0 +1,17 @@
+Source-Makefile: package/broadcom-mmc/Makefile
+Package: kmod-broadcom-mmc
+Submenu: Other modules
+Version: <LINUX_VERSION>+0.1--1
+Depends: @TARGET_brcm_2_4
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for the Linksys WRT54G MM/SD-Card Mod
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Kernel driver for the Linksys WRT54G MM/SD-Card Mod
+
+http://kiel.kool.dk/
+@@
+

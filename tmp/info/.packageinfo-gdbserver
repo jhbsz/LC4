@@ -1,0 +1,15 @@
+Source-Makefile: package/gdbserver/Makefile
+Package: gdbserver
+Version: 6.3-1
+Depends: @GDB
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Remote Server for the GNU Debugger
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  GDBSERVER is a program that allows you to run GDB on a different machine 
+ than the one which is running the program being debugged.
+@@
+

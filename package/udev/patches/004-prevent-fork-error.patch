@@ -1,0 +1,18 @@
+--- udev-106/udevd.c	2007-03-04 01:42:09.000000000 +0800
++++ udev-106/udevd.c	2014-09-18 21:46:40.848763703 +0800
+@@ -252,8 +252,15 @@
+ {
+ 	pid_t pid;
+ 	int retval;
++    int timeout = 5;
+ 
+ 	pid = fork();
++    while((pid < 0) && (timeout > 0)) {
++        sleep(1);
++        pid = fork();
++        timeout --;
++    }
++    // err("fork of child %d", pid);
+ 	switch (pid) {
+ 	case 0:
+ 		/* child */

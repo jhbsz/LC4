@@ -1,0 +1,34 @@
+#!/bin/sh
+. /etc/arch.sh
+local lic_inv=$(nvram get license_invalid)
+case "$ACTION" in
+        add)
+            PROD_CAT=$(nvram get prod_cat)
+            [ "$PROD_CAT" != "M" -a "$PROD_CAT" != "N" -a \
+              "$PROD_CAT" != "P" -a "$PROD_CAT" != "U" -a \
+              "$PROD_CAT" != "I" -a "$PROD_CAT" != "A" -a \
+              "$PROD_CAT" != "W" ] && exit
+
+            local toblink=0
+            WAN_NUM=$(nvram get wan_num)
+            for i in $(seq 0 $WAN_NUM)
+            do
+                [ "$(nvram get wan${i}_proto)" = "wwan" -o "$(nvram get wan${i}_proto)" = "directip"  ] && [ -z "$(nvram get wan${i}_ipaddr)" ] && toblink=1
+            done          
+            [ $toblink -ne 0 ] && {
+                arch_led_start wwan
+            }
+            lock /tmp/.ezpcom-mode
+            EZPHOTPLUG=scsi_generic /usr/sbin/ezpcom-mode 2>&1 > /dev/null
+            lock -u /tmp/.ezpcom-mode
+            # If we probe finished and do not find a 3g/4g dongle, 
+            # stop led indication
+            [ -z "$(nvram show wan_wwan_probe_rule 0 datatty)" -a -z "$(nvram show wan_wwan_probe_rule 0 ctrltty)" ] && arch_led_stop wwan
+            ;;
+        remove)
+            arch_led_start remove
+            sleep 5
+            arch_led_stop remove
+            ;;
+esac
+

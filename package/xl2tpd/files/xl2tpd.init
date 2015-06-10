@@ -1,0 +1,110 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/xl2tpd
+PID_FILE=/var/run/xl2tpd.pid
+L2TPD_CONFIG_FILE=/etc/xl2tpd/xl2tpd.conf
+L2TPD_CONFIG_RFILE=/tmp/xl2tpd.conf
+PPP_CONFIG_FILE=/etc/ppp/options.xl2tpd
+PPP_CONFIG_RFILE=/tmp/options.xl2tpd
+CHAP_FILE=/etc/ppp/chap-secrets
+CHAP_RFILE=/tmp/chap-secrets
+START=70
+log_msg="L2TPD-server"
+
+local_config () {
+    	local i;
+    	local limit;
+        
+        # mkdir /var/run/xl2tpd or it won't start correctly
+        [ ! -d /var/run/xl2tpd ] && {
+            mkdir /var/run/xl2tpd
+            chmod 755 /var/run/xl2tpd
+        }
+
+        # xl2tpd.conf
+	rm -rf $L2TPD_CONFIG_RFILE
+        echo "[global]" >> $L2TPD_CONFIG_FILE
+        echo "auth file = $CHAP_FILE" >> $L2TPD_CONFIG_FILE
+        echo "" >> $L2TPD_CONFIG_FILE
+        echo "[lns default]" >> $L2TPD_CONFIG_FILE
+        echo "ip range = $(nvram show l2tpd_rule 0 remoteip)-$(nvram show l2tpd_rule 0 remoteip_range)" >> $L2TPD_CONFIG_FILE
+        echo "local ip = $(nvram show l2tpd_rule 0 localip)" >> $L2TPD_CONFIG_FILE
+
+        [ "$(nvram show l2tpd_rule 0 chap_enable)" = "1" ] && \
+            echo "refuse chap = no" >> $L2TPD_CONFIG_FILE
+        [ "$(nvram show l2tpd_rule 0 chap_enable)" = "0" ] && \
+            echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+             
+        [ "$(nvram show l2tpd_rule 0 pap_enable)" = "1" ] && \
+            echo "refuse pap = no" >> $L2TPD_CONFIG_FILE
+        [ "$(nvram show l2tpd_rule 0 pap_enable)" = "0" ] && \
+            echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+             
+        echo "require authentication = yes" >> $L2TPD_CONFIG_FILE
+        echo "name = $(nvram show l2tpd_rule 0 name)" >> $L2TPD_CONFIG_FILE
+        echo "ppp debug = yes" >> $L2TPD_CONFIG_FILE
+        echo "pppoptfile = $PPP_CONFIG_FILE" >> $L2TPD_CONFIG_FILE
+        echo "length bit = yes" >> $L2TPD_CONFIG_FILE
+
+        # options.xl2tpd
+	rm -rf $PPP_CONFIG_RFILE
+        echo "ipcp-accept-local" >> $PPP_CONFIG_FILE
+        echo "ipcp-accept-remote" >> $PPP_CONFIG_FILE
+	    [ "$(nvram show l2tpd_rule 0 dns_auto_enable)" = "0" ] && \
+            echo "ms-dns $(nvram show l2tpd_rule 0 dns)" >> $PPP_CONFIG_FILE
+	    [ "$(nvram show l2tpd_rule 0 dns_auto_enable)" = "1" ] && \
+        	echo "ms-dns $(nvram get lan0_ipaddr)" >> $PPP_CONFIG_FILE
+        echo "noccp" >> $PPP_CONFIG_FILE
+        echo "auth" >> $PPP_CONFIG_FILE
+        echo "crtscts" >> $PPP_CONFIG_FILE
+        echo "idle 1800" >> $PPP_CONFIG_FILE
+        echo "mtu $(nvram show l2tpd_rule 0 mtu)" >> $PPP_CONFIG_FILE
+        echo "mru $(nvram show l2tpd_rule 0 mru)" >> $PPP_CONFIG_FILE
+        echo "nodefaultroute" >> $PPP_CONFIG_FILE
+        echo "debug" >> $PPP_CONFIG_FILE
+        echo "lock" >> $PPP_CONFIG_FILE
+	    [ "$(nvram show l2tpd_rule 0 proxyarp_enable)" = "0" ] && \
+        	echo "noproxyarp" >> $PPP_CONFIG_FILE
+	    [ "$(nvram show l2tpd_rule 0 proxyarp_enable)" = "1" ] && \
+        	echo "proxyarp" >> $PPP_CONFIG_FILE
+        echo "connect-delay 5000" >> $PPP_CONFIG_FILE
+
+        # chap-secrets
+    	i=0
+    	limit=$(nvram get pptpd_user_rule_num)
+  	rm -rf $CHAP_RFILE
+	while [ $i -lt $limit ]; do
+       	 [ "$(nvram show pptpd_user_rule $i enable)" = "1" ] && {
+       	     username=$(nvram show pptpd_user_rule $i username)
+       	     passwd=$(nvram show pptpd_user_rule $i passwd)
+       	     echo "$username * $passwd *" >> $CHAP_FILE
+       	 }
+       	 i=$(($i+1))
+   	done
+}
+start () {
+    local err; err=0
+    [ "$(nvram show l2tpd_rule 0 enable)" = "1" ] && {
+        pidof xl2tpd > /dev/null || stop
+        local_config
+	# kernel modules
+	for m in arc4 sha1 slhc crc-ccitt ppp_generic ppp_async ppp_mppe_mppc; do
+	  insmod $m >/dev/null 2>&1
+	done
+
+	# XXX: SNAT for Class C network
+	[ "$(nvram show l2tpd_rule 0 nat_enable)" = "1" ] && \
+		/usr/sbin/iptables -A EZP_SNAT -t nat -s $(nvram show l2tpd_rule 0 remoteip)/24 -j MASQUERADE
+
+        $BIN || err=1
+    }
+
+    return $err
+}
+stop () {
+    killall xl2tpd
+    [ "$(nvram show l2tpd_rule 0 enable)" = "1" ] && {
+	[ "$(nvram show l2tpd_rule 0 nat_enable)" = "1" ] && \
+		/usr/sbin/iptables -D EZP_SNAT -t nat -s $(nvram show l2tpd_rule 0 remoteip)/24 -j MASQUERADE
+    }
+}
+

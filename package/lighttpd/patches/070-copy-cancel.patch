@@ -1,0 +1,161 @@
+--- lighttpd-1.4.30/src/command.h	1970-01-01 08:00:00.000000000 +0800
++++ lighttpd-1.4.30/src/command.h	2013-03-25 11:28:46.027185527 +0800
+@@ -0,0 +1,19 @@
++#ifndef _COMMAND_H_
++#define _COMMAND_H_
++
++#define COMMAND_SOCKET_PATH  "/tmp/lighttpd_command"
++#define COMMAND_LENGTH 20
++#define COMMAND_COPY_CANCEL "cancel"
++#define RET_COPY_SUCCESS "success"
++
++/* for webdav ation status */
++enum {
++    COPY_INIT = 1,
++    COPY_RECV,
++    COPY_DONE
++};
++
++/* GLOBAL SIGNAL for command notificaion*/
++int command_signal = COPY_INIT;
++
++#endif
+
+
+--- lighttpd-1.4.30/src/server.c	2011-12-18 20:50:38.000000000 +0800
++++ lighttpd-1.4.30/src/server.c	2013-03-25 11:53:58.335226025 +0800
+@@ -31,6 +31,12 @@
+ 
+ #include <stdio.h>
+ 
++#if defined (PLATFORM_AXA)
++#include <sys/socket.h>
++#include "command.h"
++#include <pthread.h>
++#endif
++
+ #ifdef HAVE_GETOPT_H
+ # include <getopt.h>
+ #endif
+@@ -68,6 +74,68 @@
+ #ifdef HAVE_GETUID
+ # ifndef HAVE_ISSETUGID
+ 
++/*
++    server thread to receive command from httpd
++*/
++
++#if defined (PLATFORM_AXA)
++void *open_socket()
++{
++    int         server_sockfd;
++    int         client_sockfd;
++    int         server_len;
++    int         client_len;
++    struct sockaddr_un server_address;
++    struct sockaddr_un client_address;
++
++    unlink(COMMAND_SOCKET_PATH);
++    server_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
++
++    if(server_sockfd < 0) 
++        return 0;
++
++    server_address.sun_family = AF_UNIX;
++    strcpy(server_address.sun_path, COMMAND_SOCKET_PATH);
++    server_len = strlen(server_address.sun_path) + sizeof(server_address.sun_family);
++
++    if (bind(server_sockfd, (struct sockaddr*)&server_address, server_len) < 0 ) 
++        return 0;
++
++    if (listen(server_sockfd, 5) < 0) 
++        return 0;
++
++    while(1)
++    {
++        char httpd_command_signal[20];
++        client_len = sizeof(client_address);
++        if (client_sockfd = accept(server_sockfd, (struct sockaddr*)&client_address, &client_len) < 0 ) 
++            return 0;
++        if (read(client_sockfd, httpd_command_signal, 20) < 0) 
++            return 0;
++        /* command type switch */
++        if (strcmp(httpd_command_signal, COMMAND_COPY_CANCEL) == 0) 
++        {
++            int i;
++            command_signal = COPY_RECV;
++            for(i=0 ; i < 30 ; i++)
++            {
++                usleep(50000);
++                if(command_signal == COPY_DONE)
++                {
++                    if((send(client_sockfd, RET_COPY_SUCCESS, strlen(RET_COPY_SUCCESS), 0)) < 0)
++                        continue;
++                    else
++                        break;
++                }
++            }
++            command_signal = COPY_INIT;
++        } 
++        /* other command */
++        close(client_sockfd);
++    }
++}
++#endif
++
+ static int l_issetugid() {
+ 	return (geteuid() != getuid() || getegid() != getgid());
+ }
+@@ -1179,6 +1247,12 @@
+ 		}
+ 	}
+ 
++#if defined (PLATFORM_AXA)
++	/* create thread for socket connection */
++	pthread_t p;
++	pthread_create(&p, NULL, open_socket, NULL);
++#endif
++
+ 	/* main-loop */
+ 	while (!srv_shutdown) {
+ 		int n;
+
+
+
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-03-25 16:05:05.548684302 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-03-25 16:07:42.532688506 +0800
+@@ -23,6 +23,10 @@
+ #include <unistd.h>
+ #include <dirent.h>
+ 
++#if defined (PLATFORM_AXA)
++#include "command.h"
++#endif
++
+ #if defined(HAVE_LIBXML_H) && defined(HAVE_SQLITE3_H)
+ #define USE_PROPPATCH
+ #include <libxml/tree.h>
+@@ -710,7 +714,19 @@
+     /* copy files */
+     while ( (n_chars = read(in_fd , buf, BUFFERSIZE)) > 0 ) {
+         ntotal += n_chars;
+-        usleep(50000);
++        usleep(40000);
++
++#if defined (PLATFORM_AXA)
++        /* get the command to cancel copy */
++        if( command_signal == COPY_RECV) 
++        {
++       	 command_signal = COPY_DONE;
++    	     write_failed = 1;
++            retcode = 200;
++            break;
++        }
++#endif
++
+         if ((wn_chars = write( out_fd, buf, n_chars )) != n_chars ) {
+             switch(errno) {
+                 case ENOSPC:
+
+
+

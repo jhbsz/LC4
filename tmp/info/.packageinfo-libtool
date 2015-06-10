@@ -1,0 +1,16 @@
+Source-Makefile: package/libtool/Makefile
+Package: libltdl
+Version: 1.5.24-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: A generic dynamic object loading library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A generic dynamic object loading library
+
+http://www.gnu.org/software/libtool/
+@@
+

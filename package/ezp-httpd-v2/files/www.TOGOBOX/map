@@ -1,0 +1,154 @@
+Welcome	歡迎	Willkommen
+Guest	訪客	Gast
+Admin	管理員	Admin
+Login	登錄	Anmelden
+Dashboard	主控台	Übersicht
+Setting	設定	Einstellungen
+Internet	網際網路	Internet
+Home	首頁	Home
+CPU	CPU	CPU
+Memory	記憶體	Hauptspeicher
+Device(s)	連線裝置	Gerät(e)
+Time	時間	Zeit
+mins	分鐘	Minuten
+N/A	N/A	N/A
+Battery Status	電池狀況	Batteriestatus
+Power Level	剩餘電量	Kapazität
+Charge Status	充電狀況	Ladezustand
+Charging	充電中	Lädt
+Not Charging	未充電	Lädt nicht
+Unknown	不明	Unbekannt
+Storage Status	儲存空間狀況	Speicherstatus    
+Not Available	無法使用	Nicht verfügbar
+USB Disk	USB隨身碟	USB Disk
+SD Card	SD卡	SD Karte
+USB Used	USB已使用	USB vedet
+SD Used	SD已使用	SD verwendet
+Link Status	網路連線	Verbindungsstatus
+Connection Type	連線類型	Verbindungstyp
+Link State	連線狀況	Verbindungsstatus
+IP Address	外部IP位置	IP-Adresse
+Model Name	產品型號	Modell
+Firmware Version	系統軟體版本	Firmwareversion
+Current Time	現在時間	Aktuelle Zeit
+Running Time	已開機時間	Laufzeit
+Traffic	流量統計	Traffic
+Device	裝置	Gerät
+Device Name	裝置名稱	Gerätename
+DHCP	DHCP	DHCP
+IP Address Pool	IP位置範圍	IP Adressbereich
+LAN	內部網路	LAN
+Network Address	內部網路範圍	Netzwerkadresse
+Wireless Security	無線網路安全	Sicherheit (drahtlos)
+Security Type	加密類型	Sicherheitstyp
+Disable	已停用	Deaktiviert
+WEP	WEP	WEP
+WPA	WPA	WPA
+WPA2    WPA2	WPA2
+It's recommended to use WPA2 for security.	建議使用WPA2加密	Es ist empfehlenswert WPA2 zu wählen
+Password	密碼	Kennwort
+Admin Password	管理員密碼	Admin-Kennwort
+Change Password	更改密碼	Kennwort ändern
+Re-type Password	確認新密碼	Kennwort wiederholen
+Please use the combination with only number and English alphabet with upper or lower case.	請使用英文大小寫與數字組合為密碼	Bitte verwenden Sie nur eine Kombination aus Zahlen und englischen Groß- und Kleinbuchstaben
+System	系統	System
+Default Configuration Restore	回復原廠設定值	Standard- Werkseinstellungen
+System Reboot	重新啟動	Systemneustart
+Default	回復	Standard
+Reboot	重啟	Neustart
+Firmware	系統軟體	Firmware
+Version	版本	Version
+Upgrade	更新	Upgrade
+Choose	選擇檔案	Wählen
+Save	儲存	Sichern
+Cancel	取消	Abbrechen
+Wired Internet	有線網路	Kabelgebundenes Intern
+Wireless Internet	無線網路	Drahtloses Internet
+For wireless and hotspots users.	連接到其他無線網路或熱點	Für drahtlose und "Hotspot" Benutzer
+USB Internet	USB 網路	USB Internet
+If you have an exact username and password, choose this.	若您有撥接用的帳號密碼，請選擇此選項	Wählen Sie diese Option, wenn Sie über einen exakten Benutzernamen und ein Kennwort verfügen
+If you already have an IP adddress, choose this.	若您的擁有特定的IP位置，請選擇此選項	Wählen Sie diese Option, wenn Sie bereits über eine statische IP- Adresse verfügen
+If you have no any information from your network provider, choose this.	若您沒有上述資訊，請選擇此選項	Wählen Sie diese Option, wenn Sie über keine Informationen des Netzwerkanbieters verfügen
+Unplugged	未連接纜線	Ausgesteckt
+Plugged	已連接纜線	Eingesteckt
+Disconnect	中斷連線	Trennen
+Connect	連線	Verbinden
+Connected	已經連線	Verbunden
+Connecting	連線中  Verbindet
+Connection Failed	連線失敗	Verbindung fehlgeschlagen
+Search	搜尋	Suchen
+Apple iPhone	蘋果iPhone	Apple iPhone
+Android phone	Android手機	Android Telefon
+3G/4G Mobile Internet	3G/4G網路卡 3G/4G Mobiles Internet
+If you want internet tethering on iPhone, choose this.	若透過USB連接iPhone網路分享，請選擇此選項	Wenn Sie die Tetheringfunktion Ihres iPhone verwenden möchten.
+If you want internet tethering on Android phone, choose this.	若透過USB連接Android手機網路分享，請選擇此選項	Wenn Sie die Tetheringfunktion Ihres Android Telefons verwenden möchten.
+If you want internet tethering on 3G/4G dongle, choose this.	若透過3G/4G網路卡連接網路，請選擇此選項	Wenn Sie eine Internetverbindung über ein externes 3G/4G USB Modem herstellen möchten.
+Refresh	重新整理	Aktualisieren
+PPPoE	PPPoE	PPPoE
+User Name	使用者名稱	Benutzername
+Static IP	固定IP	Statische IP
+External IP Address	外部IP位置	Externe IP- Adresse
+Netmask	網路遮罩	Netzmaske
+Gateway	預設閘道	Gateway
+Static DNS 1	靜態DNS 1	Statische DNS 1
+Static DNS 2	靜態DNS 2	Statische DNS 2
+3G/4G dongle	3G/4G網路卡	3G/4G USB Modem
+APN Type	連接點(APN)設定方式	APN Typ
+Auto	自動	Auto
+Manual	手動	Manuell
+Access Point Name	連接點(APN)名稱	Access Point Name
+APN	連接點(APN)	APN
+PIN	PIN碼	PIN
+Dial Number	撥接號碼	Einwahlnummer
+WISP	無線網路連線	WISP
+Key	無線網路密碼	Schlüssel
+Re-type Key	重新輸入密碼	Schlüssel erneut eingeben
+The Key is an ASCII string of 8-63 digits	密碼為8-63位的半形英數字	Der Schlüssel besteht aus einer ASCII Zeichenfolge von 8-63 Zeichen
+The Key must have value.	密碼不可為空白	Der Schlüssel hat einen falschen Wert
+SSID	SSID	SSID			
+Signal	信號強度	Signalstärke
+Action	動作	Aktion
+Forget	忘記此連線	Vergessen
+Target SSID	目標SSID	Ziel- SSID
+will reboot to connect to the selected network, please reconnect after rebooting.	將會重新啟動並連接到指定的網路，請在稍後重新連線	Neustart um zu dem gewählten Netzwerk zu wechseln. Bitte verbinden Sie sich nach dem Neustart erneut.
+Confirmed password did not match Entered Password.  Please re-enter password	兩次輸入的密碼不一致，請重新輸入密碼	Kennwörter stimmen nicht überein. Bitte erneut eingeben.
+Password is not the same.	密碼不一致	Kennwort stimmt nicht überein.
+For ADSL, VDSL, Cable Modem, and Static IP users.	使用有線網路、ADSL、VDSL、或者Cable Modem的使用者	Für Verbindungen über ADSL, VDSL, Kabelmodem oder statische IP
+For wireless and hotspots users.	無線網路與熱點的使用者	Für drahtlose und "Hotspot" Benutzer
+For smart phone and 3G/4G modem users.	分享智慧型手機網路或3G/4G網路卡的使用者	Für Smartphone und 3G/4G Modem Verbindungen
+Copyright	版權所有	Copyright
+AXIM Communications Inc.	國晟科技股份有限公司	AXIM Communications Inc.
+All rights reserved.	保留所有相關權利	All rights reserved.
+Upload	上傳	Upload
+Download	下載	Download
+Logout	登出	Abmelden
+Device Information	裝置資訊	Geräteinformation
+USB Internet (Apple iPhone)	USB網際網路 (蘋果iPhone)	USB Internet (Apple iPhone)
+Web Folder	檔案總管	Netzwerkordner
+Read Only	唯讀	Nur Lesen
+Read/Write	可讀寫	Lesen/Schreiben
+Re-type New Password	重新輸入密碼	Neues Kennwort erneut eingeben
+5 or 13 characters	5或13個字元	5 oder 13 Zeichen
+8-63 characters	8-63個字元	8-63 Zeichen
+System update ".bin" file expected.	需要選擇 .bin 系統更新檔	Eine System-Update-Datei ".bin" wird benötigt.    
+The firmware is upgraded successfully.	軔體更新成功。Die Firmware wurde erfolgreich installiert.
+Rebooting... Please wait.	重新啟動中... 請稍候	Neustart… Bitte warten.
+Are you sure to upgrade by using	請確認使用以下系統更新檔	Sind Sie sich sicher ein Upgrade mit folgender Datei durchzuführen:
+Are you sure to import configuration by using	請確認要匯入以下系統設定檔	Sind Sie sich sicher eine Konfiguration mit folgender Datei zu importieren:
+Firmware upgrading...	系統更新中 ...	Firmware wird installiert…
+Confirm	確認	Bestätigen
+Password is not same    密碼不一致	Kennwort stimmt nicht überein.
+Settings are saved successfully.	設定已被儲存，	Einstellungen erfolgreich gesichert.
+Settings take effect immediately.	並即將生效。	Einstellungen werden sofort übernommen.
+No changes of the settings are made.	設定值並未被更動。	Einstellungen wurden nicht geändert.
+The values you entered are invalid.	您所輸入的值無效，	Die eingegebenen Werte sind ungültig.
+Please try again.	請重新輸入。	Bitte versuchen Sie es erneut.
+Login Success    登錄成功	Anmeldung erfolgreich
+System will reboot automatically after upgrade is completed.	更新成功後，系統將會自動重新開機。	System startet automatisch neu, nachdem die Aktualisierung vollständig ist.
+Cannot begin update. Recharge the battery until the battery level is at least 60%.	無法開始更新。將電池重新充電，直到電池電量至少達到60%。	Eine Aktualisierung kann nicht gestartet werden, solange der Batterie-Level weniger als 60% beträgt.
+Battery level	電池電量	Batterie-Level
+Disconnected	連線中斷	Getrennt
+remaining	剩餘	verbleibend
+The SSID name must be no longer than 31 characters. The first and final characters must not be spaces.
+The allowed characters are: A-Z, a-z, 0-9, - _ () and spaces.
+The Password must be no longer than 31 characters. The first and final characters must not be spaces.

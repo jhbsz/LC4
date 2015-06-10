@@ -1,0 +1,12 @@
+--- openswan.old/programs/pluto/myid.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/programs/pluto/myid.c	2009-08-27 09:52:26.071718226 +0800
+@@ -22,6 +22,9 @@
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <unistd.h>
++#ifndef HOST_NAME_MAX   /* POSIX 1003.1-2001 says <unistd.h> defines this */
++# define HOST_NAME_MAX  255 /* upper bound, according to SUSv2 */
++#endif
+ #include <limits.h>
+ 
+ #include <openswan.h>

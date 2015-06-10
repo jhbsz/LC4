@@ -1,0 +1,34 @@
+--- Uboot-spi-1.1.3/drivers/rt2880_eth.c	2010-08-27 10:46:34.646690928 +0800
++++ Uboot-spi-1.1.3.new/drivers/rt2880_eth.c	2010-08-27 10:45:59.077940827 +0800
+@@ -20,6 +20,7 @@
+ 
+ #include <common.h>
+ #include <command.h>
++#include <../autoconf.h>
+ 
+ #if (CONFIG_COMMANDS & CFG_CMD_NET) && defined(CONFIG_RT2880_ETH)
+ 
+--- Uboot-spi-1.1.3/lib_mips/board.c	2010-08-27 10:46:34.706692499 +0800
++++ Uboot-spi-1.1.3.new/lib_mips/board.c	2010-08-27 10:45:59.489190886 +0800
+@@ -1547,12 +1547,21 @@
+ #if defined (RT3052_ASIC_BOARD) || defined (RT3052_FPGA_BOARD)  || \
+     defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD)
+ 	rt305x_esw_init();
++    #ifdef CONFIG_AR8316
++    printf("\n AR8316 Giga Switch support \n");
++    RT2882_REG(0xb01100C8) &= 0xe0ffffff; //set P5 external phy address to 0
++    athrs16_init();
++    #endif
+ #endif
+ 
+ #ifndef RT3052_PHY_TEST
+ 	LANWANPartition();
+ #endif
+ 
++#ifdef CONFIG_AR8316
++    athrs16_LAN_WAN_Par();        
++#endif
++
+ #ifdef DUAL_IMAGE_SUPPORT
+ 	check_image_validation();
+ #endif

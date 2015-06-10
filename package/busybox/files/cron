@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/crond
+PID_FILE=/var/run/crond.pid
+
+START=60
+log_msg="CRON-service"
+
+start () {
+    stop
+    local err; err=0
+    {
+        local PLATFORM="$(nvram get platform)"
+        [ ! -d /var/spool/cron ] && mkdir -p /var/spool/cron
+        [ -f /var/spool/cron/root ] && rm -f /var/spool/cron/root
+        pidof crond > /dev/null && stop
+        # Construct crontabs
+        # check bt engine is running 
+        echo "*/1 * * * * /sbin/server-detect start" >> /etc/crontabs/root
+        # keep all ddns update
+        [ $PLATFORM != "ALS" ] && {
+            echo "01 4 * * * TYPE=wan sh /etc/init.d/ddns all" >> /etc/crontabs/root
+            echo "50 3 * * * TYPE=wan sh /etc/init.d/aximddns all" >> /etc/crontabs/root
+            # ddns check
+            echo "*/5 * * * * /sbin/ddns-detect start" >> /etc/crontabs/root
+        } || {
+            echo "*/59 * * * * /bin/sh /etc/init.d/mem_clear.sh" >> /etc/crontabs/root
+            echo "*/1 * * * * /etc/rc.common /etc/init.d/schedule start " >> /etc/crontabs/root
+            echo "*/1 * * * * /bin/sh /etc/init.d/battery.sh " >> /etc/crontabs/root
+            TIME="$(nvram show wan_ddns_rule 0 server)"
+            [ $TIME -gt 9 ] && {
+                echo "*/$TIME * * * * /etc/rc.common /etc/init.d/als-ddns start " >> /etc/crontabs/root
+            }
+        }
+        # NTP client
+        [ "$(nvram show cron_rule 0 ntp_enable)" = "1" ] && {
+            echo "$(nvram show cron_rule 0 ntp_interval) TYPE=wan /etc/rc.common /etc/init.d/ntpclient start" >> /etc/crontabs/root
+        }
+        # Reboot
+        INTERVAL="$(nvram show cron_rule 0 reboot_interval)"
+        nvram replcae attr cron_rule 0 reboot_countdown "$INTERVAL"
+        REBOOT_HOUR="$(nvram show cron_rule 0 reboot_hour)"
+        [ "$REBOOT_HOUR" != "-1" ] && echo "0 $REBOOT_HOUR * * *  reboot" >> /etc/crontabs/root
+        $BIN -c /etc/crontabs || err=1
+        # XXX: pidof might return multiple PIDs
+        [ $err = 0 ] && echo "$(pidof crond)" > $PID_FILE
+    }
+    return $err
+}
+stop (){
+    kill -9 $(pidof watchdog)
+    [ -f $PID_FILE ] && {
+        kill -TERM $(cat $PID_FILE) || err=1
+        rm -f $PID_FILE || err=1
+    }
+
+    return $err
+}

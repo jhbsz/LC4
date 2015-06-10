@@ -1,0 +1,11 @@
+diff -Nur miniupnpd-1.0-RC13/Makefile.linux miniupnpd-1.0-RC13.new/Makefile.linux
+--- miniupnpd-1.0-RC13/Makefile.linux	2007-12-23 01:26:44.000000000 +0800
++++ miniupnpd-1.0-RC13.new/Makefile.linux	2008-01-21 16:43:10.000000000 +0800
+@@ -63,6 +63,7 @@
+ 	sed -i -e "s/^uuid=[-0-9a-f]*/uuid=`(genuuid||uuidgen) 2>/dev/null`/" miniupnpd.conf
+ 
+ miniupnpd:	$(BASEOBJS) $(LNXOBJS) $(NETFILTEROBJS) $(LIBS)
++	$(CC) -o $@ $^ $(LIBS) $(LDFLAGS)
+ 
+ testupnpdescgen:	$(TESTUPNPDESCGENOBJS)
+ 

@@ -1,0 +1,12 @@
+Index: samba-3.0.24/source/smbd/reply.c
+===================================================================
+--- samba-3.0.24.ori/source/smbd/reply.c	2013-03-21 16:23:43.117104558 +0800
++++ samba-3.0.24/source/smbd/reply.c	2013-03-21 16:24:04.067115833 +0800
+@@ -3338,6 +3338,7 @@
+ 	}
+ 
+ 	END_PROFILE(SMBclose);
++        sync();
+ 	return(outsize);
+ }
+ 

@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-cli/Makefile
+Package: ezp-cli
+Version: 1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: CLI - EZ Packet CLI Process
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

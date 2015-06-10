@@ -1,0 +1,14 @@
+Source-Makefile: package/ntpclient/Makefile
+Package: ntpclient
+Version: 2007_365-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: NTP (Network Time Protocol) client.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   NTP client for setting system time from NTP servers.
+@@
+

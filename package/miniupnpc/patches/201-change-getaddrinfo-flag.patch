@@ -1,0 +1,20 @@
+--- miniupnpc-1.6/connecthostport.c	2011-04-11 17:10:44.000000000 +0800
++++ miniupnpc-1.6/connecthostport.c	2014-08-15 14:26:14.404882718 +0800
+@@ -136,7 +136,7 @@
+ 	memset(&hints, 0, sizeof(hints));
+ 	/* hints.ai_flags = AI_ADDRCONFIG; */
+ #ifdef AI_NUMERICSERV
+-	hints.ai_flags = AI_NUMERICSERV;
++	hints.ai_flags = 0;
+ #endif
+ 	hints.ai_socktype = SOCK_STREAM;
+ 	hints.ai_family = AF_UNSPEC; /* AF_INET, AF_INET6 or AF_UNSPEC */
+@@ -163,7 +163,7 @@
+ #ifdef WIN32
+ 		fprintf(stderr, "getaddrinfo() error : %d\n", n);
+ #else
+-		fprintf(stderr, "getaddrinfo() error : %s\n", gai_strerror(n));
++		fprintf(stderr, "getaddrinfo():%d error : %s hints.ai_flags:%x\n", __LINE__, gai_strerror(n), hints.ai_flags);
+ #endif
+ 		return -1;
+ 	}

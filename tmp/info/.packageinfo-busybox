@@ -1,0 +1,25 @@
+Source-Makefile: package/busybox/Makefile
+Package: busybox
+Menu: 1
+Version: 1.11.2-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: Core utilities for embedded Linux
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  The Swiss Army Knife of embedded Linux.
+ It slices, it dices, it makes Julian Fries.
+
+http://busybox.net/
+@@
+Config: 
+	menu "Configuration"
+		depends on PACKAGE_busybox
+		source "package/busybox/target-config.in"
+		source "package/busybox/config/Config.in"
+	endmenu
+@@
+

@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+. /etc/arch.sh
+
+START=18
+log_msg="MODULE-service"
+start() {
+	load_modules /etc/modules.d/*
+}

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+type=$1
+num="$3"
+
+ownip="$(nvram get wan${num}_ipaddr)"
+serverip="$(nvram show wan_tunnel6_rule $num brokerv4addr)"
+v6ipaddr="$(nvram show wan_tunnel6_rule $num v6ipaddr_length)"
+[ -z "$v6ipaddr" ] && return 
+v6gateway="$(nvram show wan_tunnel6_rule $num v6gateway)"
+prefix=$(echo "$v6ipaddr" | awk 'BEGIN {FS = "::" } {print $1}')
+suffix=$(echo "$v6ipaddr" | awk 'BEGIN {FS = "::" } {print $2}')
+length=$(echo "$suffix" | awk 'BEGIN {FS = "/" } {print $2}')
+suffix=$(echo "$suffix" | awk 'BEGIN {FS = "/" } {print $1}')
+ip tunnel del wan${num}-ipv6
+ip tunnel add wan${num}-ipv6 mode sit remote $serverip local $ownip ttl 255
+ip link set wan${num}-ipv6 up
+ip addr add $prefix::$suffix/$length dev wan${num}-ipv6
+# FIXME !!! When adding ipv6 address, this rule is automatically added, but it
+# will conflict with lan-side route rule, so we specifically set route to
+# gateway
+ip -6 route del $prefix::/$length dev wan${num}-ipv6
+[ -n "$v6gateway" ] && ip -6 route add $v6gateway dev wan${num}-ipv6
+ip -6 route add default dev wan${num}-ipv6
+sh /etc/rc.common /etc/init.d/radvd restart
+

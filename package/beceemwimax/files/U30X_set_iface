@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Uncomment only one of the following:
+
+# activate the 4G (WiMax) interface on startup
+WIMAXSTATE="1"
+
+# OR deactivate the 4G interface on startup
+#WIMAXSTATE="0"
+
+/bin/echo -e "at\0044\0044wimax=$WIMAXSTATE\r" > $1

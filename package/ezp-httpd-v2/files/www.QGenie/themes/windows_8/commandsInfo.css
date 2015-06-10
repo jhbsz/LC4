@@ -1,0 +1,86 @@
+/* Colors for theme */
+.ih_style .commands-info ul li .status-container .progress {
+    background-color: #ffffff; /* @b-bar-color */
+}
+.ih_style .commands-info ul li .status-container .progress div {
+    background-color: #7db9e2; /* @b-bar-border */
+}
+.ih_style .commands-info ul li .button-cancel {
+    background-image: url('images/normal/16/cancel_alt.png') !important;
+}
+
+/* Base styles */
+.ih_style .commands-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1001;
+    font-size: 13px;
+}
+.ih_style .commands-info ul,
+.ih_style .commands-info ul li {
+    margin: 0;
+    padding: 0;
+}
+.ih_style .commands-info ul li {
+    display: inline-block;
+    width: auto;
+    float: right;
+    margin: 3px;
+    font-size: .8em;
+    background: rgba(220, 220, 220, 0.9);
+    background : #ddd\9; /* IE8 and below */
+    border-radius: 5px;
+}
+.ih_style .commands-info ul li .status-container {
+    padding: 5px 0 6px 10px;
+    float: left;
+    display: inline-block;
+}
+.ih_style .commands-info ul li .status-container .title,
+.ih_style .commands-info ul li .status-container .status {
+    float: left;
+    display: inline-block;
+    line-height: 1.7em;
+}
+.ih_style .commands-info ul li .status-container .title {
+    width: 200px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.ih_style .commands-info ul li .status-container .status {
+    float: left;
+    display: inline-block;
+    margin-left: 7px;
+    min-width: 35px;
+}
+.ih_style .commands-info ul li .status-container .progress {
+    clear: left;
+    width: 100%;
+    height: 3px;
+    margin-bottom: -1px;
+}
+.ih_style .commands-info ul li .status-container .progress div {
+    width: 0%;
+    height: 100%;
+}
+.ih_style .commands-info ul li .button-cancel {
+    position: relative;
+    float: left;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin: 8px 2px 0 8px;
+    background-image: url('images/normal/16/cancel.png');
+}
+.ih_style .commands-info ul li .button-cancel:after {
+    background-size: 65%;
+}
+.ih_style .commands-info ul li.cancelled .status-container {
+    padding-right: 10px;
+}
+.ih_style .commands-info ul li.cancelled .button-cancel {
+    display: none;
+}

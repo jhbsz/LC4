@@ -1,0 +1,90 @@
+#!/bin/sh /etc/rc.common
+CONF_FILE="/etc/lighttpd/lighttpd.conf.$$"
+R_CONF_FILE="/etc/lighttpd/lighttpd.conf"
+USBSTORAGE=96
+START=99
+log_msg="Drive"
+
+start() {
+    [ -n "$(pidof lighttpd)" ] && exit
+    [ "$(nvram show drive_rule 0 enable)" = "1" ] || exit
+	local path=$(nvram show smbd_rule 0 share_path)
+    cp /etc/lighttpd/lighttpd.conf.template $CONF_FILE
+    echo "server.tag = \"$(nvram get hostname)\"" >> $CONF_FILE
+    PORT=$(nvram show drive_rule 0 port)
+    echo "server.port = $PORT" >> $CONF_FILE
+
+    # Allow guest is a global setting applying to web gui, webdav and samba
+    [ "$(nvram show drive_rule 0 guest)" = "0" ] && {
+        if [ "$(nvram get platform)" != "M2E" ];then
+            echo "\$SERVER[\"socket\"] == \":$PORT\" {" >> $CONF_FILE
+        fi
+        NAME="$(nvram show http_rule 0 username)"
+        PASSWD="$(nvram show http_rule 0 passwd)"
+        echo "$NAME:$PASSWD" > "/tmp/lighttpd.user"
+        echo "guest:guest" >> "/tmp/lighttpd.user"
+        echo "auth.backend = \"plain\"" >> $CONF_FILE
+        echo "auth.backend.plain.userfile = \"/tmp/lighttpd.user\"" >> $CONF_FILE
+        echo "auth.require = (" >> $CONF_FILE
+        if [ "$(nvram get platform)" = "M2E" ];then
+            [ "$(nvram get allow_guest)" = "1" ] && {
+                for file in Documents Music Others Photos Videos Qsync;do
+                    echo " \"/fslite/$file\"  => (" >> $CONF_FILE
+                    echo "  \"method\"  => \"digest\"," >> $CONF_FILE
+                    echo "  \"realm\"   => \"Drive\"," >> $CONF_FILE
+                    echo "  \"require\" => \"user=$NAME\"" >> $CONF_FILE
+                    echo " )," >> $CONF_FILE
+                done
+            } || {
+                for file in Documents Music Others Photos Videos Qsync SD USB;do
+                    echo " \"/fslite/$file\"  => (" >> $CONF_FILE
+                    echo "  \"method\"  => \"digest\"," >> $CONF_FILE
+                    echo "  \"realm\"   => \"Drive\"," >> $CONF_FILE
+                    echo "  \"require\" => \"user=$NAME\"" >> $CONF_FILE
+                    echo " )," >> $CONF_FILE
+                done
+            }
+        else
+            echo " \"/Public/\"  => (" >> $CONF_FILE
+            echo "  \"method\"  => \"digest\"," >> $CONF_FILE
+            echo "  \"realm\"   => \"Public\"," >> $CONF_FILE
+            echo "  \"require\" => \"valid-user\"" >> $CONF_FILE
+            echo " )," >> $CONF_FILE
+            echo " \"\"  => (" >> $CONF_FILE
+            echo "  \"method\"  => \"digest\"," >> $CONF_FILE
+            echo "  \"realm\"   => \"Drive\"," >> $CONF_FILE
+            echo "  \"require\" => \"user=$NAME\"" >> $CONF_FILE
+            echo " )" >> $CONF_FILE
+        fi
+
+        echo ")" >> $CONF_FILE
+
+        if [ "$(nvram get platform)" != "M2E" ];then
+            echo "}" >> $CONF_FILE
+        fi
+    }
+
+    [ "$(nvram show drive_rule 0 ext_access)" = "0" ] && {
+        echo "server.bind = \"$(nvram get lan0_ipaddr)\"" >> $CONF_FILE
+    }
+    mv $CONF_FILE $R_CONF_FILE
+    lighttpd -f $R_CONF_FILE
+    [ "$?" != "0" ] && {
+        #Start again if start fail.
+        lighttpd -f $R_CONF_FILE
+        [ "$?" != "0" ] && exit
+    }
+    usblabel=""
+    [ -x "/usr/sbin/blkid" ] && usblabel=$(blkid | awk 'FS="="{print $4}')
+    [ -z "$usblabel" ] && usblabel="USB"
+    usblabel=$(echo $usblabel | tr -d '"')
+    togo_add "$usblabel" "_drive._tcp." "$(nvram get lan0_ipaddr)" "$PORT" "$(nvram get lan_hwaddr_rule_default)" $(nvram show drive_rule 0 config)
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}
+
+stop() {
+    kill -9 $(pidof lighttpd)
+    togo_del "$(nvram get lan_hwaddr_rule_default)" "_drive._tcp."
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}
+

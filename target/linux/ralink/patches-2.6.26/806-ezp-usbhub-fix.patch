@@ -1,0 +1,262 @@
+--- linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_cil.h	2010-11-02 17:45:46.560394000 +0800
++++ linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_cil.h	2011-02-01 11:36:38.450745805 +0800
+@@ -517,7 +517,7 @@
+ 	 * Note: The FPGA configuration supports a maximum of 12 host channels.
+ 	 */
+ 	int32_t host_channels;
+-#define dwc_param_host_channels_default 12
++#define dwc_param_host_channels_default 16
+ 
+ 	/** The number of endpoints in addition to EP0 available for device 
+ 	 * mode operations. 
+--- linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_hcd.h	2010-11-02 17:45:46.560394000 +0800
++++ linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_hcd.h	2011-02-01 11:34:40.140744722 +0800
+@@ -150,6 +150,7 @@
+ 	 */
+ 	uint8_t			ep_type;
+ 	uint8_t			ep_is_in;
++    uint8_t         dev_speed;
+ 
+ 	/** wMaxPacketSize Field of Endpoint Descriptor. */
+ 	uint16_t		maxp;
+
+--- linux-2.6.26.old/drivers/usb/dwc_otg/dwc_otg_hcd.c	2010-08-26 14:01:06.467942000 +0800
++++ linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_hcd.c	2011-04-26 11:02:16.564051908 +0800
+@@ -1031,12 +1031,17 @@
+     }
+ 
+ 	urb_qtd = (dwc_otg_qtd_t *)urb->hcpriv;
+-
++    
++#if 1
++    /* Ralink: fix urb_qtd == NULL issue*/
+     if (!urb_qtd || !ep) {
++        if (list_empty(&qh->qtd_list))
++            dwc_otg_hcd_qh_remove(dwc_otg_hcd, qh);
+         DWC_ERROR("%s urb(%p) ep(%p)\n", __FUNCTION__, urb, ep);
+         SPIN_UNLOCK_IRQRESTORE(&dwc_otg_hcd->lock, flags);
+-        return -EINVAL;
++        return 0;
+     }
++#endif
+ 
+ 	qh = (dwc_otg_qh_t *)ep->hcpriv;
+ 
+@@ -1265,7 +1270,7 @@
+ 	dwc_write_reg32(&hc_global_regs->haintmsk, 0x0001);
+ 
+ 	/* Enable HCINTs */
+-	dwc_write_reg32(&hc_regs->hcintmsk, 0x04a0);
++	dwc_write_reg32(&hc_regs->hcintmsk, 0x04a3);
+ 
+ 	/* Read GINTSTS */
+ 	gintsts.d32 = dwc_read_reg32(&global_regs->gintsts);
+@@ -1417,7 +1422,7 @@
+ 	dwc_write_reg32(&hc_global_regs->haintmsk, 0x0001);
+ 
+ 	/* Enable HCINTs */
+-	dwc_write_reg32(&hc_regs->hcintmsk, 0x04a0);
++	dwc_write_reg32(&hc_regs->hcintmsk, 0x04a3);
+ 
+ 	/* Read GINTSTS */
+ 	gintsts.d32 = dwc_read_reg32(&global_regs->gintsts);
+@@ -2208,6 +2213,17 @@
+ 	 */
+ 	hc->do_ping = qh->ping_state;
+ 	hc->ep_is_in = (usb_pipein(urb->pipe) != 0);
++#if 1
++    /* Ralink: fix usb_clear_halt() data toggle issue */
++    if(urb && urb->dev){
++        if(! usb_gettoggle(urb->dev, usb_pipeendpoint(urb->pipe),
++                    usb_pipeout(urb->pipe))){
++            usb_settoggle (urb->dev, usb_pipeendpoint(urb->pipe),
++                    usb_pipeout(urb->pipe), 1);
++            qh->data_toggle = DWC_OTG_HC_PID_DATA0;
++        }
++    }
++#endif
+ 	hc->data_pid_start = qh->data_toggle;
+ 	hc->multi_count = 1;
+ 
+--- linux-2.6.26.old/drivers/usb/dwc_otg/dwc_otg_hcd_intr.c	2010-04-08 16:58:43.576823000 +0800
++++ linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_hcd_intr.c	2011-04-26 11:58:09.939167743 +0800
+@@ -829,10 +829,19 @@
+ 	}
+ 
+ 	/* Try to queue more transfers now that there's a free channel. */
+-	tr_type = dwc_otg_hcd_select_transactions(hcd);
++#ifdef FAST_TRANSACTION
++    tr_type = dwc_otg_hcd_select_transactions(hcd);
+ 	if (tr_type != DWC_OTG_TRANSACTION_NONE) {
+ 		dwc_otg_hcd_queue_transactions(hcd, tr_type);
+ 	}
++#else
++    if (halt_status != DWC_OTG_HC_XFER_NAK) {
++        tr_type = dwc_otg_hcd_select_transactions(hcd);
++        if (tr_type != DWC_OTG_TRANSACTION_NONE) {
++            dwc_otg_hcd_queue_transactions(hcd, tr_type);
++        }
++    }
++#endif
+ }
+ 
+ /**
+@@ -1653,7 +1662,7 @@
+ 	hcint_data_t hcint;
+ 	hcintmsk_data_t hcintmsk;
+ 	int out_nak_enh = 0;
+- 	disable_hc_int(hc_regs, chhltd);
++ 	/* disable_hc_int(hc_regs, chhltd); */
+ 
+ 	/* For core with OUT NAK enhancement, the flow for high-
+ 	 * speed CONTROL/BULK OUT is handled a little differently.
+@@ -1662,16 +1671,14 @@
+ 		if (hc->speed == DWC_OTG_EP_SPEED_HIGH && !hc->ep_is_in &&
+ 		    (hc->ep_type == DWC_OTG_EP_TYPE_CONTROL ||
+ 		     hc->ep_type == DWC_OTG_EP_TYPE_BULK)) {
+-			printk(KERN_DEBUG "OUT NAK enhancement enabled\n");
+-			out_nak_enh = 1;
++            DWC_DEBUGPL(DBG_HCDV, "OUT NAK enhancement enabled\n");
++            out_nak_enh = 1;
+ 		} else {
+-			printk(KERN_DEBUG "OUT NAK enhancement disabled, not HS Ctrl/Bulk OUT EP\n");
+-		}
++            DWC_DEBUGPL(DBG_HCDV,  "OUT NAK enhancement disabled, not HS Ctrl/Bulk OUT EP\n");
++        }
+ 	} else {
+-        /* EZP: 
+-		printk(KERN_DEBUG "OUT NAK enhancement disabled, no core support\n");
+-        */
+-	}
++        DWC_DEBUGPL(DBG_HCDV, "OUT NAK enhancement disabled, no core support\n");
++    }
+ 
+ 	if (hc->halt_status == DWC_OTG_HC_XFER_URB_DEQUEUE ||
+ 	    hc->halt_status == DWC_OTG_HC_XFER_AHB_ERR) {
+@@ -1762,10 +1769,11 @@
+ #endif
+ 				halt_channel(hcd, hc, qtd, DWC_OTG_HC_XFER_PERIODIC_INCOMPLETE);
+ 			} else {
+-				DWC_ERROR("%s: Channel %d, DMA Mode -- ChHltd set, but reason "
+-					  "for halting is unknown, hcint 0x%08x, intsts 0x%08x\n",
+-					  __func__, hc->hc_num, hcint.d32,
+-					  dwc_read_reg32(&hcd->core_if->core_global_regs->gintsts));
++                DWC_ERROR("%s %s:%d Channel %d, DMA Mode -- ChHltd set, but reason for halting is unknown, hcint 0x%08x, intsts 0x%08x\n",
++                        __FILE__, __func__, __LINE__, hc->hc_num, hcint.d32,
++                        dwc_read_reg32(&hcd->core_if->core_global_regs->gintsts));
++                /* EZP : Halt this channel even when reason is unknown. */
++                halt_channel(hcd, hc, qtd, DWC_OTG_HC_XFER_NO_HALT_STATUS);
+ 			}
+ 		}
+ 	} else {
+--- linux-2.6.26.old/drivers/usb/dwc_otg/dwc_otg_hcd_queue.c	2010-04-08 16:58:43.576823000 +0800
++++ linux-2.6.26/drivers/usb/dwc_otg/dwc_otg_hcd_queue.c	2011-04-26 12:40:28.877919171 +0800
+@@ -124,8 +124,16 @@
+ #define SCHEDULE_SLOP 10
+ void dwc_otg_hcd_qh_init(dwc_otg_hcd_t *hcd, dwc_otg_qh_t *qh, struct urb *urb)
+ {
+-	char *speed, *type;
+-	memset (qh, 0, sizeof (dwc_otg_qh_t));
++    char *type;
++#ifdef DEBUG
++    char *speed;
++#endif
++
++    memset (qh, 0, sizeof (dwc_otg_qh_t));
++    if(urb && urb->dev){
++        usb_settoggle (urb->dev, usb_pipeendpoint(urb->pipe),
++                usb_pipeout(urb->pipe), 1);
++    }
+ 
+ 	/* Initialize QH */
+ 	switch (usb_pipetype(urb->pipe)) {
+@@ -208,20 +216,31 @@
+ 		    usb_pipeendpoint(urb->pipe),
+ 		    usb_pipein(urb->pipe) == USB_DIR_IN ? "IN" : "OUT");
+ 
+-	switch(urb->dev->speed) {
+-	case USB_SPEED_LOW: 
+-		speed = "low";	
+-		break;
+-	case USB_SPEED_FULL: 
+-		speed = "full";	
+-		break;
+-	case USB_SPEED_HIGH: 
+-		speed = "high";	
+-		break;
+-	default: 
+-		speed = "?";	
+-		break;
+-	}
++    switch(urb->dev->speed) {
++        case USB_SPEED_LOW: 
++            qh->dev_speed = DWC_OTG_EP_SPEED_LOW;
++#ifdef DEBUG
++            speed = "low";
++#endif
++            break;
++        case USB_SPEED_FULL: 
++            qh->dev_speed = DWC_OTG_EP_SPEED_FULL;
++#ifdef DEBUG
++            speed = "full";	
++#endif
++            break;
++        case USB_SPEED_HIGH: 
++            qh->dev_speed = DWC_OTG_EP_SPEED_HIGH;
++#ifdef DEBUG
++            speed = "high";	
++#endif
++            break;
++        default: 
++#ifdef DEBUG
++            speed = "?";	
++#endif
++            break;
++    }
+ 	DWC_DEBUGPL(DBG_HCDV, "DWC OTG HCD QH  - Speed = %s\n", speed);
+ 	
+ 	switch (qh->ep_type) {
+@@ -295,6 +314,7 @@
+  *
+  * @return 0 if successful, negative error code otherwise.
+  */
++#if 0
+ static int check_periodic_bandwidth(dwc_otg_hcd_t *hcd, dwc_otg_qh_t *qh)
+ {
+ 	int 		status;
+@@ -324,6 +344,35 @@
+ 
+ 	return status;
+ }
++#else
++static int check_periodic_bandwidth(dwc_otg_hcd_t * hcd, dwc_otg_qh_t * qh)
++{
++    int status;
++    int16_t max_claimed_usecs;
++
++    status = 0;
++
++    if ((qh->dev_speed == DWC_OTG_EP_SPEED_HIGH) || qh->do_split) {
++        /*
++         * High speed mode. Max periodic usecs is 80% x 125 usec = 100 usec.
++         */
++        max_claimed_usecs = 100 - qh->usecs;
++    } else {
++        /*
++         * Full speed mode. Max periodic usecs is 90% x 1000 usec = 900 usec.
++         */
++        max_claimed_usecs = 900 - qh->usecs;
++    }
++
++    if (hcd->periodic_usecs > max_claimed_usecs) {
++        DWC_NOTICE("%s: already claimed usecs %d, required usecs %d\n",
++                __func__, hcd->periodic_usecs, qh->usecs);  //NOTICE
++        status = -ENOSPC;
++    }
++
++    return status;
++}
++#endif
+ 			
+ /**
+  * Checks that the max transfer size allowed in a host channel is large enough

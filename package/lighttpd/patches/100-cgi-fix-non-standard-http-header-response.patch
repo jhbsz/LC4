@@ -1,0 +1,115 @@
+--- lighttpd-1.4.30/src/mod_cgi.c	2014-05-02 14:38:28.704461955 +0800
++++ lighttpd-1.4.30/src/mod_cgi.c	2014-05-05 13:44:02.943118326 +0800
+@@ -371,9 +371,15 @@
+ 
+ 		if (n == 0) {
+ 			/* read finished */
+-
+ 			con->file_finished = 1;
+-
++            /* With pure XML or data response, we dont have "http header", so
++             * is_header_end will be false but header content will be not
++             * empty. */
++            if (!con->is_header_end && (hctx->response_header->used > 0) && 
++                    hctx->response_header->ptr && *hctx->response_header->ptr) {
++                http_chunk_append_mem(srv, con, hctx->response_header->ptr, hctx->response_header->used);
++                joblist_append(srv, con);
++            }
+ 			/* send final chunk */
+ 			http_chunk_append_mem(srv, con, NULL, 0);
+ 			joblist_append(srv, con);
+@@ -387,11 +393,10 @@
+ 		/* split header from body */
+ 
+ 		if (con->file_started == 0) {
+-			int is_header = 0;
+-			int is_header_end = 0;
+ 			size_t last_eol = 0;
+ 			size_t i;
+-
++            con->is_header_end = 0;
++            con->is_header = 0;
+ 			buffer_append_string_buffer(hctx->response_header, hctx->response);
+ 
+ 			/**
+@@ -416,9 +421,9 @@
+ 			 */
+ 			
+ 			/* nph (non-parsed headers) */
+-			if (0 == strncmp(hctx->response_header->ptr, "HTTP/1.", 7)) is_header = 1;
++			if (0 == strncmp(hctx->response_header->ptr, "HTTP/1.", 7)) con->is_header = 1;
+ 				
+-			for (i = 0; !is_header_end && i < hctx->response_header->used - 1; i++) {
++			for (i = 0; !con->is_header_end && i < hctx->response_header->used - 1; i++) {
+ 				char c = hctx->response_header->ptr[i];
+ 
+ 				switch (c) {
+@@ -427,14 +432,14 @@
+ 					 *
+ 					 * looks like we have a normal header 
+ 					 */
+-					is_header = 1;
++					con->is_header = 1;
+ 					break;
+ 				case '\n':
+ 					/* EOL */
+-					if (is_header == 0) {
++					if (con->is_header == 0) {
+ 						/* we got a EOL but we don't seem to got a HTTP header */
+ 
+-						is_header_end = 1;
++						con->is_header_end = 1;
+ 
+ 						break;
+ 					}
+@@ -445,7 +450,7 @@
+ 					if (last_eol > 0 && 
+ 					    ((i - last_eol == 1) || 
+ 					     (i - last_eol == 2 && hctx->response_header->ptr[i - 1] == '\r'))) {
+-						is_header_end = 1;
++						con->is_header_end = 1;
+ 						break;
+ 					}
+ 
+@@ -455,8 +460,8 @@
+ 				}
+ 			}
+ 
+-			if (is_header_end) {
+-				if (!is_header) {
++			if (con->is_header_end) {
++				if (!con->is_header) {
+ 					/* no header, but a body */
+ 
+ 					if (con->request.http_version == HTTP_VERSION_1_1) {
+--- lighttpd-1.4.30/src/base.h	2014-05-02 14:38:28.708463955 +0800
++++ lighttpd-1.4.30/src/base.h	2014-05-05 12:40:21.249817983 +0800
+@@ -382,6 +382,8 @@
+ 
+ 	int file_started;
+ 	int file_finished;
++	int is_header_end;
++	int is_header;
+ 
+ 	chunkqueue *write_queue;      /* a large queue for low-level write ( HTTP response ) [ file, mem ] */
+ 	chunkqueue *read_queue;       /* a small queue for low-level read ( HTTP request ) [ mem ] */
+--- lighttpd-1.4.30/src/connections.c	2014-05-02 14:38:28.708463955 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-05-05 12:48:02.417830331 +0800
+@@ -486,6 +486,8 @@
+ 		if (con->http_status < 400 || con->http_status >= 600) break;
+ 
+ 		con->file_finished = 0;
++		con->is_header = 0;
++		con->is_header_end = 0;
+ 
+ 		buffer_reset(con->physical.path);
+ 
+@@ -789,6 +792,8 @@
+ 	con->is_writable = 1;
+ 	con->http_status = 0;
+ 	con->file_finished = 0;
++    con->is_header = 0;
++    con->is_header_end = 0;
+ 	con->file_started = 0;
+ 	con->got_response = 0;
+ 

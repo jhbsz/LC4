@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-upgraded/Makefile
+Package: ezp-upgraded
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Stats - EZ Packet upgraded daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A statistics server for EZ Packet Products.
+@@
+

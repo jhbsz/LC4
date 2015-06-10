@@ -1,0 +1,39 @@
+Source-Makefile: target/linux/ifxmips/Makefile
+Target: ifxmips
+Target-Board: ifxmips
+Target-Kernel: 2.6
+Target-Name: Infineon Mips [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio jffs2 pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Infineon Mips Controllers
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall uboot-ifxmips
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi (default)
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: Ralink
+Target-Profile-Name: Ralink RT61 Wifi (ARV452)
+Target-Profile-Packages: kmod-rt61-pci
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Ralink WiFi cards
+@@
+
+

@@ -1,0 +1,92 @@
+fieldset .setting {
+    line-height: 1.7em;
+}
+
+.nav ul li .sub {
+    top: 60px;
+}
+
+#contentsinfo div.lcol2l .setting .label {
+    width: 150px;
+}
+
+#contentsinfo div.lcol2r .setting .label {
+    width: 150px;
+}
+
+#input-window {
+    position: absolute;
+    top: 150px;
+    left: 75px;
+}
+
+#waiting-window {
+    position: absolute;
+    top:25%;
+    left:0%;
+}
+
+#upgrade-window {
+    position: absolute;
+    top:30%;
+    left:0%
+}
+
+#return-window {
+    position: absolute;
+    top:25%;
+    left:0%
+}
+/** IE6 is a hunk of crap!!! don't ask me why this is needed **/
+
+#mainbody {
+    float: left;
+}
+
+#mainbody-2 {
+    float: left;
+}
+
+.w-fluid #mainbody-2 {
+    float: none;
+}
+
+#selectors {
+    margin-right: 4px;
+}
+
+#access a {
+    cursor: hand;
+}
+
+/* somereason, IE needs to be 'reminded' to make the div 100% to be visible */
+
+h1 {
+  padding-top: 5px;
+}
+
+div#header .hd1,
+div#topbox .tb1,
+div#mainbox .mb1,
+div#footbox .fb1,
+div.bx1,
+div#reflectbox div {
+  width: 100%;
+}
+
+
+div#header-menu {
+  left: 321px; /* regular width -9px side */
+  float: left;
+}
+
+
+img#logo {
+  top: 27px;
+  left: 14px;
+  position: relative;
+}
+
+div#inset { margin: 0; }
+div#body_inset { margin-right: 210px; padding-right: 0px;}
+div#body_inset table {width: auto; }

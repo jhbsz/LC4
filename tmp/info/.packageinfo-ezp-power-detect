@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-power-detect/Makefile
+Package: ezp-power-detect
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Power-detect - EZ Packet power detection daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A power detect server for EZ Packet Products.
+@@
+

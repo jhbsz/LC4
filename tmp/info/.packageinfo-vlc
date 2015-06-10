@@ -1,0 +1,17 @@
+Source-Makefile: package/vlc/Makefile
+Package: vlc
+Version: 0.9.6-1
+Depends: +libflac +libid3tag +libmad +libvorbisidec +libffmpeg +libiconv +libvorbis
+Provides: 
+Build-Depends: 
+Section: sound
+Category: Sound
+Title: Videolan Client
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:    Videolan Client:
+   a music player
+
+http://www.videolan.org/
+@@
+

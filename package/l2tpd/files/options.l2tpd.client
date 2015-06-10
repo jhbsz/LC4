@@ -1,0 +1,10 @@
+user "l2test"
+password "test"
+noipdefault
+ipcp-accept-local
+ipcp-accept-remote
+lcp-echo-interval 30
+lcp-echo-failure 6
+persist
+unit 5
+ipparam wan0

@@ -1,0 +1,14 @@
+Source-Makefile: package/togoPower/Makefile
+Package: togoPower
+Version: 1.0
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Mouse click counter
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Mouse click counter
+@@
+

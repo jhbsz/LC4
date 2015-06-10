@@ -1,0 +1,118 @@
+--- iptables-1.4.0.orig/extensions/libxt_MARK.c	2007-10-15 20:45:09.000000000 +0800
++++ iptables-1.4.0/extensions/libxt_MARK.c	2009-04-07 11:21:50.000000000 +0800
+@@ -13,7 +13,7 @@
+ {
+ 	printf(
+ "MARK target v%s options:\n"
+-"  --set-mark value                   Set nfmark value\n"
++"  --set-mark value[/mask]            Set nfmark value\n"
+ "  --and-mark value                   Binary AND the nfmark with value\n"
+ "  --or-mark  value                   Binary OR  the nfmark with value\n"
+ "\n",
+@@ -36,11 +36,23 @@
+ 	struct xt_mark_target_info *markinfo
+ 		= (struct xt_mark_target_info *)(*target)->data;
+ 
++    char *end;
++    markinfo->mask = ~0UL; /* EZP: XXX */
++
+ 	switch (c) {
+ 	case '1':
+-		if (string_to_number_l(optarg, 0, 0, 
+-				     &markinfo->mark))
++        /* EZP: XXX */
++        markinfo->mark = strtoul(optarg, &end, 0); /* mark value */
++        if (*end == '/') {
++            if (end[1] != '\0')
++                markinfo->mask = strtoul(end+1, &end, 0);
++            else
++                end++;
++        }
++
++		if (*end != '\0')
+ 			exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
++
+ 		if (*flags)
+ 			exit_error(PARAMETER_PROBLEM,
+ 			           "MARK target: Can't specify --set-mark twice");
+@@ -76,6 +88,9 @@
+ 	struct xt_mark_target_info_v1 *markinfo
+ 		= (struct xt_mark_target_info_v1 *)(*target)->data;
+ 
++    char *end;
++    markinfo->mask = ~0UL; /* EZP: XXX */
++
+ 	switch (c) {
+ 	case '1':
+ 	        markinfo->mode = XT_MARK_SET;
+@@ -90,8 +105,17 @@
+ 		return 0;
+ 	}
+ 
+-	if (string_to_number_l(optarg, 0, 0, &markinfo->mark))
+-		exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
++    /* EZP: XXX */
++    markinfo->mark = strtoul(optarg, &end, 0); /* mark value */
++    if (*end == '/') {
++        if (end[1] != '\0')
++            markinfo->mask = strtoul(end+1, &end, 0);
++        else
++            end++;
++    }
++
++    if (*end != '\0')
++        exit_error(PARAMETER_PROBLEM, "Bad MARK value `%s'", optarg);
+ 
+ 	if (*flags)
+ 		exit_error(PARAMETER_PROBLEM,
+@@ -102,9 +126,12 @@
+ }
+ 
+ static void
+-print_mark(unsigned long mark)
++print_mark(unsigned long mark, unsigned long mask)
+ {
+-	printf("0x%lx ", mark);
++    if(~mask == 0UL)
++        printf("0x%lx ", mark);
++    else
++        printf("0x%lx/0x%lx ", mark, mask);
+ }
+ 
+ /* Prints out the targinfo. */
+@@ -114,7 +141,7 @@
+ 	const struct xt_mark_target_info *markinfo =
+ 		(const struct xt_mark_target_info *)target->data;
+ 	printf("MARK set ");
+-	print_mark(markinfo->mark);
++	print_mark(markinfo->mark, markinfo->mask);
+ }
+ 
+ /* Saves the union ipt_targinfo in parsable form to stdout. */
+@@ -124,7 +151,7 @@
+ 		(const struct xt_mark_target_info *)target->data;
+ 
+ 	printf("--set-mark ");
+-	print_mark(markinfo->mark);
++	print_mark(markinfo->mark, markinfo->mask);
+ }
+ 
+ /* Prints out the targinfo. */
+@@ -145,7 +172,7 @@
+ 		printf("MARK or ");
+ 		break;
+ 	}
+-	print_mark(markinfo->mark);
++	print_mark(markinfo->mark, markinfo->mask);
+ }
+ 
+ /* Saves the union ipt_targinfo in parsable form to stdout. */
+@@ -165,7 +192,7 @@
+ 		printf("--or-mark ");
+ 		break;
+ 	}
+-	print_mark(markinfo->mark);
++	print_mark(markinfo->mark, markinfo->mask);
+ }
+ 
+ static struct xtables_target mark_target_v0 = {

@@ -1,0 +1,22 @@
+.x-panel-header {
+    background-image: url("images/white-top-bottom.gif");
+    border-color: red;
+    color: black;
+}
+
+.x-fieldset legend {
+    color: black;
+}
+
+.x-panel-noborder .x-panel-header-noborder {
+    border-bottom-color: black;
+}
+
+.x-panel-body-noheader, .x-panel-mc .x-panel-body {
+    border-top-color: red;
+}
+
+.x-panel-body {
+    background-color: #FFFFFF;
+    border-color: red;
+}

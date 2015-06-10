@@ -1,0 +1,46 @@
+--- old/drivers/net/usb/usbnet.c	2007-04-26 11:08:32.000000000 +0800
++++ new/drivers/net/usb/usbnet.c	2008-10-24 14:20:13.000000000 +0800
+@@ -309,7 +309,9 @@
+ 		usb_free_urb (urb);
+ 		return;
+ 	}
++#ifndef DWC_HOST_ONLY  
+ 	skb_reserve (skb, NET_IP_ALIGN);
++#endif
+ 
+ 	entry = (struct skb_data *) skb->cb;
+ 	entry->urb = urb;
+@@ -930,6 +932,10 @@
+ 	struct skb_data		*entry;
+ 	struct driver_info	*info = dev->driver_info;
+ 	unsigned long		flags;
++#ifdef DWC_HOST_ONLY
++    u8 *new_addr;
++#endif
++
+ 
+ 	// some devices want funky USB-level framing, for
+ 	// win32 driver (usually) and/or hardware quirks
+@@ -955,6 +961,12 @@
+ 	entry->state = tx_start;
+ 	entry->length = length;
+ 
++#ifdef DWC_HOST_ONLY
++    new_addr = skb->data - 2;
++    memcpy(new_addr,skb->data,skb->len);
++    skb->data = new_addr;
++#endif 
++
+ 	usb_fill_bulk_urb (urb, dev->udev, dev->out,
+ 			skb->data, skb->len, tx_complete, skb);
+ 
+--- old/drivers/net/usb/Makefile	2008-11-25 20:22:53.000000000 +0800
++++ new/drivers/net/usb/Makefile	2008-11-25 21:57:05.000000000 +0800
+@@ -22,3 +22,7 @@
+ ifeq ($(CONFIG_USB_DEBUG),y)
+ EXTRA_CFLAGS += -DDEBUG
+ endif
++
++ifeq ($(CONFIG_DWC_OTG_HOST_ONLY),y)
++EXTRA_CFLAGS   += -DDWC_HOST_ONLY
++endif

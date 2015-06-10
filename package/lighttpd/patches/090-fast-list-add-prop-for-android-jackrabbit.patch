@@ -1,0 +1,28 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-11-05 16:21:29.557760568 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-11-05 16:21:20.633760329 +0800
+@@ -1176,12 +1176,11 @@
+ 	char *prop_result;
+     char propbuf[50];
+ 	c = cq->first;
+-    snprintf(propbuf, sizeof(propbuf), "<D:prop><D:%s/></D:prop>", prop_name);
+-	prop_result = strstr(c->mem->ptr + c->offset, propbuf);
+-        if (prop_result != NULL)
+-	        return 1;
+-	else
+-		return 0;
++    snprintf(propbuf, sizeof(propbuf), "<D:%s/>", prop_name);
++    prop_result = strstr(c->mem->ptr + c->offset, propbuf);
++    if (!prop_result)
++        return 0;
++    return 1;
+ }
+ 
+ #ifdef USE_PROPPATCH
+@@ -1683,6 +1685,7 @@
+                         char ctime_buf[] = "2005-08-18T07:27:16Z";
+                         char mtime_buf[] = "Thu, 18 Aug 2005 07:27:16 GMT";
+                         size_t k;
++                        buffer_append_string_len(b,CONST_STR_LEN("<D:getcontentlanguage>en</D:getcontentlanguage>\n"));
+                         if (de->d_type == 4) {
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:resourcetype><D:collection/></D:resourcetype>"));
+                             buffer_append_string_len(b, CONST_STR_LEN("<D:getcontenttype>httpd/unix-directory</D:getcontenttype>"));

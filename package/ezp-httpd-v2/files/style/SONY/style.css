@@ -1,0 +1,490 @@
+/*.* custom stuff */
+
+html {
+  height: 120%;
+  margin-bottom: 1px;
+}
+fieldset {
+    border: 2px;
+    border-color: #999999;
+    border-style: solid;
+    padding: 10px;
+    margin: 5px;
+    width: auto;
+}
+.setting {
+    line-height: 2.3em;
+    width: auto;
+    font-size: 12px;
+    postition: relative;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+fieldset .setting {
+    line-height: 2.3em;
+    width: auto;
+    font-size: 12px;
+    postition: relative;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.input-window fieldset .setting {
+    line-height: 1.7em;
+}
+#controls {
+    font-size: 12px;
+}
+.label,
+fieldset .setting .label {
+    float: left;
+    width: 290px;
+    color: #000000;
+}
+fieldset .setting .ilabel {
+    float: left;
+    width: 250px;
+    color: #000000;
+}
+fieldset legend {
+    font-size: 12px;
+    font-weight: bold;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+    margin-left: 0.5em;
+    color: #000000;
+}
+textarea {
+    margin-left: 20px;
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+input {
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+select {
+    font-size: 12px;
+    font-family: arial, helvetica, sans-serif;
+}
+#contentsInfo {
+    padding: 5px;
+    width: auto;
+}
+/* small column */
+#contentsInfo div.scol2l {
+    float: left; 
+    width: 260px
+}
+#contentsInfo div.scol2r {
+    float: left; 
+    margin-left: 6px;
+    width: 260px
+}
+/* large column */
+#contentsInfo div.lcol2l {
+    float: left; 
+    width: 480px
+}
+#contentsInfo div.lcol2l .setting .label {
+    width: 140px;
+}
+#contentsInfo div.lcol2r {
+    float: left; 
+    margin-left: 6px;
+    width: 480px
+}
+#contentsInfo div.lcol2r .setting .label {
+    width: 140px;
+}
+body {
+    line-height: 1.3em;
+    font-family: arial, helvetica, sans-serif;
+    background: #333333;
+    color:#222222;
+    margin: 0;
+    padding: 0;
+}
+
+#statusinfo {
+    font-size: 12px;
+    color: gray;
+    text-align: left
+}
+
+div#wrapper {
+    margin: auto;
+    position: relative;
+    width: 1024px;
+}
+
+#TopToolbar {
+    margin: auto;
+    position: relative;
+
+    width: 1024px;
+    height: 80px;
+    color: #ffffff;
+    background: #000000;
+}
+
+#TypeLable{
+    position:relative;
+    top: 30%;
+    left: 8%;
+    width: 200px;
+    height: 20px;
+    font-size: 12px;
+    color: #999999;
+    background: #000000;
+}
+
+#TypModel{
+    position:relative;
+    top: 30%;
+    left: 8%;
+    width: 200px;
+    height: 20px;
+    color: #ffffff;
+    background: #000000;
+}
+
+#header {
+    margin: 0px 0px 40px 0px;
+    position: relative;
+    width: 1024px;
+    height: 80px;
+	color: #ffffff;
+    background: #000000;
+}
+
+#logo {
+    width: 160px;
+    height: 50px;
+    background: transparent url(images/head_logo.png) 0 0 no-repeat;
+    position: absolute;
+    border: 0;
+    top: 20px;
+    left: 10px;
+    cursor: pointer;                          
+}
+
+div#mainbox {
+    /*background: #FFF url(images/mbox_shad_r.png) 100% 0 repeat-y;*/
+    background: #FFFFFF;
+	padding: 10px 10px 10px 10px; 
+}
+
+
+
+div.modulebox-silver {
+    /*background: url(images/box_br.png) 100% 100% no-repeat;*/
+}
+
+div.modulebox-white {
+    /*background: #f7f7f7 url(images/box_r.png) 100% 0 repeat-y;*/
+    background: #FFFFFF;
+}
+
+div.modulebox-silver div.moduletable h3 {
+    margin: 0 -9px;
+    background: url(images/box_h3_divider.png) 0 100% repeat-x;
+    margin-bottom: 5px;
+}
+
+div#bot-padding {
+    padding-top: 4px;
+}
+
+div#whitebox-padding {
+    padding-top: 1px;
+    padding-right: 2px;
+    padding-bottom: 0px;
+}
+
+div#whitebox-padding div.padding {
+    padding: 10px;
+}
+
+div.sidenav {
+     width: 230px;
+}
+
+.nav {
+    margin: 0 auto;
+    padding: 0;
+    height: 40px;
+    background: #000000;
+	border-top: 1px solid #666666;
+	border-bottom: 0px solid #666666;
+	float: left;
+	overflow: hidden;
+	position: relative;
+}
+
+.nav ul {
+	width: 1024px;
+	clear: left;
+	float: left;
+	list-style: none;
+	margin: 0 auto;
+	padding: 0;
+	left: 50%;
+	text-align: center;
+}
+
+.nav ul li {
+	width: 256px;
+	height: auto;
+	display: inline;
+	float: left;
+	list-style-type:none;
+	margin: 0;
+	padding: 0;
+	right: 50%;
+}
+
+.nav li .menu-item {
+    height: 50px;
+    padding: 0 0px;
+    color: #FFF; 
+    font-weight: normal;
+    font-size: 12px;
+    line-height: 40px;
+}
+
+.nav li a {
+	width: 256px;
+    font-size: 12px;
+    padding-top: 0px;
+    float: left;
+    color: #FFF; 
+    text-decoration: none;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.nav li a:link {
+	background: transparent url(images/menu-off.png) no-repeat 0pt;
+	background-size: contain;
+}
+
+.nav li a:hover
+ {
+	color: #00FFFF
+}
+
+.nav li a:active {
+	color: #008080
+}
+
+.nav ul li .menu-item:hover {
+}
+
+.nav li:hover .sub {
+    display: block
+}
+
+.nav ul li .sub {
+/*  background: #666666;*/
+    display: none; 
+    width: 128px; 
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 10;
+}
+
+.nav ul li .sub li {
+	padding-top: 5px;
+    padding-left: 0px;
+    /*background: #000000 url(images/item.png) no-repeat;*/
+    background: #000000;
+    /*border: 2.5px solid;
+    line-height: 20px;*/
+    height: auto;
+}
+
+.nav li ul {
+    width: 1024px; 
+    height: auto
+}
+
+.nav li:hover li {
+    /*margin-bottom: 0.5px;*/
+    width: 1024px;
+}
+
+.nav li:hover li a {
+    padding-top: 0px; 
+    padding-right: 0px; 
+    padding-left: 0px; 
+    padding-bottom: 0px;         
+    text-align: center;
+    color: white; 
+    text-indent: 1px; 
+    line-height: normal; 
+}
+
+.sub li .menu-subitem {
+    margin-left: 1px;
+    margin-bottom: 7px;
+}
+
+/* some page content things */
+form {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+div.action {                                  
+    cursor: pointer;                          
+}
+
+
+.submitFooter {
+    margin: 0px;
+    text-align: center;
+}
+.widgetinfo {
+    font-size: 11px;
+    color: gray;
+}
+#page-path {
+    text-align:left;
+    margin:5px;
+    padding-left:10px;
+    color: #008080;
+    font-weight: bold;
+}
+
+#description {
+    text-align:left;
+    margin:5px;
+    padding-left:10px;
+    color: #008080;
+	font-size: 8px
+}
+
+.cap-info {
+    text-align: left;
+    color: black;
+}
+.data-info {
+    text-align: left;
+}
+#background-cover {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: black;  
+    opacity: 0.5;
+    filter: alpha(opacity=50);
+}
+#popup-window-wrapper { 
+    text-align: center;
+    width:100%;
+    position: fixed;
+    top:130px;
+    left:0px;
+    background-color: ;
+    z-index:101;
+}   
+.input-window-wrapper, #waiting-window-wrapper,
+#upgrade-window-wrapper, #return-window-wrapper {
+    background-color: #000 ;
+    opacity: 0.6;
+    filter: alpha(opacity=60);
+    width: 100%;
+    height: 100%;
+    text-align:center;
+    vertical-align: middle;
+    position: fixed;
+    top:0%;
+    left:0%;
+    z-index: 100;
+}
+.input-window-wrapper-wrapper{
+    height:100%;
+    width:100%;
+    text-align:center;
+    vertical-align: middle;
+    position:fixed;
+    background-color: ;
+    top:0%;
+    left:0%;
+    padding-top:0px;
+    z-index: 100;
+}
+.input-window {
+    width: 650px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+}
+#waiting-window {
+    width: 300px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+    top:25%;
+    left:35%
+}
+#upgrade-window {
+    width: 300px;
+    position: fixed;
+    margin: auto;
+    text-align: center;
+    z-index:100;
+    top:30%;
+    left:30%
+}
+#return-window {
+    width: 300px;
+    position: relative;
+    margin: auto; 
+    text-align: center;
+    z-index: 100; 
+    top:0px;
+}
+
+#radial {
+    background: url(images/radial.gif);
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    left: 125px;
+    top: 40px;
+}
+#floatkiller {
+    clear:both;
+    width:1px;
+    height:1px;
+    font-size:1px;
+}
+
+/* Let file upload button to right */
+.f_class {
+	width: 220px;
+	height: 20px;
+	margin: 0;
+	border: 1px solid #777;
+	float: left;
+	-webkit-box-sizing: border-box;
+	color:Black;
+}
+
+input[type="file"].f_class::-webkit-file-upload-button {
+	float: right;
+	position: relative;
+	top: -1px;
+	right: -1px;
+}
+
+/* Copy right area */
+#copyRight {
+   height: 500px;
+   width: 600px;
+}

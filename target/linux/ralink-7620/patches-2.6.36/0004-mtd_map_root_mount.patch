@@ -1,0 +1,426 @@
+diff --git a/drivers/mtd/ralink/ralink_spi.c b/drivers/mtd/ralink/ralink_spi.c
+index cad0cb7..10cba54 100644
+--- a/drivers/mtd/ralink/ralink_spi.c
++++ b/drivers/mtd/ralink/ralink_spi.c
+@@ -1539,7 +1539,8 @@ static void __exit raspi_exit(void)
+ 
+ 
+ 
+-module_init(raspi_init);
++// module_init(raspi_init);
++rootfs_initcall(raspi_init);
+ module_exit(raspi_exit);
+ 
+ MODULE_LICENSE("GPL");
+diff --git a/fs/compat.c b/fs/compat.c
+index b93bddc..0644a15 100644
+--- a/fs/compat.c
++++ b/fs/compat.c
+@@ -849,7 +849,7 @@ asmlinkage long compat_sys_mount(const char __user * dev_name,
+ 	char *kernel_dev;
+ 	char *dir_page;
+ 	int retval;
+-    printk("%s(%d)\n", __func__, __LINE__);
++
+ 	retval = copy_mount_string(type, &kernel_type);
+ 	if (retval < 0)
+ 		goto out;
+@@ -880,24 +880,18 @@ asmlinkage long compat_sys_mount(const char __user * dev_name,
+ 		}
+ 	}
+ 
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	retval = do_mount(kernel_dev, dir_page, kernel_type,
+ 			flags, (void*)data_page);
+ 
+  out4:
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	free_page(data_page);
+  out3:
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	kfree(kernel_dev);
+  out2:
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	putname(dir_page);
+  out1:
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	kfree(kernel_type);
+  out:
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	return retval;
+ }
+ 
+diff --git a/fs/filesystems.c b/fs/filesystems.c
+index 705d14d..68ba492 100644
+--- a/fs/filesystems.c
++++ b/fs/filesystems.c
+@@ -76,7 +76,6 @@ int register_filesystem(struct file_system_type * fs)
+ 		return -EBUSY;
+ 	INIT_LIST_HEAD(&fs->fs_supers);
+ 	write_lock(&file_systems_lock);
+-    printk("%s(%d) fs name:%s\n", __func__, __LINE__, fs->name);
+ 	p = find_filesystem(fs->name, strlen(fs->name));
+ 	if (*p)
+ 		res = -EBUSY;
+diff --git a/fs/namei.c b/fs/namei.c
+index 3de8036..24896e8 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1243,19 +1243,15 @@ static int user_path_parent(int dfd, const char __user *path,
+ 	char *s = getname(path);
+ 	int error;
+ 
+-    printk("%s(%d) error:%d path:%s s:%s\n", __func__, __LINE__, error, path, s);
+ 	if (IS_ERR(s))
+ 		return PTR_ERR(s);
+ 
+-    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	error = do_path_lookup(dfd, s, LOOKUP_PARENT, nd);
+-    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	if (error)
+ 		putname(s);
+ 	else
+ 		*name = s;
+ 
+-    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	return error;
+ }
+ 
+@@ -2000,17 +1996,14 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const char __user *, filename, int, mode,
+ 	char *tmp;
+ 	struct dentry *dentry;
+ 	struct nameidata nd;
+-    printk("%s(%d)\n", __func__, __LINE__);
++
+ 	if (S_ISDIR(mode))
+ 		return -EPERM;
+ 
+-    printk("%s(%d) error:%d filename:%s\n", __func__, __LINE__, error, filename);
+ 	error = user_path_parent(dfd, filename, &nd, &tmp);
+-    printk("%s(%d) error:%d filename:%s tmp:%s\n", __func__, __LINE__, error, filename, tmp);
+ 	if (error)
+ 		return error;
+ 
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	dentry = lookup_create(&nd, 0);
+ 	if (IS_ERR(dentry)) {
+ 		error = PTR_ERR(dentry);
+@@ -2019,44 +2012,35 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const char __user *, filename, int, mode,
+ 	if (!IS_POSIXACL(nd.path.dentry->d_inode))
+ 		mode &= ~current_umask();
+ 	error = may_mknod(mode);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_dput;
+ 	error = mnt_want_write(nd.path.mnt);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_dput;
+ 	error = security_path_mknod(&nd.path, dentry, mode, dev);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_drop_write;
+ 	switch (mode & S_IFMT) {
+ 		case 0: case S_IFREG:
+ 			error = vfs_create(nd.path.dentry->d_inode,dentry,mode,&nd);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 		case S_IFCHR: case S_IFBLK:
+ 			error = vfs_mknod(nd.path.dentry->d_inode,dentry,mode,
+ 					new_decode_dev(dev));
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 		case S_IFIFO: case S_IFSOCK:
+ 			error = vfs_mknod(nd.path.dentry->d_inode,dentry,mode,0);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 	}
+ out_drop_write:
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	mnt_drop_write(nd.path.mnt);
+ out_dput:
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	dput(dentry);
+ out_unlock:
+ 	mutex_unlock(&nd.path.dentry->d_inode->i_mutex);
+ 	path_put(&nd.path);
+ 	putname(tmp);
+ 
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	return error;
+ }
+ 
+diff --git a/fs/namespace.c b/fs/namespace.c
+index e846e0f..a72eaab 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1745,13 +1745,10 @@ static int do_new_mount(struct path *path, char *type, int flags,
+ 		return -EPERM;
+ 
+ 	lock_kernel();
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	mnt = do_kern_mount(type, flags, name, data);
+ 	unlock_kernel();
+-	if (IS_ERR(mnt)) {
+-    printk("%s(%d)\n", __func__, __LINE__);
++	if (IS_ERR(mnt))
+ 		return PTR_ERR(mnt);
+-    }
+ 
+ 	return do_add_mount(mnt, path, mnt_flags, NULL);
+ }
+@@ -2019,7 +2016,6 @@ long do_mount(char *dev_name, char *dir_name, char *type_page,
+ 
+ 	/* Basic sanity checks */
+ 
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	if (!dir_name || !*dir_name || !memchr(dir_name, 0, PAGE_SIZE))
+ 		return -EINVAL;
+ 
+@@ -2027,15 +2023,12 @@ long do_mount(char *dev_name, char *dir_name, char *type_page,
+ 		((char *)data_page)[PAGE_SIZE - 1] = 0;
+ 
+ 	/* ... and get the mountpoint */
+-    printk("%s(%d) dirname:%s\n", __func__, __LINE__, dir_name);
+ 	retval = kern_path(dir_name, LOOKUP_FOLLOW, &path);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	if (retval)
+ 		return retval;
+ 
+ 	retval = security_sb_mount(dev_name, &path,
+ 				   type_page, flags, data_page);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	if (retval)
+ 		goto dput_out;
+ 
+@@ -2063,39 +2056,20 @@ long do_mount(char *dev_name, char *dir_name, char *type_page,
+ 		   MS_NOATIME | MS_NODIRATIME | MS_RELATIME| MS_KERNMOUNT |
+ 		   MS_STRICTATIME);
+ 
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-	if (flags & MS_REMOUNT) {
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	if (flags & MS_REMOUNT)
+ 		retval = do_remount(&path, flags & ~MS_REMOUNT, mnt_flags,
+ 				    data_page);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-    }
+-	else if (flags & MS_BIND) {
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	else if (flags & MS_BIND)
+ 		retval = do_loopback(&path, dev_name, flags & MS_REC);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-    }
+-	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE)) {
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
+ 		retval = do_change_type(&path, flags);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-    }
+-	else if (flags & MS_MOVE) {
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	else if (flags & MS_MOVE)
+ 		retval = do_move_mount(&path, dev_name);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-    }
+-	else {
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	else
+ 		retval = do_new_mount(&path, type_page, flags, mnt_flags,
+ 				      dev_name, data_page);
+-
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+-    }
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ dput_out:
+ 	path_put(&path);
+-    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	return retval;
+ }
+ 
+@@ -2217,7 +2191,7 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+ 	char *kernel_dir;
+ 	char *kernel_dev;
+ 	unsigned long data_page;
+-    printk("%s(%d) dev_name:%s dir:%s type:%s\n", __func__, __LINE__, dev_name, dir_name, type);
++
+ 	ret = copy_mount_string(type, &kernel_type);
+ 	if (ret < 0)
+ 		goto out_type;
+@@ -2236,11 +2210,9 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+ 	if (ret < 0)
+ 		goto out_data;
+ 
+-    printk("%s(%d) dev_name:%s dir:%s type:%s\n", __func__, __LINE__, dev_name, dir_name, type);
+ 	ret = do_mount(kernel_dev, kernel_dir, kernel_type, flags,
+ 		(void *) data_page);
+ 
+-    printk("%s(%d) dev_name:%s dir:%s type:%s ret:%d\n", __func__, __LINE__, dev_name, dir_name, type, ret);
+ 	free_page(data_page);
+ out_data:
+ 	kfree(kernel_dev);
+diff --git a/fs/squashfs/super.c b/fs/squashfs/super.c
+index 0edb722..60f9cd4 100644
+--- a/fs/squashfs/super.c
++++ b/fs/squashfs/super.c
+@@ -231,7 +231,6 @@ static int squashfs_fill_super(struct super_block *sb, void *data, int silent)
+ 	if (fragments == 0)
+ 		goto allocate_lookup_table;
+ 
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	msblk->fragment_cache = squashfs_cache_init("fragment",
+ 		SQUASHFS_CACHED_FRAGMENTS, msblk->block_size);
+ 	if (msblk->fragment_cache == NULL) {
+@@ -304,7 +303,6 @@ allocate_root:
+ 
+ 	TRACE("Leaving squashfs_fill_super\n");
+ 	kfree(sblk);
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	return 0;
+ 
+ failed_mount:
+@@ -352,7 +350,6 @@ static int squashfs_statfs(struct dentry *dentry, struct kstatfs *buf)
+ static int squashfs_remount(struct super_block *sb, int *flags, char *data)
+ {
+ 	*flags |= MS_RDONLY;
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	return 0;
+ }
+ 
+@@ -380,7 +377,6 @@ static int squashfs_get_sb(struct file_system_type *fs_type, int flags,
+ 				const char *dev_name, void *data,
+ 				struct vfsmount *mnt)
+ {
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	return get_sb_bdev(fs_type, flags, dev_name, data, squashfs_fill_super,
+ 				mnt);
+ }
+@@ -419,7 +415,7 @@ static int __init init_squashfs_fs(void)
+ 
+ 	if (err)
+ 		return err;
+-    printk("%s(%d)\n", __func__, __LINE__);
++
+ 	err = register_filesystem(&squashfs_fs_type);
+ 	if (err) {
+ 		destroy_inodecache();
+diff --git a/fs/super.c b/fs/super.c
+index df94c62..9a8b7fd 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -947,9 +947,7 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void
+ 			goto out_free_secdata;
+ 	}
+ 
+-    printk("%s(%d) name:%s\n", __func__, __LINE__, name);
+ 	error = type->get_sb(type, flags, name, data, mnt);
+-    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error < 0)
+ 		goto out_free_secdata;
+ 	BUG_ON(!mnt->mnt_sb);
+@@ -1113,14 +1111,11 @@ do_kern_mount(const char *fstype, int flags, const char *name, void *data)
+ 	struct vfsmount *mnt;
+ 	if (!type)
+ 		return ERR_PTR(-ENODEV);
+-    printk("%s(%d)\n", __func__, __LINE__);
+ 	mnt = vfs_kern_mount(type, flags, name, data);
+-    printk("%s(%d) mnt:%p\n", __func__, __LINE__, mnt);
+ 	if (!IS_ERR(mnt) && (type->fs_flags & FS_HAS_SUBTYPE) &&
+ 	    !mnt->mnt_sb->s_subtype)
+ 		mnt = fs_set_subtype(mnt, fstype);
+ 	put_filesystem(type);
+-    printk("%s(%d) mnt:%p\n", __func__, __LINE__, mnt);
+ 	return mnt;
+ }
+ EXPORT_SYMBOL_GPL(do_kern_mount);
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index 4546c06..02e3ca4 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -173,7 +173,6 @@ static int __init root_data_setup(char *str)
+ static char * __initdata root_fs_names;
+ static int __init fs_names_setup(char *str)
+ {
+-    printk("%s(%d) str:%s\n", __func__, __LINE__, str);
+ 	root_fs_names = str;
+ 	return 1;
+ }
+@@ -192,7 +191,7 @@ __setup("rootdelay=", root_delay_setup);
+ static void __init get_fs_names(char *page)
+ {
+ 	char *s = page;
+-    printk("%s(%d) root_fs_names:%s\n", __func__, __LINE__, root_fs_names);
++
+ 	if (root_fs_names) {
+ 		strcpy(page, root_fs_names);
+ 		while (*s++) {
+@@ -206,7 +205,6 @@ static void __init get_fs_names(char *page)
+ 		page[len] = '\0';
+ 		for (p = page-1; p; p = next) {
+ 			next = strchr(++p, '\n');
+-    printk("%s(%d) next:%s\n", __func__, __LINE__, next);
+ 			if (*p++ != '\t')
+ 				continue;
+ 			while ((*s++ = *p++) != '\n')
+@@ -219,13 +217,10 @@ static void __init get_fs_names(char *page)
+ 
+ static int __init do_mount_root(char *name, char *fs, int flags, void *data)
+ {
+-    printk("%s(%d) name:%s fs:%s\n", __func__, __LINE__, name, fs);
+ 	int err = sys_mount(name, "/root", fs, flags, data);
+-    printk("%s(%d) name:%s fs:%s err:%d\n", __func__, __LINE__, name, fs, err);
+ 	if (err)
+ 		return err;
+ 
+-    printk("%s(%d) name:%s fs:%s\n", __func__, __LINE__, name, fs);
+ 	sys_chdir("/root");
+ 	ROOT_DEV = current->fs->pwd.mnt->mnt_sb->s_dev;
+ 	printk("VFS: Mounted root (%s filesystem)%s on device %u:%u.\n",
+@@ -246,9 +241,7 @@ void __init mount_block_root(char *name, int flags)
+ 	const char *b = name;
+ #endif
+ 
+-    printk("%s(%d) name:%s fsname:%s\n", __func__, __LINE__, name, fs_names);
+ 	get_fs_names(fs_names);
+-    printk("%s(%d) name:%s fsname:%s\n", __func__, __LINE__, name, fs_names);
+ retry:
+ 	for (p = fs_names; *p; p += strlen(p)+1) {
+ 		int err = do_mount_root(name, p, flags, root_mount_data);
+@@ -340,7 +333,6 @@ void __init change_floppy(char *fmt, ...)
+ 
+ void __init mount_root(void)
+ {
+-    int res;
+ #ifdef CONFIG_ROOT_NFS
+ 	if (MAJOR(ROOT_DEV) == UNNAMED_MAJOR) {
+ 		if (mount_nfs_root())
+@@ -363,8 +355,7 @@ void __init mount_root(void)
+ 	}
+ #endif
+ #ifdef CONFIG_BLOCK
+-	res = create_dev("/dev/root", ROOT_DEV);
+-    printk("%s(%d) res:%d\n", __func__, __LINE__, res);
++	create_dev("/dev/root", ROOT_DEV);
+ 	mount_block_root("/dev/root", root_mountflags);
+ #endif
+ }
+diff --git a/init/do_mounts.h b/init/do_mounts.h
+index c755770..f5b978a 100644
+--- a/init/do_mounts.h
++++ b/init/do_mounts.h
+@@ -15,13 +15,8 @@ extern int root_mountflags;
+ 
+ static inline int create_dev(char *name, dev_t dev)
+ {
+-    int err;
+-    printk("%s(%d) name:%s\n", __func__, __LINE__, name);
+-	err = sys_unlink(name);
+-    printk("%s(%d) name:%s err:%d\n", __func__, __LINE__, name, err);
+-    err = sys_mknod(name, S_IFBLK|0600, new_encode_dev(dev));
+-    printk("%s(%d) name:%s err:%d\n", __func__, __LINE__, name, err);
+-	return err;
++	sys_unlink(name);
++	return sys_mknod(name, S_IFBLK|0600, new_encode_dev(dev));
+ }
+ 
+ #if BITS_PER_LONG == 32

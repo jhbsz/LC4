@@ -1,0 +1,2 @@
+ace-responsive.min.css :
+@media only screen and (max-width:422px){.navbar .brand{display:block;float:none}.navbar .navbar-inner{border-bottom-width:0}.ace-nav{display:block;float:none!important;text-align:center;font-size:0;background-color:#404040;border:1px solid #DDD;border-width:1px 0;letter-spacing:-4px;word-spacing:-4px}.ace-nav>li{display:inline-block;float:none!important;    <<  remove !important

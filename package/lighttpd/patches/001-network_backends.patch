@@ -1,0 +1,11 @@
+--- a/src/network_backends.h.orig	2012-08-08 01:07:13.096465878 +0800
++++ b/src/network_backends.h	2012-08-08 01:07:27.483079522 +0800
+@@ -9,7 +9,7 @@
+ #include <sys/types.h>
+ 
+ /* on linux 2.4.x you get either sendfile or LFS */
+-#if defined HAVE_SYS_SENDFILE_H && defined HAVE_SENDFILE && (!defined _LARGEFILE_SOURCE || defined HAVE_SENDFILE64) && defined HAVE_WRITEV && defined(__linux__) && !defined HAVE_SENDFILE_BROKEN
++#if defined HAVE_SYS_SENDFILE_H && defined HAVE_SENDFILE && (!defined _LARGEFILE_SOURCE || defined HAVE_SENDFILE64) && defined HAVE_WRITEV && defined(__linux__) 
+ # define USE_LINUX_SENDFILE
+ # include <sys/sendfile.h>
+ # include <sys/uio.h>

@@ -1,0 +1,11 @@
+--- Uboot-spi-3.6.0.0/drivers/spi_flash.c	2012-12-28 14:41:18.000000000 +0800
++++ Uboot-spi-3.6.0.0/drivers/spi_flash.c	2013-03-21 20:35:17.521039785 +0800
+@@ -75,7 +75,7 @@
+ #endif
+ 
+ static unsigned int spi_wait_nsec = 0;
+-
++static inline int raspi_write_enable(void);
+ 
+ static int spic_busy_wait(void)
+ {

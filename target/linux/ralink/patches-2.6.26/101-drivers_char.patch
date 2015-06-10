@@ -1,0 +1,129 @@
+--- linux-2.6.26-orig/drivers/char/Makefile	2011-10-05 15:17:18.947915621 +0800
++++ linux-2.6.26-new/drivers/char/Makefile	2011-08-04 23:42:31.000000000 +0800
+@@ -94,6 +94,12 @@ obj-$(CONFIG_COBALT_LCD)	+= lcd.o
+ obj-$(CONFIG_PPDEV)		+= ppdev.o
+ obj-$(CONFIG_NWBUTTON)		+= nwbutton.o
+ obj-$(CONFIG_NWFLASH)		+= nwflash.o
++obj-$(CONFIG_RALINK_GPIO)	+= ralink_gpio.o
++obj-$(CONFIG_RALINK_GDMA)	+= ralink_gdma.o
++obj-$(CONFIG_RALINK_SPI)	+= spi_drv.o
++obj-$(CONFIG_RALINK_I2C)	+= i2c_drv.o
++obj-$(CONFIG_RALINK_PCM)	+= pcm/
++obj-$(CONFIG_RALINK_I2S)	+= i2s/
+ obj-$(CONFIG_SCx200_GPIO)	+= scx200_gpio.o
+ obj-$(CONFIG_PC8736x_GPIO)	+= pc8736x_gpio.o
+ obj-$(CONFIG_NSC_GPIO)		+= nsc_gpio.o
+--- linux-2.6.26-orig/drivers/char/Kconfig	2011-10-05 15:17:18.927916192 +0800
++++ linux-2.6.26-new/drivers/char/Kconfig	2011-10-11 01:52:00.624415594 +0800
+@@ -372,6 +372,34 @@ config ISTALLION
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called istallion.
+ 
++config AU1000_UART
++	bool "Enable Au1000 UART Support"
++	depends on SERIAL_NONSTANDARD && MIPS
++	help
++	  If you have an Alchemy AU1000 processor (MIPS based) and you want
++	  to use serial ports, say Y.  Otherwise, say N.
++
++config AU1000_SERIAL_CONSOLE
++	bool "Enable Au1000 serial console"
++	depends on AU1000_UART
++	help
++	  If you have an Alchemy AU1000 processor (MIPS based) and you want
++	  to use a console on a serial port, say Y.  Otherwise, say N.
++
++config AU1000_UART
++	bool "Enable Au1000 UART Support"
++	depends on SERIAL_NONSTANDARD && MIPS
++	help
++	  If you have an Alchemy AU1000 processor (MIPS based) and you want
++	  to use serial ports, say Y.  Otherwise, say N.
++
++config AU1000_SERIAL_CONSOLE
++	bool "Enable Au1000 serial console"
++	depends on AU1000_UART
++	help
++	  If you have an Alchemy AU1000 processor (MIPS based) and you want
++	  to use a console on a serial port, say Y.  Otherwise, say N.
++
+ config NOZOMI
+ 	tristate "HSDPA Broadband Wireless Data Card - Globe Trotter"
+ 	depends on PCI && EXPERIMENTAL
+@@ -962,6 +990,76 @@ config MWAVE
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called mwave.
+ 
++config RALINK_GPIO
++	tristate "Ralink GPIO Support"
++    default y
++	help
++        To provide Ralink GPIO support.
++
++config RALINK_GPIO_LED
++    tristate "RALINK GPIO LED Support"
++    depends on RALINK_GPIO
++
++config RALINK_GDMA
++    tristate "RALINK GDMA Support"
++    default n
++    choice
++        prompt "GDMA Channel Allocation Mode"
++        depends on RALINK_GDMA
++        default GDMA_EVERYBODY
++        
++        config GDMA_PCM_ONLY
++            bool "All for PCM0/PCM1"
++        
++        config GDMA_PCM_I2S_OTHERS
++            bool "4Ch for PCM0 / 2Ch for I2S / 2Ch for Everybody"
++
++        config GDMA_EVERYBODY
++            bool "All for Everybody"
++
++        config GDMA_DEBUG
++            bool "Debug Mode 0->1..7->0->1..7.."
++    endchoice
++
++config RALINK_SPI
++    tristate "RALINK RT305X SPI Support"
++    default n
++
++config RALINK_SPI_CS0_HIGH_ACTIVE
++	depends on RALINK_SPI
++	bool "SPI CS0(Chip Select) is high active"
++	default n
++	
++config RALINK_SPI_CS1_HIGH_ACTIVE
++	depends on RALINK_SPI
++	depends on RALINK_RT3883 || RALINK_RT3352 || RALINK_RT5350 || RALINK_RT6855
++	bool "SPI CS1(Chip Select) is high active"
++	default n
++
++config RALINK_VITESSE_SWITCH_CONNECT_SPI_CS1
++	depends on RALINK_SPI
++	depends on RALINK_RT3883 || RALINK_RT3352 || RALINK_RT5350 || RALINK_RT6855
++	bool "Vitess Switch CS Pin Connects to SPI CS1"
++	default n
++
++config RALINK_SLIC_CONNECT_SPI_CS1
++        depends on RALINK_SPI
++	depends on RALINK_RT3883 || RALINK_RT3352 || RALINK_RT5350 || RALINK_RT6855
++        bool "SLIC CS Pin Connects to SPI CS1"
++	default n
++ 	
++config RALINK_I2C
++    tristate "RALINK RT305X I2C Support"
++    default n
++
++config RALINK_PCM
++    tristate "RALINK PCM Support"
++    default n
++
++config RALINK_I2S
++    tristate "RALINK I2S Suopport"
++    default n
++
+ config SCx200_GPIO
+ 	tristate "NatSemi SCx200 GPIO Support"
+ 	depends on SCx200

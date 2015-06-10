@@ -1,0 +1,85 @@
+--- dnsmasq-2.57/src/lease.c	2011-05-09 15:12:49.064302871 +0800
++++ dnsmasq-2.57/src/lease.c	2011-05-09 15:16:50.284565778 +0800
+@@ -20,6 +20,11 @@
+ 
+ static struct dhcp_lease *leases = NULL, *old_leases = NULL;
+ static int dns_dirty, file_dirty, leases_left;
++static time_t rec_time_prev = 0;
++/* 21*24*60*60 */
++#define THREE_WEEKS_IN_SECONDS 1814400
++#define ONE_DAY_IN_SECONDS 24*60*60
++
+ 
+ void lease_init(time_t now)
+ {
+@@ -176,6 +181,9 @@
+   struct dhcp_lease *lease;
+   time_t next_event;
+   int i, err = 0;
++  /* The now-time may shift due to retrival of current time and default system
++   * time (1970/1/1) */
++  time_t current_time_shift = 0;
+ 
+   if (file_dirty != 0 && daemon->lease_stream)
+     {
+@@ -183,12 +191,21 @@
+       rewind(daemon->lease_stream);
+       if (errno != 0 || ftruncate(fileno(daemon->lease_stream), 0) != 0)
+ 	err = errno;
++      if (!rec_time_prev) {
++         rec_time_prev = now;
++      }
++      if ((now - rec_time_prev) > THREE_WEEKS_IN_SECONDS) {
++         current_time_shift = now - rec_time_prev;
++      }
+       
+       for (lease = leases; lease; lease = lease->next)
+ 	{
+ #ifdef HAVE_BROKEN_RTC
+ 	  ourprintf(&err, "%u ", lease->length);
+ #else
++      if (current_time_shift) {
++          lease->expires += current_time_shift;
++      }
+ 	  ourprintf(&err, "%lu ", (unsigned long)lease->expires);
+ #endif
+ 	  if (lease->hwaddr_type != ARPHRD_ETHER || lease->hwaddr_len == 0) 
+@@ -237,6 +254,7 @@
+ 		(unsigned int)difftime(next_event, now));
+     }
+ 
++  rec_time_prev = now;
+   if (next_event != 0)
+     alarm((unsigned)difftime(next_event, now)); 
+ }
+@@ -266,9 +284,22 @@
+ {
+   struct dhcp_lease *lease, *tmp, **up;
+ 
++  /* The now-time may shift due to retrival of current time and default system
++   * time (1970/1/1) */
++  time_t current_time_shift = 0;
++  if (!rec_time_prev) {
++      rec_time_prev = now;
++  }
++  if ((now - rec_time_prev) > THREE_WEEKS_IN_SECONDS) {
++      current_time_shift = now - rec_time_prev;
++  }
+   for (lease = leases, up = &leases; lease; lease = tmp)
+     {
+       tmp = lease->next;
++      if (current_time_shift) {
++          lease->expires += current_time_shift;
++          file_dirty = 1;
++      }
+       if ((lease->expires != 0 && difftime(now, lease->expires) > 0) || lease == target)
+ 	{
+ 	  file_dirty = 1;
+@@ -287,6 +318,7 @@
+       else
+ 	up = &lease->next;
+     }
++  rec_time_prev = now;
+ } 
+ 	
+   

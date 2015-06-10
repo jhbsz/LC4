@@ -1,0 +1,38 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+log_msg="Music-server"
+
+BIN="/usr/sbin/shairport"
+
+start() {
+    [ "$(nvram show music_rule 0 enable)" != "1" ] && exit
+    local exist_device=0;
+    local NUM="$(nvram get togo_rule_num)"
+    local i=0
+    while [ $i -lt $NUM ]; do
+        [ "$(nvram show togo_rule $i status)" = "1" -a\
+          "$(nvram show togo_rule $i proto)" = "_raop._tcp." ] && {
+            exist_device=1    
+            break;
+        }
+        i=$(($i+1))
+    done
+    [ "$exist_device" != "1" ] && exit
+    nice -n -20 $BIN -o 5100 -k -b 126 -q -d
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}
+stop() {
+    local count=0
+    kill -9 $(pidof shairport)
+    while [ -n "$(pidof shairport)" ]
+    do
+       sleep 1
+       count=$(($count + 1))
+       [ "$count" -gt "20" ] && {
+           err=1
+           return
+       }
+    done
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}

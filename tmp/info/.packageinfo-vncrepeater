@@ -1,0 +1,14 @@
+Source-Makefile: package/vncrepeater/Makefile
+Package: vncrepeater
+Version: 0.14-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: vncrepeater
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	vncrepeater
+@@
+

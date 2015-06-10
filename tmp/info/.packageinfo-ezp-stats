@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-stats/Makefile
+Package: ezp-stats
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Stats - EZ Packet stats daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A statistics server for EZ Packet Products.
+@@
+

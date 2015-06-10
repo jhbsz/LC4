@@ -1,0 +1,30 @@
+Source-Makefile: package/linux-atm/Makefile
+Package: linux-atm
+Version: 2.4.1-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Linux ATM library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   This package contains a library for accessing the Linux ATM subsystem.
+
+http://linux-atm.sourceforge.net/
+@@
+Package: atm-tools
+Version: 2.4.1-1
+Depends: linux-atm
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Linux ATM tools
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   This package contains the Linux ATM tools.
+
+http://linux-atm.sourceforge.net/
+@@
+

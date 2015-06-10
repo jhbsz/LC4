@@ -1,0 +1,76 @@
+--- lighttpd/src/mod_webdav.c	2014-10-26 11:12:35.756013804 +0800
++++ lighttpd/src/mod_webdav.c	2014-11-06 11:39:25.036052315 +0800
+@@ -1905,7 +1904,7 @@
+ 		}
+ 		return HANDLER_FINISHED;
+ 	case HTTP_METHOD_PUT: {
+-		int fd;
++		int fd = -1;
+ 		chunkqueue *cq = con->request_content_queue;
+ 		chunk *c;
+ 		data_string *ds_range;
+@@ -1976,8 +1975,10 @@
+ 
+ 			if (-1 == lseek(fd, offset, SEEK_SET)) {
+ 				con->http_status = 501; /* not implemented */
+-
+-				close(fd);
++                if(fd >= 0) {
++                    fd = -1;
++				    close(fd);
++                }
+ 
+ 				return HANDLER_FINISHED;
+ 			}
+@@ -1993,6 +1994,10 @@
+ 			switch(c->type) {
+ 
+             case FILE_CHUNK:
++                if(fd >= 0) {
++                    fd = -1;
++				    close(fd);
++                }
+ 				if(-1 == (rename(c->file.name->ptr,con->physical.path->ptr))) {
+ 					log_error_write(srv, __FILE__, __LINE__, "ss", "write back failed: ", strerror(errno));
+ 					return HANDLER_ERROR;
+@@ -2001,12 +2006,15 @@
+ 				break;
+ 			case MEM_CHUNK:
+ 				/* if the file doesn't exist, create it */
+-				if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE))) {
++				if ((fd < 0) && (-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_TRUNC, WEBDAV_FILE_MODE)))) {
+ 					if (errno == ENOENT &&
+ 							-1 == (fd = open(con->physical.path->ptr, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, WEBDAV_FILE_MODE))) {
+ 						/* we can't open the file */
+ 						con->http_status = 403;
+-
++                        if(fd >= 0) {
++                            fd = -1;
++                            close(fd);
++                        }
+ 						return HANDLER_FINISHED;
+ 					} else {
+ 						con->http_status = 201; /* created */
+@@ -2027,6 +2035,10 @@
+ 						break;
+ 					}
+ 				}
++                if(fd >= 0) {
++                    fd = -1;
++				    close(fd);
++                }
+ 				break;
+ 			case UNUSED_CHUNK:
+ 				break;
+@@ -2040,7 +2052,10 @@
+ 			}
+ 			chunkqueue_remove_finished_chunks(cq);
+ 		}
+-		close(fd);
++        if(fd >= 0) {
++            fd = -1;
++    	    close(fd);
++        }
+ 		sync();
+ 		return HANDLER_FINISHED;
+ 	}

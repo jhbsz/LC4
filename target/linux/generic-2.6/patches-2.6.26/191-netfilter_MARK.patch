@@ -1,0 +1,40 @@
+--- linux-2.6.26.orig/include/linux/netfilter/xt_MARK.h	2008-07-14 05:51:29.000000000 +0800
++++ linux-2.6.26/include/linux/netfilter/xt_MARK.h	2009-04-07 11:23:12.000000000 +0800
+@@ -4,6 +4,8 @@
+ /* Version 0 */
+ struct xt_mark_target_info {
+ 	unsigned long mark;
++    /* EZP: XXX */
++	unsigned long mask;
+ };
+ 
+ /* Version 1 */
+@@ -15,6 +17,8 @@
+ 
+ struct xt_mark_target_info_v1 {
+ 	unsigned long mark;
++    /* EZP: XXX */
++	unsigned long mask;
+ 	u_int8_t mode;
+ };
+ 
+--- linux-2.6.26.orig/net/netfilter/xt_MARK.c	2008-07-14 05:51:29.000000000 +0800
++++ linux-2.6.26/net/netfilter/xt_MARK.c	2009-04-07 11:53:51.000000000 +0800
+@@ -31,7 +31,7 @@
+ {
+ 	const struct xt_mark_target_info *markinfo = targinfo;
+ 
+-	skb->mark = markinfo->mark;
++	skb->mark = (skb->mark & ~markinfo->mask) | (markinfo->mark & markinfo->mask);
+ 	return XT_CONTINUE;
+ }
+ 
+@@ -45,7 +45,7 @@
+ 
+ 	switch (markinfo->mode) {
+ 	case XT_MARK_SET:
+-		mark = markinfo->mark;
++		mark = (skb->mark & ~markinfo->mask) | (markinfo->mark & markinfo->mask);
+ 		break;
+ 
+ 	case XT_MARK_AND:

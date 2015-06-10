@@ -1,0 +1,15 @@
+Source-Makefile: package/wrt55agv2-spidevs/Makefile
+Package: kmod-wrt55agv2-spidevs
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6 @TARGET_atheros +kmod-spi-gpio +kmod-spi-ks8995
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: WRT55AG v2 SPI devices support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   Kernel module for the SPI devices on the WRT55AG v2 board.
+@@
+

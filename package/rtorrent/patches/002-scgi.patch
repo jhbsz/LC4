@@ -1,0 +1,147 @@
+--- rtorrent.old/src/rpc/scgi_task.h	2008-05-07 20:19:10.000000000 +0800
++++ rtorrent.new/src/rpc/scgi_task.h	2009-04-27 10:49:36.000000000 +0800
+@@ -69,6 +69,7 @@
+ 
+   utils::SocketFd&    get_fd()            { return *reinterpret_cast<utils::SocketFd*>(&m_fileDesc); }
+ 
++  bool                is_http;
+ private:
+   inline void         realloc_buffer(uint32_t size, const char* buffer, uint32_t bufferSize);
+ 
+--- rtorrent.old/src/rpc/scgi_task.cc	2008-05-07 20:19:10.000000000 +0800
++++ rtorrent.new/src/rpc/scgi_task.cc	2009-04-27 10:49:36.000000000 +0800
+@@ -73,6 +73,7 @@
+   m_buffer   = new char[(m_bufferSize = default_buffer_size) + 1];
+   m_position = m_buffer;
+   m_body     = NULL;
++  is_http    = false; 
+ 
+   control->poll()->open(this);
+   control->poll()->insert_read(this);
+@@ -122,54 +123,64 @@
+     // Don't bother caching the parsed values, as we're likely to
+     // receive all the data we need the first time.
+     char* current;
+-
+     int contentSize;
+-    int headerSize = strtol(m_buffer, &current, 0);
++    int temp = memcmp(m_buffer, "POST",10);
++    if(temp >= 0)
++        is_http = true;
++    if (!is_http){
++        int headerSize = strtol(m_buffer, &current, 0);
+ 
+-    if (current == m_position)
+-      return;
++        if (current == m_position)
++            return;
+ 
+-    // If the request doesn't start with an integer or if it didn't
+-    // end in ':', then close the connection.
+-    if (current == m_buffer || *current != ':' || headerSize < 17 || headerSize > max_header_size)
+-      goto event_read_failed;
++        // If the request doesn't start with an integer or if it didn't
++        // end in ':', then close the connection.
++        if (current == m_buffer || *current != ':' || headerSize < 17 || headerSize > max_header_size)
++            goto event_read_failed;
+ 
+-    if (std::distance(++current, m_position) < headerSize + 1)
+-      return;
++        if (std::distance(++current, m_position) < headerSize + 1)
++            return;
+ 
+-    if (std::memcmp(current, "CONTENT_LENGTH", 15) != 0)
+-      goto event_read_failed;
++        if (std::memcmp(current, "CONTENT_LENGTH", 15) != 0)
++            goto event_read_failed;
+ 
+-    char* contentPos;
+-    contentSize = strtol(current + 15, &contentPos, 0);
++        char* contentPos;
++        contentSize = strtol(current + 15, &contentPos, 0);
+ 
+-    if (*contentPos != '\0' || contentSize <= 0 || contentSize > max_content_size)
+-      goto event_read_failed;
++        if (*contentPos != '\0' || contentSize <= 0 || contentSize > max_content_size)
++            goto event_read_failed;
+ 
+-    m_body = current + headerSize + 1;
+-    headerSize = std::distance(m_buffer, m_body);
++        m_body = current + headerSize + 1;
++        headerSize = std::distance(m_buffer, m_body);
+ 
+-    if ((unsigned int)(contentSize + headerSize) < m_bufferSize) {
+-      m_bufferSize = contentSize + headerSize;
++        if ((unsigned int)(contentSize + headerSize) < m_bufferSize) {
++            m_bufferSize = contentSize + headerSize;
+ 
+-    } else if ((unsigned int)contentSize <= default_buffer_size) {
+-      m_bufferSize = contentSize;
++        } else if ((unsigned int)contentSize <= default_buffer_size) {
++            m_bufferSize = contentSize;
+ 
+-      std::memmove(m_buffer, m_body, std::distance(m_body, m_position));
+-      m_position = m_buffer + std::distance(m_body, m_position);
+-      m_body = m_buffer;
++            std::memmove(m_buffer, m_body, std::distance(m_body, m_position));
++            m_position = m_buffer + std::distance(m_body, m_position);
++            m_body = m_buffer;
+ 
+-    } else {
+-      realloc_buffer((m_bufferSize = contentSize) + 1, m_body, std::distance(m_body, m_position));
++        } else {
++            realloc_buffer((m_bufferSize = contentSize) + 1, m_body, std::distance(m_body, m_position));
+ 
+-      m_position = m_buffer + std::distance(m_body, m_position);
+-      m_body = m_buffer;
++            m_position = m_buffer + std::distance(m_body, m_position);
++            m_body = m_buffer;
++        }
++    } else {
++        /* EZP: 103 is size of http header , 95 is position of 
++         * string CONTENT_LENGTH */
++        m_body = m_buffer + 103;
++        char* contentPos;
++        int contentSize = strtol(m_buffer + 95, &contentPos, 0);
++        m_parent->receive_call(this, m_body, contentSize);
+     }
+-  }
+-
+-  if ((unsigned int)std::distance(m_buffer, m_position) != m_bufferSize)
+-    return;
+ 
++    if ((unsigned int)std::distance(m_buffer, m_position) != m_bufferSize)
++        return;
++  }
+   control->poll()->remove_read(this);
+   control->poll()->insert_write(this);
+ 
+@@ -209,16 +220,22 @@
+ 
+ bool
+ SCgiTask::receive_write(const char* buffer, uint32_t length) {
++    int headerSize = 0;
+   // Need to cast due to a bug in MacOSX gcc-4.0.1.
+   if (length + 256 > std::max(m_bufferSize, (unsigned int)default_buffer_size))
+     realloc_buffer(length + 256, NULL, 0);
++  if (!is_http) {
++      // Who ever bothers to check the return value?
++      headerSize = sprintf(m_buffer, "Status: 200 OK\r\nContent-Type: text/xml\r\nContent-Length: %i\r\n\r\n", length);
++
++      m_position = m_buffer;
++      m_bufferSize = length + headerSize;
++  } else {
++      headerSize = sprintf(m_buffer, "HTTP/1.1 200OK\r\nContent-Type: text/xml\r\nContent-Length: %i\r\n\r\n", length);
++      m_position = m_buffer;
++      m_bufferSize = length + headerSize;
++  }
+ 
+-  // Who ever bothers to check the return value?
+-  int headerSize = sprintf(m_buffer, "Status: 200 OK\r\nContent-Type: text/xml\r\nContent-Length: %i\r\n\r\n", length);
+-
+-  m_position = m_buffer;
+-  m_bufferSize = length + headerSize;
+-  
+   std::memcpy(m_buffer + headerSize, buffer, length);
+   event_write();
+ 

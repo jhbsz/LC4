@@ -1,0 +1,10 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-07-26 11:09:30.835537329 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-07-26 11:11:04.795537184 +0800
+@@ -742,6 +742,7 @@
+             break;
+         }
+     }
++    sync();
+     if ( n_chars == -1 ) {
+         fprintf(stderr, "Read error from %s\n", in_filename);
+         retcode = 403;

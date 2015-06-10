@@ -1,0 +1,220 @@
+--- comgt.0.32/comgt.c	2009-09-02 12:16:13.306380390 +0800
++++ comgt.0.32.new/comgt.c	2009-09-02 12:22:20.150124986 +0800
+@@ -40,6 +40,9 @@
+ #include <sys/ioctl.h>
+ #include <sys/wait.h>
+ #include <sys/stat.h>
++#include <sys/sem.h>
++#include <errno.h>
++#include "ezp-lib.h"
+ #include "comgt.h"
+ 
+ 
+@@ -49,12 +52,14 @@
+ #define STRINGL 1024    /* String lengths.  Also, max script line length */
+ #define MAXPATH 1024    /* Max filename length (less or equal to STRINGL) */
+ #define MAXTOKEN 20     /* Maximum token or label length */
+-#define GTDEVICE "/dev/modem"
++#define GTDEVICE "/dev/usb/tts/0"
+ 
+ #define BOOL unsigned char
+ #define NVARS 286       /* a-z, a0-z9 == 26*11 */
+ 
+ #ifndef EZPACKET
++#define SEMKEY_EZPCOM       (2493)
++#define SEMKEY_DIRECTIPON   (3494)
+ #define B460800 0010004
+ #endif
+ 
+@@ -94,6 +99,9 @@
+ char NullString[]={ "" };
+ BOOL lastcharnl=1; /* Indicate that last char printed from getonebyte
+                                was a nl, so no new one is needed */
++int sem_ezpcom = 0;
++struct sembuf op_ezpcom[1];
++int nbrand = 0, nmodel = 0;
+ 
+ 
+ //"open com \"/dev/modem\"\nset com 38400n81\nset senddelay 0.05\nsend \"ATi^m\"\nget 2 \" ^m\" $s\nprint \"Response : \",$s,\"\\n\"\nget 2 \" ^m\" $s\nprint \"Response :\",$s,\"\\n\"\nget 2 \" ^m\" $s\nprint \"Response : \",$s,\"\\n\"\n\n";
+@@ -176,6 +184,15 @@
+ /* Exit after resetting terminal settings */
+ void ext(long xtc) {
+   ioctl(1, TCSETA, &cons);
++  /* Semaphore for serializing for Sierra 306 only. */
++  if (nbrand == 23 && nmodel == 0) {
++    if (sem_ezpcom > 0) {
++        op_ezpcom[0].sem_num = 0;
++        op_ezpcom[0].sem_op = 1;
++        op_ezpcom[0].sem_flg = 0;
++        semop(sem_ezpcom, op_ezpcom, 1);
++    }
++  }
+   exit(xtc);
+ }
+ 
+@@ -190,7 +207,7 @@
+     }
+     t=time(0);
+     ct=ctime(&t);
+-    fprintf(stderr,"comgt %c%c:%c%c:%c%c -> %s\n",
++    fprintf(stderr,"ezpcom %c%c:%c%c:%c%c -> %s\n",
+             ct[11],ct[12],ct[14],ct[15],ct[17],ct[18],
+             text);
+   }
+@@ -1273,7 +1290,7 @@
+     sprintf(msg,"Can't control %s, please try again.\n",device);
+     serror(msg,1);
+   }
+-  setenv("COMGTDEVICE",device,1);
++  setenv("EZPCOMDEVICE",device,1);
+   ioctl(comfd, TCGETA, &stbuf);
+   speed=stbuf.c_cflag & CBAUD;
+   if (high_speed == 0)  strcpy(cspeed,"115200");
+@@ -1524,7 +1541,7 @@
+         case 2 : serror("What's that, governor?",5); break;
+         case 3 : serror("Very funny.  I don't get it",5); break;
+         case 4 : serror("Huh?",5); break;
+-        case 5 : serror("comgt doesn't speak spanish",5); break;
++        case 5 : serror("ezpcom doesn't speak spanish",5); break;
+         case 6 : serror("Mais, qu'est-ce que vous dites?",5); break;
+         default: serror("%E-6837-% : Corrupted human data detected",5); break;
+       }
+@@ -1537,13 +1554,16 @@
+ 
+ int main(int argc,char **argv) {
+   unsigned int a;
+-  int aa,b,i,skip_default;
++  int aa,b,i,skip_default, val, set_flag_up = 0, set_flag_down = 0;
++  int sem_directipon; 
++  struct sembuf op_directipon[1];
++  char tmp[32];
+   unsigned char ch;
+   unsigned char terminator='\n';
+   char *devenv,line[STRINGL];
+ 
+-  //Load up the COMGT device env variable if it exists
+-  devenv = getenv("COMGTDEVICE");
++  //Load up the EZPCOM device env variable if it exists
++  devenv = getenv("EZPCOMDEVICE");
+   if (devenv != NULL && strlen(devenv)){
+   strcpy(device,devenv);
+   }
+@@ -1570,7 +1590,7 @@
+   for(a=0;a<strlen(argv[0]);a++) {
+     if(argv[0][a]=='/') b=a+1;
+   }
+-  while((aa=getopt(argc,argv,"xheVvd:t:sb:"))!= -1) {
++  while((aa=getopt(argc,argv,"xheVvd:t:sab"))!= -1) {
+     switch(aa) {
+       case 0:
+         ext(0);
+@@ -1584,6 +1604,12 @@
+         strcpy(device,optarg);
+         //opendevice();
+         break;
++      case 'a':
++        set_flag_up = 1;
++        break;
++      case 'b':
++        set_flag_down = 1;
++        break;
+       case 'e':
+         comecho=1;
+         vmsg("Communication echo turned on");
+@@ -1596,12 +1622,12 @@
+         skip_default=1;
+         break;
+       case 'V':
+-        printf("comgt version %s Copyright Paul Hardwick (c) %s\n",COMGT_VERSION,YEARS);
++        printf("ezpcom version %s Copyright Paul Hardwick (c) %s\n",EZPCOM_VERSION,YEARS);
+         ext(1);
+         break;
+       case 'h':
+-        printf("comgt version %s Copyright Paul Hardwick (c) %s\n",COMGT_VERSION,YEARS);
+-        printf("\nType 'comgt help' for more information\n");
++        printf("ezpcom version %s Copyright Paul Hardwick (c) %s\n",EZPCOM_VERSION,YEARS);
++        printf("\nType 'ezpcom help' for more information\n");
+         ext(1);
+         break;
+       case 'x':
+@@ -1618,6 +1644,71 @@
+     vmsg(msg);
+   }
+ 
++    ezplib_get_attr_val("wan_wwan_probe_rule", 0, "brand", tmp, sizeof(tmp),
++            EZPLIB_USE_CLI);
++    nbrand = atoi(tmp);
++    ezplib_get_attr_val("wan_wwan_probe_rule", 0, "model", tmp, sizeof(tmp),
++            EZPLIB_USE_CLI);
++    nmodel = atoi(tmp);
++
++    /* Semaphore for serializing for Sierra 306 only. */
++    if (nbrand == 23 && nmodel == 0) {
++        sem_ezpcom = semget(SEMKEY_EZPCOM, 1, 0666);
++        if(sem_ezpcom < 0) {
++            /* Semaphore doesn't exist. Create and initialize it. */
++            sem_ezpcom = semget(SEMKEY_EZPCOM, 1, 0666 | IPC_CREAT);
++            if(sem_ezpcom < 0) {
++                printf("%s semaphore error: semget (%d)\n", __FUNCTION__, errno);
++                ext(1);
++            }
++            if (semctl(sem_ezpcom, 0, SETVAL, 1) == -1) {
++                printf("%s semaphore error: semctl (%d)\n", __FUNCTION__, errno);
++                ext(1);
++            }
++        }
++        /* Serialize all ezpcom commands. */
++        op_ezpcom[0].sem_num = 0;
++        op_ezpcom[0].sem_op = -1;
++        op_ezpcom[0].sem_flg = 0;
++        if (semop(sem_ezpcom, op_ezpcom, 1)) {
++            printf("%s semaphore error: semop (%d)\n", __FUNCTION__, errno);
++            /* Needless to unlock semaphore. The unlock process is based on
++             * sem_ezpcom > 0.
++             */
++            sem_ezpcom = 0;
++            ext(1);
++        }
++    }
++
++    /* Semaphore for being a flag of directipon. */
++    sem_directipon = semget(SEMKEY_DIRECTIPON, 1, 0666 | IPC_CREAT);
++    if(sem_directipon < 0) {
++        printf("%s semaphore error: semget (%d)\n", __FUNCTION__, errno);
++        ext(1);
++    }
++
++    if (set_flag_down == 1) {
++        semctl(sem_directipon, 0, SETVAL, 0);
++        ext(0);
++    }
++
++    val = semctl(sem_directipon, 0, GETVAL);
++    if (val == 1) {
++        /* Do not execute if 'ezpcom -d <dev> directipon' has been run. */
++        ext(1);
++    }
++
++    if (set_flag_up == 1) {
++        /* Mark the flag as 'ezpcom -d <dev> directipon' has been run. */
++        op_directipon[0].sem_num = 0;
++        op_directipon[0].sem_op = 1;
++        op_directipon[0].sem_flg = 0;
++        if (semop(sem_directipon, op_directipon, 1)) {
++            printf("%s semaphore error: semop (%d)\n", __FUNCTION__, errno);
++            ext(1);
++        }
++    }
++
+   char * code;
+   code = get_code(scriptfile);
+   if (code != NULL){
+@@ -1645,7 +1736,7 @@
+       //scriptfile[0] = '\0';
+     }
+     if((fp=fopen(scriptfile,"r"))==NULL) {
+-		strcpy(scriptfilepath,"/etc/comgt/");
++		strcpy(scriptfilepath,"/etc/ezpcom/");
+ 		strcat(scriptfilepath,scriptfile);
+ 		if((fp=fopen(scriptfilepath,"r"))==NULL) {
+       		sprintf(msg,"Could not open scriptfile \"%s\".\n",scriptfile);

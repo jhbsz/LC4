@@ -1,0 +1,100 @@
+--- a/pppd/pathnames.h	2004-11-13 20:02:22.000000000 +0800
++++ b/pppd/pathnames.h	2009-10-03 16:57:31.484127872 +0800
+@@ -23,7 +23,9 @@
+ #define _PATH_SRPFILE 	 _ROOT_PATH "/etc/ppp/srp-secrets"
+ #define _PATH_SYSOPTIONS _ROOT_PATH "/etc/ppp/options"
+ #define _PATH_IPUP	 _ROOT_PATH "/etc/ppp/ip-up"
++#define _PATH_IPDEMAND	 _ROOT_PATH "/etc/ppp/ip-demand"
+ #define _PATH_IPDOWN	 _ROOT_PATH "/etc/ppp/ip-down"
++#define _PATH_IPTERM	 _ROOT_PATH "/etc/ppp/ip-term"
+ #define _PATH_AUTHUP	 _ROOT_PATH "/etc/ppp/auth-up"
+ #define _PATH_AUTHDOWN	 _ROOT_PATH "/etc/ppp/auth-down"
+ #define _PATH_TTYOPT	 _ROOT_PATH "/etc/ppp/options."
+--- a/pppd/ipcp.c	2009-10-03 16:56:50.210126001 +0800
++++ b/pppd/ipcp.c	2009-10-03 16:57:31.484127872 +0800
+@@ -1672,8 +1672,17 @@
+ 	if (sifproxyarp(u, wo->hisaddr))
+ 	    proxy_arp_set[u] = 1;
+ 
+-    notice("local  IP address %I", wo->ouraddr);
+-    notice("remote IP address %I", wo->hisaddr);
++    notice("local  IP address %I on demand", wo->ouraddr);
++    notice("remote IP address %I on demand", wo->hisaddr);
++    /*
++     * Execute the ip-demand script, like this:
++     *	/etc/ppp/ip-demand interface tty speed local-IP remote-IP
++     * We don't change the ipcp_script_state here, only leave a on demand
++     * status record.
++     */
++    if (ipcp_script_state == s_down && ipcp_script_pid == 0) {
++	    ipcp_script(path_ipdemand);
++    }
+ 
+     return 1;
+ }
+--- a/pppd/options.c	2009-10-03 16:56:50.200125393 +0800
++++ b/pppd/options.c	2009-10-03 16:57:31.484127872 +0800
+@@ -102,7 +102,9 @@
+ int	connect_delay = 1000;	/* wait this many ms after connect script */
+ int	req_unit = -1;		/* requested interface unit */
+ char	path_ipup[MAXPATHLEN];	/* pathname of ip-up script */
++char	path_ipdemand[MAXPATHLEN];	/* pathname of ip-demand script */
+ char	path_ipdown[MAXPATHLEN];/* pathname of ip-down script */
++char	path_ipterm[MAXPATHLEN];/* pathname of ip-term script */
+ bool	multilink = 0;		/* Enable multilink operation */
+ char	*bundle_name = NULL;	/* bundle name for multilink */
+ bool	dump_options;		/* print out option values */
+@@ -281,9 +283,15 @@
+     { "ip-up-script", o_string, path_ipup,
+       "Set pathname of ip-up script",
+       OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
++    { "ip-demand-script", o_string, path_ipdemand,
++      "Set pathname of ip-demand script",
++      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+     { "ip-down-script", o_string, path_ipdown,
+       "Set pathname of ip-down script",
+       OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
++    { "ip-term-script", o_string, path_ipterm,
++      "Set pathname of ip-term script",
++      OPT_PRIV|OPT_STATIC, NULL, MAXPATHLEN },
+ 
+ #ifdef HAVE_MULTILINK
+     { "multilink", o_bool, &multilink,
+--- a/pppd/main.c	2009-10-03 16:56:50.210126001 +0800
++++ b/pppd/main.c	2009-10-03 16:57:31.484127872 +0800
+@@ -317,9 +317,12 @@
+     char numbuf[16];
+     /* EZPacket */
+     struct stat st;
++    char *term_args[2];
+ 
+     strlcpy(path_ipup, _PATH_IPUP, sizeof(path_ipup));
++    strlcpy(path_ipdemand, _PATH_IPDEMAND, sizeof(path_ipdemand));
+     strlcpy(path_ipdown, _PATH_IPDOWN, sizeof(path_ipdown));
++    strlcpy(path_ipterm, _PATH_IPTERM, sizeof(path_ipterm));
+ 
+     link_stats_valid = 0;
+     new_phase(PHASE_INITIALIZE);
+@@ -618,6 +621,10 @@
+     /* EZPacket */
+     /* Remove pid files before the process terminates. */
+     remove_pidfiles();
++    term_args[0] = path_ipterm;
++    term_args[1] = ipparam;
++    term_args[2] = NULL;
++    run_program(path_ipterm, term_args, 1, NULL, NULL);
+ 
+     return 0;
+ }
+--- a/pppd/pppd.h	2009-10-03 16:56:50.190126813 +0800
++++ b/pppd/pppd.h	2009-10-03 16:57:31.484127872 +0800
+@@ -313,7 +313,9 @@
+ extern int	max_data_rate;	/* max bytes/sec through charshunt */
+ extern int	req_unit;	/* interface unit number to use */
+ extern char	path_ipup[MAXPATHLEN]; /* pathname of ip-up script */
++extern char	path_ipdemand[MAXPATHLEN]; /* pathname of ip-demand script */
+ extern char	path_ipdown[MAXPATHLEN]; /* pathname of ip-down script */
++extern char	path_ipterm[MAXPATHLEN]; /* pathname of ip-term script */
+ extern bool	multilink;	/* enable multilink operation */
+ extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
+ extern char	*bundle_name;	/* bundle name for multilink */

@@ -1,0 +1,16 @@
+Source-Makefile: package/ncurses/Makefile
+Package: libncurses
+Version: 5.6-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Terminal handling library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Terminal handling library
+
+http://www.gnu.org/software/ncurses/
+@@
+

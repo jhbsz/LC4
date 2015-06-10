@@ -1,0 +1,8 @@
+#!/bin/sh
+./etc/arch.sh
+
+[ "$(nvram get wan0_proto)" = "htc" -o "$(nvram get wan0_proto)" = "iphone" ] && {
+killall udhcpc
+}
+
+

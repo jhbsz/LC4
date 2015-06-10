@@ -1,0 +1,16 @@
+Source-Makefile: package/uboot-rt305x/Makefile
+Package: Uboot
+Version: 1.1.3
+Depends: 
+Provides: 
+Build-Depends: 
+Section: boot
+Category: Boot Loaders
+Title: Uboot 1.1.3 for EZPacket
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Uboot 1.1.3 for EZPacket
+
+http://www.denx.de/wiki/UBoot/WebHome
+@@
+

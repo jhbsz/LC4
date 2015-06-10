@@ -1,0 +1,20 @@
+Source-Makefile: package/ezp-httpd/Makefile
+Package: ezp-httpd
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: ezp-httpd
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	ezp-httpd
+@@
+Config: 
+	menu "Httpd Configuration"
+		depends on PACKAGE_ezp-httpd
+		source "package/ezp-httpd/config/Config.in"
+	endmenu
+@@
+

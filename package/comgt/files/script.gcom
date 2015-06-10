@@ -1,0 +1,15 @@
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 1 0.2
+
+let $x=$env("SCRIPT")
+send $x
+send "^m"
+:loop
+    print $a
+    get 1 "^m" $a
+    let a=len($a)
+    if a > 0 goto loop
+    goto end 
+:end

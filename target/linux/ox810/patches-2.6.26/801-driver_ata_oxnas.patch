@@ -1,0 +1,60 @@
+--- linux-2.6.24.4/drivers/ata/Kconfig	2009-09-07 18:02:49.000000000 +0800
++++ linux-2.6.24.4/drivers/ata/Kconfig.hotplug	2009-09-07 18:02:40.000000000 +0800
+@@ -73,6 +73,14 @@
+ 
+ 	  If unsure, say N.
+ 
++config SATA_OXNAS_HOTPLUG
++	bool "Force OX810 to support SATA hotplug"
++	depends on SATA_OX810
++	default n
++	help
++  	  Enable OX810 SATA hotplug.
++
++
+ config ATA_SFF
+ 	bool "ATA SFF support"
+ 	default y
+--- linux-2.6.24.4/drivers/ata/libata-eh.c	2009-09-15 11:53:52.000000000 +0800
++++ linux-2.6.24.4/drivers/ata/libata-eh.c.hotplug	2009-09-15 11:49:26.000000000 +0800
+@@ -45,6 +45,13 @@
+ 
+ #include "libata.h"
+ 
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG
++static int esata_flag = 0;
++module_param(esata_flag, bool, 0644);
++MODULE_PARM_DESC(esata_flag,"Flag to specify whether OX810 2nd sata port is used for esata hotplug");
++#endif
++
++
+ enum {
+ 	/* speed down verdicts */
+ 	ATA_EH_SPDN_NCQ_OFF		= (1 << 0),
+@@ -2644,9 +2651,25 @@
+ 		ata_link_for_each_dev(dev, link) {
+ 			if (link->flags & ATA_LFLAG_NO_RETRY)
+ 				ehc->tries[dev->devno] = 1;
+-			else
++		
++			else {
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG
++				if (esata_flag) {	
++					if((ehc->i.serror != 0) && (ap->print_id == 2) && !(ehc->i.serror & SERR_DEV_XCHG)) {
++						ehc->tries[dev->devno] = 1;
++						dev->flags |= ATA_DFLAG_DETACH;
++						link->flags |= ATA_LFLAG_DISABLED;
++					}else{
++						ehc->tries[dev->devno] = ATA_EH_DEV_TRIES;
++					}
++				} else {
++					ehc->tries[dev->devno] = ATA_EH_DEV_TRIES;
++				}
++#else
+ 				ehc->tries[dev->devno] = ATA_EH_DEV_TRIES;
+ 
++#endif
++			}
+ 			/* collect port action mask recorded in dev actions */
+ 			ehc->i.action |= ehc->i.dev_action[dev->devno] &
+ 					 ~ATA_EH_PERDEV_MASK;

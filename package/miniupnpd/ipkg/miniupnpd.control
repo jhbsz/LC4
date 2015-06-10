@@ -1,0 +1,4 @@
+Package: miniupnpd 
+Priority: optional 
+Section: net 
+Description: A very tiny upnp server 

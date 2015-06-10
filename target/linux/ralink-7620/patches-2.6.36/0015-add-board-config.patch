@@ -1,0 +1,65 @@
+--- linux-2.6.36/arch/mips/ralink/Kconfig	2014-01-28 16:43:18.000000000 +0800
++++ linux-2.6.36/arch/mips/ralink/Kconfig1	2014-01-28 16:49:46.127046342 +0800
+@@ -41,6 +41,15 @@
+ 
+ endchoice
+ 
++choice
++    prompt "Board type"
++    default BOARD_GMA
++
++    config BOARD_GMA
++        bool "Garmin-marine-board"
++
++endchoice
++
+ endif
+ 
+ #--------------------------
+@@ -91,6 +100,30 @@
+ 
+ endchoice
+ 
++choice
++    prompt "Board type"
++    default BOARD_AME
++
++    config BOARD_AME
++        bool "MR-102NV2"
++
++    config BOARD_AXA
++        bool "MR-102N-M1"
++
++    config BOARD_AXB
++        bool "MR-102N-Bee"
++
++    config BOARD_LIS
++        bool "MR-102N-Sony"
++
++    config BOARD_AMD
++        bool "MR-102N-Bee"
++
++    config BOARD_AXM
++        bool "MR-102N-Music"
++
++endchoice
++
+ endif
+ 
+ #--------------------------
+@@ -108,6 +141,15 @@
+ 
+ endchoice
+ 
++choice
++    prompt "Board type"
++    default BOARD_M2E
++
++    config BOARD_M2E
++        bool "MT-7620 EVB board for M2"
++
++endchoice
++
+ endif
+ 
+ #--------------------------

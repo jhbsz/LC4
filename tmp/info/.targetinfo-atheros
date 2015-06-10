@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/atheros/Makefile
+Target: atheros
+Target-Board: atheros
+Target-Kernel: 2.6
+Target-Name: Atheros 231x/5312 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mips
+Target-Features: gpio jffs2 pci squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Atheros SoC boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-madwifi gpioctl
+

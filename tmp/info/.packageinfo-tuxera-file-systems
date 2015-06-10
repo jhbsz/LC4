@@ -1,0 +1,15 @@
+Source-Makefile: package/tuxera-file-systems/Makefile
+Package: tuxera-file-systems
+Submenu: Filesystem
+Version: 0
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: exFAT/NTFS/HFS+ drivers, libraries and utilities from tuxera
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Prebuilt exfat/NTFS/HFS+ libraries from tuxera.
+@@
+

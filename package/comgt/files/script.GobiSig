@@ -1,0 +1,11 @@
+open com /dev/ttyUSB1
+set com 38400n81
+set senddelay 0.05
+waitquiet 1 0.2
+send "at!gstatus?^m"
+:loop2
+print $a
+get 1 "^m" $a
+let a=len($a)
+if a > 0 goto loop2
+

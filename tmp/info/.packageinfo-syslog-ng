@@ -1,0 +1,19 @@
+Source-Makefile: package/syslog-ng/Makefile
+Package: syslog-ng
+Version: 1.6.12-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: A new-generation syslog daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   'syslog-ng' is a new-generation syslog daemon. It tries to fill the gaps original syslogd's were lacking:
+	* powerful configurability
+    * filtering based on message content
+    * message integrity, message encryption (not yet implemented in 1.4.x)
+    * portability
+    * better network forwarding
+@@
+

@@ -1,0 +1,63 @@
+Index: trunk/libtransmission/rpc-server.c
+===================================================================
+--- trunk/libtransmission/rpc-server.c	(revision 11774)
++++ trunk/libtransmission/rpc-server.c	(revision 11775)
+@@ -364,5 +364,5 @@
+             /* zlib's manual says: "Add 16 to windowBits to write a simple gzip header
+              * and trailer around the compressed data instead of a zlib wrapper." */
+-#ifdef TR_EMBEDDED
++#ifndef EZP
+             compressionLevel = Z_DEFAULT_COMPRESSION;
+ #else
+Index: trunk/libtransmission/session.c
+===================================================================
+--- trunk/libtransmission/session.c	(revision 11774)
++++ trunk/libtransmission/session.c	(revision 11775)
+@@ -252,5 +256,5 @@
+ ***/
+ 
+-#ifdef TR_EMBEDDED
++#ifndef EZP
+  #define TR_DEFAULT_ENCRYPTION   TR_CLEAR_PREFERRED
+ #else
+Index: trunk/libtransmission/utils.h
+===================================================================
+--- trunk/libtransmission/utils.h	(revision 11774)
++++ trunk/libtransmission/utils.h	(revision 11775)
+@@ -102,5 +102,5 @@
+ /* #define DISABLE_GETTEXT */
+ #ifndef DISABLE_GETTEXT
+- #if defined(WIN32) || defined(TR_EMBEDDED)
++ #if defined(WIN32) || defined(EZP)
+    #define DISABLE_GETTEXT
+  #endif
+Index: trunk/libtransmission/peer-msgs.c
+===================================================================
+--- trunk/libtransmission/peer-msgs.c	(revision 11799)
++++ trunk/libtransmission/peer-msgs.c	(revision 11800)
+@@ -1196,4 +1196,8 @@
+ {
+     int i;
++
++    #ifndef EZP
++        return;
++    #endif
+ 
+     /* Maintain 12 prefetched blocks per unchoked peer */
+Index: trunk/libtransmission/session.c
+===================================================================
+--- trunk/libtransmission/session.c	(revision 11799)
++++ trunk/libtransmission/session.c	(revision 11800)
+@@ -54,9 +54,10 @@
+ 
+ enum
+ {
+-    SAVE_INTERVAL_SECS = 120,
++    /*EZP*/
++    SAVE_INTERVAL_SECS = 360,
+ 
+-    DEFAULT_CACHE_SIZE_MB = 2
++    DEFAULT_CACHE_SIZE_MB = 1
+ };
+ 
+ /* EZP time interval to dump download info */

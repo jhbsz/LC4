@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009 OpenWrt.org
+
+NAME=mini_snmpd
+PROG=/usr/bin/$NAME
+START=50
+log_msg="SNMP-server"
+if_list="lo"
+
+start() {
+   udpport=$(nvram show snmp_rule 0 udpport)
+   location=$(nvram show snmp_rule 0 location)
+   contact=$(nvram show snmp_rule 0 contact)
+   community=$(nvram show snmp_rule 0 community)
+   description=""
+
+   [ "$(nvram get brand)" = "PROX" ] && description="Proxicast LAN-Cell 3" || description="AXIMCom Product"
+   
+   [ "$(nvram show snmp_rule 0 enable)" = "1" ] || exit 
+   
+   wan_num=$(nvram get wan_num)
+   lan_num=$(nvram get lan_num)
+   
+   id=1
+   while [ $id -le $wan_num ] ;
+   do 
+   	if_list="$if_list,WAN${id}"
+   	id=$(($id+1))
+   done
+   
+   if [ "$lan_num" = 1 ]; then 
+	   if_list="$if_list,LAN"
+   else
+	   id=1
+	   while [ $id -le $lan_num ] ;
+	   do 
+	   	if_list="$if_list,LAN${id}"
+	   	id=$(($id+1))
+	   done
+   fi
+   
+   $PROG -c "$community" -p "$udpport"  -C "$contact" -L "$location" -D "$description" -d /tmp,/jffs -i "$if_list" &
+}
+
+stop() {
+	killall mini_snmpd
+}

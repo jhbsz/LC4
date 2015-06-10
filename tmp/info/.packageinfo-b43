@@ -1,0 +1,15 @@
+Source-Makefile: package/b43/Makefile
+Package: kmod-b43
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_brcm47xx +kmod-mac80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom 43xx wireless support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: Kernel module for Broadcom 43xx wireless support (mac80211)
+@@
+

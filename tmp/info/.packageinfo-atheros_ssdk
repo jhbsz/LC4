@@ -1,0 +1,14 @@
+Source-Makefile: package/atheros_ssdk/Makefile
+Package: atheros_ssdk
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: SSDK for atheros switch
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A small shell to configure switch register
+@@
+

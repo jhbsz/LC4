@@ -1,0 +1,322 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg" onload="init(evt)" onmousemove="mMove(evt)">
+
+<style type='text/css'>
+* {
+	cursor: pointer;
+}
+line {
+	stroke: #fff;
+	stroke-width: 1;
+}
+#crossX, #crossY {
+	stroke: #640000;
+	stroke-width: 2;
+	opacity: 0.5;
+}
+text {
+	font: 11px arial;
+	fill: #000;
+}
+#pointText {
+	text-anchor: end;
+}
+.back {
+	fill: #fff;
+	opacity: 0.8;
+}
+</style>
+<script type='text/ecmascript'><![CDATA[
+
+var week = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var pointLoc = 0;
+var vWidth = 700;
+var vHeight = 300;
+var crossH = 0;
+var crossV = 0;
+var maxV = 0;
+var time24 = 0;
+var advX = 1;
+var interval = 0;
+var xpstVis = 1;
+var ignoreNext = 0;
+var eraseL = 0;
+var polyLines = new Array(4);
+var thp_flag = 1;
+
+function E(id)
+{
+	return document.getElementById(id);
+}
+
+function pad(n)
+{
+	n = n.toString();
+	while (n.length < 2) n = '0' + n;
+	return n;
+}
+
+function xps(n, mode)
+{
+    if (thp_flag) {
+        if (mode)
+            return Math.round(n / 1024) + ' KB/s';
+        else
+            return (n / 1024).toFixed(2) + ' KB/s';
+    } else {
+        return n;
+    }
+}
+
+function setText(e, text)
+{
+	// Adobe/IE doesn't do textContent=
+	if (e.firstChild) e.removeChild(e.firstChild);
+	e.appendChild(document.createTextNode(text));
+}
+
+function setAttribute(name, type, val)
+{
+    E(name).setAttribute(type, val);
+}
+
+function init(evt)
+{
+	var n;
+
+    if (typeof(svgDocument) == 'undefined') svgDocument = evt.target.ownerDocument;
+
+	crossX = E('crossX');
+	crossY = E('crossY');
+	polyRx = E('polyRx');
+	polyTx = E('polyTx');
+
+    polyLines[0] = E('poly0');
+    polyLines[1] = E('poly1');
+    polyLines[2] = E('poly2');
+    polyLines[3] = E('poly3');
+
+	pointText = E('pointText');
+	pointG = E('pointGroup');
+
+	tickLines = [];
+	for (n = 0; n < 6; ++n)
+		tickLines[n] = E('tick' + n);
+
+	xpst = [];
+	for (n = 0; n < 5; ++n)
+		xpst[n] = E('xpst' + n);
+
+	time24 = ((new Date(2000, 0, 1, 23, 0, 0, 0)).toLocaleString().indexOf('23') != -1);
+
+	top.updateSVG = updateSVG;
+	top.setAttribute = setAttribute;
+	top.svgOK = 1;
+	top.initSVGData();
+}
+
+function drawSVGData(poly, data, mode, color)
+{
+	var i;
+	var pt;
+	var x;
+	var y;
+	var z;
+	var d;
+
+	if (data.length == 0) return;
+
+	tock = new Date();	// aproximate since there is no real time included
+
+	advX = vWidth / data.length;
+
+	x = 0;
+	if (mode == 0) {
+		poly.setAttribute('fill-opacity', '0.5');
+		pt = '0,' + vHeight;
+	}
+	else {
+		poly.setAttribute('fill-opacity', '0');
+		pt = '';
+	}
+	poly.setAttribute('stroke', color);
+	poly.setAttribute('fill', color);
+	for (i = 0; i < data.length; ++i) {
+		d = data[i];
+		y = (vHeight - Math.floor((d * vHeight) / maxV))
+		pt += ' ' + Math.floor(x) + ',' + y;
+		x += advX;
+	}
+	pt += ' ' + (vWidth + 5) + ',' + y + ' ' + (vWidth + 10) + ',' + vHeight;
+	poly.setAttribute('points', pt);
+
+	if (interval == 60) {
+		x = (60 - tock.getMinutes());
+		for (i = 0; i < 6; ++i) {
+			tickLines[i].setAttribute('x1', Math.round(x * advX));
+			tickLines[i].setAttribute('x2', Math.round(x * advX));
+			x += 60;
+		}
+	}
+
+	tock = tock.getTime();
+}
+
+function updateSVG(num, p, c, max, mode, intv, thp)
+{
+	var x, z, i;
+
+    thp_flag = thp;
+	maxV = max;
+	interval = intv;
+
+	if (intv != 60) {
+		x = z = (vWidth / 5);
+		for (i = 0; i < 4; ++i) {
+			tickLines[i].setAttribute('x1', Math.round(x));
+			tickLines[i].setAttribute('x2', Math.round(x));
+			x += z;
+		}
+	}
+
+	if (max <= 0) {
+		polyRx.setAttribute('points', '');
+		polyTx.setAttribute('points', '');
+
+        for (i = 0; i < 4; i++) {
+            polyLines[i].setAttribute('points', '');
+        }
+		return;
+	}
+
+	if (crossV > 0) {
+        drawLoc(crossH, vHeight - Math.floor((crossV / maxV) * vHeight));
+    }
+
+    for (i = 0; i < num; i++) {
+	    drawSVGData(polyLines[i], p[i], mode, c[i]);
+    }
+
+    xpsmode = (max >= 1024 * 32) ? 1 : 0;
+
+	setText(xpst[0], xps(max, xpsmode));
+	setText(xpst[1], xps(max * 0.8, xpsmode));
+	setText(xpst[2], xps(max * 0.6, xpsmode));
+	setText(xpst[3], xps(max * 0.4, xpsmode));
+	setText(xpst[4], xps(max * 0.2, xpsmode));
+
+	if (eraseL > 0) {
+		if (--eraseL == 0) pointG.setAttribute('visibility', 'hidden');
+	}
+}
+
+function vY(y)
+{
+	return Math.round(maxV - (maxV * (y / vHeight)));
+}
+
+function mMove(evt)
+{
+	var t, s, x, h;
+
+	if (maxV <= 0) return;
+	if (evt.clientX > (vWidth - 120)) {
+		if (pointLoc == 0) {
+			if (evt.clientY < 30) {
+				pointLoc = 1;
+				pointText.setAttribute('y', '98%');
+			}
+		}
+		else {
+			if (evt.clientY > (vHeight - 30)) {
+				pointLoc = 0;
+				pointText.setAttribute('y', '5%');
+			}
+		}
+	}
+    drawLoc(evt.clientX, evt.clientY);
+
+	t = new Date(tock - (Math.round((vWidth - evt.clientX - 1) / advX) * interval * 1000));
+	x = t.getHours();
+	s = week[t.getDay()] + ' ';
+	if (time24)	{
+		s += pad(x) + ':' + pad(t.getMinutes());
+	}
+	else {
+		h = x % 12;
+		s += pad((h == 0) ? 12 : h) + ':' + pad(t.getMinutes()) + ((x < 12) ? ' am' : ' pm');
+	}
+	setText(pointText, s + ' / ' + xps(vY(evt.clientY), 0));
+
+	x = pointText.getComputedTextLength();
+	if (eraseL == 0) pointG.setAttribute('visibility', 'visible');
+	eraseL = 5;
+}
+
+function setXY(e, x, y)
+{
+	e.setAttribute('x', x);
+	e.setAttribute('y', y);
+}
+
+function drawLoc(x, y)
+{
+	crossX.setAttribute('x1', x - 15);
+	crossX.setAttribute('x2', x + 15);
+	crossX.setAttribute('y1', y);
+	crossX.setAttribute('y2', y);
+
+	crossY.setAttribute('x1', x);
+	crossY.setAttribute('x2', x);
+	crossY.setAttribute('y1', y - 15);
+	crossY.setAttribute('y2', y + 15);
+}
+
+function toggleXpst()
+{
+	E('xpst').setAttribute('visibility', (xpstVis ^= 1) ? 'visible' : 'hidden');
+	ignoreNext = 1;
+}
+
+]]></script>
+<rect x="0" y="0" width="100%" height="100%" style="fill:#f0f0f0;opacity:0.3;stroke-width:5;stroke:#000" />
+
+<line x1="0" y1="20%" x2="100%" y2="20%" />
+<line x1="0" y1="40%" x2="100%" y2="40%" />
+<line x1="0" y1="60%" x2="100%" y2="60%" />
+<line x1="0" y1="80%" x2="100%" y2="80%" />
+
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick0" />
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick1" />
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick2" />
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick3" />
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick4" />
+<line x1="0" y1="0%" x2="0" y2="100%" id="tick5" />
+
+<g id="xpst">
+	<text x="1%" y="5%" id="xpst0" />
+	<text x="1%" y="25%" id="xpst1" />
+	<text x="1%" y="45%" id="xpst2" />
+	<text x="1%" y="65%" id="xpst3" />
+	<text x="1%" y="85%" id="xpst4" />
+</g>
+
+<polyline id="polyTx" style="stroke-width:2.5" points="" />
+<polyline id="polyRx" style="stroke-width:2.5" points="" />
+
+<polyline id="poly0" style="stroke-width:2" points="" />
+<polyline id="poly1" style="stroke-width:2" points="" />
+<polyline id="poly2" style="stroke-width:2" points="" />
+<polyline id="poly3" style="stroke-width:2" points="" />
+
+<g id="pointGroup">
+	<text x="99%" y="12" id="pointText" />
+</g>
+
+<g id="cross">
+	<line x1="0" y1="0" x2="0" y2="0" id="crossX" />
+	<line x1="0" y1="0" x2="0" y2="0" id="crossY" />
+</g>
+
+</svg>

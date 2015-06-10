@@ -1,0 +1,48 @@
+--- pure-ftpd-1.0.21.orig/src/ftpd.c	2006-02-21 21:14:49.000000000 +0800
++++ pure-ftpd-1.0.21/src/ftpd_new.c	2014-11-24 14:22:01.750095300 +0800
+@@ -4490,10 +4490,10 @@
+ 
+ #ifndef NO_BANNER
+ # ifdef BORING_MODE
+-    addreply_noformat(0, MSG_WELCOME_TO " Pure-FTPd.");
++    addreply_noformat(0, MSG_WELCOME_TO "QGenie FTP service");
+ # else
+     addreply_noformat(0, "--------- " MSG_WELCOME_TO 
+-                      " Pure-FTPd" VERSION_PRIVSEP VERSION_TLS " ----------");
++                      " QGenie FTP service" VERSION_PRIVSEP VERSION_TLS " ----------");
+ # endif
+ #else
+     addreply_noformat(220, "FTP server ready.");
+@@ -4620,16 +4620,16 @@
+     {
+         struct tm *t;
+         
+-        if ((t = localtime(&session_start_time)) != NULL) {
++       /* if ((t = localtime(&session_start_time)) != NULL) {
+             addreply(220, MSG_WELCOME_TIME,
+                      t->tm_hour, t->tm_min, (unsigned int) serverport);
+-        }
++        }*/
+     }
+ #endif
+     if (anon_only > 0) {
+         addreply_noformat(220, MSG_ANONYMOUS_FTP_ONLY);
+     } else if (anon_only < 0) {
+-        addreply_noformat(220, MSG_NO_ANONYMOUS_LOGIN);
++        /*addreply_noformat(220, MSG_NO_ANONYMOUS_LOGIN);*/
+     }
+ #ifndef NO_BANNER
+     if (allowfxp == 2) {
+@@ -4647,9 +4647,9 @@
+     }
+ #endif
+ #ifndef NO_BANNER
+-    if (v6ready != 0 && STORAGE_FAMILY(peer) != AF_INET6) {
+-        addreply(0, MSG_IPV6_OK);
+-    }    
++    /*if (v6ready != 0 && STORAGE_FAMILY(peer) != AF_INET6) {
++       addreply(0, MSG_IPV6_OK);
++    }  */ 
+     if (idletime >= 120UL) {
+         addreply(220, MSG_INFO_IDLE_M, idletime / 60UL);
+     } else {

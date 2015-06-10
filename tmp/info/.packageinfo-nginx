@@ -1,0 +1,22 @@
+Source-Makefile: package/nginx/Makefile
+Package: nginx
+Menu: 1
+Submenu: Web Servers/Proxies
+Version: 1.4.4-1
+Depends: +NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +libpthread +NGINX_LUA:liblua
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Nginx web server
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  nginx is an HTTP and reverse proxy server, as well as a mail proxy server,
+ written by Igor Sysoev.
+
+http://nginx.org/
+@@
+Config: 
+  source "package/nginx/Config.in"
+@@
+

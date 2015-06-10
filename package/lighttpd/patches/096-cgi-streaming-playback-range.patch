@@ -1,0 +1,13 @@
+--- lighttpd-1.4.30/src/mod_cgi.c	2014-03-06 09:46:50.695871827 +0800
++++ lighttpd-1.4.30/src/mod_cgi.c	2014-03-06 09:41:55.279884997 +0800
+@@ -888,7 +888,9 @@
+ 		if (!buffer_is_empty(con->request.orig_uri)) {
+ 			cgi_env_add(&env, CONST_STR_LEN("REQUEST_URI"), CONST_BUF_LEN(con->request.orig_uri));
+ 		}
+-
++        if(con->request.http_range != NULL) {
++            cgi_env_add(&env, CONST_STR_LEN("HTTP_RANGE"), con->request.http_range, strlen(con->request.http_range));
++        }
+ 
+ 		switch (con->dst_addr.plain.sa_family) {
+ #ifdef HAVE_IPV6

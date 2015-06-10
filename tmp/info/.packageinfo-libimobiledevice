@@ -1,0 +1,14 @@
+Source-Makefile: package/libimobiledevice/Makefile
+Package: libimobiledevice
+Version: 1.1.6
+Depends: +libplist +libtasn1 +libiconv +libgnutls +libusbmuxd +openssl
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: A library for accessing Linux iPhone devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A library for accessing Linux iPhone devices
+@@
+

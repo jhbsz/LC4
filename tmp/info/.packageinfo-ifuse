@@ -1,0 +1,14 @@
+Source-Makefile: package/ifuse/Makefile
+Package: ifuse
+Version: 1.1.3
+Depends: +libimobiledevice +libfuse +fuse-utils +libgnutls +libgcrypt +libgpg-error +kmod-usb-net-iphone
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: ifuse
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	ifuse
+@@
+

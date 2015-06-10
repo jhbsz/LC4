@@ -1,0 +1,2024 @@
+--- linux-2.6.26.old/drivers/net/usb/ib-net.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-2.6.26/drivers/net/usb/ib-net.h	2009-07-24 21:16:07.001655704 +0800
+@@ -0,0 +1,184 @@
++/* iBurst (TM) compatible driver for 2.6 Linux kernel.
++ * based on the original ArrayComm (TM) iBurst (TM) driver.
++ * Nicholas Jefferson <nicholas@pythontraining.com.au>
++ * 11 May 2005
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include <linux/netdevice.h>
++#include <linux/wireless.h>
++
++#define IB_PROTO 0xac
++#define STATUS_READY 0x06
++
++/*
++ * if macro is undefined, define it to be a noop
++ */
++#ifndef SET_MODULE_OWNER
++#define SET_MODULE_OWNER while (0) {}
++#endif
++
++/**
++ * enum ib_net_flag - radio frame flag field.
++ */
++enum ib_net_flag
++{
++	FLAG_BROADCAST = 0x08,
++	FLAG_EXTENSION = 0x80,
++};
++
++/**
++ * struct ib_net_driver_t - driver callback functions.
++ * @poll: called by ib_net_poll, ib_net_tx_start.
++ * @tx_timeout: called by ib_net_tx_timeout.
++ * @close: called by ib_net_close.
++ */
++struct ib_net_driver_t {
++	void (*poll)(void*);
++	void (*tx_timeout)(void*);
++	int (*open)(void*);
++	void (*rx_parse)(void*);
++	int (*close)(void*);
++};
++
++/**
++ * struct ib_net_radio_t - radio frame header.
++ * @word: packet length and flags.
++ *     word[0].2 word[0].1 word[0].0 word[1]: packet length.
++ *     word[0].3: broadcast flag.
++ *     word[0].6 word[0].5 word[0].4: priority field (ignore this field).
++ *     word[0].7: extension flag (drop packet if set).
++ * @packet: packet identifier.
++ * @check: ones' complement of word[1].
++ * @proto: next protocol field.
++ * @payload: payload.
++ */
++struct ib_net_radio_t {
++	unsigned char word[2];
++	unsigned char packet;
++	unsigned char check;
++	unsigned char proto[2];
++	unsigned char payload[0];
++};
++
++#define IB_NET_RADIO_HEAD sizeof(struct ib_net_radio_t)
++#define IB_NET_RADIO_SIZE ((IB_NET_RADIO_HEAD + ETH_DATA_LEN + 31) & ~31)
++#define IB_NET_NBUF(word0, word1) ((((word0) & 0x07) << 8) | (word1))
++
++/**
++ * struct ib_net_ether_t - ethernet frame header.
++ * @dest: destination MAC address.
++ * @source: source MAC address.
++ * @proto: next protocol field.
++ * @payload: payload.
++ */
++struct ib_net_ether_t {
++	unsigned char dest[ETH_ALEN];
++	unsigned char source[ETH_ALEN];
++	unsigned char proto[2];
++	unsigned char payload[0];
++};
++
++#define IB_NET_ETHER_HEAD sizeof(struct ib_net_ether_t)
++
++/**
++ * struct ib_net_modem_t - modem state.
++ * NTJ: 1.3.4: added 1 byte to buffers for possible padding
++ *
++ * @netdev: network device.
++ * @stats: device statistics.
++ * @wstats: wireless statistics.
++ * @status: network device status; used by ib_net_close.
++ * @driver: driver callback functions.
++ * @pdriver: instance for driver callback functions.
++ * @rx_buf: buffer to receive one iBurst radio cell.
++ * @tx_buf: buffer to transmit one iBurst radio cell.
++ * @tx_queue: transmit cell queue.
++ * @task_queue: bottom half handler.
++ */
++struct ib_net_modem_t {
++	struct net_device *netdev;
++	struct net_device_stats stats;
++	struct iw_statistics wstats;
++	int pc_status, ut_status, uprate, downrate;
++	struct ib_net_driver_t *driver;
++	void *pdriver;
++	unsigned char rx_buf[IB_NET_RADIO_SIZE + 1];
++	unsigned char tx_buf[IB_NET_RADIO_SIZE + 1];
++	struct sk_buff_head tx_queue;
++	struct work_struct work_queue;
++};
++
++/**
++ * ib_net_lock - spin lock for entire driver.
++ */
++extern spinlock_t ib_lock;
++
++/**
++ * ib_net_addr - set network device MAC address.
++ * @modem: modem state.
++ * @addr: MAC address.
++ */
++static inline void ib_net_addr(struct ib_net_modem_t *modem,
++		unsigned char *addr)
++{
++	memcpy(modem->netdev->dev_addr, addr, ETH_ALEN);
++	modem->netdev->dev_addr[0] &= ~1; /* hack - make unicast */
++}
++
++/**
++ * ib_net_attach - attach network device.
++ * @modem: modem state.
++ */
++static inline void ib_net_attach(struct ib_net_modem_t *modem)
++{
++	netif_device_attach(modem->netdev);
++}
++
++/**
++ * ib_net_detach - detach network device.
++ * @modem: modem state.
++ */
++static inline void ib_net_detach(struct ib_net_modem_t *modem)
++{
++	netif_device_detach(modem->netdev);
++}
++
++/**
++ * ib_net_schedule - schedule bottom half handler.
++ * @modem: modem state.
++ */
++static inline void ib_net_schedule(struct ib_net_modem_t *modem)
++{
++	schedule_work(&modem->work_queue);
++}
++
++/**
++ * ib_net_flush - flush workqueue.
++ * @modem: modem state.
++ */
++static inline void ib_net_flush(struct ib_net_modem_t *modem)
++{
++	flush_scheduled_work();
++}
++
++static inline void ib_net_ut_status(struct ib_net_modem_t *modem,
++		int ut_status)
++{
++	if ((ut_status ^ modem->ut_status) & STATUS_READY) {
++		if (ut_status & STATUS_READY)
++			netif_carrier_on(modem->netdev);
++		else
++			netif_carrier_off(modem->netdev);
++	}
++	modem->ut_status = ut_status;
++}
++
++extern int ib_net_register(struct net_device **netdev);
++extern void ib_net_deregister(struct ib_net_modem_t *modem);
++extern void ib_net_rx_parse(struct ib_net_modem_t *modem, int nbuf);
++extern int ib_net_tx_prepare(struct ib_net_modem_t *modem);
+--- linux-2.6.26.old/drivers/net/usb/ib-net.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-2.6.26/drivers/net/usb/ib-net.c	2009-07-24 21:16:07.001655704 +0800
+@@ -0,0 +1,556 @@
++/* iBurst (TM) compatible driver for 2.6 Linux kernel.
++ * based on the original ArrayComm (TM) iBurst (TM) driver.
++ * Nicholas Jefferson <nicholas@pythontraining.com.au>
++ * 11 May 2005
++ *
++ * Fixes by Nik Trevallyn-Jones.
++ * Fixes to support new hardware by Shane MacPhillamy.
++ * Support for 2.6.20 by Daniel Burr.
++ *
++ * Wireless Extension IOCTL code based on that in
++ * orinoco.c (v0.15rc2 28 July 2004) in the orinoco driver, written by
++ * Pavel Roskin, David Gibson, Jean Tourrilhes & Benjamin Herrenschmidt.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include "ib-net.h"
++
++#include <linux/version.h>
++#include <linux/etherdevice.h>
++#include <net/iw_handler.h>
++
++#define IB_NET_QUEUE_LO 4
++#define IB_NET_QUEUE_HI 10
++#define IB_PROTO_CONTROL 0x00
++#define IB_CONTROL_STATUS1 0x05
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
++#define IW_QUAL_QUAL_UPDATED	0x01	/* Value was updated since last read */
++#define IW_QUAL_LEVEL_UPDATED	0x02
++#define IW_QUAL_NOISE_UPDATED	0x04
++#endif
++
++enum ib_net_offset
++{
++	OFFSET_STATUS1_NPAYLOAD = 0x00,
++	OFFSET_STATUS1_TYPE = 0x01,
++	OFFSET_STATUS1_LEVEL = 0x02,
++	OFFSET_STATUS1_UPCOUNT = 0x03,
++	OFFSET_STATUS1_DOWNCOUNT = 0x04,
++	OFFSET_STATUS1_SAMPLE = 0x05,
++	OFFSET_STATUS1_SUCCESS = 0x0a,
++	OFFSET_STATUS1_ATTEMPT = 0x0b,
++	OFFSET_STATUS1_SINR = 0x0c,
++};
++
++static int debug = 0;
++module_param(debug, int, 0);
++#define DEBUG(n, args...) if (debug < (n)) ; else printk(KERN_INFO args)
++
++/**
++ * ifname - interface name.
++ */
++static char *ifname = "ib%d";
++module_param(ifname, charp, 0);
++
++spinlock_t ib_lock = SPIN_LOCK_UNLOCKED;
++
++/**
++ * ib_net_rx_deliver - deliver received radio frame as ethernet frame.
++ *     called under ib_lock
++ * @modem: modem state.
++ * @nbuf: radio frame size.
++ */
++static void ib_net_rx_deliver(struct ib_net_modem_t *modem, int nbuf)
++{
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++	struct ib_net_ether_t *ether;
++	struct sk_buff *skb;
++	int npayload;
++
++	modem->stats.rx_bytes += nbuf;
++	modem->stats.rx_packets += 1;
++	modem->netdev->last_rx = jiffies;
++	npayload = nbuf - IB_NET_RADIO_HEAD;
++	skb = alloc_skb(IB_NET_ETHER_HEAD + npayload, GFP_ATOMIC);
++	if (skb == NULL) {
++		modem->stats.rx_dropped += 1;
++		return;
++	}
++	skb->dev = modem->netdev;
++	ether = (struct ib_net_ether_t*)
++			skb_put(skb, IB_NET_ETHER_HEAD + npayload);
++	memcpy(ether->source, modem->netdev->dev_addr, ETH_ALEN);
++	if (radio->word[0] & FLAG_BROADCAST)
++		memset(ether->dest, 0xff, ETH_ALEN);
++	else {
++		ether->source[ETH_ALEN - 1] ^= 1;
++		memcpy(ether->dest, modem->netdev->dev_addr, ETH_ALEN);
++	}
++	ether->proto[0] = radio->proto[0];
++	ether->proto[1] = radio->proto[1];
++	memcpy(ether->payload, radio->payload, npayload);
++	skb->protocol = eth_type_trans(skb, modem->netdev);
++	skb->ip_summed = CHECKSUM_UNNECESSARY;
++	netif_rx(skb);
++}
++
++/**
++ * ib_net_rx_control_parse - process received control frame.
++ *     called under ib_lock
++ * @modem: modem state.
++ * @nbuf: control frame size.
++ */
++static void ib_net_rx_control_parse(struct ib_net_modem_t *modem, int nbuf)
++{
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++	int32_t *payload = (int32_t*) &radio->payload;
++	int npayload, type, level, sinr, attempt, success;
++#if 17 <= WIRELESS_EXT
++	int sample, upcount, downcount;
++#endif
++
++	level = 0;	// to silence a benign warning
++	npayload = nbuf - IB_NET_RADIO_HEAD;
++	if (npayload < 8)
++		return;
++	if (npayload != be32_to_cpup(payload + OFFSET_STATUS1_NPAYLOAD))
++		return;
++	type = be32_to_cpup(payload + OFFSET_STATUS1_TYPE);
++	if (type == IB_CONTROL_STATUS1 && 12 <= npayload) {
++		/**
++		 * level is reported as an int 0 <= n <= 100,
++		 * or -1 => invalid
++		 */
++		level = le32_to_cpup(payload + OFFSET_STATUS1_LEVEL);
++		if (level != -1) {
++			modem->wstats.qual.level = modem->wstats.qual.qual
++					= level;
++			modem->wstats.qual.updated |= IW_QUAL_LEVEL_UPDATED
++					| IW_QUAL_QUAL_UPDATED;
++		}
++	}
++#if 17 <= WIRELESS_EXT
++	if (type == IB_CONTROL_STATUS1 && 24 <= npayload) {
++		/**
++		 * up and down throughput are reported as int byte
++		 * counts; the sample time is reported in milliseconds.
++		 *
++		 * The rates are calculated as bits/sec.
++		 */
++		sample = le32_to_cpup(payload + OFFSET_STATUS1_SAMPLE);
++		upcount = le32_to_cpup(payload + OFFSET_STATUS1_UPCOUNT);
++		downcount = le32_to_cpup(payload + OFFSET_STATUS1_DOWNCOUNT);
++		if (sample) {
++			modem->uprate = upcount * 1000 / sample * 8;
++			modem->downrate = downcount * 1000 / sample * 8;
++		}
++	}
++#endif
++	if (type == IB_CONTROL_STATUS1 && 48 <= npayload) {
++		/**
++		 * success and attempt report the number of bursts
++		 * attempted/successful since last report.
++		 *
++		 * Missed bursts are calculated as attempt - success.
++		 */
++		attempt = le32_to_cpup(payload + OFFSET_STATUS1_ATTEMPT);
++		success = le32_to_cpup(payload + OFFSET_STATUS1_SUCCESS);
++		modem->wstats.miss.beacon = attempt - success;
++	}
++	if (type == IB_CONTROL_STATUS1 && 52 <= npayload) {
++		/**
++		 * sinr (signal to interference AND noise) is reported as
++		 * actual-sinr << 4 (ie sinr * 16).
++		 *
++		 * noise is calculated as level / (sinr+1).
++		 *
++		 * Since sinr is already multiplied by 16, top and bottom of
++		 * ratio are multiplied by 16. Hence level => level*16 and
++		 * sinr+1 => sinr+16 (sinr is already multiplied by 16).
++		 */
++		sinr = le32_to_cpup(payload + OFFSET_STATUS1_SINR);
++		if (sinr) {
++			modem->wstats.qual.noise = (level * 16) / (sinr + 16);
++			modem->wstats.qual.updated |= IW_QUAL_NOISE_UPDATED;
++		}
++	}
++}
++
++/**
++ * ib_net_rx_parse - process received radio frame.
++ *     called under ib_lock
++ * @modem: modem state.
++ * @nbuf: radio frame size.
++ */
++void ib_net_rx_parse(struct ib_net_modem_t *modem, int nbuf)
++{
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++
++	if (radio->word[0] & FLAG_EXTENSION)
++		return;
++	if (radio->word[1] ^ radio->check ^ 0xff)
++		return;
++	if (radio->proto[0] != IB_PROTO)
++		ib_net_rx_deliver(modem, nbuf);
++	else if (radio->proto[1] == IB_PROTO_CONTROL)
++		ib_net_rx_control_parse(modem, nbuf);
++	else if (modem->driver->rx_parse)
++		modem->driver->rx_parse(modem->pdriver);
++}
++
++/**
++ * ib_net_tx_prepare - prepare next radio frame for transmission.
++ *     called under ib_lock
++ * @modem: modem state.
++ */
++int ib_net_tx_prepare(struct ib_net_modem_t *modem)
++{
++	struct sk_buff *skb;
++	struct ib_net_radio_t *radio;
++	int nqueue;
++
++	nqueue = skb_queue_len(&modem->tx_queue);
++	if (nqueue < IB_NET_QUEUE_LO)
++		netif_wake_queue(modem->netdev);
++	skb = skb_dequeue(&modem->tx_queue);
++	if (skb == NULL)
++		return 0;
++	memcpy(modem->tx_buf, skb->data, skb->len);
++	dev_kfree_skb(skb);
++	radio = (struct ib_net_radio_t*) modem->tx_buf;
++	radio->packet = modem->stats.tx_packets & 0xff;
++	modem->netdev->trans_start = jiffies;
++	return skb->len;
++}
++
++/**
++ * ib_net_deregister - deregister network device.
++ * @modem: modem state.
++ */
++void ib_net_deregister(struct ib_net_modem_t *modem)
++{
++	unregister_netdev(modem->netdev);
++	free_netdev(modem->netdev);
++}
++
++/**
++ * ib_net_poll - bottom half handler for interrupts.
++ * @_modem: modem state.
++ */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
++static void ib_net_poll(void *_modem)
++#else
++static void ib_net_poll(struct work_struct *work)
++#endif
++{
++	unsigned long state;
++	struct ib_net_modem_t *modem = 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
++		_modem;
++#else
++		container_of(work, struct ib_net_modem_t, work_queue);
++#endif
++
++	spin_lock_irqsave(&ib_lock, state);
++	if (modem->driver->poll)
++		modem->driver->poll(modem->pdriver);
++	spin_unlock_irqrestore(&ib_lock, state);
++}
++
++/**
++ * ib_net_stats - return network device statistics.
++ * @netdev: network device state.
++ */
++static struct net_device_stats *ib_net_stats(struct net_device *netdev)
++{
++	struct ib_net_modem_t *modem = netdev->priv;
++
++	return &modem->stats;
++}
++
++/**
++ * ib_wireless_stats - return wireless statistics.
++ * @netdev: network device state.
++ */
++static struct iw_statistics *ib_wireless_stats(struct net_device *netdev)
++{
++	struct ib_net_modem_t *modem = netdev->priv;
++
++	return &modem->wstats;
++}
++
++/**
++ * ib_net_tx_timeout - timeout handler.
++ * @netdev: network device state.
++ */
++static void ib_net_tx_timeout(struct net_device *netdev)
++{
++	unsigned long state;
++	struct ib_net_modem_t *modem = netdev->priv;
++
++	spin_lock_irqsave(&ib_lock, state);
++	if (modem->driver->tx_timeout)
++		modem->driver->tx_timeout(modem->pdriver);
++	netdev->trans_start = jiffies;
++	spin_unlock_irqrestore(&ib_lock, state);
++}
++
++/**
++ * ib_net_tx_start - convert ethernet frame to radio frame for transmission.
++ * @skb: ethernet frame.
++ * @netdev: network device state.
++ */
++static int ib_net_tx_start(struct sk_buff *skb, struct net_device *netdev)
++{
++	unsigned long state;
++	struct ib_net_modem_t *modem = netdev->priv;
++	struct ib_net_ether_t *ether;
++	struct ib_net_radio_t *radio;
++	int nbuf, nqueue;
++
++	ether = (struct ib_net_ether_t*) skb->data;
++	radio = (struct ib_net_radio_t*)
++			skb_pull(skb, IB_NET_ETHER_HEAD - IB_NET_RADIO_HEAD);
++	nbuf = skb->len;
++	if (ether->dest[0] & 1)
++		radio->word[0] = (nbuf >> 8) | FLAG_BROADCAST;
++	else
++		radio->word[0] = nbuf >> 8;
++	radio->word[1] = nbuf & 0xff;
++	radio->check = (nbuf & 0xff) ^ 0xff;
++	spin_lock_irqsave(&ib_lock, state);
++	skb_queue_tail(&modem->tx_queue, skb);
++	nqueue = skb_queue_len(&modem->tx_queue);
++	if (IB_NET_QUEUE_HI < nqueue)
++		netif_stop_queue(modem->netdev);
++	if (modem->driver->poll)
++		modem->driver->poll(modem->pdriver);
++	spin_unlock_irqrestore(&ib_lock, state);
++	return 0;
++}
++
++/**
++ * ib_net_open - open network device.
++ * @netdev: network device state.
++ */
++static int ib_net_open(struct net_device *netdev)
++{
++	struct ib_net_modem_t *modem = netdev->priv;
++	int err;
++
++	spin_lock_irq(&ib_lock);
++	if (modem->driver->open) {
++		err = modem->driver->open(modem->pdriver);
++		if (!err)
++			netif_start_queue(netdev);
++	} else
++		err = -ENODEV;
++	spin_unlock_irq(&ib_lock);
++	return err;
++}
++
++/**
++ * ib_net_close - close network device.
++ * @netdev: network device state.
++ */
++static int ib_net_close(struct net_device *netdev)
++{
++	struct ib_net_modem_t *modem = netdev->priv;
++	int err;
++
++	spin_lock_irq(&ib_lock);
++	if (modem->driver->close) {
++		err = modem->driver->close(modem->pdriver);
++		if (!err) {
++			modem->wstats.qual.level = 0;
++			modem->wstats.qual.qual = 0;
++			modem->wstats.qual.noise = 0;
++			modem->wstats.qual.updated = 0x7;
++			netif_stop_queue(netdev);
++		}
++	} else
++		err = -ENODEV;
++	spin_unlock_irq(&ib_lock);
++	return err;
++}
++
++/**
++ * ib_net_change_mtu - change mtu.
++ * @netdev: network device state.
++ * @mtu: new mtu.
++ */
++static int ib_net_change_mtu(struct net_device *netdev, int mtu)
++{
++	if (mtu < 0 || ETH_DATA_LEN < mtu)
++		return -EINVAL;
++	netdev->mtu = mtu;
++	return 0;
++}
++
++#if 17 <= WIRELESS_EXT
++/**
++ * ib_ioctl_getname - return the name of this wireless interface
++ *
++ * The header file suggests (strongly) that this indicate the wireless
++ * protocol (eg "IEEE 802.11").
++ *
++ * @dev: network device state (ignored).
++ * @info: request info (ignored).
++ * @name: interface name (returned).
++ * @extra: extra flags (ignored).
++ */
++static int ib_ioctl_getname(struct net_device *dev,
++		struct iw_request_info *info, char *name, char *extra)
++{
++	strcpy(name, "HC-SDMA (iBurst)");
++	return 0;
++}
++
++/**
++ * ib_ioctl_getrate - return the current date rate of this wireless interface
++ *
++ * Wireless Extensions make no distinction between up and down rates,
++ * so we report the larger of the two. One way of looking at this is that
++ * we report on whatever is doing the most work. Another way of looking
++ * at it is that we report the most impressive number...
++ *
++ * @dev: network device state.
++ * @info: request info (ignored).
++ * @rrq: request data (returned)
++ * @extra: extra flags (ignored).
++ */
++static int ib_ioctl_getrate(struct net_device *dev,
++		struct iw_request_info *info, struct iw_param *rrq, char *extra)
++{
++	struct ib_net_modem_t *modem = dev->priv;
++
++	rrq->value = (modem->downrate <= modem->uprate
++			? modem->uprate : modem->downrate);
++	rrq->fixed = 0;
++	rrq->disabled = 0;
++	return 0;
++}
++
++/**
++ * ib_ioctl_getrange - return the range information about other values.
++ *
++ * We leave the majority of the iw_range struct unfilled-in, since the
++ * device does not support/report values for most fields.
++ *
++ * @dev: network device state (ignored).
++ * @info: request info (ignored).
++ * @rrq: request data (returned)
++ * @extra: the iw_range struct (returned).
++ */
++static int ib_ioctl_getrange(struct net_device *dev,
++		struct iw_request_info *info, struct iw_point *rrq, char *extra)
++{
++	struct iw_range *range = (struct iw_range*) extra;
++
++	rrq->length = sizeof(struct iw_range);
++	memset(range, 0, sizeof(struct iw_range));
++	range->we_version_compiled = WIRELESS_EXT;
++	range->max_qual.qual = 100;
++	range->max_qual.level = 100;
++	range->max_qual.noise = 100;
++	range->num_bitrates = 1;
++	range->throughput = 3000000;
++	return 0;
++}
++
++/**
++ * ib_wireless_handler - structure to export the Wireless Handlers.
++ *
++ * This is an array of iw_handler's (wireless ioctl functions).
++ */
++static const iw_handler ib_wireless_handler[] =
++{
++	[SIOCGIWNAME - SIOCIWFIRST] = (iw_handler) ib_ioctl_getname,
++	[SIOCGIWRANGE - SIOCIWFIRST] = (iw_handler) ib_ioctl_getrange,
++	[SIOCGIWRATE - SIOCIWFIRST] = (iw_handler) ib_ioctl_getrate,
++};
++
++/**
++ * ib_wireless_def - wireless functions.
++ */
++static struct iw_handler_def ib_wireless_def = {
++	.num_standard = sizeof(ib_wireless_handler) / sizeof(iw_handler),
++	.standard = (iw_handler*) ib_wireless_handler,
++	.get_wireless_stats = ib_wireless_stats,
++};
++#endif
++
++/**
++ * ib_net_setup - initialize net_device structure.
++ * @netdev: network device state.
++ */
++static void ib_net_setup(struct net_device *netdev)
++{
++	ether_setup(netdev);
++	netdev->flags = IFF_BROADCAST | IFF_DYNAMIC | IFF_NOARP;
++	netdev->get_stats = ib_net_stats;
++#if WIRELESS_EXT < 17
++	netdev->get_wireless_stats = ib_wireless_stats;
++#else
++	netdev->wireless_handlers = &ib_wireless_def;
++#endif
++	netdev->hard_start_xmit = ib_net_tx_start;
++	netdev->open = ib_net_open;
++	netdev->stop = ib_net_close;
++	netdev->trans_start = jiffies;
++	netdev->tx_timeout = ib_net_tx_timeout;
++	netdev->watchdog_timeo = 10 * HZ;
++	netdev->change_mtu = ib_net_change_mtu;
++	SET_MODULE_OWNER(netdev);
++}
++
++/**
++ * ib_net_register - register network device.
++ * @_netdev: return network device state.
++ */
++int ib_net_register(struct net_device **_netdev)
++{
++	struct net_device *netdev;
++	struct ib_net_modem_t *modem;
++	int err;
++
++	netdev = alloc_netdev(sizeof(struct ib_net_modem_t), ifname,
++			ib_net_setup);
++	if (netdev == NULL)
++		return -ENOMEM;
++	modem = netdev->priv;
++	modem->netdev = netdev;
++	modem->pc_status = 0;
++	modem->ut_status = 0;
++	memset(modem->tx_buf, 0, sizeof(modem->tx_buf));
++	memset(&modem->stats, 0, sizeof(struct net_device_stats));
++	memset(&modem->wstats, 0, sizeof(struct iw_statistics));
++	err = register_netdev(netdev);
++	if (err) {
++		DEBUG(1, "ib-net: register_netdev failed\n");
++		free_netdev(netdev);
++		return err;
++	}
++	skb_queue_head_init(&modem->tx_queue);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
++	INIT_WORK(&modem->work_queue, ib_net_poll, modem);
++#else
++	INIT_WORK(&modem->work_queue, ib_net_poll);
++#endif
++	*_netdev = netdev;
++	return 0;
++}
++
++EXPORT_SYMBOL(ib_net_register);
++EXPORT_SYMBOL(ib_net_deregister);
++EXPORT_SYMBOL(ib_net_rx_parse);
++EXPORT_SYMBOL(ib_net_tx_prepare);
++EXPORT_SYMBOL(ib_lock);
++
++MODULE_DESCRIPTION("iBurst compatible driver");
++MODULE_LICENSE("GPL");
+--- linux-2.6.26.old/drivers/net/usb/ib-usb.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-2.6.26/drivers/net/usb/ib-usb.c	2009-07-24 21:16:07.001655704 +0800
+@@ -0,0 +1,478 @@
++/* iBurst (TM) compatible driver for 2.6 Linux kernel.
++ * based on the original ArrayComm (TM) iBurst (TM) driver.
++ * Nicholas Jefferson <nicholas@pythontraining.com.au>
++ * 11 May 2005
++ *
++ * Ported to 2.6 Linux kernel by David Michael Barr.
++ * Fixes to support new hardware by Shane MacPhillamy.
++ * Fixes to support further new hardware by Nik Trevallyn-Jones.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include "ib-net.h"
++
++#include <asm/io.h>
++#include <linux/version.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/timer.h>
++#include <linux/usb.h>
++
++#define PROTO_USB_CONF 0x03
++#define VENDOR_USB_REQUEST (USB_DIR_IN | USB_TYPE_VENDOR)
++#define CONTROL_USB_GET_MAC_ADDR_UT_02 0x63
++#define CONTROL_USB_GET_MAC_ADDR_UT_04 0x4d
++#define UT_DEVICE_UT_02 0x0101
++#define UT_DEVICE_UT_04 0x0401
++
++static int debug = 0;
++module_param(debug, int, 0);
++#define DEBUG(n, args...) if (debug < (n)) ; else printk(KERN_INFO args)
++
++/**
++ * struct ib_usb_priv_t - USB device private state.
++ * @usbdev: USB device state.
++ * @rx_urb:
++ * @tx_urb:
++ * @ctl_buf: buffer for control messages.
++ * @modem: corresponding modem state.
++ */
++struct ib_usb_priv_t {
++	struct usb_device *usbdev;
++	int rx_endpoint, tx_endpoint;
++	struct urb rx_urb;
++	struct urb tx_urb;
++	unsigned char ctl_buf[32];
++	struct ib_net_modem_t *modem;
++	short packet_modulo;
++};
++
++/**
++ * ib_usb_conf - USB configuration frame.
++ */
++static unsigned char ib_usb_conf[] = {
++	0x00, 0x08, 0x00, 0xf7, IB_PROTO, PROTO_USB_CONF, 0x00, 0x00,
++};
++
++/**
++ * ib_usb_disconnect - USB device disconnected.
++ * @usbintf:
++ */
++static void ib_usb_disconnect(struct usb_interface *usbintf)
++{
++	unsigned long state;
++	struct ib_usb_priv_t *priv = usb_get_intfdata(usbintf);
++
++	spin_lock_irqsave(&ib_lock, state);
++	priv->usbdev = NULL;
++	spin_unlock_irqrestore(&ib_lock, state);
++	if (priv->rx_urb.status == -EINPROGRESS)
++		usb_kill_urb(&priv->rx_urb);
++	if (priv->tx_urb.status == -EINPROGRESS)
++		usb_kill_urb(&priv->tx_urb);
++	ib_net_flush(priv->modem);
++	ib_net_deregister(priv->modem);
++	kfree(priv);
++}
++
++/**
++ * ib_usb_rx_read - receive radio frame.
++ * @urb:
++ * @pt_regs:
++ */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
++static void ib_usb_rx_read(struct urb *urb, struct pt_regs *pt_regs)
++#else
++static void ib_usb_rx_read(struct urb *urb)
++#endif
++{
++	unsigned long state;
++	struct ib_usb_priv_t *priv = urb->context;
++	struct ib_net_modem_t *modem = priv->modem;
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++	int nbuf;
++
++	spin_lock_irqsave(&ib_lock, state);
++	if (urb->status == 0 && urb->actual_length != 0) {
++		nbuf = IB_NET_NBUF(radio->word[0], radio->word[1]);
++		if (nbuf < IB_NET_RADIO_HEAD
++				|| IB_NET_RADIO_HEAD + ETH_DATA_LEN < nbuf)
++			goto failed;
++		ib_net_rx_parse(modem, urb->actual_length);
++		ib_net_schedule(modem);
++	}
++	/* fall through */
++failed:
++	if (urb->status != -ECONNRESET) {
++		urb->actual_length = 0;
++		urb->dev = priv->usbdev;
++		usb_submit_urb(urb, GFP_ATOMIC);
++	}
++	spin_unlock_irqrestore(&ib_lock, state);
++}
++
++/**
++ * ib_usb_open
++ *     called under ib_lock
++ * @_priv: device private state.
++ */
++static int ib_usb_open(void *_priv)
++{
++	struct ib_usb_priv_t *priv = _priv;
++	struct ib_net_modem_t *modem = priv->modem;
++	struct ib_net_radio_t *radio;
++	struct sk_buff *skb;
++
++	skb = alloc_skb(sizeof(ib_usb_conf), GFP_ATOMIC);
++	if (skb == NULL)
++		return -EINVAL;
++	radio = (struct ib_net_radio_t*) skb_put(skb, sizeof(ib_usb_conf));
++	memcpy(radio, ib_usb_conf, sizeof(ib_usb_conf));
++	radio->payload[0] = modem->stats.tx_packets & 0xff;
++	radio->payload[1] = (modem->pc_status |= STATUS_READY);
++	skb_queue_tail(&modem->tx_queue, skb);
++	ib_net_schedule(modem);
++	return 0;
++}
++
++/**
++ * ib_usb_rx_parse -
++ *     called under ib_lock
++ * @modem: modem private state.
++ */
++static void ib_usb_rx_parse(void *_priv)
++{
++	struct ib_usb_priv_t *priv = _priv;
++	struct ib_net_modem_t *modem = priv->modem;
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++	struct sk_buff *skb;
++
++	ib_net_ut_status(modem, radio->payload[1]);
++	if (radio->proto[1] == PROTO_USB_CONF) {
++		skb = alloc_skb(sizeof(ib_usb_conf), GFP_ATOMIC);
++		if (skb != NULL) {
++			radio = (struct ib_net_radio_t*)
++					skb_put(skb, sizeof(ib_usb_conf));
++			memcpy(radio, ib_usb_conf, sizeof(ib_usb_conf));
++			radio->payload[0] = modem->stats.tx_packets & 0xff;
++			radio->payload[1] = modem->pc_status;
++			skb_queue_tail(&modem->tx_queue, skb);
++			ib_net_schedule(modem);
++		}
++	}
++}
++
++/**
++ * ib_usb_close
++ *     called under ib_lock
++ * @modem: modem private state.
++ */
++static int ib_usb_close(void *_priv)
++{
++	struct ib_usb_priv_t *priv = _priv;
++	struct ib_net_modem_t *modem = priv->modem;
++	struct ib_net_radio_t *radio;
++	struct sk_buff *skb;
++
++	if (modem->pc_status & STATUS_READY) {
++		skb = alloc_skb(sizeof(ib_usb_conf), GFP_ATOMIC);
++		if (skb == NULL)
++			return -EINVAL;
++		radio = (struct ib_net_radio_t*)
++				skb_put(skb, sizeof(ib_usb_conf));
++		memcpy(radio, ib_usb_conf, sizeof(ib_usb_conf));
++		radio->payload[0] = modem->stats.tx_packets & 0xff;
++		radio->payload[1] = (modem->pc_status &= ~STATUS_READY);
++		skb_queue_tail(&modem->tx_queue, skb);
++		ib_net_schedule(modem);
++	}
++	return 0;
++}
++
++/**
++ * ib_usb_tx_done - transfer completed.
++ * @urb:
++ * @pt_regs:
++ */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
++static void ib_usb_tx_done(struct urb *urb, struct pt_regs *pt_regs)
++#else
++static void ib_usb_tx_done(struct urb *urb)
++#endif
++{
++	unsigned long state;
++	struct ib_usb_priv_t *priv = urb->context;
++
++	spin_lock_irqsave(&ib_lock, state);
++	if (urb->status)
++		priv->modem->stats.tx_errors += 1;
++	if (urb->status != -ECONNRESET)
++		ib_net_schedule(priv->modem);
++	spin_unlock_irqrestore(&ib_lock, state);
++}
++
++/**
++ * ib_usb_poll - poll device.
++ *     called under ib_lock
++ * @_priv: device private state.
++ */
++static void ib_usb_poll(void *_priv)
++{
++	struct ib_usb_priv_t *priv = _priv;
++	struct ib_net_modem_t *modem = priv->modem;
++	int nbuf, pad_bytes;
++
++	if (priv->tx_urb.status == -EINPROGRESS)
++		return;
++	nbuf = ib_net_tx_prepare(modem);
++	if (nbuf == 0)
++		return;
++	if (priv->usbdev == NULL)
++		return;
++	usb_fill_bulk_urb(&priv->tx_urb, priv->usbdev,
++			usb_sndbulkpipe(priv->usbdev, priv->tx_endpoint),
++			modem->tx_buf, IB_NET_RADIO_HEAD + ETH_DATA_LEN,
++			ib_usb_tx_done, priv);
++
++	// NTJ: 1.3.4: avoid modulo-aligned transfers by padding tx_length
++	pad_bytes = (priv->packet_modulo > 0
++		    && (nbuf % priv->packet_modulo == 0) ? 1 : 0);
++
++	priv->tx_urb.transfer_buffer_length = nbuf + pad_bytes;
++	if (usb_submit_urb(&priv->tx_urb, GFP_KERNEL)) {
++		modem->stats.tx_errors += 1;
++		return;
++	}
++	modem->stats.tx_bytes += nbuf;
++	modem->stats.tx_packets += 1;
++}
++
++/**
++ * ib_usb_tx_timeout
++ *     called under ib_lock
++ * @_priv: device private state.
++ */
++static void ib_usb_tx_timeout(void *_priv)
++{
++	struct ib_usb_priv_t *priv = _priv;
++
++	if (priv == NULL) {
++		/* can't happen? */
++		DEBUG(1,"ib-usb: NULL passed to ib_usb_tx_timeout\n");
++		return;
++	}
++	if (priv->tx_urb.status == -EINPROGRESS)
++		usb_unlink_urb(&priv->tx_urb);
++}
++
++/**
++ * ib_usb_net_driver - USB driver callback functions.
++ */
++static struct ib_net_driver_t ib_usb_net_driver = {
++	.poll = ib_usb_poll,
++	.tx_timeout = ib_usb_tx_timeout,
++	.open = ib_usb_open,
++	.rx_parse = ib_usb_rx_parse,
++	.close = ib_usb_close,
++};
++
++/**
++ * ib_usb_probe - probe USB device.
++ * @usbintf:
++ * @id:
++ */
++static int ib_usb_probe(struct usb_interface *usbintf,
++		const struct usb_device_id *id)
++{
++	struct usb_device *usbdev = interface_to_usbdev(usbintf);
++	struct usb_host_interface *hostif = usbintf->cur_altsetting;
++	struct ib_usb_priv_t *priv;
++	struct net_device *netdev;
++	struct ib_net_modem_t *modem;
++	struct usb_endpoint_descriptor *ep;
++	int nbuf, err, i;
++	int control;
++
++	switch (usbdev->descriptor.bcdDevice) {
++	case UT_DEVICE_UT_02:
++		control = CONTROL_USB_GET_MAC_ADDR_UT_02;
++		DEBUG(9, "ib-usb: UT_02 Detected\n");
++		break;
++	case UT_DEVICE_UT_04:
++		control = CONTROL_USB_GET_MAC_ADDR_UT_04;
++		DEBUG(9, "ib-usb: UT_04 Detected\n");
++		break;
++	default:
++		DEBUG(1, "ib-usb: UT device %04x\n",
++				usbdev->descriptor.bcdDevice);
++		control = 0x0;
++		//return -ENODEV;
++	}
++	err = usb_reset_configuration(usbdev);
++	if (err) {
++		DEBUG(1, "ib-usb: usb_reset_configuration failed\n");
++		return err;
++	}
++	priv = kmalloc(sizeof(struct ib_usb_priv_t), GFP_KERNEL);
++	if (priv == NULL) {
++		DEBUG(1, "ib-usb: kmalloc failed\n");
++		return -ENOMEM;
++	}
++	memset(priv, 0, sizeof(struct ib_usb_priv_t)); /* hack */
++	priv->usbdev = usbdev;
++	usb_init_urb(&priv->rx_urb);
++	usb_init_urb(&priv->tx_urb);
++	nbuf = usb_control_msg(usbdev, usb_rcvctrlpipe(usbdev, 0),
++			CONTROL_USB_GET_MAC_ADDR_UT_02, VENDOR_USB_REQUEST,
++			cpu_to_le16(0), cpu_to_le16(0), priv->ctl_buf,
++			cpu_to_le16(8), 0);
++	if (nbuf != 8) {
++		DEBUG(1, "ib-usb: invalid read %02x %02x %02x\n",
++				priv->ctl_buf[0], nbuf,
++				CONTROL_USB_GET_MAC_ADDR_UT_02);
++		err = -ENODEV;
++		goto failed;
++	}
++
++
++	// NTJ: 1.3.4: disabled - now determined by endpoint characteristics
++#if 0
++	if (priv->ctl_buf[1] != control) {
++		DEBUG(1, "ib-usb: mismatch command %02x %02x\n",
++				priv->ctl_buf[1], control);
++ 		err = -ENODEV;
++ 		goto failed;
++ 	}
++
++	switch (control) {
++	case CONTROL_USB_GET_MAC_ADDR_UT_02:
++ 		priv->rx_endpoint = 2;
++ 		priv->tx_endpoint = 1;
++		break;
++	case CONTROL_USB_GET_MAC_ADDR_UT_04:
++ 		priv->rx_endpoint = 3;
++ 		priv->tx_endpoint = 2;
++		break;
++	default:
++		/* can't happen */
++ 		err = -ENODEV;
++ 		goto failed;
++ 	}
++#endif
++
++	/* NTJ: 1.3.4: set the modulo for more recent devices */
++	if (control == CONTROL_USB_GET_MAC_ADDR_UT_04) {
++	  priv->packet_modulo = 64;
++	  DEBUG(9, "ib-usb: packet modulo set to %d\n",
++		(int) priv->packet_modulo);
++	}
++
++	/*
++	 * NTJ: 1.3.4: find the endpoints by characteristics, not by descriptor
++	 */
++	
++	priv->rx_endpoint = -1;
++	priv->tx_endpoint = -1;
++
++	// iterate the endpoints to find the bulk-io endpoints
++	for (i = 0; i < hostif->desc.bNumEndpoints; i++) {
++	  ep = &hostif->endpoint[i].desc;
++
++	  if (usb_endpoint_xfer_bulk(ep)) {
++	    if (usb_endpoint_dir_in(ep)) {
++	      if (priv->rx_endpoint == -1) priv->rx_endpoint = i+1;
++	    } else if (usb_endpoint_dir_out(ep)) {
++	      if (priv->tx_endpoint == -1) priv->tx_endpoint = i+1;
++	    } else {
++	      DEBUG(1, "ib-usb: broken Endpoint descr: ep[%d]\n", i);
++	    }
++	  }
++
++	  if (priv->rx_endpoint != -1 && priv->tx_endpoint != -1) break;
++	}
++
++	if (priv->rx_endpoint == -1 || priv->tx_endpoint == -1) {
++	  DEBUG(1, "ib-usb: One or more bulk-io endpoints not found\n");
++	  return -ENODEV;
++	}
++
++	DEBUG(9, "ib-usb: rx_endpoint=%d; tx_endpoint=%d\n",
++	      priv->rx_endpoint, priv->tx_endpoint);
++
++	err = ib_net_register(&netdev);
++	if (err)
++		goto failed;
++	modem = netdev->priv;
++	modem->driver = &ib_usb_net_driver;
++	modem->pdriver = priv;
++	priv->modem = modem;
++	ib_net_addr(modem, priv->ctl_buf + 2);
++	usb_fill_bulk_urb(&priv->rx_urb, usbdev,
++			usb_rcvbulkpipe(usbdev, priv->rx_endpoint),
++			modem->rx_buf, IB_NET_RADIO_HEAD + ETH_DATA_LEN,
++			ib_usb_rx_read, priv);
++	priv->rx_urb.actual_length = 0;
++	priv->rx_urb.dev = usbdev;
++	usb_fill_bulk_urb(&priv->tx_urb, usbdev,
++			usb_sndbulkpipe(usbdev, priv->tx_endpoint),
++			modem->tx_buf, IB_NET_RADIO_HEAD + ETH_DATA_LEN,
++			ib_usb_tx_done, priv);
++	priv->tx_urb.transfer_flags |= URB_ZERO_PACKET;
++	usb_set_intfdata(usbintf, priv);
++	usb_submit_urb(&priv->rx_urb, GFP_ATOMIC);
++	return 0;
++failed:
++	kfree(priv);
++	return err;
++}
++
++/**
++ * ib_usb_table - USB device table.
++ */
++static struct usb_device_id ib_usb_table[] = {
++	{ USB_DEVICE(0x0d14, 0x0009) },
++	{ USB_DEVICE(0x0482, 0x0204) },
++	{}
++};
++
++MODULE_DEVICE_TABLE(usb, ib_usb_table);
++
++/**
++ * ib_usb_driver - USB driver.
++ */
++static struct usb_driver ib_usb_driver = {
++#if KERNEL_VERSION(2,4,20) <= LINUX_VERSION_CODE \
++		&& LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
++	.owner = THIS_MODULE,
++#endif
++	.name = "iburst",
++	.probe = ib_usb_probe,
++	.disconnect = ib_usb_disconnect,
++	.id_table = ib_usb_table,
++};
++
++/**
++ * ib_usb_init - ib-usb module init.
++ */
++static int __init ib_usb_init(void)
++{
++	return usb_register(&ib_usb_driver);
++}
++
++/**
++ * ib_usb_exit - ib-usb module exit.
++ */
++static void __exit ib_usb_exit(void)
++{
++	usb_deregister(&ib_usb_driver);
++}
++
++module_init(ib_usb_init);
++module_exit(ib_usb_exit);
++
++MODULE_DESCRIPTION("iBurst compatible USB driver");
++MODULE_LICENSE("GPL");
+--- linux-2.6.26.old/drivers/net/usb/ib-pcmcia.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-2.6.26/drivers/net/usb/ib-pcmcia.c	2009-07-24 21:16:07.001655704 +0800
+@@ -0,0 +1,794 @@
++/* iBurst (TM) compatible driver for 2.6 Linux kernel.
++ * based on the original ArrayComm (TM) iBurst (TM) driver.
++ * Nicholas Jefferson <nicholas@pythontraining.com.au>
++ * 11 May 2005
++ *
++ * Ported to 2.6 Linux kernel by Nik Trevallyn-Jones.
++ * Patches for 2.6.13 Linux kernel by Greg Cockburn and Scott McKenzie.
++ * Patch for 2.6.16 Linux kernel by Daniel Burr.
++ * Patch for 2.6.17 Linux kernel by Damian Ivereigh
++ * Patch for sysfs by Scott McKenzie.
++ * Fixes to support new hardware by Shane MacPhillamy.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include "ib-net.h"
++
++#include <asm/io.h>
++#include <linux/version.h>
++#include <pcmcia/cs_types.h>
++#include <pcmcia/cs.h>
++#include <pcmcia/cisreg.h>
++#include <pcmcia/cistpl.h>
++#include <pcmcia/ds.h>
++
++static int debug = 0;
++module_param(debug, int, 0);
++#define DEBUG(n, args...) if (debug < (n)) ; else printk(KERN_INFO args)
++
++/**
++ * interval - poll interval (in milliseconds).
++ */
++static int interval = 4;
++module_param(interval, int, 0);
++
++/**
++ * io16 - PCMCIA 16 bit mode.
++ */
++static int io16 = 0;
++module_param(io16, int, 0);
++
++/**
++ * enum ib_pcmcia_ifstate - hardware interface state.
++ */
++enum ib_pcmcia_ifstate
++{
++	IFSTATE_RESET = 0,
++	IFSTATE_WAIT = 1,
++	IFSTATE_NORMAL = 2,
++};
++
++/**
++ * ib_pcmcia_offset - i/o mapped memory offsets.
++ */
++enum ib_pcmcia_offset
++{
++	OFFSET_UT_MAGIC1 = 0x00,
++	OFFSET_UT_MAGIC2 = 0x01,
++	OFFSET_UT_SEQUENCE = 0x02,
++	OFFSET_UT_FEEDBACK = 0x03,
++	OFFSET_UT_JRX = 0x04,
++	OFFSET_UT_ITX = 0x05,
++	OFFSET_UT_PACKET = 0x06,
++	OFFSET_UT_STATUS = 0x07,
++	OFFSET_PC_MAGIC1 = 0x08,
++	OFFSET_PC_MAGIC2 = 0x09,
++	OFFSET_PC_SEQUENCE = 0x0a,
++	OFFSET_PC_FEEDBACK = 0x0b,
++	OFFSET_PC_JTX = 0x0c,
++	OFFSET_PC_IRX = 0x0d,
++	OFFSET_PC_PACKET = 0x0e,
++	OFFSET_PC_STATUS = 0x0f,
++	OFFSET_UT_ICHUNK = 0x10,
++	OFFSET_UT_NCHUNK = 0x11,
++	OFFSET_PC_JCHUNK = 0x12,
++	OFFSET_PC_NCHUNK = 0x13,
++	OFFSET_UT_ETHERNET = 0x1a,
++};
++
++/**
++ * ib_pcmcia_local_t - PCMCIA device private state.
++ * @dev: PCMCIA device state.
++ * @node: network node.
++ * @mem: i/o mapped memory.
++ * @modem: corresponding modem state.
++ * @timer: poll hardware.
++ * @release: release configuration timer.
++ * @ifstate: hardware state.
++ * @sequence: hardware sync protocol.
++ * @feedback: hardware sync protocol.
++ * @rx_echunk: expected chunks (32 bytes) to receive.
++ * @rx_ibuf: next index into rx_buf to use.
++ * @rx_nbuf: packet length.
++ * @tx_echunk: expected chunks (32 bytes) to transmit.
++ * @tx_jbuf: next index into tx_buf to use.
++ * @irx: most recent index into i/o mapped receive buffer.
++ * @jtx: most recent index into i/o mapped transmit buffer.
++ * @nreset: number of hardware resets.
++ */
++struct ib_pcmcia_local_t {
++	struct pcmcia_device *dev;
++	struct dev_node_t node;
++	unsigned char *mem;
++	struct ib_net_modem_t *modem;
++	struct timer_list timer;
++	struct timer_list release;
++	enum ib_pcmcia_ifstate ifstate;
++	unsigned int sequence, feedback;
++	int rx_echunk, rx_ibuf, rx_nbuf;
++	int tx_echunk, tx_jbuf;
++	int irx, jtx;
++	int nreset;
++};
++
++/**
++ * ib_pcmcia_dev_info - identifier for this driver.
++ */
++static dev_info_t ib_pcmcia_dev_info = "iburst_cs";
++
++/**
++ * ib_pcmcia_blit - the selected blit function.
++ */
++static void (*ib_pcmcia_blit)(unsigned char*, unsigned char*, int);
++
++/**
++ * ib_pcmcia_timer - poll hardware.
++ * @_local: device private state.
++ */
++static void ib_pcmcia_timer(unsigned long _local)
++{
++	struct ib_pcmcia_local_t *local = (struct ib_pcmcia_local_t*) _local;
++
++	ib_net_schedule(local->modem);
++	local->timer.expires = jiffies + msecs_to_jiffies(interval);
++	local->timer.function = ib_pcmcia_timer;
++	local->timer.data = _local;
++	add_timer(&local->timer);
++}
++
++/**
++ * ib_pcmcia_blit16 - blit chunks (32 bytes) 16 bits at a time.
++ * @_dst: destination buffer.
++ * @_src: source buffer.
++ * @nchunk: chunk count.
++ */
++static void ib_pcmcia_blit16(unsigned char *_dst, unsigned char *_src,
++		int nchunk)
++{
++	uint16_t *dst = (uint16_t*) _dst;
++	uint16_t *src = (uint16_t*) _src;
++
++	while (nchunk--) {
++		dst[0] = src[0];
++		dst[1] = src[1];
++		dst[2] = src[2];
++		dst[3] = src[3];
++		dst[4] = src[4];
++		dst[5] = src[5];
++		dst[6] = src[6];
++		dst[7] = src[7];
++		dst[8] = src[8];
++		dst[9] = src[9];
++		dst[10] = src[10];
++		dst[11] = src[11];
++		dst[12] = src[12];
++		dst[13] = src[13];
++		dst[14] = src[14];
++		dst[15] = src[15];
++		dst += 16;
++		src += 16;
++	}
++}
++
++/**
++ * ib_pcmcia_blit32 - blit chunks (32 bytes) 32 bits at a time.
++ * @_dst: destination buffer.
++ * @_src: source buffer.
++ * @nchunk: chunk count.
++ */
++static void ib_pcmcia_blit32(unsigned char *_dst, unsigned char *_src,
++		int nchunk)
++{
++	uint32_t *dst = (uint32_t*) _dst;
++	uint32_t *src = (uint32_t*) _src;
++
++	while (1 < nchunk) {
++		dst[0] = src[0];
++		dst[1] = src[1];
++		dst[2] = src[2];
++		dst[3] = src[3];
++		dst[4] = src[4];
++		dst[5] = src[5];
++		dst[6] = src[6];
++		dst[7] = src[7];
++		dst[8] = src[8];
++		dst[9] = src[9];
++		dst[10] = src[10];
++		dst[11] = src[11];
++		dst[12] = src[12];
++		dst[13] = src[13];
++		dst[14] = src[14];
++		dst[15] = src[15];
++		dst += 16;
++		src += 16;
++		nchunk -= 2;
++	}
++	if (nchunk) {
++		dst[0] = src[0];
++		dst[1] = src[1];
++		dst[2] = src[2];
++		dst[3] = src[3];
++		dst[4] = src[4];
++		dst[5] = src[5];
++		dst[6] = src[6];
++		dst[7] = src[7];
++	}
++}
++
++/**
++ * ib_pcmcia_release - release configuration.
++ * @_local: device private state.
++ */
++static void ib_pcmcia_release(unsigned long _local)
++{
++	struct ib_pcmcia_local_t *local = (struct ib_pcmcia_local_t *) _local;
++	struct pcmcia_device *link = local->dev;
++
++	del_timer_sync(&local->timer);
++	ib_net_flush(local->modem);
++	iounmap(local->mem);
++	pcmcia_disable_device(link);
++}
++
++/**
++ * ib_pcmcia_detach - detach device.
++ * @link: device state.
++ */
++static void ib_pcmcia_detach(struct pcmcia_device *link)
++{
++	struct ib_pcmcia_local_t *local = link->priv;
++
++	del_timer_sync(&local->release);
++	ib_pcmcia_release((unsigned long) local);
++	if (local->modem)
++		ib_net_deregister(local->modem);
++	kfree(local);
++}
++
++/**
++ * ib_pcmcia_reset - reset hardware protocol.
++ *     called under ib_lock
++ * @local: device private state.
++ */
++static void ib_pcmcia_reset(struct ib_pcmcia_local_t *local)
++{
++	struct ib_net_modem_t *modem = local->modem;
++	unsigned char *mem = local->mem;
++	unsigned int sequence, feedback;
++
++	mem[OFFSET_PC_MAGIC2] = 0x00;
++	mem[OFFSET_PC_MAGIC1] = 0x00;
++	sequence = mem[OFFSET_UT_SEQUENCE];
++	feedback = mem[OFFSET_UT_FEEDBACK];
++	if (local->nreset)
++		local->sequence = (feedback + 1) & 0xff;
++	else
++		local->sequence = (feedback + 7) & 0xff;
++	local->feedback = sequence;
++	mem[OFFSET_PC_SEQUENCE] = local->sequence;
++	mem[OFFSET_PC_FEEDBACK] = local->feedback;
++	mem[OFFSET_PC_IRX] = local->irx = 0;
++	mem[OFFSET_PC_JTX] = local->jtx = 0;
++	mem[OFFSET_PC_PACKET] = modem->stats.tx_packets & 0xff;
++	mem[OFFSET_PC_STATUS] = modem->pc_status;
++	mem[OFFSET_PC_MAGIC1] = 0xac;
++	mem[OFFSET_PC_MAGIC2] = 0x02;
++	local->ifstate = IFSTATE_WAIT;
++	local->nreset += 1;
++}
++
++/**
++ * ib_pcmcia_check - check hardware consistent.
++ *     called under ib_lock
++ * @local: device private state.
++ */
++static int ib_pcmcia_check(struct ib_pcmcia_local_t *local)
++{
++	unsigned char *mem = local->mem;
++
++	if (mem[OFFSET_PC_MAGIC1] != 0xac || mem[OFFSET_PC_MAGIC2] != 0x02
++			|| mem[OFFSET_PC_SEQUENCE] != local->sequence
++			|| mem[OFFSET_PC_FEEDBACK] != local->feedback
++			|| mem[OFFSET_PC_IRX] != local->irx
++			|| mem[OFFSET_PC_JTX] != local->jtx) {
++		DEBUG(8, "ib-pcmcia: check %02X %02X %02X %02X "
++				"%02X %02X %02X %02X %02X %02X %02X %02X\n",
++				mem[OFFSET_PC_MAGIC1], mem[OFFSET_PC_MAGIC2],
++				mem[OFFSET_PC_PACKET], mem[OFFSET_PC_STATUS],
++				mem[OFFSET_PC_SEQUENCE], local->sequence,
++				mem[OFFSET_PC_FEEDBACK], local->feedback,
++				mem[OFFSET_PC_IRX], local->irx,
++				mem[OFFSET_PC_JTX], local->jtx);
++		ib_pcmcia_reset(local);
++		return 1;
++	}
++	return 0;
++}
++
++/**
++ * ib_pcmcia_normal - normal operation; transfer chunks.
++ *     called under ib_lock
++ * @local: device private state.
++ */
++static void ib_pcmcia_normal(struct ib_pcmcia_local_t *local)
++{
++	struct ib_net_modem_t *modem = local->modem;
++	struct ib_net_radio_t *radio = (struct ib_net_radio_t*) modem->rx_buf;
++	unsigned char *mem = local->mem;
++	int irx, jrx, rx_ichunk, rx_nchunk;
++	int itx, jtx, tx_jchunk, tx_nchunk;
++	int nchunk, nbuf;
++	int packet;
++
++	if (ib_pcmcia_check(local))
++		return;
++	if (mem[OFFSET_UT_MAGIC1] != 0xac || mem[OFFSET_UT_MAGIC2] != 0x02
++			|| mem[OFFSET_UT_SEQUENCE] != local->feedback
++			|| mem[OFFSET_UT_FEEDBACK] != local->sequence) {
++		DEBUG(8, "ib-pcmcia: normal %02X %02X "
++				"%02X %02X %02X %02X\n",
++				mem[OFFSET_UT_MAGIC1], mem[OFFSET_UT_MAGIC2],
++				mem[OFFSET_UT_SEQUENCE], local->feedback,
++				mem[OFFSET_UT_FEEDBACK], local->sequence);
++		mem[OFFSET_PC_IRX] = local->irx = 0;
++		mem[OFFSET_PC_JTX] = local->jtx = 0;
++		local->ifstate = IFSTATE_WAIT;
++		return;
++	}
++	packet = modem->stats.tx_packets & 0xff;
++	ib_net_ut_status(modem, mem[OFFSET_UT_STATUS]);
++	if (mem[OFFSET_PC_PACKET] != packet)
++		mem[OFFSET_PC_PACKET] = packet;
++	if (mem[OFFSET_PC_STATUS] != modem->pc_status)
++		mem[OFFSET_PC_STATUS] = modem->pc_status;
++	rx_ichunk = mem[OFFSET_UT_ICHUNK];
++	rx_nchunk = mem[OFFSET_UT_NCHUNK];
++	tx_jchunk = mem[OFFSET_PC_JCHUNK];
++	tx_nchunk = mem[OFFSET_PC_NCHUNK];
++	if (rx_ichunk == 0 || rx_nchunk == 0)
++		goto failed;
++	if (tx_jchunk == 0 || tx_nchunk == 0)
++		goto failed;
++	if (tx_jchunk <= rx_ichunk && rx_ichunk < tx_jchunk + tx_nchunk)
++		goto failed;
++	if (rx_ichunk <= tx_jchunk && tx_jchunk < rx_ichunk + rx_nchunk)
++		goto failed;
++	if (0x80 < rx_ichunk + rx_nchunk || 0x80 < tx_jchunk + tx_nchunk)
++		goto failed;
++	while (1) {
++		irx = local->irx;
++		if (mem[OFFSET_PC_IRX] != irx)
++			goto failed;
++		jrx = mem[OFFSET_UT_JRX];
++		if (2 * rx_nchunk <= jrx)
++			goto failed;
++		if (irx == jrx)
++			break;
++		if (jrx < irx)
++			nchunk = jrx - irx + 2 * rx_nchunk;
++		else
++			nchunk = jrx - irx;
++		if (rx_nchunk < nchunk)
++			goto failed;
++		if (rx_nchunk <= irx)
++			irx -= rx_nchunk;
++		if (rx_nchunk - irx < nchunk)
++			nchunk = rx_nchunk - irx;
++		if (local->rx_echunk == 0) {
++			ib_pcmcia_blit(modem->rx_buf,
++					mem + ((rx_ichunk + irx) << 5), 1);
++			if (radio->word[0] & FLAG_EXTENSION)
++				goto failed;
++			nbuf = IB_NET_NBUF(radio->word[0], radio->word[1]);
++			if (nbuf < IB_NET_RADIO_HEAD)
++				goto failed;
++			if (IB_NET_RADIO_HEAD + ETH_DATA_LEN < nbuf)
++				goto failed;
++			local->irx += 1;
++			if (local->irx == 2 * rx_nchunk)
++				local->irx = 0;
++			mem[OFFSET_PC_IRX] = local->irx;
++			if (nbuf <= 32) {
++				ib_net_rx_parse(modem, nbuf);
++				continue;
++			}
++			local->rx_echunk = ((nbuf + 31) >> 5) - 1;
++			local->rx_ibuf = 32;
++			local->rx_nbuf = nbuf;
++			continue;
++		}
++		if (local->rx_echunk < nchunk)
++			nchunk = local->rx_echunk;
++		ib_pcmcia_blit(modem->rx_buf + local->rx_ibuf,
++				mem + ((rx_ichunk + irx) << 5), nchunk);
++		local->irx += nchunk;
++		if (2 * rx_nchunk <= local->irx)
++			local->irx -= 2 * rx_nchunk;
++		mem[OFFSET_PC_IRX] = local->irx;
++		local->rx_echunk -= nchunk;
++		local->rx_ibuf += nchunk << 5;
++		if (local->rx_echunk == 0)
++			ib_net_rx_parse(modem, local->rx_nbuf);
++	}
++	while (1) {
++		if (local->tx_echunk == 0) {
++			nbuf = ib_net_tx_prepare(modem);
++			if (nbuf == 0)
++				break;
++			modem->stats.tx_bytes += nbuf;
++			modem->stats.tx_packets += 1;
++			local->tx_echunk = (nbuf + 31) >> 5;
++			local->tx_jbuf = 0;
++		}
++		itx = mem[OFFSET_UT_ITX];
++		if (2 * tx_nchunk <= itx)
++			goto failed;
++		jtx = local->jtx;
++		if (mem[OFFSET_PC_JTX] != jtx)
++			goto failed;
++		if (jtx < itx)
++			nchunk = itx - jtx - tx_nchunk;
++		else
++			nchunk = itx - jtx + tx_nchunk;
++		if (nchunk < 0)
++			goto failed;
++		if (nchunk == 0)
++			break;
++		if (tx_nchunk <= jtx)
++			jtx -= tx_nchunk;
++		if (tx_nchunk - jtx < nchunk)
++			nchunk = tx_nchunk - jtx;
++		if (local->tx_echunk < nchunk)
++			nchunk = local->tx_echunk;
++		ib_pcmcia_blit(mem + ((tx_jchunk + jtx) << 5),
++				modem->tx_buf + local->tx_jbuf, nchunk);
++		local->tx_echunk -= nchunk;
++		local->tx_jbuf += nchunk << 5;
++		local->jtx += nchunk;
++		if (2 * tx_nchunk <= local->jtx)
++			local->jtx -= 2 * tx_nchunk;
++		mem[OFFSET_PC_JTX] = local->jtx;
++	}
++	return;
++failed:
++	DEBUG(1, "ib-pcmcia: normal failed\n");
++	ib_pcmcia_reset(local);
++}
++
++/**
++ * ib_pcmcia_wait - hardware reset wait; get hardware address.
++ *     called under ib_lock
++ * @local: device private state.
++ */
++static void ib_pcmcia_wait(struct ib_pcmcia_local_t *local)
++{
++	struct ib_net_modem_t *modem = local->modem;
++	unsigned char *mem = local->mem;
++
++	if (ib_pcmcia_check(local))
++		return;
++	local->feedback = mem[OFFSET_UT_SEQUENCE];
++	mem[OFFSET_PC_FEEDBACK] = local->feedback;
++	local->rx_echunk = 0;
++	local->tx_echunk = 0;
++	mem[OFFSET_PC_IRX] = local->irx = 0;
++	mem[OFFSET_PC_JTX] = local->jtx = 0;
++	if (mem[OFFSET_UT_MAGIC1] != 0xac || mem[OFFSET_UT_MAGIC2] != 0x02
++			|| mem[OFFSET_UT_FEEDBACK] != local->sequence) {
++		DEBUG(8, "ib-pcmcia: wait %02X %02X %02X %02X\n",
++				mem[OFFSET_UT_MAGIC1], mem[OFFSET_UT_MAGIC2],
++				mem[OFFSET_UT_FEEDBACK], local->sequence);
++		return;
++	}
++	ib_net_addr(modem, mem + OFFSET_UT_ETHERNET);
++	local->ifstate = IFSTATE_NORMAL;
++	ib_pcmcia_normal(local);
++}
++
++/**
++ * ib_pcmcia_poll - poll hardware according to protocol.
++ *     called under ib_lock
++ * @_local: device private state.
++ */
++static void ib_pcmcia_poll(void *_local)
++{
++	struct ib_pcmcia_local_t *local = _local;
++
++	switch (local->ifstate) {
++	case IFSTATE_RESET:
++		ib_pcmcia_reset(local);
++		break;
++	case IFSTATE_WAIT:
++		ib_pcmcia_wait(local);
++		break;
++	case IFSTATE_NORMAL:
++		ib_pcmcia_normal(local);
++		break;
++	}
++}
++
++/**
++ * ib_pcmcia_open - open device.
++ *     called under ib_lock
++ * @_local: device private state.
++ */
++static int ib_pcmcia_open(void *_local)
++{
++	struct ib_pcmcia_local_t *local = _local;
++	struct ib_net_modem_t *modem = local->modem;
++	unsigned char *mem = local->mem;
++
++	DEBUG(9, "ib-pcmcia: +open\n");
++	mem[OFFSET_PC_STATUS] = (modem->pc_status |= STATUS_READY);
++	mem[OFFSET_PC_PACKET] = modem->stats.tx_packets & 0xff;
++	DEBUG(9, "ib-pcmcia: -open\n");
++	return 0;
++}
++
++/**
++ * ib_pcmcia_rx_parse -
++ *     called under ib_lock
++ * @_local: device private state.
++ */
++static void ib_pcmcia_rx_parse(void *_local)
++{
++	struct ib_pcmcia_local_t *local = _local;
++	struct ib_net_modem_t *modem = local->modem;
++	unsigned char *mem = local->mem;
++
++	ib_net_ut_status(modem, mem[OFFSET_UT_STATUS]);
++	mem[OFFSET_PC_STATUS] = modem->pc_status;
++	mem[OFFSET_PC_PACKET] = modem->stats.tx_packets & 0xff;
++}
++
++/**
++ * ib_pcmcia_close - close device; release in a momemt.
++ *     called under ib_lock
++ * @_local: device private state.
++ */
++static int ib_pcmcia_close(void *_local)
++{
++	struct ib_pcmcia_local_t *local = _local;
++	struct ib_net_modem_t *modem = local->modem;
++	unsigned char *mem = local->mem;
++
++	if (pcmcia_dev_present(local->dev)) {
++		mem[OFFSET_PC_STATUS] = (modem->pc_status &= ~STATUS_READY);
++		mem[OFFSET_PC_PACKET] = modem->stats.tx_packets & 0xff;
++	}
++	return 0;
++}
++
++/**
++ * ib_pcmcia_net_driver - PCMCIA driver callback functions.
++ */
++static struct ib_net_driver_t ib_pcmcia_net_driver = {
++	.poll = ib_pcmcia_poll,
++	.tx_timeout = NULL,
++	.open = ib_pcmcia_open,
++	.rx_parse = ib_pcmcia_rx_parse,
++	.close = ib_pcmcia_close,
++};
++
++/**
++ * ib_pcmcia_config - PCMCIA config.
++ * @link: device state.
++ */
++static int ib_pcmcia_config(struct pcmcia_device *link)
++{
++	struct ib_pcmcia_local_t *local = link->priv;
++	struct net_device *netdev;
++	struct ib_net_modem_t *modem;
++	struct tuple_t tuple;
++	union cisparse_t parse;
++	unsigned char buf[64];
++	int version;
++	struct config_info_t conf;
++	struct cistpl_cftable_entry_t *cfg;
++	struct cistpl_cftable_entry_t dflt = { 0 };
++	struct win_req_t req;
++	int err;
++
++	tuple.DesiredTuple = CISTPL_MANFID;
++	tuple.Attributes = 0;
++	tuple.TupleData = buf;
++	tuple.TupleDataMax = sizeof(buf);
++	tuple.TupleOffset = 0;
++	err = pcmcia_get_first_tuple(link, &tuple);
++	if (err)
++		goto failed1;
++	err = pcmcia_get_tuple_data(link, &tuple);
++	if (err)
++		goto failed1;
++	err = pcmcia_parse_tuple(link, &tuple, &parse);
++	if (err)
++		goto failed1;
++	version = parse.manfid.card;
++	DEBUG(1, "ib-pcmcia: card version %d\n", version);
++	tuple.DesiredTuple = CISTPL_CONFIG;
++	tuple.Attributes = 0;
++	tuple.TupleData = buf;
++	tuple.TupleDataMax = sizeof(buf);
++	tuple.TupleOffset = 0;
++	err = pcmcia_get_first_tuple(link, &tuple);
++	if (err)
++		goto failed1;
++	err = pcmcia_get_tuple_data(link, &tuple);
++	if (err)
++		goto failed1;
++	err = pcmcia_parse_tuple(link, &tuple, &parse);
++	if (err)
++		goto failed1;
++	link->conf.ConfigBase = parse.config.base;
++	link->conf.Present = parse.config.rmask[0];
++	err = pcmcia_get_configuration_info(link, &conf);
++	if (err)
++		goto failed1;
++	tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
++	err = pcmcia_get_first_tuple(link, &tuple);
++	if (err)
++		goto failed1;
++	while (1) {
++		if (pcmcia_get_tuple_data(link, &tuple))
++			goto next_entry;
++		if (pcmcia_parse_tuple(link, &tuple, &parse))
++			goto next_entry;
++		cfg = &parse.cftable_entry;
++		if (cfg->flags & CISTPL_CFTABLE_DEFAULT)
++			dflt = *cfg;
++		if (cfg->index == 0)
++			goto next_entry;
++		link->conf.ConfigIndex = cfg->index;
++		if (cfg->flags & CISTPL_CFTABLE_AUDIO) {
++			link->conf.Attributes |= CONF_ENABLE_SPKR;
++			link->conf.Status = CCSR_AUDIO_ENA;
++		}
++		if (cfg->vcc.present & (1 << CISTPL_POWER_VNOM)) {
++			if (conf.Vcc != cfg->vcc.param[CISTPL_POWER_VNOM]
++					/ 10000)
++				goto next_entry;
++		} else if (dflt.vcc.present & (1 << CISTPL_POWER_VNOM)) {
++			if (conf.Vcc != dflt.vcc.param[CISTPL_POWER_VNOM]
++					/ 10000)
++				goto next_entry;
++		}
++		if (cfg->vpp1.present & (1 << CISTPL_POWER_VNOM))
++			link->conf.Vpp = cfg->vpp1.param[CISTPL_POWER_VNOM]
++					/ 10000;
++		else if (dflt.vpp1.present & (1 << CISTPL_POWER_VNOM))
++			link->conf.Vpp = dflt.vpp1.param[CISTPL_POWER_VNOM]
++					/ 10000;
++		break;
++next_entry:
++		err = pcmcia_get_next_tuple(link, &tuple);
++		if (err)
++			goto failed1;
++	}
++	err = pcmcia_request_configuration(link, &link->conf);
++	if (err) {
++		DEBUG(1, "ib-pcmcia: pcmcia_request_configuration failed\n");
++		goto failed1;
++	}
++	req.AccessSpeed = 0;
++	req.Attributes = WIN_MEMORY_TYPE_CM | WIN_DATA_WIDTH_16 | WIN_ENABLE;
++	req.Base = 0;
++	req.Size = version < 2 ? 0x1000 : 0x2000;
++	link->win = NULL;
++	err = pcmcia_request_window(&link, &req, &link->win);
++	if (err) {
++		DEBUG(1, "ib-pcmcia: pcmcia_request_window failed\n");
++		goto failed2;
++	}
++	local->mem = (unsigned char*) ioremap(req.Base, req.Size);
++	if (local->mem == NULL) {
++		DEBUG(1, "ib-pcmcia: ioremap failed\n");
++		err = -EIO;
++		goto failed3;
++	}
++	err = ib_net_register(&netdev);
++	if (err)
++		goto failed4;
++	modem = netdev->priv;
++	strcpy(local->node.dev_name, netdev->name);
++	ib_net_addr(modem, local->mem + OFFSET_UT_ETHERNET);
++	modem->driver = &ib_pcmcia_net_driver;
++	modem->pdriver = local;
++	local->modem = modem;
++	local->ifstate = IFSTATE_RESET;
++	local->nreset = 0;
++	init_timer(&local->timer);
++	local->timer.expires = jiffies + HZ / 4;
++	local->timer.function = ib_pcmcia_timer;
++	local->timer.data = (unsigned long) local;
++	add_timer(&local->timer);
++	local->node.major = local->node.minor = 0;
++	local->node.next = NULL;
++	return 0;
++failed4:
++	iounmap(local->mem);
++failed3:
++failed2:
++	pcmcia_disable_device(link);
++failed1:
++	DEBUG(1, "ib-pcmcia: config failed\n");
++	return err;
++}
++
++/**
++ * ib_pcmcia_probe - probe device.
++ * @dev: device state.
++ */
++static int ib_pcmcia_probe(struct pcmcia_device *link)
++{
++	struct ib_pcmcia_local_t *local;
++
++	local = kmalloc(sizeof(struct ib_pcmcia_local_t), GFP_KERNEL);
++	if (local == NULL)
++		return -ENOMEM;
++	local->dev = link;
++	link->priv = local;
++	link->conf.Attributes = 0;
++	link->conf.IntType = INT_MEMORY_AND_IO;
++	link->conf.Status = 0;
++	link->conf.Vpp = 0;
++	init_timer(&local->release);
++	local->release.function = &ib_pcmcia_release;
++	local->release.data = (unsigned long) local;
++	local->modem = NULL;
++	return ib_pcmcia_config(link);
++}
++
++static struct pcmcia_device_id ib_pcmcia_table[] = {
++	PCMCIA_DEVICE_MANF_CARD(0x02e3, 0x0001),
++	PCMCIA_DEVICE_MANF_CARD(0x02e3, 0x0002),
++	PCMCIA_DEVICE_PROD_ID12("Kyocera Corporation", "Access Card",
++			0xaba79a14, 0xd66618ce),
++	PCMCIA_DEVICE_NULL,
++};
++
++MODULE_DEVICE_TABLE(pcmcia, ib_pcmcia_table);
++
++/**
++ * ib_pcmcia_driver - PCMCIA driver struct.
++ */
++
++static struct pcmcia_driver ib_pcmcia_driver = {
++	.owner = THIS_MODULE,
++	.drv = {
++		.name = ib_pcmcia_dev_info,
++	},
++	.probe = ib_pcmcia_probe,
++	.remove = ib_pcmcia_detach,
++	.id_table = ib_pcmcia_table,
++};
++
++/**
++ * ib_pcmcia_init - ib-pcmcia module init.
++ */
++static int __init ib_pcmcia_init(void)
++{
++	if (io16)
++		ib_pcmcia_blit = ib_pcmcia_blit16;
++	else
++		ib_pcmcia_blit = ib_pcmcia_blit32;
++	pcmcia_register_driver(&ib_pcmcia_driver);
++	return 0;
++}
++
++/**
++ * ib_pcmcia_exit - ib-pcmcia module exit.
++ */
++static void __exit ib_pcmcia_exit(void)
++{
++	pcmcia_unregister_driver(&ib_pcmcia_driver);
++}
++
++module_init(ib_pcmcia_init);
++module_exit(ib_pcmcia_exit);
++
++MODULE_DESCRIPTION("iBurst compatible PCMCIA driver");
++MODULE_LICENSE("GPL");

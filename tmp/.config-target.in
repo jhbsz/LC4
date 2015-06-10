@@ -1,0 +1,3595 @@
+choice
+	prompt "Target System"
+	default TARGET_brcm_2_4
+	reset if !DEVEL
+	
+config TARGET_ppc40x
+	bool "AMCC/IBM PPC40x [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select powerpc
+	depends BROKEN
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	help
+	  Build firmware images for the AMCC Kilauea evaluation board
+
+
+config TARGET_ppc44x
+	bool "AMCC/IBM PPC44x [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select powerpc
+	depends BROKEN
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	help
+	  Build firmware images for the AMCC Taishan evaluation board
+
+
+config TARGET_as500
+	bool "Acrospeed AS500 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select mips
+
+	help
+	  Build firmware images for Acrospeed AS500 based boards
+
+
+config TARGET_atheros
+	bool "Atheros 231x/5312 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select mips
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Atheros SoC boards
+
+
+config TARGET_ar71xx
+	bool "Atheros AR71xx [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select mips
+	select GPIO_SUPPORT
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USES_TGZ
+	select USB_SUPPORT
+	help
+	  Build firmware images for Atheros AR71xx based boards
+
+
+config TARGET_avr32
+	bool "Atmel AVR32 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_25
+	select avr32
+	select GPIO_SUPPORT
+	select USES_SQUASHFS
+	help
+	  Build firmware images for ATNGW100 board
+
+
+config TARGET_brcm_2_4
+	bool "Broadcom BCM947xx/953xx [2.4]"
+	select LINUX_2_4
+	select LINUX_2_4_35
+	select mipsel
+	select PCI_SUPPORT
+	select PCMCIA_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Broadcom based routers
+	  (e.g. Linksys WRT54G(S), Asus WL-500g, Motorola WR850G)
+
+
+config TARGET_brcm47xx
+	bool "Broadcom BCM947xx/953xx [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_25
+	select mipsel
+	select GPIO_SUPPORT
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Broadcom based routers
+	  (e.g. Netgear WGT634U)
+
+
+config TARGET_ifxmips
+	bool "Infineon Mips [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select mips
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Infineon Mips Controllers
+
+
+config TARGET_adm5120
+	bool "Infineon/ADMtek ADM5120 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select HAS_SUBTARGETS
+
+
+config TARGET_ixp4xx
+	bool "Intel IXP4xx [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select HAS_SUBTARGETS
+
+
+config TARGET_magicbox
+	bool "Magicbox [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select powerpc
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+
+
+config TARGET_rb532
+	bool "Mikrotik RouterBoard 532 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_24
+	select mipsel
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USES_TGZ
+	select USB_SUPPORT
+
+
+config TARGET_ox810
+	bool "Oxford NAS 810 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select arm
+	select PCI_SUPPORT
+	select USB_SUPPORT
+	help
+	  Build firmware images for Oxford NAS 810 based boards
+
+
+config TARGET_rdc
+	bool "RDC 321x [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_24
+	select i386
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select PCMCIA_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for RDC321x based routers
+	  (e.g. Airlink101 AR525W, Linksys WRT54R, Sitecom WL-153)
+
+
+config TARGET_au1000
+	bool "RMI/AMD AU1x00 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_25
+	select mipsel
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USB_SUPPORT
+	help
+	  Build firmware for AMD Alchemy 1500 boards
+	  (e.g. 4G-Systems Mesh/Access Cube ...)
+
+
+config TARGET_ralink_7620
+	bool "Ralink MT7620 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_36
+	select HAS_SUBTARGETS
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink
+	bool "Ralink RT305X [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select HAS_SUBTARGETS
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ar7
+	bool "TI AR7 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select mipsel
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select USES_SQUASHFS
+	help
+	  Build firmware images for TI AR7 based routers
+
+
+config TARGET_uml
+	bool "User Mode Linux [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	select x86_64
+	select USES_EXT2
+
+
+config TARGET_x86
+	bool "x86 [2.6]"
+	select LINUX_2_6
+	select LINUX_2_6_25
+	select HAS_SUBTARGETS
+
+
+endchoice
+
+choice
+	prompt "Subtarget" if HAS_SUBTARGETS
+
+config TARGET_ralink_f4d16_1t1r
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f4d32_1t1r
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_1t1r
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f4d32_2t2r
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r
+	bool "FLASH 8M DRAM 32M 2T2R"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d64_2t2r
+	bool "FLASH 8M DRAM 64M 2T2R"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_ar8316
+	bool "FLASH 8M DRAM 32M 2T2R with AR8316 Giga Switch"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_4615g
+	bool "FLASH 8M DRAM 32M 2T2R ABOCOM 4615"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d64_2t2r_ar8316
+	bool "FLASH 8M DRAM 64M 2T2R with AR8316 Giga Switch"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d64_2t2r_5205g
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f16d64_2t2r_5205g
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_1t1r_amit
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_1t1r_amit_cdw531ac
+	bool "FLASH 8M DRAM 32M 1T1R AMIT CDW531AC board"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_baudtec
+	bool "FLASH 8M DRAM 32M 2T2R Baudtec board"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d64_2t2r_ar8316_amit_cde550
+	bool "FLASH 8M DRAM 64M AMIT CDE550"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d64_2t2r_ar8316_spi_amit_cde570
+	bool "SPI FLASH 8M DRAM 64M 2T2R AMIT CDE570"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R1H_1l1w
+	bool "FLASH 8M DRAM 32M 2T2R Baudtec board RA300R1H 1 Lan 1 Wan"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w
+	bool "FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4H_4l1w
+	bool "FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4H 4 Lan 1 Wan"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_1t1r_poray_R50E
+	bool "Ralink RT305X"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w
+	bool "FLASH 8M DRAM 32M RT5350 1T1R 1L1W"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f16d64_2t2r_ar8316_spi_amit_cde570_prox
+	bool "SPI FLASH 16M DRAM 64M 2T2R AMIT CDE570 PROX"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_m1
+	bool "FLASH 8M DRAM 32M RT5350 1T1R 1L1W M1"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_bee
+	bool "FLASH 8M DRAM 32M RT5350 1T1R 1L1W Bee"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_sony
+	bool "FLASH 8M DRAM 32M RT5350 1T1R 1L1W SONY"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt3352_f8d32_2t2r_1l1w
+	bool "FLASH 16M DRAM 32M RT3352 1T1R 1L1W"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_mac_sense
+	bool "FLASH 8M DRAM 32M 2T2R Baudtec board RA300R4G 4 Lan 1 Wan mac sense"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt3352_f16d64_2t2r_3l1w_gma
+	bool "FLASH 16M DRAM 64M RT3352 2T2R 3L1W for Garmin project(GMA)"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_music
+	bool "FLASH 8M DRAM 32M RT5350 1T1R 1L1W Music"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ralink
+	select mipsel
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_7620_mt7620_evb
+	bool "mt7620 evb 20131114"
+	select LINUX_2_6
+	select LINUX_2_6_36
+	depends TARGET_ralink_7620
+	select mipsel
+	select PCI_SUPPORT
+	select USES_SQUASHFS4
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_7620_mt7620_als
+	bool "mt7620 als 20140415"
+	select LINUX_2_6
+	select LINUX_2_6_36
+	depends TARGET_ralink_7620
+	select mipsel
+	select PCI_SUPPORT
+	select USES_SQUASHFS4
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_ralink_7620_mt7620_x2
+	bool "mt7620 x2 20140424"
+	select LINUX_2_6
+	select LINUX_2_6_36
+	depends TARGET_ralink_7620
+	select mipsel
+	select PCI_SUPPORT
+	select USES_SQUASHFS4
+	select USB_SUPPORT
+	help
+	  Build firmware images for Ralink RT305X based boards
+
+
+config TARGET_x86_generic
+	bool "Generic"
+	select LINUX_2_6
+	select LINUX_2_6_25
+	depends TARGET_x86
+	select i386
+	select DISPLAY_SUPPORT
+	select USES_EXT2
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select PCMCIA_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for x86 based boards 
+	  (e.g : Soekris, ...)
+
+
+config TARGET_adm5120_router_le
+	bool "Little Endian"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_adm5120
+	select mipsel
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USES_TGZ
+	select USB_SUPPORT
+	help
+	  Build firmware images for Infineon/ADMtek ADM5120 based boards
+	  running in little-endian mode (e.g: RouterBoard RB1xx, Compex WP54x ...)
+
+
+config TARGET_adm5120_router_be
+	bool "Big Endian"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_adm5120
+	select mips
+	select GPIO_SUPPORT
+	select USES_JFFS2
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for Infineon/ADMTek ADM5120 based boards
+	  running in big-endian mode (e.g : ZyXEL Prestige 335WT ...)
+
+
+config TARGET_ixp4xx_generic
+	bool "Generic"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ixp4xx
+	select armeb
+	select GPIO_SUPPORT
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for ixp4xx based boards that boot from internal flash
+	  (e.g : Linksys NSLU2, ...)
+
+
+config TARGET_ixp4xx_harddisk
+	bool "Internal Hard-Disk"
+	select LINUX_2_6
+	select LINUX_2_6_26
+	depends TARGET_ixp4xx
+	select armeb
+	select GPIO_SUPPORT
+	select PCI_SUPPORT
+	select USES_SQUASHFS
+	select USB_SUPPORT
+	help
+	  Build firmware images for ixp4xx based boards that boot directly from internal disk storage
+	  (e.g : Freecom FSG-3, ...)
+
+
+endchoice
+
+choice
+	prompt "Target Profile"
+
+config TARGET_ox810_Default
+	bool "Default"
+	depends TARGET_ox810
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ar7_Texas
+	bool "Texas Instruments WiFi (default)"
+	depends TARGET_ar7
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-acx-mac80211
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ar7_None
+	bool "No WiFi"
+	depends TARGET_ar7
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f4d16_1t1r_Default
+	bool "Default"
+	depends TARGET_ralink_f4d16_1t1r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f4d32_1t1r_Default
+	bool "Default"
+	depends TARGET_ralink_f4d32_1t1r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_1t1r_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_1t1r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f4d32_2t2r_Default
+	bool "Default"
+	depends TARGET_ralink_f4d32_2t2r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d64_2t2r_Default
+	bool "Default"
+	depends TARGET_ralink_f8d64_2t2r
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_ar8316_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_ar8316
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_4615g_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_4615g
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d64_2t2r_ar8316_Default
+	bool "Default"
+	depends TARGET_ralink_f8d64_2t2r_ar8316
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d64_2t2r_5205g_Default
+	bool "Default"
+	depends TARGET_ralink_f8d64_2t2r_5205g
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f16d64_2t2r_5205g_Default
+	bool "Default"
+	depends TARGET_ralink_f16d64_2t2r_5205g
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_1t1r_amit_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_1t1r_amit
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_1t1r_amit_cdw531ac_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_1t1r_amit_cdw531ac
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_baudtec_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_baudtec
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d64_2t2r_ar8316_amit_cde550_Default
+	bool "Default"
+	depends TARGET_ralink_f8d64_2t2r_ar8316_amit_cde550
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d64_2t2r_ar8316_spi_amit_cde570_Default
+	bool "Default"
+	depends TARGET_ralink_f8d64_2t2r_ar8316_spi_amit_cde570
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R1H_1l1w_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_baudtec_RA300R1H_1l1w
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4H_4l1w_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_baudtec_RA300R4H_4l1w
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_1t1r_poray_R50E_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_1t1r_poray_R50E
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_Default
+	bool "Default"
+	depends TARGET_ralink_rt5350_f8d32_1t1r_1l1w
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f16d64_2t2r_ar8316_spi_amit_cde570_prox_Default
+	bool "Default"
+	depends TARGET_ralink_f16d64_2t2r_ar8316_spi_amit_cde570_prox
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_m1_Default
+	bool "Default"
+	depends TARGET_ralink_rt5350_f8d32_1t1r_1l1w_m1
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_bee_Default
+	bool "Default"
+	depends TARGET_ralink_rt5350_f8d32_1t1r_1l1w_bee
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_sony_Default
+	bool "Default"
+	depends TARGET_ralink_rt5350_f8d32_1t1r_1l1w_sony
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt3352_f8d32_2t2r_1l1w_Default
+	bool "Default"
+	depends TARGET_ralink_rt3352_f8d32_2t2r_1l1w
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_mac_sense_Default
+	bool "Default"
+	depends TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_mac_sense
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt3352_f16d64_2t2r_3l1w_gma_Default
+	bool "Default"
+	depends TARGET_ralink_rt3352_f16d64_2t2r_3l1w_gma
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_rt5350_f8d32_1t1r_1l1w_music_Default
+	bool "Default"
+	depends TARGET_ralink_rt5350_f8d32_1t1r_1l1w_music
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_magicbox_Default
+	bool "Default"
+	depends TARGET_magicbox
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_uml_Default
+	bool "Default"
+	depends TARGET_uml
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_7620_mt7620_evb_Default
+	bool "Default"
+	depends TARGET_ralink_7620_mt7620_evb
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_7620_mt7620_als_Default
+	bool "Default"
+	depends TARGET_ralink_7620_mt7620_als
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ralink_7620_mt7620_x2_Default
+	bool "Default"
+	depends TARGET_ralink_7620_mt7620_x2
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ppc40x_Default
+	bool "Default"
+	depends TARGET_ppc40x
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ppc44x_Default
+	bool "Default"
+	depends TARGET_ppc44x
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_rdc_ar525w
+	bool "AirLink101 AR525W"
+	depends TARGET_rdc
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-r6040
+	select DEFAULT_kmod-rt61-pci
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_rdc_dir450
+	bool "D-Link DIR-450"
+	depends TARGET_rdc
+
+	select PROFILE_KCONFIG
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-nozomi
+	select DEFAULT_kmod-pcmcia-core
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_rdc_wl153
+	bool "Sitecom WL-153"
+	depends TARGET_rdc
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-r6040
+	select DEFAULT_kmod-rt61-pci
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_rb532_Default
+	bool "Default"
+	depends TARGET_rb532
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_au1000_Atheros
+	bool "Atheros WiFi (default)"
+	depends TARGET_au1000
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_yamonenv
+
+config TARGET_au1000_Broadcom
+	bool "Broadcom BCM43xx WiFi"
+	depends TARGET_au1000
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-net-bcm43xx
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_yamonenv
+
+config TARGET_au1000_Intel
+	bool "Intel IPW2200 WiFi"
+	depends TARGET_au1000
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-net-ipw2200
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_yamonenv
+
+config TARGET_au1000_InternetBox
+	bool "T-Mobile InternetBox"
+	depends TARGET_au1000
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hostapd
+	select DEFAULT_hostapd-utils
+	select DEFAULT_hotplug2
+	select DEFAULT_ip
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_ldconfig
+	select DEFAULT_ldd
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_tc
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_wpa-cli
+	select DEFAULT_wpa-supplicant
+	select DEFAULT_yamonenv
+
+config TARGET_au1000_MeshCube
+	bool "MeshCube MTX-1"
+	depends TARGET_au1000
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hostap-utils
+	select DEFAULT_hostapd
+	select DEFAULT_hostapd-utils
+	select DEFAULT_hotplug2
+	select DEFAULT_ip
+	select DEFAULT_iptables
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-fs-vfat
+	select DEFAULT_kmod-hostap
+	select DEFAULT_kmod-hostap-pci
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-net-prism54
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_ldconfig
+	select DEFAULT_ldd
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_tc
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_wpa-cli
+	select DEFAULT_wpa-supplicant
+	select DEFAULT_yamonenv
+
+config TARGET_atheros_Default
+	bool "Default"
+	depends TARGET_atheros
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_gpioctl
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm_2_4_Broadcom
+	bool "Generic, Broadcom WiFi (default)"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_BroadcomMimo
+	bool "Generic, Broadcom WiFi (MIMO)"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl-mimo
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_Atheros
+	bool "Generic, Atheros WiFi"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+
+config TARGET_brcm_2_4_None
+	bool "Generic, No WiFi"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+
+config TARGET_brcm_2_4_USBGeneric
+	bool "Generic USB"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_WL500G
+	bool "ASUS WL-500g"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-lp
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_WL500GD
+	bool "ASUS WL-500g Deluxe"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-uhci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_WL500GP
+	bool "ASUS WL-500g Premium"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-uhci-iv
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_WL700GE
+	bool "WL-700gE"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_busybox
+	select DEFAULT_dropbear
+	select DEFAULT_e2fsprogs
+	select DEFAULT_fdisk
+	select DEFAULT_firewall
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-ide-aec62xx
+	select DEFAULT_kmod-ide-core
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_nvram
+	select DEFAULT_uclibc
+
+config TARGET_brcm_2_4_WLHDD
+	bool "WL-HDD"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ide-core
+	select DEFAULT_kmod-ide-pdc202xx
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_brcm_2_4_WRT54G3G
+	bool "Linksys WRT54G3G"
+	depends TARGET_brcm_2_4
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_comgt
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_iptables
+	select DEFAULT_kmod-brcm-wl
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-nozomi
+	select DEFAULT_kmod-pcmcia-core
+	select DEFAULT_kmod-pcmcia-serial
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-wlcompat
+	select DEFAULT_libgcc
+	select DEFAULT_nas
+	select DEFAULT_nvram
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_wlc
+
+config TARGET_ifxmips_Atheros
+	bool "Atheros WiFi (default)"
+	depends TARGET_ifxmips
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uboot-ifxmips
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ifxmips_Ralink
+	bool "Ralink RT61 Wifi (ARV452)"
+	depends TARGET_ifxmips
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-rt61-pci
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uboot-ifxmips
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_Broadcom-b43
+	bool "Broadcom BCM43xx WiFi (default)"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-b43
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_Atheros
+	bool "Atheros WiFi"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_Atheros-ath5k
+	bool "Atheros WiFi (atk5k)"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ath5k
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_None
+	bool "No WiFi"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-switch
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_WGT634U
+	bool "Netgear WGT634U"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_WL500GPv1
+	bool "ASUS WL-500g Premium v1 (Atheros WiFi)"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-uhci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_brcm47xx_WRTSL54GS
+	bool "Linksys WRTSL54GS"
+	depends TARGET_brcm47xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_e2fsprogs
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-b43
+	select DEFAULT_kmod-diag
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-scsi-core
+	select DEFAULT_kmod-switch
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_as500_Default
+	bool "Default"
+	depends TARGET_as500
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_avr32_Default
+	bool "Default"
+	depends TARGET_avr32
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ar71xx_Default
+	bool "Default"
+	depends TARGET_ar71xx
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_x86_generic_Generic
+	bool "Generic"
+	depends TARGET_x86_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-natsemi
+	select DEFAULT_kmod-ne2k-pci
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_x86_generic_Alix
+	bool "PCEngines Alix"
+	depends TARGET_x86_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-leds-alix
+	select DEFAULT_kmod-natsemi
+	select DEFAULT_kmod-ne2k-pci
+	select DEFAULT_kmod-via-rhine
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_x86_generic_Pcengines
+	bool "PCEngines WRAP"
+	depends TARGET_x86_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-hwmon-pc87360
+	select DEFAULT_kmod-i2c-scx200
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-leds-wrap
+	select DEFAULT_kmod-natsemi
+	select DEFAULT_kmod-ne2k-pci
+	select DEFAULT_kmod-scx200-gpio
+	select DEFAULT_kmod-scx200-wdt
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_x86_generic_Soekris
+	bool "Soekris Net4801"
+	depends TARGET_x86_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-hwmon-pc87360
+	select DEFAULT_kmod-i2c-scx200
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-leds-net48xx
+	select DEFAULT_kmod-natsemi
+	select DEFAULT_kmod-ne2k-pci
+	select DEFAULT_kmod-scx200-gpio
+	select DEFAULT_kmod-scx200-wdt
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_Generic
+	bool "Generic (default)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS630
+	bool "Cellvision CAS-630 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS630W
+	bool "Cellvision CAS-630W IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS670
+	bool "Cellvision CAS-670 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS670W
+	bool "Cellvision CAS-670W IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS700
+	bool "Cellvision CAS-700 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS700W
+	bool "Cellvision CAS-700W IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS771
+	bool "Cellvision CAS-771 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-usb-audio
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-video-cpia2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS771W
+	bool "Cellvision CAS-771W IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-rt2500-pci
+	select DEFAULT_kmod-usb-audio
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-video-cpia2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS790
+	bool "Cellvision CAS-790 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS861
+	bool "Cellvision CAS-861 IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_CAS861W
+	bool "Cellvision CAS-861W IP camera (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-rt2500-pci
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_NFS101U
+	bool "Cellvision NFS-101U Network File Server (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_NFS101WU
+	bool "Cellvision NFS-101WU Network File Server (Experimental)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_NP27G
+	bool "Compex NP27G"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-usb-adm5120
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_NP28G
+	bool "Compex NP28G"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-uhci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_WP54
+	bool "Compex WP54 family"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_BR6104K
+	bool "Edimax BR-6104K (Unofficial)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_BR6104KP
+	bool "Edimax BR-6104KP (Unofficial)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-usb-adm5120
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_BR6104WG
+	bool "Edimax BR-6104Wg (Unofficial, No WiFi)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_BR6114WG
+	bool "Edimax BR-6114WG (Unofficial, No WiFi)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_EASY5120RT
+	bool "Infineon EASY 5120-RT Reference Board"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-usb-adm5120
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_EASY5120PATA
+	bool "Infineon EASY 5120P-ATA Reference Board"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_PMUGW
+	bool "Motorola Powerline MU Gateway (EXPERIMENTAL)"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_le_RouterBoard
+	bool "Mikrotik RouterBoard 1xx family"
+	depends TARGET_adm5120_router_le
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-pata-rb153-cf
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_be_Generic
+	bool "Generic (default)"
+	depends TARGET_adm5120_router_be
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_be_P334WT
+	bool "ZyXEL Prestige 334WT"
+	depends TARGET_adm5120_router_be
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-acx
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_adm5120_router_be_P335WT
+	bool "ZyXEL Prestige 335WT"
+	depends TARGET_adm5120_router_be
+
+	select DEFAULT_admswconfig
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_kmod-acx
+	select DEFAULT_kmod-button-hotplug
+	select DEFAULT_kmod-input-core
+	select DEFAULT_kmod-input-gpio-buttons
+	select DEFAULT_kmod-input-polldev
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-usb-adm5120
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ixp4xx_generic_Default
+	bool "Default Profile"
+	depends TARGET_ixp4xx_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ixp4xx_generic_Atheros-ath5k
+	bool "Atheros WiFi (atk5k)"
+	depends TARGET_ixp4xx_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-ath5k
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ixp4xx_generic_NSLU2
+	bool "Linksys NSLU2"
+	depends TARGET_ixp4xx_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-fs-ext2
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-ixp4xx-npe
+	select DEFAULT_kmod-scsi-core
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-ohci
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+
+config TARGET_ixp4xx_generic_NAS100d
+	bool "Iomega NAS 100d"
+	depends TARGET_ixp4xx_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-ata-artop
+	select DEFAULT_kmod-ata-core
+	select DEFAULT_kmod-fs-ext2
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-ixp4xx-npe
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-scsi-core
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_wireless-tools
+
+config TARGET_ixp4xx_generic_DSMG600RevA
+	bool "DSM-G600 Rev A"
+	depends TARGET_ixp4xx_generic
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-ata-artop
+	select DEFAULT_kmod-ata-core
+	select DEFAULT_kmod-fs-ext2
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-scsi-core
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_kmod-usb-uhci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_kmod-via-velocity
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_wireless-tools
+
+config TARGET_ixp4xx_harddisk_FSG3
+	bool "Freecom FSG-3"
+	depends TARGET_ixp4xx_harddisk
+
+	select DEFAULT_base-files
+	select DEFAULT_bridge
+	select DEFAULT_busybox
+	select DEFAULT_dnsmasq
+	select DEFAULT_dropbear
+	select DEFAULT_fconfig
+	select DEFAULT_firewall
+	select DEFAULT_hotplug2
+	select DEFAULT_iptables
+	select DEFAULT_ixp4xx-microcode
+	select DEFAULT_kmod-fs-ext2
+	select DEFAULT_kmod-fs-ext3
+	select DEFAULT_kmod-fs-reiserfs
+	select DEFAULT_kmod-ipt-nathelper
+	select DEFAULT_kmod-madwifi
+	select DEFAULT_kmod-usb-core
+	select DEFAULT_kmod-usb-storage
+	select DEFAULT_kmod-usb-uhci
+	select DEFAULT_kmod-usb2
+	select DEFAULT_libgcc
+	select DEFAULT_ppp
+	select DEFAULT_ppp-mod-pppoe
+	select DEFAULT_uclibc
+	select DEFAULT_udevtrigger
+	select DEFAULT_wireless-tools
+
+endchoice
+
+config HAS_SUBTARGETS
+	bool
+
+config TARGET_BOARD
+	string
+
+		default "ox810" if TARGET_ox810
+		default "ar7" if TARGET_ar7
+		default "ralink" if TARGET_ralink
+		default "magicbox" if TARGET_magicbox
+		default "uml" if TARGET_uml
+		default "ralink-7620" if TARGET_ralink_7620
+		default "ppc40x" if TARGET_ppc40x
+		default "ppc44x" if TARGET_ppc44x
+		default "rdc" if TARGET_rdc
+		default "rb532" if TARGET_rb532
+		default "au1000" if TARGET_au1000
+		default "atheros" if TARGET_atheros
+		default "brcm-2.4" if TARGET_brcm_2_4
+		default "ifxmips" if TARGET_ifxmips
+		default "brcm47xx" if TARGET_brcm47xx
+		default "as500" if TARGET_as500
+		default "avr32" if TARGET_avr32
+		default "ar71xx" if TARGET_ar71xx
+		default "x86" if TARGET_x86
+		default "adm5120" if TARGET_adm5120
+		default "ixp4xx" if TARGET_ixp4xx
+config TARGET_PLATFORM
+    string
+
+		default " " if TARGET_ralink_f4d16_1t1r
+		default " " if TARGET_ralink_f4d32_1t1r
+		default " " if TARGET_ralink_f8d32_1t1r
+		default " " if TARGET_ralink_f4d32_2t2r
+		default "ABB" if TARGET_ralink_f8d32_2t2r
+		default "ABC" if TARGET_ralink_f8d64_2t2r
+		default "ABD" if TARGET_ralink_f8d32_2t2r_ar8316
+		default "ABF" if TARGET_ralink_f8d32_2t2r_4615g
+		default "ABE" if TARGET_ralink_f8d64_2t2r_ar8316
+		default " " if TARGET_ralink_f8d64_2t2r_5205g
+		default " " if TARGET_ralink_f16d64_2t2r_5205g
+		default " " if TARGET_ralink_f8d32_1t1r_amit
+		default "AMB" if TARGET_ralink_f8d32_1t1r_amit_cdw531ac
+		default "BAA" if TARGET_ralink_f8d32_2t2r_baudtec
+		default "AMC" if TARGET_ralink_f8d64_2t2r_ar8316_amit_cde550
+		default "AMD" if TARGET_ralink_f8d64_2t2r_ar8316_spi_amit_cde570
+		default "BAB" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R1H_1l1w
+		default "BAD" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w
+		default "BAC" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4H_4l1w
+		default " " if TARGET_ralink_f8d32_1t1r_poray_R50E
+		default "AME" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w
+		default "AMD" if TARGET_ralink_f16d64_2t2r_ar8316_spi_amit_cde570_prox
+		default "AXA" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_m1
+		default "AXB" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_bee
+		default "LIS" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_sony
+		default "AMD" if TARGET_ralink_rt3352_f8d32_2t2r_1l1w
+		default "BAD_m" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_mac_sense
+		default "GMA" if TARGET_ralink_rt3352_f16d64_2t2r_3l1w_gma
+		default "AXM" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_music
+		default "M2E" if TARGET_ralink_7620_mt7620_evb
+		default "ALS" if TARGET_ralink_7620_mt7620_als
+		default "X2MT7620" if TARGET_ralink_7620_mt7620_x2
+		default " " if TARGET_x86_generic
+		default " " if TARGET_adm5120_router_le
+		default " " if TARGET_adm5120_router_be
+		default " " if TARGET_ixp4xx_generic
+		default " " if TARGET_ixp4xx_harddisk
+config TARGET_SW_TYPE
+    string
+
+		default " " if TARGET_ralink_f4d16_1t1r
+		default " " if TARGET_ralink_f4d32_1t1r
+		default " " if TARGET_ralink_f8d32_1t1r
+		default " " if TARGET_ralink_f4d32_2t2r
+		default "esw" if TARGET_ralink_f8d32_2t2r
+		default "esw" if TARGET_ralink_f8d64_2t2r
+		default "ar8316" if TARGET_ralink_f8d32_2t2r_ar8316
+		default "ar8316" if TARGET_ralink_f8d32_2t2r_4615g
+		default "ar8316" if TARGET_ralink_f8d64_2t2r_ar8316
+		default " " if TARGET_ralink_f8d64_2t2r_5205g
+		default " " if TARGET_ralink_f16d64_2t2r_5205g
+		default " " if TARGET_ralink_f8d32_1t1r_amit
+		default "esw" if TARGET_ralink_f8d32_1t1r_amit_cdw531ac
+		default "esw" if TARGET_ralink_f8d32_2t2r_baudtec
+		default "ar8316" if TARGET_ralink_f8d64_2t2r_ar8316_amit_cde550
+		default "ar8316" if TARGET_ralink_f8d64_2t2r_ar8316_spi_amit_cde570
+		default "esw" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R1H_1l1w
+		default "ar8316" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w
+		default "esw" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4H_4l1w
+		default " " if TARGET_ralink_f8d32_1t1r_poray_R50E
+		default "esw" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w
+		default "ar8316" if TARGET_ralink_f16d64_2t2r_ar8316_spi_amit_cde570_prox
+		default "esw" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_m1
+		default "esw" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_bee
+		default "esw" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_sony
+		default "ar8328" if TARGET_ralink_rt3352_f8d32_2t2r_1l1w
+		default "ar8316" if TARGET_ralink_f8d32_2t2r_baudtec_RA300R4G_4l1w_mac_sense
+		default "ar8328" if TARGET_ralink_rt3352_f16d64_2t2r_3l1w_gma
+		default "esw" if TARGET_ralink_rt5350_f8d32_1t1r_1l1w_music
+		default "esw" if TARGET_ralink_7620_mt7620_evb
+		default "esw" if TARGET_ralink_7620_mt7620_als
+		default "esw" if TARGET_ralink_7620_mt7620_x2
+		default " " if TARGET_x86_generic
+		default " " if TARGET_adm5120_router_le
+		default " " if TARGET_adm5120_router_be
+		default " " if TARGET_ixp4xx_generic
+		default " " if TARGET_ixp4xx_harddisk
+config LINUX_2_6_26
+	bool
+config LINUX_2_6_36
+	bool
+config LINUX_2_6_24
+	bool
+config LINUX_2_6_25
+	bool
+config LINUX_2_4_35
+	bool
+	config DEFAULT_admswconfig
+		bool
+
+	config DEFAULT_base-files
+		bool
+
+	config DEFAULT_bridge
+		bool
+
+	config DEFAULT_busybox
+		bool
+
+	config DEFAULT_comgt
+		bool
+
+	config DEFAULT_dnsmasq
+		bool
+
+	config DEFAULT_dropbear
+		bool
+
+	config DEFAULT_e2fsprogs
+		bool
+
+	config DEFAULT_fconfig
+		bool
+
+	config DEFAULT_fdisk
+		bool
+
+	config DEFAULT_firewall
+		bool
+
+	config DEFAULT_gpioctl
+		bool
+
+	config DEFAULT_hostap-utils
+		bool
+
+	config DEFAULT_hostapd
+		bool
+
+	config DEFAULT_hostapd-utils
+		bool
+
+	config DEFAULT_hotplug2
+		bool
+
+	config DEFAULT_ip
+		bool
+
+	config DEFAULT_iptables
+		bool
+
+	config DEFAULT_ixp4xx-microcode
+		bool
+
+	config DEFAULT_kmod-acx
+		bool
+
+	config DEFAULT_kmod-acx-mac80211
+		bool
+
+	config DEFAULT_kmod-ata-artop
+		bool
+
+	config DEFAULT_kmod-ata-core
+		bool
+
+	config DEFAULT_kmod-ath5k
+		bool
+
+	config DEFAULT_kmod-b43
+		bool
+
+	config DEFAULT_kmod-brcm-wl
+		bool
+
+	config DEFAULT_kmod-brcm-wl-mimo
+		bool
+
+	config DEFAULT_kmod-button-hotplug
+		bool
+
+	config DEFAULT_kmod-diag
+		bool
+
+	config DEFAULT_kmod-fs-ext2
+		bool
+
+	config DEFAULT_kmod-fs-ext3
+		bool
+
+	config DEFAULT_kmod-fs-reiserfs
+		bool
+
+	config DEFAULT_kmod-fs-vfat
+		bool
+
+	config DEFAULT_kmod-hostap
+		bool
+
+	config DEFAULT_kmod-hostap-pci
+		bool
+
+	config DEFAULT_kmod-hwmon-pc87360
+		bool
+
+	config DEFAULT_kmod-i2c-scx200
+		bool
+
+	config DEFAULT_kmod-ide-aec62xx
+		bool
+
+	config DEFAULT_kmod-ide-core
+		bool
+
+	config DEFAULT_kmod-ide-pdc202xx
+		bool
+
+	config DEFAULT_kmod-input-core
+		bool
+
+	config DEFAULT_kmod-input-gpio-buttons
+		bool
+
+	config DEFAULT_kmod-input-polldev
+		bool
+
+	config DEFAULT_kmod-ipt-nathelper
+		bool
+
+	config DEFAULT_kmod-ixp4xx-npe
+		bool
+
+	config DEFAULT_kmod-leds-alix
+		bool
+
+	config DEFAULT_kmod-leds-net48xx
+		bool
+
+	config DEFAULT_kmod-leds-wrap
+		bool
+
+	config DEFAULT_kmod-lp
+		bool
+
+	config DEFAULT_kmod-madwifi
+		bool
+
+	config DEFAULT_kmod-natsemi
+		bool
+
+	config DEFAULT_kmod-ne2k-pci
+		bool
+
+	config DEFAULT_kmod-net-bcm43xx
+		bool
+
+	config DEFAULT_kmod-net-ipw2200
+		bool
+
+	config DEFAULT_kmod-net-prism54
+		bool
+
+	config DEFAULT_kmod-nozomi
+		bool
+
+	config DEFAULT_kmod-pata-rb153-cf
+		bool
+
+	config DEFAULT_kmod-pcmcia-core
+		bool
+
+	config DEFAULT_kmod-pcmcia-serial
+		bool
+
+	config DEFAULT_kmod-r6040
+		bool
+
+	config DEFAULT_kmod-rt2500-pci
+		bool
+
+	config DEFAULT_kmod-rt61-pci
+		bool
+
+	config DEFAULT_kmod-scsi-core
+		bool
+
+	config DEFAULT_kmod-scx200-gpio
+		bool
+
+	config DEFAULT_kmod-scx200-wdt
+		bool
+
+	config DEFAULT_kmod-switch
+		bool
+
+	config DEFAULT_kmod-usb-adm5120
+		bool
+
+	config DEFAULT_kmod-usb-audio
+		bool
+
+	config DEFAULT_kmod-usb-core
+		bool
+
+	config DEFAULT_kmod-usb-ohci
+		bool
+
+	config DEFAULT_kmod-usb-storage
+		bool
+
+	config DEFAULT_kmod-usb-uhci
+		bool
+
+	config DEFAULT_kmod-usb-uhci-iv
+		bool
+
+	config DEFAULT_kmod-usb2
+		bool
+
+	config DEFAULT_kmod-via-rhine
+		bool
+
+	config DEFAULT_kmod-via-velocity
+		bool
+
+	config DEFAULT_kmod-video-cpia2
+		bool
+
+	config DEFAULT_kmod-wlcompat
+		bool
+
+	config DEFAULT_ldconfig
+		bool
+
+	config DEFAULT_ldd
+		bool
+
+	config DEFAULT_libgcc
+		bool
+
+	config DEFAULT_nas
+		bool
+
+	config DEFAULT_nvram
+		bool
+
+	config DEFAULT_ppp
+		bool
+
+	config DEFAULT_ppp-mod-pppoe
+		bool
+
+	config DEFAULT_tc
+		bool
+
+	config DEFAULT_uboot-ifxmips
+		bool
+
+	config DEFAULT_uclibc
+		bool
+
+	config DEFAULT_udevtrigger
+		bool
+
+	config DEFAULT_wireless-tools
+		bool
+
+	config DEFAULT_wlc
+		bool
+
+	config DEFAULT_wpa-cli
+		bool
+
+	config DEFAULT_wpa-supplicant
+		bool
+
+	config DEFAULT_yamonenv
+		bool
+

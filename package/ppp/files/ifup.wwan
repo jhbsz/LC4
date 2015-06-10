@@ -1,0 +1,270 @@
+#!/bin/sh -x
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+type=$1
+
+[ "$(nvram get ${type}_proto)" = "wwan" ] || {
+	echo "$0: ${type}_proto isn't wwan"
+	exit
+}
+
+[ "$(nvram get platform)" = "ALS" ] && {
+    gpioctl led 67 3 3 1 0 6000
+}
+
+ifdata_num=$(nvram show wan_wwan_probe_rule $3 datatty)
+[ -z "$ifdata_num" ] && {
+    ifdata_num=$(nvram show wan_wwan_rule $3 datatty)
+}
+
+ifctrl_num=$(nvram show wan_wwan_probe_rule $3 ctrltty)
+[ -z "$ifctrl_num" ] && {
+    ifctrl_num=$(nvram show wan_wwan_rule $3 ctrltty)
+}
+
+dev_name=$(nvram show wan_wwan_probe_rule $3 devname)
+[ -z "$dev_name" ] && {
+    dev_name=$(nvram show wan_wwan_rule $3 devname)
+}
+
+flag=$(nvram show wan_wwan_probe_rule $3 flag)
+[ -z "$flag" ] && {
+    flag=$(nvram show wan_wwan_rule $3 flag)
+}
+
+[ -e /sys/class/tty/${dev_name}${ifctrl_num} ] || exit 1
+[ -e /sys/class/tty/${dev_name}${ifdata_num} ] || exit 1
+
+mkdir -p /var/lock
+
+for module in slhc ppp_generic ppp_async; do
+	/sbin/insmod $module 2>&- >&-
+done
+
+# XXX: Use ifdata_num because ifctrl_num is not reliable!
+[ "$ifctrl_num" = "$ifdata_num" ] || ifctrl_num=$ifdata_num
+# pin
+pin=$(nvram show wan_wwan_rule $3 pin)
+[ -n "$pin" ] && env -i EZPCOMPIN="$pin" /usr/sbin/ezpcom PIN \
+    -d /dev/${dev_name}${ifctrl_num} 
+
+UML290="$(cat /proc/bus/usb/devices | grep UML290)"
+NOVA_4620L="$(cat /proc/bus/usb/devices | grep "Vendor=1410 ProdID=b005")"
+NOVA_551L="$(cat /proc/bus/usb/devices | grep "Vendor=1410 ProdID=b001")"
+UBLOX_C200="$(cat /proc/bus/usb/devices | grep "Vendor=05c6 ProdID=9004")"
+SC7702="$(cat /proc/bus/usb/devices | grep "Vendor=1782 ProdID=0002")"
+APN_TYPE="$(nvram show wan_wwan_rule $3 apn_type)"
+PH8="$(cat /proc/bus/usb/devices | grep "Vendor=1e2d ProdID=0053")"
+[ -n "$PH8" ] && {
+
+    PH8ENABLE="$(nvram show als_failover 0 enable)"
+    [ "$PH8ENABLE" = "on" ] && {
+        PH8COUNT="$(nvram show als_failover 0 count)"
+        PH8TYPE="$(nvram show als_failover 0 type)"
+	PH8OPTION=$PH8TYPE
+	[ $PH8COUNT -eq 5 ] && {       
+		[ "$PH8TYPE" = "V" ] && {
+			nvram replace attr als_failover 0 type T
+		}
+		[ "$PH8TYPE" = "T" ] && {
+			nvram replace attr als_failover 0 type V
+		}
+		PH8COUNT=0
+	} || {
+		PH8COUNT=$((PH8COUNT+1))
+	}
+	nvram replace attr als_failover 0 count $PH8COUNT        
+    } || {
+	    PH8COUNT=0
+	    [ "$(nvram show wan_wwan_rule 0 isp)" -eq 3 ] && {
+		PH8OPTION="V"
+	    }
+	    [ "$(nvram show wan_wwan_rule 0 isp)" -eq 2 ] && {
+		PH8OPTION="T"
+	    }
+    }
+    
+    
+    [ $PH8COUNT -eq 0 -o $PH8COUNT -eq 3 -o $PH8COUNT -eq 5 ] && {
+        gpioctl set 66
+        sleep 5
+        gpioctl clear 66
+        sleep 10
+	[ $PH8COUNT -eq 0 -a "$PH8OPTION" = "V" -a "$PH8ENABLE" = "on" ] && {
+	    SCRIPT="AT^SCFG=\"CDMA/Operator/Store\",2,\"Verizon\"" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+	    sleep 5
+	    SCRIPT="ATD*22899" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+	    sleep 100	
+
+	}
+    }
+    SCRIPT="At^SGPSC=\"Engine\",1" ezpcom -d /dev/ttyUSB4 -s /etc/chatscripts/script.gcom
+    sleep 10
+    
+    [ "$(nvram show wan_wwan_rule 0 location)" -eq 0 ] && {
+    	[ "$PH8OPTION" = "V" ] && {
+            PH8_FLAG="V"
+	    SCRIPT="AT^SCFG=\"MEopMode/AccT\",\"cdma2000\"" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+        }
+    	[ "$PH8OPTION" = "T" ] && {
+            PH8_FLAG="T"
+	    SCRIPT="AT^SCFG=\"MEopMode/AccT\",\"GSM/UMTS\"" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+        }
+    	sleep 10
+	[ -n "$PH8_FLAG" ] && {
+	    SCRIPT="AF+CFUN=1,1" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+    	    sleep 10
+	}
+    }
+}
+# apn
+apn=$(nvram show wan_wwan_rule $3 apn)
+[ "$APN_TYPE" != "2" -a -n "$apn" -a -z "$UML290" -a -z "$NOVA_4620L" -a -z "$NOVA_551L" -a -z "$PH8_FLAG" ] && \
+ env -i EZPCOMAPN="$apn" /usr/sbin/ezpcom APN -d /dev/${dev_name}${ifctrl_num} 
+    
+[ "$APN_TYPE" != "2" -a -n "$apn" -a -n "$NOVA_551L" -a -z "$PH8_FLAG" ] && {
+    SCRIPT="AT+CGDCONT=3,\"IP\",\"$apn\",\"0.0.0.0\",0,0" ezpcom -d /dev/${dev_name}${ifctrl_num} -s /etc/chatscripts/script.gcom
+}
+    
+# mode
+mode=$(nvram show wan_wwan_rule $3 mode)
+[ "$mode" != "auto" ] && env -i MODE="$mode" /usr/sbin/ezpcom \
+    -d /dev/${dev_name}${ifctrl_num} -s /etc/ezpcom/setmode.ezpcom
+
+# turn on radio 
+[ -z "$UBLOX_C200" -a -z "$PH8_FLAG" ] && {
+    /usr/sbin/ezpcom radioon -d /dev/${dev_name}${ifctrl_num} 
+    sleep 5 
+}
+
+# For reset trycount to zero.
+nvram replace attr wan_status_rule $3 trycount 0
+
+# Get 3G Stats
+if [ -n "$UBLOX_C200" ]; then
+    get_3g_stats ${dev_name}${ifctrl_num} $3 C200
+elif [ -n "$PH8_FLAG" ]; then
+    get_3g_stats ${dev_name}${ifctrl_num} $3 $PH8_FLAG
+    #get_3g_stats ${dev_name}${ifctrl_num} $3 C200
+elif [ -n "$PH8" ]; then
+    get_3g_stats ${dev_name}${ifctrl_num} $3 C200
+elif [ -n "$SC7702" ]; then
+    get_3g_stats ${dev_name}${ifctrl_num} $3 SC7702
+else
+    get_3g_stats ${dev_name}${ifctrl_num} $3
+fi
+# dialstr
+dialstr=$(nvram show wan_wwan_rule $3 dialstr)
+[ "$APN_TYPE" = "2" -o -z "$dialstr" ] && dialstr="*99***1#"
+[ "$APN_TYPE" = "2" ] && {
+    [ -n "$UML290" -o -n "${NOVA_4620L}" ] && dialstr="*99***3#"
+    [ -n "$(cat /proc/bus/usb/devices | grep 'Vendor=1410 ProdID=6000')" -o \
+      -n "$(cat /proc/bus/usb/devices | grep 'Vendor=1199 ProdID=0025')" -o \
+      -n "$(cat /proc/bus/usb/devices | grep 'Vendor=1410 ProdID=4100')" ] && \
+        dialstr="#777"
+}
+
+[ "$PH8ENABLE" = "on" ] && {
+    [ "$PH8OPTION" = "V" ] && {
+        dialstr="#777"
+    }
+    
+    [ "$PH8OPTION" = "T" ] && {
+        dialstr="*99***1#"
+    }
+}
+dialstr="ATD${dialstr}"
+
+chatscript="wwan.chat"
+[ "$dialstr" = "#777" ] && chatscript="evdo.chat"
+
+# Prevent multiple entry of pppd
+[ -e /var/run/ppp${3}.pid ] && exit
+
+#(while :; do
+	USERNAME=$(nvram show wan_wwan_rule $3 username)
+	PASSWORD=$(nvram show wan_wwan_rule $3 passwd)
+    MTU=$(nvram show wan_wwan_rule $3 mtu)
+    # the third rightmost bit (0x1 <<3)
+    [ "$(expr $flag / 4 )" = "1" ] && {
+        [ -z "$USERNAME" ] && USERNAME="AXIMCom"
+        [ -z "$PASSWORD" ] && PASSWORD="AXIMCom"
+    }
+	IFNAME=/dev/${dev_name}${ifdata_num}
+    AUTH=$(nvram show wan_wwan_rule $3 auth)
+	DEMAND=$(nvram show wan_wwan_rule $3 demand)
+	case "$DEMAND" in
+		on|1|enabled)
+			DEMAND=$(nvram show wan_wwan_rule $3 idletime)
+			DEMAND=${DEMAND:+demand idle $DEMAND}
+			[ -f /etc/ppp/filter ] && DEMAND=${DEMAND:+precompiled-active-filter /etc/ppp/filter $DEMAND}
+			# set up a dummy nameserver for dial on demand
+			# FIXME! echo "nameserver 1.1.1.1" > /tmp/resolv.conf
+			KEEPALIVE=""
+		;;
+        off|0|disabled)
+	        KEEPALIVE=$(nvram show wan_wwan_rule $3 redialperiod)
+            FAILURE=$(nvram show wan_wwan_rule $3 echo_failure)
+	        KEEPALIVE=${KEEPALIVE:+lcp-echo-failure $FAILURE lcp-echo-interval $KEEPALIVE}
+            DEMAND=""
+        ;;
+		*) 
+            DEMAND=""
+            KEEPALIVE=""
+        ;;
+	esac
+			
+    [ "$AUTH" = "pap" ] && AUTH_OPT="refuse-chap "
+    [ "$AUTH" = "none" ] && AUTH_OPT="refuse-chap refuse-pap "
+
+    [ -z "$MTU" ] && MTU=512
+# modify wan_wwan_probe rule for C200
+[ -n "$UBLOX_C200" ] && {
+    brand=$(nvram show wan_wwan_rule $3 brand)
+    nvram replace attr wan_wwan_probe_rule $3 brand "$brand"
+    model=$(nvram show wan_wwan_rule $3 model)
+    nvram replace attr wan_wwan_probe_rule $3 model "$model"
+    ttynum=$(nvram show wan_wwan_rule $3 ttynum)
+    nvram replace attr wan_wwan_probe_rule $3 ttynum "$ttynum"
+    nvram replace attr wan_wwan_probe_rule $3 datatty "$ifdata_num"
+    nvram replace attr wan_wwan_probe_rule $3 ctrltty "$ifctrl_num"
+    nvram replace attr wan_wwan_probe_rule $3 devname "$dev_name"
+    nvram replace attr wan_wwan_probe_rule $3 flag "$flag"
+}
+
+# For reset trycount to zero.
+nvram replace attr wan_status_rule $3 trycount 0
+    # Remove "nodetach" to run as a daemon.
+	/usr/sbin/pppd \
+        ${AUTH_OPT} \
+        /dev/${dev_name}${ifdata_num} \
+        460800 \
+        lock \
+        noauth \
+        crtscts \
+        noaccomp \
+        nopcomp \
+        novj \
+        nobsdcomp \
+        noauth \
+        noipdefault \
+        usepeerdns \
+        nodefaultroute \
+        ipparam "$type" \
+        linkname "$type" \
+        unit $3 \
+        user "$USERNAME" \
+        password "$PASSWORD" \
+        $DEMAND \
+        $KEEPALIVE \
+        mtu $MTU \
+        connect "WWAN_DIALSTR=\"$dialstr\" /usr/sbin/chat -v -E -f /etc/chatscripts/$chatscript"\ 
+        2>&1 >/dev/null
+        
+#	Remove mru/mtu
+#	MTU=1200
+#	MTU=${MTU:-1492}
+#	mru $MTU \
+#	mtu $MTU \
+#	unit $3
+#done 2>&1 >/dev/null ) &

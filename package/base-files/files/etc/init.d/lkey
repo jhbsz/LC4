@@ -1,0 +1,130 @@
+#!/bin/sh /etc/rc.common
+. /etc/arch.sh
+
+START=42
+log_msg="License-client"
+
+boot() {
+    # for GARMIN develop
+    local PLATFORM="$(nvram get platform)"
+    [ "$PLATFORM" = "GMA" ] && {
+        nvram fset bootcount=0
+        nvram fset license_invalid=1
+        nvram commit
+        exit 0
+    }
+    k0=$(nvram get license_key)
+    v1=$(nvram show wan_hwaddr_rule_default 0 hwaddr)
+    v2=$(nvram show lan_hwaddr_rule_default 0 hwaddr)
+    [ -z "$v1" -o -z "$v2" -o "$1" = "mac" ] && {
+        iwpriv_flag=1 
+        [ -f /proc/ezp_machine_id ] &&  iwpriv_flag=0
+        [ "$iwpriv_flag" != "0" ] && ifconfig ra0 up
+        mac1=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac2=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac3=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac4=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac5=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac6=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        echo "ezpacket:$mac1:$mac2:$mac3:$mac4:$mac5:$mac6" > /proc/ezp_machine_id
+        mac1=`iwpriv ra0 e2p 28 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac2=`iwpriv ra0 e2p 28 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac3=`iwpriv ra0 e2p 2a | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac4=`iwpriv ra0 e2p 2a | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac5=`iwpriv ra0 e2p 2c | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac6=`iwpriv ra0 e2p 2c | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        nvram fset wan_hwaddr_rule_default="$mac1:$mac2:$mac3:$mac4:$mac5:$mac6"
+        v1="$mac1:$mac2:$mac3:$mac4:$mac5:$mac6"
+        mac1=`iwpriv ra0 e2p 2e | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac2=`iwpriv ra0 e2p 2e | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac3=`iwpriv ra0 e2p 30 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac4=`iwpriv ra0 e2p 30 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        mac5=`iwpriv ra0 e2p 32 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+        mac6=`iwpriv ra0 e2p 32 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+        [ "$iwpriv_flag" != "0" ] && ifconfig ra0 down
+        nvram fset lan_hwaddr_rule_default="$mac1:$mac2:$mac3:$mac4:$mac5:$mac6"
+        v2="$mac1:$mac2:$mac3:$mac4:$mac5:$mac6"
+        nvram commit
+    }
+    if [ -f /proc/ezp_machine_id ];then
+        v3=$(cat /proc/ezp_machine_id)
+    else {
+        # EZP XXX: 
+        ifconfig ra0 up
+        v3=$(cat /proc/ezp_machine_id)
+        ifconfig ra0 down
+    } fi
+
+    v4=$(nvram get brand)
+    v5=$(nvram get model)
+
+    bc=$(nvram get bootcount)
+    k1=$(echo -n "$v1$v2$v3$v4$v5" | md5sum | cut -d' ' -f1 | tr a-z A-Z)
+    [ "$1" = "security" ] && {
+        local PLATFORM="$(nvram get platform)"
+        [ "$PLATFORM" = "AXA" -o "$PLATFORM" = "AXB" -o  "$PLATFORM" = "M2E" -o \
+          "$PLATFORM" = "LIS" -o "$PLATFORM" = "AXM" -o "$PLATFORM" = "ALS" ] && {
+            ezp-i2c security
+            LICENSE_VALID="$(nvram show license_status_rule 0 state)"
+            [ "$LICENSE_VALID" = "1" ] && {
+                k0=$k1
+                nvram fset license_key=$k1
+            }
+        }
+    }
+
+
+    if [ "$k0" = "$k1" ];then
+        bc=0
+        licinv=0
+    else {
+        local PLATFORM="$(nvram get platform)"
+        local flag=0
+        [ "$PLATFORM" = AXM ] && {
+            v5="B-101N"
+            k1=$(echo -n "$v1$v2$v3$v4$v5" | md5sum | cut -d' ' -f1 | tr a-z A-Z)
+            if [ "$k0" = "$k1" ];then
+                bc=0
+                licinv=0
+                flag=1
+                v5="TGM-101N"
+                k1=$(echo -n "$v1$v2$v3$v4$v5" | md5sum | cut -d' ' -f1 | tr a-z A-Z)
+                nvram fset license_key=$k1
+                nvram commit
+            fi
+        } 
+        [ "$flag" != 1 -o "$PLATFORM" != AXM ] && {
+            bc=$((bc + 1))
+            if [ $bc -lt 10 ];then
+                licinv=1
+            else
+                licinv=2
+            fi
+        }
+            
+    } fi
+
+    nvram fset bootcount=$bc
+    [ "$(nvram get license_invalid)" != $licinv ] && {
+        nvram fset license_invalid=$licinv
+        nvram commit
+    }
+    
+    BRAND="$(nvram get brand)"
+    [ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+	iwpriv ra0 e2p 4
+	iwpriv_flag=$?
+	[ "$iwpriv_flag" != "0" ] && ifconfig ra0 up
+	mac1=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+	mac2=`iwpriv ra0 e2p 4 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+	mac3=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+	mac4=`iwpriv ra0 e2p 6 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+	mac5=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 3,4`
+	mac6=`iwpriv ra0 e2p 8 | grep "]" | cut -f2 -d ":" | cut -f2 -d "x" | cut -c 1,2`
+	[ "$iwpriv_flag" != "0" ] && ifconfig ra0 down
+        nvram fset prox_serial="$mac1$mac2$mac3$mac4$mac5$mac6"
+        nvram commit
+    }
+
+    return $err
+}

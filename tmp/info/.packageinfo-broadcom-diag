@@ -1,0 +1,15 @@
+Source-Makefile: package/broadcom-diag/Makefile
+Package: kmod-diag
+Submenu: Other modules
+Version: <LINUX_VERSION>--4
+Depends: @TARGET_brcm_2_4||TARGET_brcm47xx
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Driver for router LEDs and Buttons
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Driver for router LEDs and Buttons
+@@
+

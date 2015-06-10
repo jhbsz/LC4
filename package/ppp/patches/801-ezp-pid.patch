@@ -1,0 +1,132 @@
+--- ppp-2.4.3.old/pppd/auth.c	2009-05-27 21:23:48.000000000 +0800
++++ ppp-2.4.3.new/pppd/auth.c	2009-05-27 21:17:22.000000000 +0800
+@@ -619,8 +619,11 @@
+      * can happen that another pppd gets the same unit and then
+      * we delete its pid file.
+      */
++#ifdef EZPacket
++    /* Do not remove pid files until the process is terminated. */
+     if (!doing_multilink && !demand)
+ 	remove_pidfiles();
++#endif
+ 
+     /*
+      * If we may want to bring the link up again, transfer
+--- ppp-2.4.3.old/pppd/main.c	2009-05-27 22:41:34.000000000 +0800
++++ ppp-2.4.3.new/pppd/main.c	2009-05-27 22:40:18.000000000 +0800
+@@ -315,6 +315,8 @@
+     struct passwd *pw;
+     struct protent *protp;
+     char numbuf[16];
++    /* EZPacket */
++    struct stat st;
+ 
+     strlcpy(path_ipup, _PATH_IPUP, sizeof(path_ipup));
+     strlcpy(path_ipdown, _PATH_IPDOWN, sizeof(path_ipdown));
+@@ -372,6 +374,20 @@
+ 	exit(EXIT_OPTION_ERROR);
+     devnam_fixed = 1;		/* can no longer change device name */
+ 
++    /* EZPacket */
++    slprintf(ifname, sizeof(ifname), "%s%d",
++         PPP_DRV_NAME, req_unit);
++    slprintf(pidfilename, sizeof(pidfilename), "%s%s%d.pid",
++	     _PATH_VARRUN, PPP_DRV_NAME, req_unit);
++    if ((!stat(pidfilename, &st)) && (!S_ISDIR(st.st_mode))) {
++        exit(EXIT_USER_REQUEST);
++    }
++    create_pidfile(getpid());
++
++    slprintf(linkpidfile, sizeof(linkpidfile), "%sppp-%s.pid",
++	     _PATH_VARRUN, linkname);
++    create_linkpidfile(getpid());
++
+     /*
+      * Work out the device name, if it hasn't already been specified,
+      * and parse the tty's options file.
+@@ -476,8 +492,6 @@
+ 
+     setup_signals();
+ 
+-    create_linkpidfile(getpid());
+-
+     waiting = 0;
+ 
+     /*
+@@ -598,7 +612,13 @@
+ 	}
+     }
+ 
++/* EZP leave: */
+     die(status);
++
++    /* EZPacket */
++    /* Remove pid files before the process terminates. */
++    remove_pidfiles();
++
+     return 0;
+ }
+ 
+@@ -740,12 +760,17 @@
+     int iskey;
+ {
+     info("Using interface %s%d", PPP_DRV_NAME, ifunit);
++#ifdef EZPacket
++    /* Moved to the beginning of main() for creating pid files. */
+     slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
++#endif
+     script_setenv("IFNAME", ifname, iskey);
++#ifdef EZPacket
+     if (iskey) {
+ 	create_pidfile(getpid());	/* write pid to file */
+ 	create_linkpidfile(getpid());
+     }
++#endif
+ }
+ 
+ /*
+@@ -811,8 +836,10 @@
+ {
+     FILE *pidfile;
+ 
++#if EZPacket
+     slprintf(pidfilename, sizeof(pidfilename), "%s%s.pid",
+ 	     _PATH_VARRUN, ifname);
++#endif
+     if ((pidfile = fopen(pidfilename, "w")) != NULL) {
+ 	fprintf(pidfile, "%d\n", pid);
+ 	(void) fclose(pidfile);
+@@ -831,8 +858,10 @@
+     if (linkname[0] == 0)
+ 	return;
+     script_setenv("LINKNAME", linkname, 1);
++#ifdef EZPacket
+     slprintf(linkpidfile, sizeof(linkpidfile), "%sppp-%s.pid",
+ 	     _PATH_VARRUN, linkname);
++#endif
+     if ((pidfile = fopen(linkpidfile, "w")) != NULL) {
+ 	fprintf(pidfile, "%d\n", pid);
+ 	if (ifname[0])
+@@ -1107,7 +1136,12 @@
+     cleanup();
+     notify(exitnotify, status);
+     syslog(LOG_INFO, "Exit.");
++#ifdef EZPacket
++    /* Go back to main() to terminate the process. We need to remove pid files
++     * right before terminating.
++     */
+     exit(status);
++#endif
+ }
+ 
+ /*
+@@ -1123,7 +1157,9 @@
+ 	the_channel->disestablish_ppp(devfd);
+     if (the_channel->cleanup)
+ 	(*the_channel->cleanup)();
++#ifdef EZPacket
+     remove_pidfiles();
++#endif
+ 
+ #ifdef USE_TDB
+     if (pppdb != NULL)

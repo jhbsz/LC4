@@ -1,0 +1,19 @@
+--- ../configure	2009-10-07 21:56:34.000000000 +0800
++++ ../configure	2010-05-18 09:54:47.162100459 +0800
+@@ -736,7 +736,7 @@
+ ac_clean_files=
+ ac_config_libobj_dir=.
+ LIBOBJS=
+-cross_compiling=no
++cross_compiling=yes
+ subdirs=
+ MFLAGS=
+ MAKEFLAGS=
+@@ -802,6 +802,7 @@
+ GTKDOC_CHECK
+ HTML_DIR
+ GLIB_GENMARSHAL
++STAGING_DIR
+ CROSS_COMPILING_FALSE
+ CROSS_COMPILING_TRUE
+ G_LIBS_EXTRA

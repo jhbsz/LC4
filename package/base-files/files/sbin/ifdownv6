@@ -1,0 +1,47 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+debug "### ifdown $iface ###"
+LOCKFILE=/tmp/.iface.changestate.${iface}.lock
+
+nvram replace attr wan_up_down_state_rule $num v6 0
+if=$(nvram get ${iface}_ifnamev6)
+proto=$(nvram get ${iface}_protov6)
+
+PPP_DEMAND_STATE_FILE="/tmp/ppp-${iface}-demand.tmp"
+[ -f "${PPP_DEMAND_STATE_FILE}" ] && {
+  # ifdown from a connected connection, set to "demand-force-down"
+  [ "$(cat ${PPP_DEMAND_STATE_FILE})" = "demand-connected" ] && {
+    echo -n "demand-force-down" > ${PPP_DEMAND_STATE_FILE}
+  }
+}
+
+# Validate iface. XXX: ifdown might not need to validate the interfaces.
+#if_valid $if || { 
+#debug "### ifdown wrong interface $iface ###"
+#exit 
+#}
+
+# Bring down the iface
+case "$proto" in
+	static) 
+        $DEBUG ip link set dev $if down
+        $DEBUG ip addr flush dev $if
+        if_serialize_lock "$LOCKFILE"
+        ifacev6_down $iface
+        env -i ACTION="ifdownv6" INTERFACE="$iface" PROTO=static \
+            TYPE="$type" NUM="$num" IFNAME="$if" /sbin/hotplug-call "ifacev6" 
+    ;;
+    dhcp)
+        # This triggers deconfig state which unset NVRAM and generates an 
+        # ifdown event.
+        sh /etc/rc.common /etc/init.d/dhcp6c stop
+        sh /etc/rc.common /etc/init.d/radvd stop
+    ;;
+esac
+

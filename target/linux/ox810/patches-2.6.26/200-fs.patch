@@ -1,0 +1,523 @@
+diff -Naur linux-2.6.24.4/fs/adfs/file.c linux-2.6.24.4-oxnas/fs/adfs/file.c
+--- linux-2.6.24.4/fs/adfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/adfs/file.c	2009-05-08 16:23:13.000000000 +0800
+@@ -33,6 +33,7 @@
+ 	.fsync		= file_fsync,
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/affs/file.c linux-2.6.24.4-oxnas/fs/affs/file.c
+--- linux-2.6.24.4/fs/affs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/affs/file.c	2009-05-08 16:23:02.000000000 +0800
+@@ -35,6 +35,7 @@
+ 	.open		= affs_file_open,
+ 	.release	= affs_file_release,
+ 	.fsync		= file_fsync,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/afs/file.c linux-2.6.24.4-oxnas/fs/afs/file.c
+--- linux-2.6.24.4/fs/afs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/afs/file.c	2009-05-08 16:23:01.000000000 +0800
+@@ -32,6 +32,7 @@
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= afs_file_write,
+ 	.mmap		= generic_file_readonly_mmap,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= afs_fsync,
+ 	.lock		= afs_lock,
+diff -Naur linux-2.6.24.4/fs/coda/file.c linux-2.6.24.4-oxnas/fs/coda/file.c
+--- linux-2.6.24.4/fs/coda/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/coda/file.c	2009-05-08 16:23:19.000000000 +0800
+@@ -238,6 +238,7 @@
+ 	.open		= coda_open,
+ 	.release	= coda_release,
+ 	.fsync		= coda_fsync,
++	.sendfile	= coda_file_sendfile,
+ 	.splice_read	= coda_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/ecryptfs/file.c linux-2.6.24.4-oxnas/fs/ecryptfs/file.c
+--- linux-2.6.24.4/fs/ecryptfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ecryptfs/file.c	2009-05-08 16:23:10.000000000 +0800
+@@ -292,6 +292,7 @@
+ 	.release = ecryptfs_release,
+ 	.fsync = ecryptfs_fsync,
+ 	.fasync = ecryptfs_fasync,
++ 	.sendfile = ecryptfs_sendfile,
+ 	.splice_read = generic_file_splice_read,
+ };
+ 
+@@ -309,6 +310,7 @@
+ 	.release = ecryptfs_release,
+ 	.fsync = ecryptfs_fsync,
+ 	.fasync = ecryptfs_fasync,
++ 	.sendfile = ecryptfs_sendfile,
+ 	.splice_read = generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/ext2/file.c linux-2.6.24.4-oxnas/fs/ext2/file.c
+--- linux-2.6.24.4/fs/ext2/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ext2/file.c	2009-05-08 16:23:16.000000000 +0800
+@@ -56,6 +56,7 @@
+ 	.open		= generic_file_open,
+ 	.release	= ext2_release_file,
+ 	.fsync		= ext2_sync_file,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
+ };
+@@ -73,6 +74,7 @@
+ 	.open		= generic_file_open,
+ 	.release	= ext2_release_file,
+ 	.fsync		= ext2_sync_file,
++	.sendfile	= xip_file_sendfile,
+ };
+ #endif
+ 
+diff -Naur linux-2.6.24.4/fs/ext3/file.c linux-2.6.24.4-oxnas/fs/ext3/file.c
+--- linux-2.6.24.4/fs/ext3/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ext3/file.c	2009-05-08 16:23:16.000000000 +0800
+@@ -120,6 +120,7 @@
+ 	.open		= generic_file_open,
+ 	.release	= ext3_release_file,
+ 	.fsync		= ext3_sync_file,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
+ };
+diff -Naur linux-2.6.24.4/fs/ext3/ialloc.c linux-2.6.24.4-oxnas/fs/ext3/ialloc.c
+--- linux-2.6.24.4/fs/ext3/ialloc.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ext3/ialloc.c	2009-05-08 16:23:16.000000000 +0800
+@@ -543,7 +543,16 @@
+ 		percpu_counter_inc(&sbi->s_dirs_counter);
+ 	sb->s_dirt = 1;
+ 
++#ifdef CONFIG_OXNAS_SUID_INHERIT
++	if (dir->i_mode & S_ISUID) {
++		inode->i_uid = dir->i_uid;
++		if (S_ISDIR(mode))
++			mode |= S_ISUID;
++	} else
++#else // CONFIG_OXNAS_SUID_INHERIT
+ 	inode->i_uid = current->fsuid;
++#endif // CONFIG_OXNAS_SUID_INHERIT
++
+ 	if (test_opt (sb, GRPID))
+ 		inode->i_gid = dir->i_gid;
+ 	else if (dir->i_mode & S_ISGID) {
+diff -Naur linux-2.6.24.4/fs/ext4/file.c linux-2.6.24.4-oxnas/fs/ext4/file.c
+--- linux-2.6.24.4/fs/ext4/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ext4/file.c	2009-05-08 16:23:17.000000000 +0800
+@@ -120,7 +120,8 @@
+ 	.open		= generic_file_open,
+ 	.release	= ext4_release_file,
+ 	.fsync		= ext4_sync_file,
+-	.splice_read	= generic_file_splice_read,
++	.sendfile	= generic_file_sendfile,
++ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/fat/file.c linux-2.6.24.4-oxnas/fs/fat/file.c
+--- linux-2.6.24.4/fs/fat/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/fat/file.c	2009-05-08 16:23:16.000000000 +0800
+@@ -134,6 +134,7 @@
+ 	.release	= fat_file_release,
+ 	.ioctl		= fat_generic_ioctl,
+ 	.fsync		= file_fsync,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/fs-writeback.c linux-2.6.24.4-oxnas/fs/fs-writeback.c
+--- linux-2.6.24.4/fs/fs-writeback.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/fs-writeback.c	2009-05-08 16:23:20.000000000 +0800
+@@ -386,8 +386,6 @@
+  * WB_SYNC_HOLD is a hack for sys_sync(): reattach the inode to sb->s_dirty so
+  * that it can be located for waiting on in __writeback_single_inode().
+  *
+- * Called under inode_lock.
+- *
+  * If `bdi' is non-zero then we're being asked to writeback a specific queue.
+  * This function assumes that the blockdev superblock's inodes are backed by
+  * a variety of queues, so all inodes are searched.  For other superblocks,
+@@ -403,11 +401,12 @@
+  * on the writer throttling path, and we get decent balancing between many
+  * throttled threads: we don't want them all piling up on inode_sync_wait.
+  */
+-static void
+-sync_sb_inodes(struct super_block *sb, struct writeback_control *wbc)
++void generic_sync_sb_inodes(struct super_block *sb,
++				struct writeback_control *wbc)
+ {
+ 	const unsigned long start = jiffies;	/* livelock avoidance */
+ 
++	spin_lock(&inode_lock);
+ 	if (!wbc->for_kupdate || list_empty(&sb->s_io))
+ 		queue_io(sb, wbc->older_than_this);
+ 
+@@ -482,8 +481,16 @@
+ 		if (wbc->nr_to_write <= 0)
+ 			break;
+ 	}
++	spin_unlock(&inode_lock);
+ 	return;		/* Leave any unwritten inodes on s_io */
+ }
++EXPORT_SYMBOL_GPL(generic_sync_sb_inodes);
++
++static void sync_sb_inodes(struct super_block *sb,
++				struct writeback_control *wbc)
++{
++	generic_sync_sb_inodes(sb, wbc);
++}
+ 
+ /*
+  * Start writeback of dirty pagecache data against all unlocked inodes.
+@@ -524,11 +531,8 @@
+ 			 * be unmounted by the time it is released.
+ 			 */
+ 			if (down_read_trylock(&sb->s_umount)) {
+-				if (sb->s_root) {
+-					spin_lock(&inode_lock);
++				if (sb->s_root)
+ 					sync_sb_inodes(sb, wbc);
+-					spin_unlock(&inode_lock);
+-				}
+ 				up_read(&sb->s_umount);
+ 			}
+ 			spin_lock(&sb_lock);
+@@ -566,9 +570,7 @@
+ 			(inodes_stat.nr_inodes - inodes_stat.nr_unused) +
+ 			nr_dirty + nr_unstable;
+ 	wbc.nr_to_write += wbc.nr_to_write / 2;		/* Bit more for luck */
+-	spin_lock(&inode_lock);
+ 	sync_sb_inodes(sb, &wbc);
+-	spin_unlock(&inode_lock);
+ }
+ 
+ /*
+diff -Naur linux-2.6.24.4/fs/fuse/file.c linux-2.6.24.4-oxnas/fs/fuse/file.c
+--- linux-2.6.24.4/fs/fuse/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/fuse/file.c	2009-05-08 16:23:10.000000000 +0800
+@@ -920,6 +920,7 @@
+ 	.fsync		= fuse_fsync,
+ 	.lock		= fuse_file_lock,
+ 	.flock		= fuse_file_flock,
++    .sendfile   = generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/gfs2/ops_file.c linux-2.6.24.4-oxnas/fs/gfs2/ops_file.c
+--- linux-2.6.24.4/fs/gfs2/ops_file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/gfs2/ops_file.c	2009-05-08 16:23:19.000000000 +0800
+@@ -662,6 +662,7 @@
+ 	.release	= gfs2_close,
+ 	.fsync		= gfs2_fsync,
+ 	.lock		= gfs2_lock,
++	.sendfile	= generic_file_sendfile,
+ 	.flock		= gfs2_flock,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
+diff -Naur linux-2.6.24.4/fs/hfs/inode.c linux-2.6.24.4-oxnas/fs/hfs/inode.c
+--- linux-2.6.24.4/fs/hfs/inode.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/hfs/inode.c	2009-05-08 16:22:56.000000000 +0800
+@@ -612,6 +612,7 @@
+ 	.aio_write	= generic_file_aio_write,
+ 	.mmap		= generic_file_mmap,
+ 	.splice_read	= generic_file_splice_read,
++	.sendfile	= generic_file_sendfile,
+ 	.fsync		= file_fsync,
+ 	.open		= hfs_file_open,
+ 	.release	= hfs_file_release,
+diff -Naur linux-2.6.24.4/fs/hfsplus/inode.c linux-2.6.24.4-oxnas/fs/hfsplus/inode.c
+--- linux-2.6.24.4/fs/hfsplus/inode.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/hfsplus/inode.c	2009-05-08 16:23:17.000000000 +0800
+@@ -297,6 +297,7 @@
+ 	.write		= do_sync_write,
+ 	.aio_write	= generic_file_aio_write,
+ 	.mmap		= generic_file_mmap,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ 	.fsync		= file_fsync,
+ 	.open		= hfsplus_file_open,
+diff -Naur linux-2.6.24.4/fs/hpfs/file.c linux-2.6.24.4-oxnas/fs/hpfs/file.c
+--- linux-2.6.24.4/fs/hpfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/hpfs/file.c	2009-05-08 16:23:08.000000000 +0800
+@@ -137,6 +137,7 @@
+ 	.mmap		= generic_file_mmap,
+ 	.release	= hpfs_file_release,
+ 	.fsync		= hpfs_file_fsync,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/jffs2/file.c linux-2.6.24.4-oxnas/fs/jffs2/file.c
+--- linux-2.6.24.4/fs/jffs2/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/jffs2/file.c	2009-05-08 16:23:20.000000000 +0800
+@@ -49,7 +49,8 @@
+ 	.ioctl =	jffs2_ioctl,
+ 	.mmap =		generic_file_readonly_mmap,
+ 	.fsync =	jffs2_fsync,
+-	.splice_read =	generic_file_splice_read,
++	.sendfile =	generic_file_sendfile
++  	.splice_read =	generic_file_splice_read,
+ };
+ 
+ /* jffs2_file_inode_operations */
+diff -Naur linux-2.6.24.4/fs/jfs/file.c linux-2.6.24.4-oxnas/fs/jfs/file.c
+--- linux-2.6.24.4/fs/jfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/jfs/file.c	2009-05-08 16:23:09.000000000 +0800
+@@ -108,6 +108,7 @@
+ 	.aio_read	= generic_file_aio_read,
+ 	.aio_write	= generic_file_aio_write,
+ 	.mmap		= generic_file_mmap,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= generic_file_splice_write,
+ 	.fsync		= jfs_fsync,
+diff -Naur linux-2.6.24.4/fs/Kconfig linux-2.6.24.4-oxnas/fs/Kconfig
+--- linux-2.6.24.4/fs/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/Kconfig	2009-05-08 16:23:20.000000000 +0800
+@@ -1385,6 +1385,9 @@
+ 
+ endchoice
+ 
++# UBIFS File system configuration
++source "fs/ubifs/Kconfig"
++
+ config CRAMFS
+ 	tristate "Compressed ROM file system support (cramfs)"
+ 	depends on BLOCK
+diff -Naur linux-2.6.24.4/fs/Makefile linux-2.6.24.4-oxnas/fs/Makefile
+--- linux-2.6.24.4/fs/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/Makefile	2009-05-08 16:23:20.000000000 +0800
+@@ -99,6 +99,7 @@
+ obj-$(CONFIG_UFS_FS)		+= ufs/
+ obj-$(CONFIG_EFS_FS)		+= efs/
+ obj-$(CONFIG_JFFS2_FS)		+= jffs2/
++obj-$(CONFIG_UBIFS_FS)		+= ubifs/
+ obj-$(CONFIG_AFFS_FS)		+= affs/
+ obj-$(CONFIG_ROMFS_FS)		+= romfs/
+ obj-$(CONFIG_QNX4FS_FS)		+= qnx4/
+diff -Naur linux-2.6.24.4/fs/minix/file.c linux-2.6.24.4-oxnas/fs/minix/file.c
+--- linux-2.6.24.4/fs/minix/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/minix/file.c	2009-05-08 16:23:11.000000000 +0800
+@@ -23,6 +23,7 @@
+ 	.aio_write	= generic_file_aio_write,
+ 	.mmap		= generic_file_mmap,
+ 	.fsync		= minix_sync_file,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/ntfs/file.c linux-2.6.24.4-oxnas/fs/ntfs/file.c
+--- linux-2.6.24.4/fs/ntfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ntfs/file.c	2009-05-08 16:23:12.000000000 +0800
+@@ -2274,16 +2274,11 @@
+ 						    mounted filesystem. */
+ 	.mmap		= generic_file_mmap,	 /* Mmap file. */
+ 	.open		= ntfs_file_open,	 /* Open file. */
+-	.splice_read	= generic_file_splice_read /* Zero-copy data send with
++	.sendfile	= generic_file_sendfile, /* Zero-copy data send with
+ 						    the data source being on
+ 						    the ntfs partition.  We do
+ 						    not need to care about the
+ 						    data destination. */
+-	/*.sendpage	= ,*/			 /* Zero-copy data send with
+-						    the data destination being
+-						    on the ntfs partition.  We
+-						    do not need to care about
+-						    the data source. */
+ };
+ 
+ const struct inode_operations ntfs_file_inode_ops = {
+diff -Naur linux-2.6.24.4/fs/ocfs2/file.c linux-2.6.24.4-oxnas/fs/ocfs2/file.c
+--- linux-2.6.24.4/fs/ocfs2/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/ocfs2/file.c	2009-05-08 16:23:07.000000000 +0800
+@@ -2206,6 +2206,7 @@
+ const struct file_operations ocfs2_fops = {
+ 	.read		= do_sync_read,
+ 	.write		= do_sync_write,
++	.sendfile	= generic_file_sendfile,
+ 	.mmap		= ocfs2_mmap,
+ 	.fsync		= ocfs2_sync_file,
+ 	.release	= ocfs2_file_release,
+diff -Naur linux-2.6.24.4/fs/open.c linux-2.6.24.4-oxnas/fs/open.c
+--- linux-2.6.24.4/fs/open.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/open.c	2009-05-08 16:23:20.000000000 +0800
+@@ -784,6 +784,10 @@
+ 		}
+ 	}
+ 
++	if (f->f_flags & O_BACKUP) {
++		inode->i_flags |= S_BACKUP;
++	}
++
+ 	return f;
+ 
+ cleanup_all:
+diff -Naur linux-2.6.24.4/fs/qnx4/file.c linux-2.6.24.4-oxnas/fs/qnx4/file.c
+--- linux-2.6.24.4/fs/qnx4/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/qnx4/file.c	2009-05-08 16:23:07.000000000 +0800
+@@ -25,6 +25,7 @@
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
+ 	.mmap		= generic_file_mmap,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ #ifdef CONFIG_QNX4FS_RW
+ 	.write		= do_sync_write,
+diff -Naur linux-2.6.24.4/fs/read_write.c linux-2.6.24.4-oxnas/fs/read_write.c
+--- linux-2.6.24.4/fs/read_write.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/read_write.c	2009-05-08 16:23:20.000000000 +0800
+@@ -16,6 +16,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/pagemap.h>
+ #include <linux/splice.h>
++#include <net/tcp.h>
+ #include "read_write.h"
+ 
+ #include <asm/uaccess.h>
+@@ -26,7 +27,8 @@
+ 	.read		= do_sync_read,
+ 	.aio_read	= generic_file_aio_read,
+ 	.mmap		= generic_file_readonly_mmap,
+-	.splice_read	= generic_file_splice_read,
++	//.splice_read	= generic_file_splice_read,
++	.sendfile	= generic_file_sendfile,
+ };
+ 
+ EXPORT_SYMBOL(generic_ro_fops);
+@@ -709,7 +711,7 @@
+ 	struct inode * in_inode, * out_inode;
+ 	loff_t pos;
+ 	ssize_t retval;
+-	int fput_needed_in, fput_needed_out, fl;
++	int fput_needed_in, fput_needed_out;
+ 
+ 	/*
+ 	 * Get input file, and verify that it is ok..
+@@ -724,7 +726,7 @@
+ 	in_inode = in_file->f_path.dentry->d_inode;
+ 	if (!in_inode)
+ 		goto fput_in;
+-	if (!in_file->f_op || !in_file->f_op->splice_read)
++	if (!in_file->f_op || !in_file->f_op->sendfile)
+ 		goto fput_in;
+ 	retval = -ESPIPE;
+ 	if (!ppos)
+@@ -777,7 +779,6 @@
+ 		count = max - pos;
+ 	}
+ 
+-	fl = 0;
+ #if 0
+ 	/*
+ 	 * We need to debate whether we can enable this or not. The
+@@ -788,7 +789,7 @@
+ 	if (in_file->f_flags & O_NONBLOCK)
+ 		fl = SPLICE_F_NONBLOCK;
+ #endif
+-	retval = do_splice_direct(in_file, ppos, out_file, count, fl);
++	retval = in_file->f_op->sendfile(in_file, ppos, count, file_send_actor, out_file);
+ 
+ 	if (retval > 0) {
+ 		add_rchar(current, retval);
+diff -Naur linux-2.6.24.4/fs/reiserfs/file.c linux-2.6.24.4-oxnas/fs/reiserfs/file.c
+--- linux-2.6.24.4/fs/reiserfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/reiserfs/file.c	2009-05-08 16:23:01.000000000 +0800
+@@ -292,6 +292,7 @@
+ 	.open = generic_file_open,
+ 	.release = reiserfs_file_release,
+ 	.fsync = reiserfs_sync_file,
++	.sendfile = generic_file_sendfile,
+ 	.aio_read = generic_file_aio_read,
+ 	.aio_write = generic_file_aio_write,
+ 	.splice_read = generic_file_splice_read,
+diff -Naur linux-2.6.24.4/fs/smbfs/file.c linux-2.6.24.4-oxnas/fs/smbfs/file.c
+--- linux-2.6.24.4/fs/smbfs/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/smbfs/file.c	2009-05-08 16:23:12.000000000 +0800
+@@ -283,6 +283,27 @@
+ 	return status;
+ }
+ 
++static ssize_t
++smb_file_sendfile(struct file *file, loff_t *ppos,
++		  size_t count, read_actor_t actor, void *target)
++{
++	struct dentry *dentry = file->f_path.dentry;
++	ssize_t status;
++
++	VERBOSE("file %s/%s, pos=%Ld, count=%d\n",
++		DENTRY_PATH(dentry), *ppos, count);
++
++	status = smb_revalidate_inode(dentry);
++	if (status) {
++		PARANOIA("%s/%s validation failed, error=%Zd\n",
++			 DENTRY_PATH(dentry), status);
++		goto out;
++	}
++	status = generic_file_sendfile(file, ppos, count, actor, target);
++out:
++	return status;
++}
++
+ /*
+  * This does the "real" work of the write. The generic routine has
+  * allocated the page, locked it, done all the page alignment stuff
+@@ -434,6 +455,7 @@
+ 	.open		= smb_file_open,
+ 	.release	= smb_file_release,
+ 	.fsync		= smb_fsync,
++	.sendfile	= smb_file_sendfile,
+ 	.splice_read	= smb_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/sysv/file.c linux-2.6.24.4-oxnas/fs/sysv/file.c
+--- linux-2.6.24.4/fs/sysv/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/sysv/file.c	2009-05-08 16:23:11.000000000 +0800
+@@ -27,6 +27,7 @@
+ 	.aio_write	= generic_file_aio_write,
+ 	.mmap		= generic_file_mmap,
+ 	.fsync		= sysv_sync_file,
++	.sendfile	= generic_file_sendfile,
+ 	.splice_read	= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/udf/file.c linux-2.6.24.4-oxnas/fs/udf/file.c
+--- linux-2.6.24.4/fs/udf/file.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/fs/udf/file.c	2009-05-08 16:23:20.000000000 +0800
+@@ -246,6 +246,8 @@
+ 	.aio_write		= udf_file_aio_write,
+ 	.release		= udf_release_file,
+ 	.fsync			= udf_fsync_file,
++	.sendfile		= generic_file_sendfile,
++	.sendfile		= generic_file_sendfile,
+ 	.splice_read		= generic_file_splice_read,
+ };
+ 
+diff -Naur linux-2.6.24.4/fs/bio.c linux-2.6.24.4-oxnas/fs/bio.c
+--- linux-2.6.24.4/fs/bio.c	2009-12-02 08:21:25.000000000 +0800
++++ linux-2.6.24.4/fs/bio.c	2009-12-02 08:25:52.000000000 +0800
+@@ -133,6 +133,7 @@
+ 	memset(bio, 0, sizeof(*bio));
+ 	bio->bi_flags = 1 << BIO_UPTODATE;
+ 	atomic_set(&bio->bi_cnt, 1);
++    bio->bi_raid = 0;
+ }
+ 
+ /**
+@@ -262,6 +263,7 @@
+ 	bio->bi_vcnt = bio_src->bi_vcnt;
+ 	bio->bi_size = bio_src->bi_size;
+ 	bio->bi_idx = bio_src->bi_idx;
++    bio->bi_raid = bio_src->bi_raid;
+ }
+ 
+ /**

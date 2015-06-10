@@ -1,0 +1,28 @@
+--- linux.old/net/ipv4/netfilter/Kconfig	2009-09-07 17:50:56.806376654 +0800
++++ linux.new/net/ipv4/netfilter/Kconfig	2009-09-09 18:04:08.748877622 +0800
+@@ -538,6 +538,15 @@
+ 
+ 	  To compile it as a module, choose M here.  If unsure, say N.
+ 
++config IP_NF_MATCH_WEBSTR
++	tristate "url/host string match support"
++	depends on IP_NF_IPTABLES
++	help
++	  URL string matching support. Include this module to support
++	  url string matching, activeX and Java script protection.
++
++	  To compile it as a module, choose M here.  If unsure, say N.
++
+ 
+ endmenu
+ 
+--- linux.old/net/ipv4/netfilter/Makefile	2009-09-07 17:50:56.806376654 +0800
++++ linux.new/net/ipv4/netfilter/Makefile	2009-09-09 18:05:46.557629888 +0800
+@@ -52,6 +52,7 @@
+ obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
+ obj-$(CONFIG_IP_NF_MATCH_SET) += ipt_set.o
+ obj-$(CONFIG_IP_NF_MATCH_TIME) += ipt_time.o
++obj-$(CONFIG_IP_NF_MATCH_WEBSTR) += ipt_webstr.o
+ 
+ obj-$(CONFIG_IP_NF_MATCH_IPP2P) += ipt_ipp2p.o
+ 

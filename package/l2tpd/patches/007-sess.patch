@@ -1,0 +1,38 @@
+--- l2tpd-0.70-pre20031121.orig/call.c	2011-01-21 13:19:02.752893582 +0800
++++ l2tpd-0.70-pre20031121.orig/call.c	2011-01-21 12:37:59.491646658 +0800
+@@ -28,6 +28,7 @@
+ #include <termios.h>
+ #include "l2tp.h"
+ #include "nvram_ezpacket.h"
++#include "ezp-lib.h"
+ #ifdef USE_KERNEL
+ #include <sys/ioctl.h>
+ #endif
+@@ -593,6 +594,10 @@
+      */
+     struct tunnel *st;
+     struct call *sc;
++    /* EZP: control tunnel count according to nvram. */
++    int tunnelcnt = 0;
++    char l2tpserv_tcn_buf[5] = {0}, l2tpcli_tcn_buf[30] = {0};
++
+     if (tunnel)
+     {
+         st = tunnels.head;
+@@ -643,7 +648,15 @@
+          * we are not at capacity.
+          */
+         /* EZP: check the tunnels.count. */
+-        if (tunnels.count >= L2TPD_SESSION_MAX)
++        ezplib_get_attr_val("l2tpd_rule", 0, "localip_range", l2tpserv_tcn_buf, sizeof(l2tpserv_tcn_buf), EZPLIB_USE_CLI);
++        if ((!l2tpserv_tcn_buf[0]) || (l2tpserv_tcn_buf[0] == '0') || 
++            ((l2tpserv_tcn_buf[0] > '9') || (l2tpserv_tcn_buf[0] < '0'))) {
++            tunnelcnt = 0;
++        } else {
++            tunnelcnt = atoi(l2tpserv_tcn_buf);
++        }
++        tunnelcnt += 2; /* XXX: Add additional 2 connections for wan-l2tp client*/
++        if (tunnels.count >= tunnelcnt)
+         {
+             log (LOG_DEBUG,
+                     "%s: unable to allocate new tunnel for host %s, port %d.\n",

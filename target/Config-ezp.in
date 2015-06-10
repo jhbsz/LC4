@@ -1,0 +1,101 @@
+menu "EZ Packet Production Definition"
+    config EZP_PRODUCT_VERSION
+        string
+        prompt "EZ Packet Product Version"
+        default ""
+
+    menu "EZ Packet Product Xchange Super Category"
+
+    config EZP_PRODUCT_SUPERCATEGORY
+        string
+        prompt "EZ Packet Product Super Category"
+        default ""
+
+if EZP_PRODUCT_SUPERCATEGORY != ""
+    config EZP_PRODUCT_SUBCATEGORY
+        string
+        prompt "EZ Packet Product Subcategory"
+        default ""
+
+    config EZP_PRODUCT_MAJOR_CATEGORY
+        string
+        prompt "X Class Major Category"
+        default ""
+
+    config EZP_PRODUCT_MAJOR_WAN_NUM
+        string
+        prompt "X Class Major Number of WAN"
+        default ""
+
+    config EZP_PRODUCT_ALT_CATEGORY
+        string
+        prompt "X Class Alternative Category"
+        default ""
+
+    config EZP_PRODUCT_ALT_WAN_NUM
+        string
+        prompt "X Class Alternative Number of WAN"
+        default ""
+endif
+
+    endmenu
+
+if EZP_PRODUCT_SUPERCATEGORY = ""
+    config EZP_PRODUCT_CATEGORY
+        string
+        prompt "EZ Packet Product Major Category"
+        default ""
+
+    config EZP_PRODUCT_SUBCATEGORY
+        string
+        prompt "EZ Packet Product Subcategory"
+        default ""
+endif
+
+    config EZP_PRODUCT_SUBSUBCATEGORY
+        string
+        prompt "EZ Packet Product Sub-subcategory"
+        default ""
+    help
+        Designed for special firmware version for each product line.
+        So different firmwares with same product category and subcategory
+        can distinct between each other by this tag and also can do 
+        mutually firmware upgrading.
+
+    config CUSTOM_PRODUCT_VERSION
+        string
+        prompt "Custom Product Version"
+        default ""
+
+    config EZP_MODEL
+        string
+        prompt "Ezpacket Model name"
+        default "AXIMCom Product"
+
+    config EZP_I2C_KEY
+        string
+        prompt "I2C key"
+        default ""
+
+    config EZP_SECRET
+    string
+    prompt "Customized secret" 
+    help
+        Customized Customized secret for firmware encryption
+
+    config WAN_NUM
+        string
+        prompt "Number of Wan"
+        default "1"
+
+    config LAN_NUM
+        string
+        prompt "Number of Lan "
+        default "1"
+
+    config WL_NUM
+        string
+        prompt "Number Of Wireless Lan"
+        default "1"
+
+endmenu

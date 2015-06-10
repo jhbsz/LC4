@@ -1,0 +1,125 @@
+diff --git a/config.in b/config.in
+index f40478a..fdca305 100644
+--- a/config.in
++++ b/config.in
+@@ -75,6 +75,11 @@ define_bool MAC_TO_GIGAPHY_MODE n
+ if [ "$P5_MAC_TO_PHY_MODE" = "y" ]; then
+    hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x1f
+ fi
++if [ "$P5_RGMII_TO_MAC_MODE" = "y" ]; then
++choice 'GbE Switch Use' "AR8316	    CONFIG_AR8316 \
++                            AR8327     CONFIG_AR8327
++		      	   " CONFIG_AR8327
++fi
+ 
+ define_bool ON_BOARD_SPI_FLASH_COMPONENT y
+ 
+diff --git a/drivers/mii_mgr.c b/drivers/mii_mgr.c
+index ce3506b..4db34ad 100644
+--- a/drivers/mii_mgr.c
++++ b/drivers/mii_mgr.c
+@@ -420,6 +420,7 @@ int athrs17_init(void)
+ {
+     static int athr17_init_flag=0;
+     int phy_addr = 0; 
++    uint32_t po_reg_val; 
+     if (athr17_init_flag){
+         printf("AR8327 Already Supported!!\n");
+         return -1;
+@@ -427,7 +428,8 @@ int athrs17_init(void)
+ 
+     //Use power on strapping resistor to config the SW settings.
+     //Bit30 is not specified in the data sheet, it is a hidden value.
+-    athrs16_reg_write(0x010, 0x40000000);
++
++    athrs16_reg_write(0x010, 0x40000000);// for AR8327 only    
+     athrs16_reg_write(0x624, 0x007f7f7f);
+     athrs16_reg_write(0x004, 0x07600000);
+     //It is PAD6 control reg. Should not relevant...But the FAQ note write
+@@ -443,15 +445,22 @@ int athrs17_init(void)
+     /*Trick of Atheros to Fix the Phy connection problem.*/
+     /* AR8327/AR8328 fixup */
+     //mii_mgr_write(phy_addr, phy_reg, phy_val);
++    /* Old by Louis
+     for (phy_addr = 0x0; phy_addr <= 4; phy_addr++){
+-        /* For 100M waveform */
++        // For 100M waveform 
+         mii_mgr_write(phy_addr, 0x1d, 0x0);
+         mii_mgr_write(phy_addr, 0x1e, 0x02ea);
+-        /* Turn On Gigabit Clock */
++        // Turn On Gigabit Clock 
+         mii_mgr_write(phy_addr, 0x1d, 0x3d);
+         mii_mgr_write(phy_addr, 0x1e, 0x68a0);
+     }
+-    printf("AR8327 Support!!\n");
++    */
++    // New by YH 20121219 
++    for (phy_addr = 0x0; phy_addr <= 4; phy_addr++){
++        mii_mgr_write(phy_addr, 0x1d, 0x3d);
++        mii_mgr_write(phy_addr, 0x1e, 0x48a0);
++    }
++    printf("AR8327/AR8328 Support!!\n");
+     athr17_init_flag = 1;
+ }
+ 
+diff --git a/drivers/rt2880_eth.c b/drivers/rt2880_eth.c
+index 254efb6..1c44a05 100644
+--- a/drivers/rt2880_eth.c
++++ b/drivers/rt2880_eth.c
+@@ -870,13 +870,19 @@ void LANWANPartition(void)
+ #ifdef RALINK_EZP_BOARD_PVLAN
+ 
+ 	printf("\n EZP Setting VLAN. \n");
+-#ifdef CONFIG_AR8316
++#if defined( CONFIG_AR8316 ) || defined (CONFIG_AR8327)
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x40)) = 0x1001; //PVID
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x44)) = 0x1001; //PVID
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x48)) = 0x1001; //PVID
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x70)) = 0xffffff60; //VLAN member P5+P6
++#ifdef CONFIG_AR8316
+     athrs16_LAN_WAN_Par();        
+ 	#warning "new ezp board w/ AR8316"
++#endif
++#ifdef CONFIG_AR8327
++    athrs17_LAN_WAN_Par();        
++	#warning "new ezp board w/ AR8327"
++#endif
+ #else
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x40)) = 0x2001; //PVID
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x44)) = 0x4003; //PVID
+@@ -1423,6 +1429,14 @@ static int rt2880_eth_setup(struct eth_device* dev)
+     athrs16_init();
+     //We call this function in LANWANPartition()
+     //athrs16_LAN_WAN_Par();        
++    #elif defined( CONFIG_AR8327)
++    #warning "CONFIG_AR8327: RALINK_REG(0xb01100C8) &= 0xe0ffffff; athrs16_init athrs16_LAN_WAN_Par"
++    //using AR8327 GigaSW
++    //printf("AR8316 start-up in eth_setup\n");
++    RALINK_REG(0xb01100C8) &= 0xe0ffffff; //set P5 external phy address to 0
++    athrs17_init();
++    //We call this function in LANWANPartition()
++    //athrs17_LAN_WAN_Par();        
+     #endif
+ #endif
+ /* RT288x/RT388x + GigaSW */
+diff --git a/drivers/spi_flash.c b/drivers/spi_flash.c
+index 493df1e..964b25f 100644
+--- a/drivers/spi_flash.c
++++ b/drivers/spi_flash.c
+@@ -192,6 +192,7 @@ static struct chip_info chips_data [] = {
+ 	{ "EN25Q128",	    0x1c, 0x30181c30, 64 * 1024, 256, 0 },
+ 	{ "W25Q32BV",		0xef, 0x40160000, 64 * 1024, 64,  0 },
+ 	{ "W25Q64BV",		0xef, 0x40170000, 64 * 1024, 128, 0 },
++    { "F25L64QA",       0x8c, 0x41178c41, 64 * 1024, 128, 0 },
+ };
+ 
+ 
+@@ -322,7 +323,7 @@ static int raspi_wait_ready(int sleep_ms)
+ 	for (count = 0;  count < ((sleep_ms+1) *1000); count++) {
+ 		if ((raspi_read_sr((u8 *)&sr)) < 0)
+ 			break;
+-		else if (!(sr & (SR_WIP | SR_EPE | SR_WEL))) {
++		else if (!(sr & (SR_WIP | SR_EPE))) {
+ 			return 0;
+ 		}
+ 

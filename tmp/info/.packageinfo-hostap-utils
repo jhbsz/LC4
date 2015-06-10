@@ -1,0 +1,16 @@
+Source-Makefile: package/hostap-utils/Makefile
+Package: hostap-utils
+Version: 0.4.7-1
+Depends: kmod-hostap
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Host AP driver utility programs
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Host AP driver utility programs
+
+http://hostap.epitest.fi/
+@@
+

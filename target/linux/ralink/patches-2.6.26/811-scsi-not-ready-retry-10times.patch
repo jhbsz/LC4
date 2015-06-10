@@ -1,0 +1,158 @@
+--- linux/drivers/scsi/scsi_lib.c	2013-04-24 11:05:27.322250997 +0800
++++ linux/drivers/scsi/scsi_lib.c	2013-04-24 11:02:21.154246009 +0800
+@@ -856,6 +856,7 @@
+ 	struct scsi_sense_hdr sshdr;
+ 	int sense_valid = 0;
+ 	int sense_deferred = 0;
++    struct scsi_device *sdev = cmd->device;
+ 
+ 	if (result) {
+ 		sense_valid = scsi_command_normalize_sense(cmd, &sshdr);
+@@ -883,6 +884,7 @@
+ 		if (scsi_bidi_cmnd(cmd)) {
+ 			/* will also release_buffers */
+ 			scsi_end_bidi_request(cmd);
++            sdev->not_ready_retry_count = 0;
+ 			return;
+ 		}
+ 		req->data_len = scsi_get_resid(cmd);
+@@ -903,8 +905,10 @@
+ 	 * are leftovers and there is some kind of error
+ 	 * (result != 0), retry the rest.
+ 	 */
+-	if (scsi_end_request(cmd, error, good_bytes, result == 0) == NULL)
++	if (scsi_end_request(cmd, error, good_bytes, result == 0) == NULL) {
++        sdev->not_ready_retry_count = 0;
+ 		return;
++    }
+ 
+ 	/* good_bytes = 0, or (inclusive) there were leftovers and
+ 	 * result = 0, so scsi_end_request couldn't retry.
+@@ -918,20 +925,23 @@
+ 				 */
+ 				if (sshdr.asc == 0x28) {
+ 					/* EZP: Let's retry after USB resume. */
+-					scsi_requeue_command(q, cmd);
++                    goto return_with_requeue;
++					// scsi_requeue_command(q, cmd);
+ 				} else {
+ 					cmd->device->changed = 1;
+-					scsi_end_request(cmd, -EIO, this_count, 1); 
++                    goto return_with_error;
++					//scsi_end_request(cmd, -EIO, this_count, 1); 
+ 				}
+-				return;
++				//return;
+ 			} else {
+ 				/* Must have been a power glitch, or a
+ 				 * bus reset.  Could not have been a
+ 				 * media change, so we just retry the
+ 				 * request and see what happens.
+ 				 */
+-				scsi_requeue_command(q, cmd);
+-				return;
++                goto return_with_requeue;
++				//scsi_requeue_command(q, cmd);
++				//return;
+ 			}
+ 			break;
+ 		case ILLEGAL_REQUEST:
+@@ -951,11 +961,13 @@
+ 				/* This will cause a retry with a
+ 				 * 6-byte command.
+ 				 */
+-				scsi_requeue_command(q, cmd);
+-				return;
++                goto return_with_requeue;
++				//scsi_requeue_command(q, cmd);
++				//return;
+ 			} else {
+-				scsi_end_request(cmd, -EIO, this_count, 1);
+-				return;
++                goto return_with_error;
++				//scsi_end_request(cmd, -EIO, this_count, 1);
++				//return;
+ 			}
+ 			break;
+ 		case NOT_READY:
+@@ -971,19 +983,27 @@
+ 				case 0x07: /* operation in progress */
+ 				case 0x08: /* Long write in progress */
+ 				case 0x09: /* self test in progress */
+-					scsi_requeue_command(q, cmd);
+-					return;
++                    goto return_with_requeue;
++					//scsi_requeue_command(q, cmd);
++					//return;
+ 				default:
+ 					break;
+ 				}
+ 			}
++            if ((sshdr.asc == 0x3a) && (sshdr.ascq == 0x00) && (sdev->not_ready_retry_count < 10)) {
++                goto return_with_requeue;
++                //scsi_requeue_command(q, cmd);
++                //return;
++            }
++
+ 			if (!(req->cmd_flags & REQ_QUIET))
+ 				scsi_cmd_print_sense_hdr(cmd,
+ 							 "Device not ready",
+ 							 &sshdr);
+ 
+-			scsi_end_request(cmd, -EIO, this_count, 1);
+-			return;
++            goto return_with_error;
++			//scsi_end_request(cmd, -EIO, this_count, 1);
++			//return;
+ 		case VOLUME_OVERFLOW:
+ 			if (!(req->cmd_flags & REQ_QUIET)) {
+ 				scmd_printk(KERN_INFO, cmd,
+@@ -992,8 +1012,9 @@
+ 				scsi_print_sense("", cmd);
+ 			}
+ 			/* See SSC3rXX or current. */
+-			scsi_end_request(cmd, -EIO, this_count, 1);
+-			return;
++            goto return_with_error;
++			//scsi_end_request(cmd, -EIO, this_count, 1);
++			//return;
+ 		default:
+ 			break;
+ 		}
+@@ -1003,8 +1024,9 @@
+ 		 * reasons.  Just retry the request and see what
+ 		 * happens.
+ 		 */
+-		scsi_requeue_command(q, cmd);
+-		return;
++        goto return_with_requeue;
++		//scsi_requeue_command(q, cmd);
++		//return;
+ 	}
+ 	if (result) {
+ 		if (!(req->cmd_flags & REQ_QUIET)) {
+@@ -1013,7 +1035,14 @@
+ 				scsi_print_sense("", cmd);
+ 		}
+ 	}
++return_with_error:
++    sdev->not_ready_retry_count = 0;
+ 	scsi_end_request(cmd, -EIO, this_count, !result);
++    return;
++return_with_requeue:
++    sdev->not_ready_retry_count ++;
++    scsi_requeue_command(q, cmd);
++    return;
+ }
+ 
+ static int scsi_init_sgtable(struct request *req, struct scsi_data_buffer *sdb,
+--- linux/include/scsi/scsi_device.h	2008-07-14 05:51:29.000000000 +0800
++++ linux/include/scsi/scsi_device.h	2013-04-24 11:03:16.890247501 +0800
+@@ -162,6 +162,7 @@
+ 	struct execute_work	ew; /* used to get process context on put */
+ 
+ 	enum scsi_device_state sdev_state;
++    unsigned char not_ready_retry_count; /* Retry count for NOT_READY/ATTENTION */
+ 	unsigned long		sdev_data[0];
+ } __attribute__((aligned(sizeof(unsigned long))));
+ #define	to_scsi_device(d)	\

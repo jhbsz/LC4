@@ -1,0 +1,43 @@
+--- UVNCRepeater.old/readini.h	2007-10-24 00:02:53.000000000 +0800
++++ UVNCRepeater.new/readini.h	2010-04-09 15:15:54.585573319 +0800
+@@ -2,7 +2,7 @@
+ #define _READINI_H_
+ 
+ #include "commondefines.h"
+-
++typedef enum {false=0, true} bool; 
+ //variables
+ extern int viewerPort;
+ 
+--- UVNCRepeater.old/readini.cpp	2006-10-20 21:05:15.000000000 +0800
++++ UVNCRepeater.new/readini.cpp	2010-04-09 15:15:54.662673052 +0800
+@@ -33,7 +33,7 @@
+ #include "iniparser.h"
+ #include "commondefines.h"
+ #include "repeaterutil.h"
+-
++typedef enum {false=0, true} bool; 
+ //Ports where we listen 
+ int viewerPort = 5900;
+ int serverPort = 5500;
+--- UVNCRepeater.old/repeaterevents.h	2006-04-14 22:12:10.000000000 +0800
++++ UVNCRepeater.new/repeaterevents.h	2010-04-09 15:15:54.585573319 +0800
+@@ -52,7 +52,7 @@
+ typedef struct
+ {
+     //One of repeaterEvents above
+-    repeaterEvents eventNum;             
++    enum repeaterEvents eventNum;             
+ 
+     //Time when this happened
+     time_t timeStamp;
+--- UVNCRepeater.old/repeaterproc.cpp	2006-04-14 22:12:45.000000000 +0800
++++ UVNCRepeater.new/repeaterproc.cpp	2010-04-09 15:15:54.505573219 +0800
+@@ -39,6 +39,7 @@
+ #include "commondefines.h"
+ #include "repeater.h"
+ 
++typedef enum {false=0, true} bool; 
+ #define LOCAL_SOCKET	1
+ #ifndef FD_ALLOC
+ #define FD_ALLOC(nfds) ((fd_set*) malloc((nfds+7) / 8 ) )

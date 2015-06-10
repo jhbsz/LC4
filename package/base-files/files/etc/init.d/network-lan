@@ -1,0 +1,133 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+# $NUM is optional.
+
+. /etc/arch.sh
+. /etc/network.sh
+
+# We change the start part to /etc/preinit to fast start of lan and wifi
+# START=40
+STOP=40
+log_msg="network-lan"
+no_log=1
+boot() {
+    # setup vlan type
+    vconfig set_name_type VLAN_PLUS_VID_NO_PAD
+
+    # IMQ
+    /sbin/insmod imq || err=1
+    /usr/sbin/ip link set imq0 up || err=1
+    /usr/sbin/ip link set imq1 up || err=1
+
+    # config switch to setup vlan
+    ezp-vlan add_device
+
+    # Platform specific
+    # arch_wifi_start
+    start
+    [ "$(nvram get wl_num)" -gt "0" -o "$(nvram get license_invalid)" != "0" ] && {
+        # arch_wifi_control
+        /sbin/ezp-wl-ctrl wds
+    }
+                    
+#	include /lib/network
+#	setup_switch
+#	[ -s /etc/config/wireless ] || \
+#		/sbin/wifi detect > /etc/config/wireless
+#	/sbin/wifi up
+}
+
+start() {
+
+    # setup default dns
+    # if /tmp/resolv.conf is not created yet or contains no value, we set
+    # default value for it
+    [ ! -f "/tmp/resolv.conf" -o -z "$(cat /tmp/resolv.conf)" ] && {
+        # Assign a default DNS server before "ifup"
+        echo "nameserver 208.67.220.220" > /tmp/resolv.conf
+        echo "nameserver 208.67.222.222" >> /tmp/resolv.conf
+    }
+
+    # for auto upgrade 
+    [ "$(nvram get auth_mode)" = "1" ] && {
+        local i=0
+        for if in vlan1 vlan2 vlan3 vlan4 vlan5
+        do
+            ip addr flush dev $if
+            ip addr add 192.168.1.$((168 + $i))/24 broadcast + dev $if
+            ip link set dev $if up
+            i=$(($i + 1))
+        done
+    } || {
+        # Iterate br_rule 
+        brnum="$(nvram get br_rule_num)"
+        local i=0
+        local enable=0
+        while [ "$i" -lt "$brnum" ];
+        do
+            enable="$(nvram show br_rule $i enable)"
+            [ "$enable" = "1" ] && { 
+                # set up br
+                ifbr_valid br${i}
+            }
+            i="$(($i + 1))"
+        done
+
+        [ -z "$NUM" ] && {
+            num=0
+            limit=$(nvram get lan_num)
+            while [ $num -lt $limit ];
+            do 
+                [ "$(nvram show lan_main_rule $num enable)" = "1" ] && ifup lan$num
+                num=$(($num + 1))
+            done
+        }
+        [ -n "$NUM" ] && {
+            [ "$(nvram show lan_main_rule $NUM enable)" = "1" ] && ifup lan$NUM
+        }
+        # XXX: setup_wifi
+        # Turn off giga phy to reset the network
+        /usr/sbin/ezp-phy-rst &
+        /usr/sbin/ezp-mac-clone &
+
+        # XXX: setup_wifi
+        return $err
+    }
+
+#   ifup -a
+#	/sbin/wifi up
+}
+
+stop() {
+    # IMQ
+    /usr/sbin/ip link set imq0 down || err=1
+    /usr/sbin/ip link set imq1 down || err=1
+    [ -z "$NUM" ] && {
+        num=0
+        limit=$(nvram get lan_num)
+        while [ $num -lt $limit ];
+        do 
+            [ "$(nvram show lan_main_rule $num enable)" = "1" ] && ifdown lan$num
+            num=$(($num + 1))
+        done
+    }
+    [ -n "$NUM" ] && {
+            [ "$(nvram show lan_main_rule $NUM enable)" = "1" ] && ifdown lan$NUM
+    }
+
+    return $err
+#   ifdown -a
+}
+
+restart() {
+#	setup_switch() { return 0; }
+	
+#	include /lib/network
+#	setup_switch
+#	ifup -a
+#	/sbin/wifi up
+    stop
+    start    
+    return $err
+}
+

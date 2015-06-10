@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. $IFNAME is given by hotplug.
+. /etc/network.sh
+TRIGGER=60
+TRIGGER_STOP=60
+log_msg="TRIGGER"
+
+stop() {
+    /sbin/ezp-ipt-trigger stop
+    /sbin/ezp-ipt-trigger fini
+    return $err
+}
+
+start() {
+    stop
+    /sbin/ezp-ipt-trigger init
+    /sbin/ezp-ipt-trigger start
+}
+

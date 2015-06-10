@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-ipad_charge/Makefile
+Package: ezp-ipad_charge
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Ipad_charge - EZ Packet ipad_charge daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A ipad_charge for EZ Packet Products.
+@@
+

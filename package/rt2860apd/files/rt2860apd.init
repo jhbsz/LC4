@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+#run after wan started
+TRIGGER=20
+TRIGGER_STOP=99
+log_msg="802.1X-Radius"
+
+stop() {
+    killall rt2860apd
+}
+
+start() {
+    local idx=0
+    local wlv_num=$(nvram get wlv_rule_num)
+    local secmode
+    local enable
+    local startdaemon=0
+    stop
+    while [ $idx -lt $wlv_num ];
+    do
+        enable="$(nvram show wl0_basic_rule $idx enable)"
+        secmode="$(nvram show wl0_sec_rule $idx secmode)"
+        [ "$enable" = "1" ] && {
+            [ "$secmode" = "wpa" -o "$secmode" = "wpa2" ] && startdaemon=1
+        }
+        idx=$(($idx + 1))
+    done
+    [ "$startdaemon" = "1" ] && \
+        rt2860apd
+}
+

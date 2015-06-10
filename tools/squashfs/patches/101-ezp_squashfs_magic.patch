@@ -1,0 +1,9 @@
+diff -Nur squashfs3.0/squashfs-tools/squashfs_fs.h squashfs3.0-owrt/squashfs-tools/squashfs_fs.h
+--- squashfs3.0/squashfs-tools/squashfs_fs.h	2006-03-15 22:36:20.000000000 +0100
++++ squashfs3.0-owrt/squashfs-tools/squashfs_fs.h	2006-03-21 11:14:08.000000000 +0100
+29,30c29,30
+< #define SQUASHFS_MAGIC			0x73717368
+< #define SQUASHFS_MAGIC_SWAP		0x68737173
+---
+> #define SQUASHFS_MAGIC			0x37895233
+> #define SQUASHFS_MAGIC_SWAP		0x33528937

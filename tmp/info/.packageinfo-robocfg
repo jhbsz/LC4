@@ -1,0 +1,15 @@
+Source-Makefile: package/robocfg/Makefile
+Package: robocfg
+Version: 0.01-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: BCM5325E/536x switch configuration utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains an utility for configuring the Broadcom BCM5325E/536x 
+ based switches.
+@@
+

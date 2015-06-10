@@ -1,0 +1,14 @@
+Source-Makefile: package/goahead/Makefile
+Package: goahead
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: goahead
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A network test program for Abocom factory test.
+@@
+

@@ -1,0 +1,17 @@
+Source-Makefile: package/hotplug2/Makefile
+Package: hotplug2
+Version: 0.9+r102-2
+Depends: 
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: Dynamic device management subsystem for embedded systems
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Hotplug2 is a trivial replacement of some of the UDev functionality
+ in a tiny pack, intended for Linux early userspace: Init RAM FS and InitRD.
+
+http://isteve.bofh.cz/~isteve/hotplug2/
+@@
+

@@ -1,0 +1,73 @@
+Source-Makefile: package/lua/Makefile
+Package: liblua
+Version: 5.1.4-2
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: LUA programming language (libraries)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Lua is a powerful light-weight programming language designed for extending 
+ applications. Lua is also frequently used as a general-purpose, stand-alone 
+ language. Lua is free software.
+ This package contains the LUA shared libraries, needed by other programs.
+
+http://www.lua.org/
+@@
+Package: lua
+Submenu: LUA
+Version: 5.1.4-2
+Depends: +liblua
+Provides: 
+Build-Depends: 
+Section: lang
+Category: Languages
+Title: LUA programming language (interpreter)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Lua is a powerful light-weight programming language designed for extending 
+ applications. Lua is also frequently used as a general-purpose, stand-alone 
+ language. Lua is free software.
+ This package contains the LUA language interpreter.
+
+http://www.lua.org/
+@@
+Package: luac
+Submenu: LUA
+Version: 5.1.4-2
+Depends: +liblua
+Provides: 
+Build-Depends: 
+Section: lang
+Category: Languages
+Title: LUA programming language (compiler)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Lua is a powerful light-weight programming language designed for extending 
+ applications. Lua is also frequently used as a general-purpose, stand-alone 
+ language. Lua is free software.
+ This package contains the LUA language compiler.
+
+http://www.lua.org/
+@@
+Package: lua-examples
+Submenu: LUA
+Version: 5.1.4-2
+Depends: lua
+Provides: 
+Build-Depends: 
+Section: lang
+Category: Languages
+Title: LUA programming language (examples)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  Lua is a powerful light-weight programming language designed for extending 
+ applications. Lua is also frequently used as a general-purpose, stand-alone 
+ language. Lua is free software.
+ This package contains LUA language examples.
+
+http://www.lua.org/
+@@
+

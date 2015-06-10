@@ -1,0 +1,67 @@
+--- lighttpd-1.4.30/src/connections.c	2014-03-20 16:31:18.614395732 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-03-20 16:35:36.638389799 +0800
+@@ -670,6 +670,7 @@
+ 	con->bytes_header = 0;
+ 	con->loops_per_request = 0;
+     con->trans_progress = -1;
++    con->is_first_packet = 1;
+ 
+ #define CLEAN(x) \
+ 	con->x = buffer_init();
+@@ -799,6 +800,7 @@
+ 	con->bytes_header = 0;
+ 	con->loops_per_request = 0;
+     con->trans_progress = -1;
++    con->is_first_packet = 1;
+ 
+ 	con->request.http_method = HTTP_METHOD_UNSET;
+ 	con->request.http_version = HTTP_VERSION_UNSET;
+@@ -906,6 +908,7 @@
+     char *tmp_uri;
+     char cgi_tmp[512];
+     FILE *chunked_upload_file = NULL;
++    off_t upload_offset = 0;
+ 
+ 	if (con->is_readable) {
+ 		con->read_idle_ts = srv->cur_ts;
+@@ -1057,6 +1060,16 @@
+         /* For cgi chunked_upload, to open temporary file here */
+         tmp_uri = strstr(con->request.uri->ptr, ".cgi");
+         if (tmp_uri != NULL && (strstr(con->request.uri->ptr, "func=chunked_upload") != NULL)) {
++
++            if (con->is_first_packet) {
++                tmp_uri = strstr(con->request.uri->ptr, "offset=");
++                if (tmp_uri != NULL) {
++                    char *tmp_off = tmp_uri;
++                    tmp_off += 7;
++                    sscanf(tmp_off, "%lld", &upload_offset);
++                }
++            }
++
+             /* Compose a temporary path */ 
+             /* Dst file contains cgi-bin characters */
+             char *root_dir = strstr( con->request.uri->ptr, "upload_root_dir");
+@@ -1078,7 +1091,12 @@
+                 id = strtok(upload_id, "&");
+                 strcat(cgi_tmp, id);
+                 /* For instance, cgi_tmp should be: /tmp/mnt/USB/.upload_cache/XE3AzGX */
+-                chunked_upload_file = fopen(cgi_tmp, "a");
++                if (con->is_first_packet) {
++                    chunked_upload_file = fopen(cgi_tmp, "a");
++                    con->is_first_packet = 0; 
++                } else {
++                    chunked_upload_file = fopen(cgi_tmp, "a");
++                }
+                 free(head_upload_id);
+                 free(head_dest_tmp_file);
+             }
+--- lighttpd-1.4.30/src/base.h	2014-03-20 16:31:18.606395732 +0800
++++ lighttpd-1.4.30/src/base.h	2014-03-20 16:30:54.510396286 +0800
+@@ -409,6 +409,7 @@
+ 	response response;
+ 
+     off_t trans_progress;  /* Added for mod-cgi for memory usage control */
++    int is_first_packet;   /* Added for cgi chunked_upload to determine if it is fisrt packet */
+ 
+ 	size_t header_len;
+ 

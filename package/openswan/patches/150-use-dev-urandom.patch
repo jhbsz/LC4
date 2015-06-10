@@ -1,0 +1,33 @@
+--- openswan.old/programs/ranbits/ranbits.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/programs/ranbits/ranbits.c	2009-08-27 10:53:27.886375492 +0800
+@@ -35,7 +35,7 @@
+  * should NEVER be done with /dev/urandom.
+  */
+ 
+-#define	DEVICE	"/dev/random"
++#define	DEVICE	"/dev/urandom"
+ #endif
+ #ifndef QDEVICE
+ #define	QDEVICE	"/dev/urandom"
+--- openswan.old/programs/rsasigkey/rsasigkey.c	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/programs/rsasigkey/rsasigkey.c	2009-08-27 10:54:06.570126225 +0800
+@@ -38,7 +38,7 @@
+  * 0 effect. It's better to fail or bail out of generating a key, then
+  * generate a bad one.
+  */
+-#define	DEVICE	"/dev/random"
++#define	DEVICE	"/dev/urandom"
+ #endif
+ #ifndef MAXBITS
+ #define	MAXBITS	20000
+--- openswan.old/include/ipsecconf/files.h	2009-03-30 21:11:28.000000000 +0800
++++ openswan.new/include/ipsecconf/files.h	2009-08-27 10:54:37.336376171 +0800
+@@ -36,7 +36,7 @@
+ 
+ #define MY_PID_FILE     "/var/run/pluto/ipsec-starter.pid"
+ 
+-#define DEV_RANDOM      "/dev/random"
++#define DEV_RANDOM      "/dev/urandom"
+ #define DEV_URANDOM     "/dev/urandom"
+ 
+ #define PROC_IPSECVERSION   "/proc/net/ipsec_version"

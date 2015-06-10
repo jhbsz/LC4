@@ -1,0 +1,28 @@
+--- linux-2.6.26/drivers/net/wireless/rt2860v2_5350/common/rt_led.c.orig	2012-09-25 10:15:40.645598718 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2_5350/common/rt_led.c	2012-09-25 14:07:48.352561654 +0800
+@@ -429,6 +429,17 @@
+ #else
+ 	LedCfgBuf.field.LED_POL = pCurrentLedCfg->field.LedActPolarity;
+ #endif
++#if defined(CONFIG_BOARD_LIS)
++    if(pSWMCULedCntl->LedBlinkTimer!=0)
++        pSWMCULedCntl->LedBlinkTimer--;
++    else
++        pSWMCULedCntl->LedBlinkTimer = 30; //Total period 1.5s
++
++    if (pSWMCULedCntl->LedBlinkTimer<=10) //WiFi LED on 500ms.
++        LedCfgBuf.field.G_LED_MODE = MAC_LED_ON;
++    else //WiFi LED off 2s.
++        LedCfgBuf.field.G_LED_MODE = MAC_LED_OFF;
++#else
+ 	if(pSWMCULedCntl->LedBlinkTimer!=0)
+ 		pSWMCULedCntl->LedBlinkTimer--;
+ 	else
+@@ -489,6 +500,7 @@
+ 		LedCfgBuf.field.R_LED_MODE =
+ 			pCurrentLedCfg->field.LedAPolarity ? MAC_LED_ON : MAC_LED_OFF;
+ 
++#endif
+ 	if ((pSWMCULedCntl->bWlanLed) && !RTMP_TEST_FLAG(pAd, fRTMP_ADAPTER_RADIO_OFF))
+ 	{
+ 		RTMP_IO_WRITE32(pAd, MAC_LED_CFG, LedCfgBuf.word);

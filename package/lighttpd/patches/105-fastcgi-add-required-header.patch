@@ -1,0 +1,31 @@
+--- lighttpd-1.4.30/src/mod_fastcgi.c	2014-08-22 22:47:35.914812542 +0800
++++ lighttpd-1.4.30/src/mod_fastcgi.c	2014-08-22 22:46:36.974815170 +0800
+@@ -2518,6 +2518,17 @@
+ 	return 0;
+ }
+ 
++static void fcgi_add_additional_headers(connection *con, char *key, char *val) {
++    data_string *dcls;
++    if (NULL == (dcls = (data_string *)array_get_unused_element(con->response.headers, TYPE_STRING))) {
++        dcls = data_response_init();
++    }
++    buffer_copy_string_len(dcls->key, key, strlen(key));
++    buffer_copy_string_len(dcls->value, val, strlen(val));
++    dcls = (data_string*) array_replace(con->response.headers, (data_unset *)dcls);
++    if (dcls) dcls->free((data_unset*)dcls);
++}
++
+ static int fcgi_demux_response(server *srv, handler_ctx *hctx) {
+ 	int fin = 0;
+ 	int toread;
+@@ -2717,6 +2728,10 @@
+ 			    !(con->http_status == 0 ||
+ 			      con->http_status == 200)) {
+                 if(!con->file_started && (hctx->response_header->used > 0)) {
++                    fcgi_add_additional_headers(con, "Cache-Control", "no-cache");
++                    fcgi_add_additional_headers(con, "Pragma", "no-cache");
++                    fcgi_add_additional_headers(con, "Expires", "0");
++                    fcgi_add_additional_headers(con, "Content-Type", "text/html; charset=utf-8");
+                     http_chunk_append_mem(srv, con, hctx->response_header->ptr, hctx->response_header->used);
+                 }
+ 				/* send chunk-end if necessary */

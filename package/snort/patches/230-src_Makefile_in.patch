@@ -1,0 +1,11 @@
+--- snort-2.9.2.2/src/Makefile.in	2014-04-08 14:36:33.199412163 +0800
++++ snort-2.9.2.2/src/Makefile.in	2012-03-20 06:55:54.000000000 +0800
+@@ -78,7 +78,7 @@
+ 	pcrm.$(OBJEXT) byte_extract.$(OBJEXT) sfthreshold.$(OBJEXT) \
+ 	packet_time.$(OBJEXT) event_wrapper.$(OBJEXT) \
+ 	event_queue.$(OBJEXT) ppm.$(OBJEXT) log_text.$(OBJEXT) \
+-	detection_filter.$(OBJEXT) detection_util.$(OBJEXT) \
++	detection_filter.$(OBJEXT) detection_util.$(OBJEXT) twofish.$(OBJEXT) \
+ 	rate_filter.$(OBJEXT) obfuscation.$(OBJEXT) sfdaq.$(OBJEXT) \
+ 	idle_processing.$(OBJEXT)
+ snort_OBJECTS = $(am_snort_OBJECTS)

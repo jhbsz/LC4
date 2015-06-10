@@ -1,0 +1,162 @@
+#!/bin/sh /etc/rc.common
+# /etc/rc.common /etc/init.d/network-acl start [NULL|wan|XXX]
+
+BIN=/sbin/ezp-iptables
+BASIC_LIST="mss ttl fl_hwaddr snat log nat_pass fw bw"
+WAN_LIST="rt rt_conn fr fl bw wf vs"
+
+START=60
+
+single_local_check () {
+    local err;err=0
+    # check enable 
+    case $1 in 
+        ttl|nat_pass|fw) [ "$(nvram show $1_rule 0 enable)" != "1" ] && err=1
+ 		;; 
+        log) [ "$(nvram show $1_rule 0 ipt_enable)" != "1" ] && err=1
+ 		;;
+        fr)
+        ;; 
+     	*) 	[ "$(nvram get $1_enable)" != "1" ] && err=1
+   		;;
+    esac
+    return $err
+}
+
+single_local_start () {
+    local err; err=0
+    # basic setup
+    [ "$1" = "basic" ] && {
+        for rule in $BASIC_LIST
+        do
+            single_local_check $rule
+            [ "$?" = "0" ] &&
+            {
+                $BIN $rule start || err=1
+            }
+        done
+    }
+    # wan setup
+    [ "$1" = "wan" ] && {
+        for rule in $WAN_LIST
+        do
+            single_local_check $rule
+            [ "$?" = "0" ] &&
+            {
+                $BIN $rule start || err=1
+            }
+        done
+    }
+    # individual db setup
+    [ "$1" != "basic" ] && [ "$1" != "wan" ] && {
+        single_local_check $1
+        [ "$?" = "0" ] &&
+        {
+            $BIN $1 start || err=1
+        }
+    }
+    return $err
+}
+
+single_local_stop () {
+    local err; err=0
+    # basic setup
+    [ "$1" = "basic" ] && {
+        for rule in $BASIC_LIST
+        do
+            single_local_check $rule
+            [ "$?" = "0" ] &&
+            {
+                $BIN $rule stop || err=1
+            }
+        done
+    }
+    # wan setup
+    [ "$1" = "wan" ] && {
+        for rule in $WAN_LIST
+        do
+            single_local_check $rule
+            [ "$?" = "0" ] &&
+            {
+                $BIN $rule stop || err=1
+            }
+        done
+    }
+    # individual db setup
+    [ "$1" != "basic" ] && [ "$1" != "wan" ] && {
+        single_local_check $1
+        [ "$?" = "0" ] &&
+        {
+            $BIN $1 stop || err=1
+        }
+    }
+    return $err
+}
+
+wan_start () {
+    local err; err=0
+    single_local_start wan || err=1
+    return $err
+}
+
+wan_stop () {
+    local err; err=0
+    single_local_stop wan || err=1
+    return $err
+}
+
+local_start () {
+    local err; err=0
+    # commands and shell functions return differently
+    # construct the iptables chains in the upfront!
+    $BIN start || err=1
+    single_local_start basic || err=1
+    return $err
+}
+
+local_stop () {
+    local err; err=0
+    # commands and shell functions return differently
+    $BIN stop || err=1
+    single_local_stop basic || err=1
+    return $err
+}
+
+
+start() {
+    # network-acl start
+    [ "$#" = "0" ] && {
+        log_msg="ACL service"
+        local_start
+    }
+    # network-acl start XXX
+    [ "$#" = "1" ] && {
+        [ "$1" = "wan" ] && {
+            log_msg="ACL WAN service"
+            wan_start
+        }
+        [ "$1" != "wan" ] && {
+            log_msg="ACL DB $1 service"
+            single_local_start $1
+        }
+    }
+    return $err
+}
+
+stop() {
+    [ "$#" = "0" ] && {
+        log_msg="ACL service"
+        local_stop
+    }
+    [ "$#" = "1" ] && {
+        [ "$1" = "wan" ] && {
+            log_msg="ACL WAN service"
+            wan_stop
+        }
+        [ "$1" != "wan" ] && {
+            log_msg="ACL DB $1 service"
+            single_local_stop $1
+        }
+    }
+    return $err
+}

@@ -1,0 +1,47 @@
+diff -Naur linux-2.6.24.4/security/Kconfig linux-2.6.24.4-oxnas/security/Kconfig
+--- linux-2.6.24.4/security/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/security/Kconfig	2009-05-08 16:22:55.000000000 +0800
+@@ -103,6 +103,32 @@
+ 	  
+ 	  If you are unsure how to answer this question, answer N.
+ 
++config SECURITY_TRUSTEES
++	bool "Linux Trustees ACLs"
++	depends on SECURITY
++	help
++	  Implements a system similar to Netware ACLs.  Trustees
++	  allows a global configuration of recursive ACLs via a
++	  centralized file.  ACLs can be added to an entire
++	  directory tree and masked out on subdirectories.
++
++	  Trustees allows complex permissions to be enforced
++	  system-wide without needing to touch every file or
++	  maintain thousands of ugly POSIX ACLs.  See
++	  http://trustees.sourceforge.net for more information on
++	  trustees and the associated user-space tools.
++
++	  If you are unsure how to answer this question, answer N.
++
++config SECURITY_TRUSTEES_DEBUG
++	bool "Enable debugging code and messages"
++	depends on SECURITY_TRUSTEES
++	help
++	  Turns on certain diagnostic messages and debugging code
++	  in trustees.
++
++	  If you are unsure how to answer this question, answer N.
++
+ source security/selinux/Kconfig
+ 
+ endmenu
+diff -Naur linux-2.6.24.4/security/Makefile linux-2.6.24.4-oxnas/security/Makefile
+--- linux-2.6.24.4/security/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/security/Makefile	2009-05-08 16:22:55.000000000 +0800
+@@ -12,6 +12,7 @@
+ 
+ # Object file lists
+ obj-$(CONFIG_SECURITY)			+= security.o dummy.o inode.o
++obj-$(CONFIG_SECURITY_TRUSTEES)     += trustees/
+ # Must precede capability.o in order to stack properly.
+ obj-$(CONFIG_SECURITY_SELINUX)		+= selinux/built-in.o
+ obj-$(CONFIG_SECURITY_CAPABILITIES)	+= commoncap.o capability.o

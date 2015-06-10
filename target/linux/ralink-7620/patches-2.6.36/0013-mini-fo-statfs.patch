@@ -1,0 +1,28 @@
+--- linux-2.6.36/fs/mini_fo/super.c	2014-01-03 08:45:10.700694397 +0800
++++ linux-2.6.36/fs/mini_fo/super.c	2014-01-03 08:44:06.116694715 +0800
+@@ -172,9 +172,14 @@
+ 	int err = 0;
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+ 	struct dentry *hidden_d;
+-
+ 	hidden_d = dtohd(d);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
++    /* Under 2.6.36, the vfs_statfs uses a "path" struct parameter instead of a
++     * dentry, so we need to use statfs_by_dentry instead of vfs_statfs. */
++    err = statfs_by_dentry(hidden_d, buf);
++#else
+ 	err = vfs_statfs(hidden_d, buf);
++#endif
+ #else
+ 	super_block_t *hidden_sb;
+ 
+--- linux-2.6.36/fs/statfs.c	2014-01-03 09:07:35.938129773 +0800
++++ linux-2.6.36/fs/statfs.c	2014-01-03 09:07:31.378129794 +0800
+@@ -61,6 +61,7 @@
+ 		buf->f_frsize = buf->f_bsize;
+ 	return retval;
+ }
++EXPORT_SYMBOL(statfs_by_dentry);
+ 
+ int vfs_statfs(struct path *path, struct kstatfs *buf)
+ {

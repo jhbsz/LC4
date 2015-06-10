@@ -1,0 +1,90 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+USBSTORAGE=90
+
+SSD=start-stop-daemon
+PIDF=/var/run/pure-ftpd.pid
+PROG=/usr/sbin/pure-ftpd
+log_msg="FTP-server"
+
+start() {
+    [ -f "$PIDF" ] && exit
+    [ -f "/tmp/pureftpd.pdb" ] && {
+        rm /tmp/pureftpd.passwd
+        rm /tmp/pureftpd.pdb
+        }
+
+    local port=$(nvram show ftpd_rule 0 port)
+    local noanonyous=$(nvram show ftpd_rule 0 noanonyous)
+    local chrooteveryone=$(nvram show ftpd_rule 0 chrooteveryone)
+    local maxclientsperip=$(nvram show ftpd_rule 0 maxclientsperip)
+    local maxclientnumber=$(nvram show ftpd_rule 0 maxclientnumber)
+    local peruserlimits=$(nvram show ftpd_rule 0 peruserlimits)
+    local umask=$(nvram show ftpd_rule 0 umask)
+    local userbandwidth=$(nvram show ftpd_rule 0 userbandwidth)
+    local timeout=$(nvram show ftpd_rule 0 timeout)
+    local pdb=/tmp/pureftpd.pdb
+    local enabled=$(nvram show ftpd_rule 0 enable)
+    local mnt_point=$(nvram show storage_state_rule 0 dev_name)
+    local platform=$(nvram get platform)
+    [ "$platform" = "AXA" ] && {
+        # For togobox, we set mount point to mnt and discard nvram
+        mnt_point="mnt"
+    }
+    [ "$platform" = "M2E" ] && {
+        mnt_point="mnt/fslite"
+    }
+    local user_num=$(nvram get ftpd_user_rule_num)
+    local allow_ext_access=$(nvram show ftpd_rule 0 allow_ext_access)
+    local rmt_charset=$(nvram show ftpd_rule 0 rmt_charset)
+    local local_ipaddr=$(nvram get lan0_ipaddr)
+    [ "$allow_ext_access" -gt "0" ] && {
+        local_ipaddr=""
+    }
+
+    [ "$enabled" -eq 0 -o -z "$mnt_point" ] && exit
+    local aduser=$(nvram show http_rule 0 username)
+    local adpw=$(nvram show http_rule 0 passwd)
+    pure-pw useradd $aduser -p $adpw -u ftpuser -d /tmp/$mnt_point -m
+    [ "$user_num" -gt "0" ] && {
+        while [ "$user_num" -gt "0" ]
+        do
+            user_num=$(($user_num - 1))
+            local user=$(nvram show ftpd_user_rule $user_num username)
+            [ "$aduser" != "$user" ] && {
+                local pw=$(nvram show ftpd_user_rule $user_num passwd)
+                local upload=$(nvram show ftpd_user_rule $user_num upload)
+                local download=$(nvram show ftpd_user_rule $user_num download)
+                local user_enable=$(nvram show ftpd_user_rule $user_num enable)
+                args="useradd $user -p $pw -u ftpuser -d /tmp/$mnt_point"
+                [ -n "$upload" ] && args="$args -T $upload"
+                [ -n "$download" ] && args="$args -t $download"
+                [ "$user_enable" -gt "0" ] && pure-pw $args -m
+            }
+        done
+    }
+    args="-S $local_ipaddr,$port -E $noanonyous -A $chrooteveryon\
+         -c $maxclientsperip -C $maxclientnumber -y $peruserlimits\
+         -U $umask -T $userbandwidth -I $timeout \
+         -l puredb:$pdb" 
+
+    $SSD -S -p $PIDF -q -x $PROG -- -g $PIDF -B $args || err=1
+    
+}
+
+stop() {
+    [ -f "$PIDF" ] || exit 
+    killall pure-ftpd
+
+    local count=0
+    while [ -f "$PIDF"  ]
+    do
+         sleep 1
+         count=$(($count + 1))
+         [ "$count" -gt "20" ] && {
+             err=1
+             return
+         }
+    done
+}

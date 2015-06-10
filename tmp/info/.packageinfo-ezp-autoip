@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-autoip/Makefile
+Package: ezp-autoip
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Auto Lan IP Switch
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Auto switch lan network and ip address while conflict with wan ip
+@@
+

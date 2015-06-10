@@ -1,0 +1,143 @@
+#!/bin/sh
+# $NUM is optional.
+. /etc/arch.sh
+. /etc/network.sh
+
+
+local_start () {
+    local err; err=0
+    local num;
+    local prod_cat=$(nvram get prod_cat)
+    local prod_subcat=$(nvram get prod_subcat)
+    num=$(expr $(nvram get wan_num) - 1)
+    lock /tmp/.wanupnp
+    [ "$(nvram show wanupnp_rule 0)" = "1" ] && {
+        # If the original proto is the same as the wan upnp proto
+        [ "$(nvram get wan${num}_proto)" = "$1" ] && {
+            lock -u /tmp/.wanupnp
+            exit
+        }
+        [ -z "$(nvram get wan${num}_upnp_proto)" ] && \
+            nvram fset wan${num}_upnp_proto=$(nvram get wan${num}_proto)
+        [ -z "$(nvram get wan${num}_upnp_ifname)" ] && \
+            nvram fset wan${num}_upnp_ifname=$(nvram get wan${num}_ifname)
+        # Bring it down before change proto and ifname
+        /sbin/ifdown wan${num}
+        [ "$1" = "wwan" ] && {
+            nvram set wan${num}_proto=wwan    
+            nvram set wan${num}_ifname=ppp${num}
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "htc"  -a "$(nvram show appmgr_rule $num smart)" = "1" ] && {
+            nvram set wan${num}_proto=htc
+            nvram set wan${num}_ifname=usb0
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "directip" ] && {
+            nvram set wan${num}_proto=directip
+            nvram set wan${num}_ifname=usb0
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "iphone" -a "$(nvram show appmgr_rule $num iphone)" = "1" ] && { 
+            nvram set wan${num}_proto=iphone
+            nvram set wan${num}_ifname=eth0
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "beceem" -a "$(nvram show appmgr_rule $num beceem)" = "1" ] && { 
+            nvram set wan${num}_proto=beceem
+            nvram set wan${num}_ifname=eth0
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "wimax" -a "$(nvram show appmgr_rule $num wimax)" = "1" ] && { 
+            nvram set wan${num}_proto=wimax
+            nvram set wan${num}_ifname=wimax0
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+        [ "$1" = "barry" -a "$(nvram show appmgr_rule $num barry)" = "1" ] && { 
+            nvram set wan${num}_proto=barry
+            nvram set wan${num}_ifname=ppp${num}
+            # If product is P1, need to config ethernet port 
+            # to wan or lan by wan proto
+            [ "$(nvram show appmgr_rule $num portcfg)" = "1" ] &&  \
+                ezp-vlan esw config_p1_port lan
+        }
+    }
+    lock -u /tmp/.wanupnp
+}
+
+local_stop () {
+    local err; err=0
+    local num;
+    local proto;
+    local ifname;
+    local prod_cat=$(nvram get prod_cat)
+    local prod_subcat=$(nvram get prod_subcat)
+    num=$(expr $(nvram get wan_num) - 1)
+
+    lock /tmp/.wanupnp
+    [ "$(nvram show wanupnp_rule 0)" = "1" ] && {
+        # Bring it down before change proto and ifname
+        /sbin/ifdown wan${num}
+        proto=$(nvram get wan${num}_upnp_proto)
+        [ -n "$proto" ] && {
+            [ "$proto" = "$(nvram get wan${num}_proto)" ] || {
+                nvram fset wan${num}_proto=$proto
+                # If product is P1, need to config ethernet port 
+                # to wan or lan by wan proto
+                [ "$prod_cat" = "P" -a "$prod_subcat" = "1" ] &&  {
+                    case $proto in 
+                       static|dhcp|pppoe)
+                            ezp-vlan esw config_p1_port wan
+                       ;;
+                    esac
+                }
+            }
+            nvram unset wan${num}_upnp_proto
+        }
+        ifname=$(nvram get wan${num}_upnp_ifname)
+        [ -n "$ifname" ] && {
+            [ "$ifname" = "$(nvram get wan${num}_ifname)" ] || \
+                nvram fset wan${num}_ifname=$ifname
+            nvram unset wan${num}_upnp_ifname
+        }
+    }
+    lock -u /tmp/.wanupnp
+}
+
+# main
+[ -z "$1" ] && exit
+[ "$(nvram get prod_cat)" = "U" -a "$2" = "htc" ] && exit
+[ "$(nvram get prod_cat)" = "U" -a "$2" = "iphone" ] && exit
+
+err=0
+for action in $*; do
+        case $action in
+                config)         ;;
+                start)          local_start $2;;
+                stop)           local_stop $2;;
+                reload)         ;;
+                restart)        stop; sleep 1; local_start;;
+                *)              ;;
+        esac
+        [ $? != "0" ] && err=1
+done
+
+exit $err

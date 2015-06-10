@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. 
+BIN=/usr/bin/nodogsplash
+CTRL_BIN=/usr/bin/ndsctl
+PID_FILE=/var/run/nodogsplash.pid
+. /etc/network.sh
+#START=80
+#MJ temp disable
+log_msg="CaptivePortal-server"
+
+stop () {
+    $CTRL_BIN stop
+    #XXX: Make sure nodogsplash daemon is killed! 
+}
+
+start () {
+    stop
+    {
+        enable=$(nvram show captive_rule 0 enable)
+        port=$(nvram show captive_rule 0 port)
+        [ "$enable" = "0" ] && exit
+
+        # interface to listen br0
+        # splash page location /www/nodogsplash
+        $BIN -c /etc/nodogsplash.conf
+
+    } || err=1 
+    return $err
+}
+

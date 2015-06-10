@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+BIN=/usr/sbin/porter
+PID_FILE=/var/run/porter.pid
+
+START=99
+log_msg="porter"
+
+start () {
+    pidof porter > /dev/null && stop
+    $BIN || err = 1
+    return $err
+}
+
+stop() {
+    kill -9 $(pidof porter)
+    while [ -n "$(pidof porter)" ]; do
+       echo "stopping" 2>&1 > /dev/null
+    done
+}

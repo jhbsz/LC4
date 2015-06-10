@@ -1,0 +1,14 @@
+Source-Makefile: package/watchdog/Makefile
+Package: watchdog
+Version: 5.6
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Watchdog daemon
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Watchdog daemon
+@@
+

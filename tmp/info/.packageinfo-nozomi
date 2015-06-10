@@ -1,0 +1,17 @@
+Source-Makefile: package/nozomi/Makefile
+Package: kmod-nozomi
+Submenu: Other modules
+Version: <LINUX_VERSION>+060209--1
+Depends: @LINUX_2_4 @PCMCIA_SUPPORT
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Option Globetrotter HSDPA driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Option Globetrotter HSDPA driver
+
+http://www.pharscape.org/
+@@
+

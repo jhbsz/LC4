@@ -1,0 +1,119 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+DAEMON=transmission-daemon
+PIDFILE=/var/run/$DAEMON.pid
+LOCAL="127.0.0.1"
+TARNS_CMD=transmission-remote
+. /etc/functions.sh
+
+USBSTORAGE=99
+TRIGGER=80
+TRIGGER_STOP=80
+
+log_msg="BT-client"
+
+local dev=$(nvram show storage_state_rule 0 dev_name)
+swap_mount() {
+    # If usb storage contain swap partition, we use swap partition.
+    [ -d "/sys/block/sda/sda4" ] && {
+        id=$(fdisk -l /dev/sda | awk '/sda4/{print $5}')
+        [ "$id" = "82" ] && {
+            mkswap /dev/sda4 && swapon /dev/sda4
+            while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+            do 
+                sleep 5
+            done
+            return
+        }
+    } 
+    # If usb storage do not contain swap partition, we use swap file.
+    local swapsize=$(nvram show storage_rule 0 swap_size)
+    [ -f "/tmp/$dev/download/temp/.swapfile" ] && {
+        rm -rf /tmp/$dev/download/temp/.swapfile
+    }
+    dd if=/dev/zero of=/tmp/$dev/download/temp/.swapfile bs=4k count=$swapsize
+    mkswap /tmp/$dev/download/temp/.swapfile
+    swapon /tmp/$dev/download/temp/.swapfile
+    while [ "$(free | awk '/Swap/{print $2}')" = "0" ]
+    do 
+        sleep 5
+    done
+}
+
+start() {
+    [ -n "$(pidof transmission-daemon)" ] && exit
+    local enable=$(nvram show bt_rule 0 enable)
+    [ "$enable" = 0 -o  -z "$dev" ] && exit
+    [ -d "/tmp/$dev/download/session"  ] || mkdir -m 777 -p /tmp/$dev/download/session
+    [ -d "/tmp/$dev/download/temp"  ] || mkdir -m 777 -p /tmp/$dev/download/temp
+    [ -f "/tmp/$dev/download/session/bt-cpl" ] || {
+        touch /tmp/$dev/download/session/bt-cpl
+    }
+    chmod -R 777 /tmp/$dev/download
+    local CONF_DIR="/tmp/$dev/download/session"    
+    local TEMP_DIR="/tmp/$dev/download/temp"
+    local DL_DIR="/tmp/$dev/download/"
+    local UP=$(nvram show bt_rule 0 upload_rate)
+    local DOWN=$(nvram show bt_rule 0 download_rate)
+    local PORT=$(nvram show bt_rule 0 port_range_start)
+    local PEERLIMIT=$(nvram show bt_rule 0 peer)
+    local PEERLIMIT_GBL=$(nvram show bt_rule 0 max_peer)
+    local TORRENT_MAX=$(nvram get bt_torrent_max)
+    local WAN_IP=$(nvram get wan0_ipaddr)
+
+    [ -z "$WAN_IP" ] && {
+            logger "EZP_USR" BT-Client: Wan is not ready
+            err=1
+            return $err
+    }
+
+    local TRANSMISSION_ARGS="-g $CONF_DIR --incomplete-dir $TEMP_DIR \
+          -w $DL_DIR -C -P $PORT -l $PEERLIMIT -L $PEERLIMIT_GBL \
+          -z $TORRENT_MAX -s $UP -S $DOWN -r $LOCAL -i $WAN_IP -M"
+    local EXT_ENABLE=$(nvram show storage_rule 0 ext_enable)
+    [ "$EXT_ENABLE" -eq "0" ] && swap_mount
+    # allow all user delete file or directory that rtorrent create.
+    touch $PIDFILE
+    umask 0000
+    nice -n 19 $DAEMON $TRANSMISSION_ARGS
+ #   For Debug , enable this code, bt engine will dump debug info to bt.log
+ #   nice -n 19 $DAEMON $TRANSMISSION_ARGS 2>&1 | tee /tmp/sda1/bt.log
+}
+
+stop() {
+    [ -z "$(pidof transmission-daemon)" ] && exit
+    killall transmission-daemon
+    local count=0
+    while [ -n "$(pidof transmission-daemon)" ]
+    do
+        count=$(($count +1))
+        [ "$count" -gt "20" ] && {
+            err=1
+            return 
+        }
+        sleep 5
+    done
+    [ -f "$PIDFILE" ] && rm -rf $PIDFILE
+
+    [ -d "/sys/block/sda/sda4" ] && {
+        id=$(fdisk -l /dev/sda | awk '/sda4/{print $5}')
+        [ "$id" = "82" ] && {
+            swapoff /dev/sda4
+            while [ "$(free | awk '/Swap/{print $2}')" != "0" ]
+            do 
+                swapoff /dev/sda4
+                sleep 5
+            done
+        }
+    }
+    [ -f "/tmp/$dev/download/temp/.swapfile" ] && {
+        swapoff /tmp/$dev/download/temp/.swapfile
+        while [ "$(free | awk '/Swap/{print $2}')" != "0" ]
+        do 
+            swapoff /tmp/$dev/download/temp/.swapfile
+            sleep 5
+        done
+        rm -rf /tmp/$dev/download/temp/.swapfile
+    }
+    [ -f "$PIDFILE" ] && rm -rf $PIDFILE
+}

@@ -1,0 +1,32 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# When the ppp link comes up, this script is called with the following
+# parameters
+#       $1      the interface name used by pppd (e.g. ppp3)
+#       $2      the tty device name
+#       $3      the tty device speed
+#       $4      the local IP address for the interface
+#       $5      the remote IP address
+#       $6      the parameter specified by the 'ipparam' option to pppd
+
+. /etc/network.sh
+. /etc/arch.sh
+
+[ -z "$6" ] || {
+    type="${6%%[0-9]}"
+    num="${6#$type}"
+    PPP_DEMAND_STATE_FILE="/tmp/ppp-${type}${num}-demand.tmp"
+    [ "$type" = "wan" ] && {
+    	# Mask is 32 because this is a point-to-point protocol.
+    	# The temporary IP is set to 0.0.0.0 in demand waiting mode
+    	iface_up "$6" "0.0.0.0" "32" "0.0.0.0" "$DNS1 $DNS2" 2>&-
+    }
+    [ "$type" != "wan" ] && {
+        log_usr "PPTP Server" "client [$6] local [$5] entering demand mode" OK
+    }
+    # We set a status information for on-demand mode checking
+    # Each wan has its own status file
+    echo -n "demand-start" > ${PPP_DEMAND_STATE_FILE}
+}
+

@@ -1,0 +1,54 @@
+#!/bin/sh -x
+
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh.debug
+
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+debug "### ifup $iface $type $num###"
+
+# Exit if an interface is disabled.
+# [ "$(nvram show ${type}_main_rule $num enable)" != "1" ] && exit
+
+# Exit if license is invalid! 
+# [ "$type" = "wan" -a "$(nvram get license_invalid)" = "2" ] && exit
+
+# Get the physical interface.
+# ifname=$(nvram get ${iface}_ifname)
+# [ "${ifname%%[0-9]*}" = "ppp" ] && ifname=$(nvram get ${iface}_device)
+ifname=vlan3
+
+# if_proto=$(nvram get ${iface}_proto)
+if_proto=wwan
+# Exit if PPTP is used.
+# if_valid $ifname || [ "$if_proto" = "pptp" ] || exit 
+
+# See if hwaddr clone is required
+# if [ "$(nvram show ${type}_hwaddr_clone_rule $num enable)" = "1" ]; then
+#     hwaddr=$(nvram show ${type}_hwaddr_clone_rule $num hwaddr)
+# else
+#     hwaddr=$(nvram show ${type}_hwaddr_rule_default $num hwaddr)
+# fi
+
+$DEBUG ip link set dev $ifname down 2>&-
+$DEBUG ip addr flush dev $ifname 2>&-
+
+if [ "${ifname%%[0-9]*}" = "br" ]; then
+	stp=$(nvram show lan_main_rule $num stp)
+	$DEBUG brctl delbr $ifname 2>&-
+	$DEBUG brctl addbr $ifname
+	$DEBUG brctl setfd $ifname 0
+	$DEBUG brctl stp $ifname ${stp:-0}
+
+	for sif in $(nvram get ${iface}_ifnames); do
+		if_valid $sif || continue
+        $DEBUG ip link set dev $sif up allmulticast on
+		$DEBUG brctl addif $ifname $sif
+	done
+else
+    ${hwaddr:+$DEBUG ip link set dev $ifname address $hwaddr}
+fi
+
+do_ifup $if_proto $iface $type $num $ifname

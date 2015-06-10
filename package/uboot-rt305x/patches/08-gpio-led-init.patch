@@ -1,0 +1,43 @@
+--- Uboot-1.1.3/lib_mips/board.c	2010-05-28 22:32:51.103349435 +0800
++++ Uboot-1.1.3-ooo/lib_mips/board.c	2010-05-28 22:27:57.454464615 +0800
+@@ -1071,6 +1071,8 @@
+ void rt3052_gpio_init(void)
+ {
+     u32 tmp;
++    /* Turn off full UART */
++    *((unsigned long*)GOIP_MODE_REGISTER) |= 0x1f;
+     /* EZP : Disable JTAG on uboot if GPIO 18 is used */
+     if(GPIO_WPS_BUTTON == 18) {
+         tmp = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
+@@ -1079,14 +1081,21 @@
+     }
+     /* EZP : set gpio wps button and reset button to input direction */
+     tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
+-    tmp &= ~cpu_to_le32((1 << GPIO_WPS_BUTTON) | (1 << GPIO_RESET_BUTTON));
++    tmp &= ~cpu_to_le32(1 << GPIO_WPS_BUTTON);
++    *((volatile u32 *)0xb0000624) = tmp;
++    tmp &= ~cpu_to_le32(1 << GPIO_RESET_BUTTON);
+     *((volatile u32 *)0xb0000624) = tmp;
+ }
+ u32 rt3052_gpio_get(u32 gpio_index)
+ {
+     u32 tmp;
++    u32 mode;
+     /* EZP : set gpio 0 and 10 to input direction */
+     tmp = le32_to_cpu(*((volatile u32 *)0xb0000620));
++    mode = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
++#ifdef DEBUG
++    printf("gpio val:%x mode:%x reset:%x\n", tmp, mode, tmp & (1 << GPIO_RESET_BUTTON));
++#endif
+     if(tmp & (1 << gpio_index)) {
+         /* EZP: when target bit is high, the button is not pushed. */
+         return 0;
+@@ -1439,7 +1448,7 @@
+ 			}
+ #ifdef RT3052_ASIC_BOARD
+             /* EZP : handle button push */
+-            if(rt3052_gpio_get(GPIO_WPS_BUTTON)) {
++            if(rt3052_gpio_get(GPIO_RESET_BUTTON)) {
+                 gpiodata ++;
+             }
+             else {

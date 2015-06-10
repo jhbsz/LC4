@@ -1,0 +1,44 @@
+#!/bin/sh
+[ "$(nvram show switch_type 0)" = "ar8316" ] || exit
+
+# usage: ezp-mac-clone [add|del] 112233445566 to add mac clone address
+# when: 11:22:33:44:55:66 is in the LAN
+# we don't really to have this check, because we don't know what the user will input.
+# So, make it easier...just put the "cloned" address into the broadcast domain.
+
+# To make all this happened, we have to make ESW of RT3052 stop learning
+switch reg w 0x94 0x7f00
+
+local NUM="$(nvram get wan_num)"
+local i=0
+while [ $i -lt $NUM ]; do
+    [ "$(nvram show wan_hwaddr_clone_rule $i enable)" = "1" ] && {
+        # And we need to del the mac address from the ESW's Address Table
+        HWADDR="$(echo $(nvram show wan_hwaddr_clone_rule $i hwaddr) | sed 's/://g')"
+        
+        switch del $HWADDR
+        switch del $HWADDR 1 
+        # Add a static MAC/PORT mapping into the ARL table.
+        # When use this method, we need to get the PORT map of LAN PC.
+        # To make it simple, we just forward it to PC and all LAN port.
+        # ex. Target MAC = 00:11:22:33:44:55
+
+        # ADDRESS TABLE OPERATION::
+        # Reg 0x0054 <= 0x00112233
+        # Reg 0x0058 <= 0x000F001F (port member = P0+P1+P2+P3+P4)
+        # Reg 0x0050 <= 0x4455000A (Load an entry to Adress Table)    
+        switch greg w 0x54 0x"$(echo $(nvram show wan_hwaddr_clone_rule $i hwaddr) | awk -F: '{print $1$2$3$4}')"
+        switch greg w 0x58 0x000f001f
+        switch greg w 0x50 0x"$(echo $(nvram show wan_hwaddr_clone_rule $i hwaddr) | awk -F: '{print $5$6}')"000a
+    } || {
+        # Purge a static MAC/PORT mapping into the ARL table.
+        # ADDRESS TABLE OPERATION::
+        # Reg 0x0054 <= 0x00112233
+        # Reg 0x0058 <= 0x000F001f (port member = P0+P1+P2+P3+P4)
+        # Reg 0x0050 <= 0x4455000b (Purge an entry from Adress Table)
+        switch greg w 0x54 0x"$(echo $(nvram show wan_hwaddr_clone_rule $i hwaddr) | awk -F: '{print $1$2$3$4}')"
+        switch greg w 0x58 0x000f001f
+        switch greg w 0x50 0x"$(echo $(nvram show wan_hwaddr_clone_rule $i hwaddr) | awk -F: '{print $5$6}')"000b
+    }
+    i=$(($i+1))
+done

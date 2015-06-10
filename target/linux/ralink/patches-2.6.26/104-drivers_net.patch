@@ -1,0 +1,114 @@
+--- a/drivers/net/Kconfig	2008-07-14 05:51:29.000000000 +0800
++++ b/drivers/net/Kconfig	2008-11-25 22:43:20.000000000 +0800
+@@ -481,6 +604,14 @@
+ 	  This is the driver for the onboard card of MIPS Magnum 4000,
+ 	  Acer PICA, Olivetti M700-10 and a few other identical OEM systems.
+ 
++config GALILEO_64240_ETH
++	tristate "Galileo GT64240 Ethernet support"
++	depends on NET_ETHERNET && MOMENCO_OCELOT_G
++	select MII
++	help
++	  This is the driver for the ethernet interfaces integrated into
++	  the Galileo (now Marvell) GT64240 chipset.
++
+ config MIPS_AU1X00_ENET
+ 	bool "MIPS AU1000 Ethernet support"
+ 	depends on SOC_AU1X00
+@@ -2119,6 +2250,10 @@
+ 
+ 	  If in doubt, say N.
+ 
++config NET_SB1250_MAC
++	tristate "SB1250 Ethernet support"
++	depends on SIBYTE_SB1xxx_SOC
++
+ config R8169_VLAN
+ 	bool "VLAN support"
+ 	depends on R8169 && VLAN_8021Q
+@@ -2332,6 +2467,20 @@
+ 	  Some boards that use the Discovery chipset are the Momenco
+ 	  Ocelot C and Jaguar ATX and Pegasos II.
+ 
++config BIG_SUR_FE
++	bool "PMC-Sierra TITAN Fast Ethernet Support"
++	depends on NET_ETHERNET && PMC_BIG_SUR
++	help
++	  This enables support for the the integrated ethernet of
++	  PMC-Sierra's Big Sur SoC.
++
++config TITAN_GE
++	bool "PMC-Sierra TITAN Gigabit Ethernet Support"
++	depends on PMC_YOSEMITE
++	help
++	  This enables support for the the integrated ethernet of
++	  PMC-Sierra's Titan SoC.
++
+ config QLA3XXX
+ 	tristate "QLogic QLA3XXX Network Driver Support"
+ 	depends on PCI
+@@ -3195,4 +3195,7 @@
+ 	  This is the virtual network driver for virtio.  It can be used with
+           lguest or QEMU based VMMs (like KVM or Xen).  Say Y or M.
+ 
++source "drivers/net/rt_rdm/Kconfig"
++source "drivers/net/raeth/Kconfig"
++
+ endif # NETDEVICES
+--- a/drivers/net/Makefile	2008-07-14 05:51:29.000000000 +0800
++++ b/drivers/net/Makefile	2008-11-25 23:18:10.000000000 +0800
+@@ -4,6 +4,8 @@
+ 
+ obj-$(CONFIG_E1000) += e1000/
+ obj-$(CONFIG_E1000E) += e1000e/
++obj-$(CONFIG_RALINK_RDM) += rt_rdm/
++obj-$(CONFIG_RAETH) += raeth/
+ obj-$(CONFIG_IBM_EMAC) += ibm_emac/
+ obj-$(CONFIG_IBM_NEW_EMAC) += ibm_newemac/
+ obj-$(CONFIG_IGB) += igb/
+@@ -84,7 +86,9 @@
+ #
+ # end link order section
+ #
+-
++ifeq ($(CONFIG_RAETH_ROUTER),y)
++obj-$(CONFIG_RT2880_GMAC) += mii.o
++endif
+ obj-$(CONFIG_MII) += mii.o
+ obj-$(CONFIG_PHYLIB) += phy/
+ 
+@@ -127,6 +132,10 @@
+ obj-$(CONFIG_MV643XX_ETH) += mv643xx_eth.o
+ obj-$(CONFIG_QLA3XXX) += qla3xxx.o
+ 
++obj-$(CONFIG_GALILEO_64240_ETH) += gt64240eth.o
++obj-$(CONFIG_BIG_SUR_FE) += big_sur_ge.o
++obj-$(CONFIG_TITAN_GE) += titan_mdio.o titan_ge.o
++
+ obj-$(CONFIG_PPP) += ppp_generic.o
+ obj-$(CONFIG_PPP_ASYNC) += ppp_async.o
+ obj-$(CONFIG_PPP_SYNC_TTY) += ppp_synctty.o
+--- a/drivers/net/wireless/Makefile	2008-07-14 05:51:29.000000000 +0800
++++ b/drivers/net/wireless/Makefile	2008-11-25 22:26:52.000000000 +0800
+@@ -46,6 +46,11 @@
+ obj-$(CONFIG_USB_NET_RNDIS_WLAN)	+= rndis_wlan.o
+ 
+ obj-$(CONFIG_USB_ZD1201)	+= zd1201.o
++
++obj-$(CONFIG_RT2860V2_AP)       += rt2860v2_ap/
++obj-$(CONFIG_RT2860V2_STA)      += rt2860v2_sta/
++#obj-$(CONFIG_RT2880v2_INIC_MII) += iNIC/mii/
++#obj-$(CONFIG_RT2880v2_INIC_PCI) += iNIC/pci/
+ obj-$(CONFIG_LIBERTAS)		+= libertas/
+ 
+ rtl8180-objs		:= rtl8180_dev.o rtl8180_rtl8225.o rtl8180_sa2400.o rtl8180_max2820.o rtl8180_grf5101.o
+--- old/drivers/net/wireless/Kconfig	2008-07-14 05:51:29.000000000 +0800
++++ new/drivers/net/wireless/Kconfig	2008-11-27 10:57:17.000000000 +0800
+@@ -681,5 +681,7 @@
+ source "drivers/net/wireless/b43legacy/Kconfig"
+ source "drivers/net/wireless/zd1211rw/Kconfig"
+ source "drivers/net/wireless/rt2x00/Kconfig"
++source "drivers/net/wireless/rt2860v2_ap/Kconfig"
++source "drivers/net/wireless/rt2860v2_sta/Kconfig"
+ 
+ endmenu

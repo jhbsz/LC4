@@ -1,0 +1,1049 @@
+--- bpalogin-2.0.2.orig/protocol.c
++++ bpalogin-2.0.2/protocol.c
+@@ -64,12 +64,16 @@
+ 	int err;
+ 	char credentials[16];
+ 	time_t logintime;
++	int returnvalue = 0;
+ 
+ 	int authsocket;
+ 	struct transaction t;
+ 	INT2 transactiontype;
+ 	int addrsize;
+ 
++	if (alarm(15) == -1)
++	  	s->debug(0, "alarm failed!");
++
+ 	s->localaddr.sin_port = htons(0);
+ 
+ 	authsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+@@ -77,8 +81,7 @@
+ 	if(err)
+ 	{
+ 		socketerror(s,"Error binding auth socket");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 		
+ 	err = connect(authsocket,(struct sockaddr *)&s->authhost,sizeof(struct sockaddr_in));
+@@ -86,8 +89,7 @@
+ 	if(err)
+ 	{
+ 		socketerror(s,"Cant connect to auth server");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 	addrsize = sizeof(struct sockaddr_in);
+ 	err = getsockname(authsocket,(struct sockaddr *)&s->localipaddress,&addrsize);
+@@ -104,10 +106,15 @@
+ 	send_transaction(s,authsocket,&t);
+ 
+ 	transactiontype = receive_transaction(s,authsocket,&t);
++	if(transactiontype == T_MSG_TIMEOUT)
++	{
++		socketerror(s,"TIMEOUT wating for login negotiate response");
++		goto exit;
++	}
+ 	if(transactiontype != T_MSG_PROTOCOL_NEG_RESP)
+ 	{
+ 		s->debug(0,"T_MSG_PROTOCOL_NEG_RESP - error transaction type (%d)",transactiontype);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	extract_valueINT2(s,&t,T_PARAM_STATUS_CODE,&s->retcode);
+@@ -117,7 +124,7 @@
+ 	if(s->protocol != T_PROTOCOL_CHAL)
+ 	{
+ 		s->debug(0,"T_MSG_PROTOCOL_NEG_RESP - Unsupported protocol (%d)",s->protocol);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	switch(s->retcode)
+@@ -128,17 +135,17 @@
+ 	case T_STATUS_LOGIN_FAIL_SWVER:
+ 		{
+ 		s->debug(0,"T_MSG_PROTOCOL_NEG_RESP - Login failure: software version");
+-		return 0;
++		goto exit;
+ 		}
+ 	case T_STATUS_LOGIN_FAIL_INV_PROT:
+ 		{
+ 		s->debug(0,"T_MSG_PROTOCOL_NEG_RESP - Login failure: invalid protocol");
+-		return 0;
++		goto exit;
+ 		}
+ 	case T_STATUS_LOGIN_UNKNOWN:
+ 		{
+ 		s->debug(0,"T_MSG_PROTOCOL_NEG_RESP - Login failure: unknown");
+-		return 0;
++		goto exit;
+ 		}
+ 	}
+ 
+@@ -149,15 +156,13 @@
+ 	if(err)
+ 	{
+ 		socketerror(s,"Error binding auth socket 2");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 	err = connect(authsocket,(struct sockaddr *)&s->authhost,sizeof(struct sockaddr_in));
+ 	if(err)
+ 	{
+ 		socketerror(s,"Error connecting auth socket 2");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	start_transaction(&t,T_MSG_LOGIN_REQ,s->sessionid);
+@@ -171,24 +176,29 @@
+ 	send_transaction(s,authsocket,&t);
+ 
+ 	transactiontype = receive_transaction(s,authsocket,&t);
++	if(transactiontype == T_MSG_TIMEOUT)
++	{
++		socketerror(s,"TIMEOUT wating for login request response");
++		goto exit;
++	}
+ 	if(transactiontype == T_MSG_LOGIN_RESP)
+ 		goto skippo;
+ 
+ 	if(transactiontype != T_MSG_AUTH_RESP)
+ 	{
+ 		s->debug(0,"T_MSG_AUTH_RESP - error transaction type (%d)",transactiontype);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	if(!extract_valueINT2(s,&t,T_PARAM_HASH_METHOD,&s->hashmethod))
+ 	{
+ 		s->debug(0,"T_MSG_AUTH_RESP - no hashmethod provided");
+-		return 0;
++		goto exit;
+ 	}
+ 	if(!extract_valuestring(s,&t,T_PARAM_NONCE,s->nonce))
+ 	{
+ 		s->debug(0,"T_MSG_AUTH_RESP - no nonce supplied");
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	if(s->hashmethod == T_AUTH_MD5_HASH)
+@@ -207,11 +217,16 @@
+ 	send_transaction(s,authsocket,&t);
+ 
+ 	transactiontype = receive_transaction(s,authsocket,&t);
++	if(transactiontype == T_MSG_TIMEOUT)
++	{
++		socketerror(s,"TIMEOUT wating for login credentials response");
++		goto exit;
++	}
+ skippo:
+ 	if(transactiontype != T_MSG_LOGIN_RESP)
+ 	{
+ 		s->debug(0,"T_MSG_LOGIN_RESP - error transaction type (%d)",transactiontype);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	extract_valueINT2(s,&t,T_PARAM_STATUS_CODE,&s->retcode);
+@@ -224,17 +239,17 @@
+ 	case T_STATUS_USERNAME_NOT_FOUND:
+ 		{
+ 		s->debug(0,"T_MSG_LOGIN_RESP - Login failure: username not known");
+-		return 0;
++		goto exit;
+ 		}
+ 	case T_STATUS_INCORRECT_PASSWORD:
+ 		{
+ 		s->debug(0,"T_MSG_LOGIN_RESP - Login failure: incorrect password");
+-		return 0;
++		goto exit;
+ 		}
+ 	case T_STATUS_ACCOUNT_DISABLED:
+ 		{
+ 		s->debug(0,"T_MSG_LOGIN_RESP - Login failure: Account disabled");
+-		return 0;
++		goto exit;
+ 		}
+ 	case T_STATUS_LOGIN_RETRY_LIMIT:
+ 	case T_STATUS_USER_DISABLED:
+@@ -243,7 +258,7 @@
+ 	case T_STATUS_LOGIN_UNKNOWN:
+ 		{
+ 		s->debug(0,"T_MSG_LOGIN_RESP - Login failure: other error");
+-		return 0;
++		goto exit;
+ 		}
+ 	}
+ 
+@@ -288,8 +303,12 @@
+ 	s->lastheartbeat = time(NULL);
+ 	s->recenthb = 0;
+ 
++	returnvalue = 1;
++exit:
++
+ 	closesocket(authsocket);
+-	return 1;
++	alarm(0);
++	return returnvalue;
+ }
+ 
+ /*
+@@ -375,26 +394,28 @@
+ 	int err;
+ 	char credentials[16];
+ 	time_t logintime;
++	int returnvalue = 0;
+ 
+ 	int authsocket;
+ 	struct transaction t;
+ 	INT2 transactiontype;
+ 
++	if (alarm(15) == -1)
++	  	s->debug(0, "alarm failed!");
++
+ 	s->localaddr.sin_port = htons(0);
+ 	authsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+ 	err = bind(authsocket,(struct sockaddr *)&s->localaddr,sizeof(struct sockaddr_in));
+ 	if(err)
+ 	{
+ 		socketerror(s,"Error binding logout auth socket");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 	err = connect(authsocket,(struct sockaddr *)&s->authhost,sizeof(struct sockaddr_in));
+ 	if(err)
+ 	{
+ 		socketerror(s,"Error connecting logout auth socket");
+-		closesocket(authsocket);
+-		return 0;
++		goto exit;
+ 	}
+ 
+ 	/*
+@@ -410,6 +431,11 @@
+ 	send_transaction(s,authsocket,&t);
+ 
+ 	transactiontype = receive_transaction(s,authsocket,&t);
++	if(transactiontype == T_MSG_TIMEOUT)
++	{
++		socketerror(s,"TIMEOUT wating for logout response");
++		goto exit;
++	}
+ 	if(transactiontype != T_MSG_AUTH_RESP)
+ 	{
+ 		s->critical("logic error");
+@@ -440,6 +466,11 @@
+ 	send_transaction(s,authsocket,&t);
+ 
+ 	transactiontype = receive_transaction(s,authsocket,&t);
++	if(transactiontype == T_MSG_TIMEOUT)
++	{
++		socketerror(s,"TIMEOUT wating for logout credentials response");
++		goto exit;
++	}
+ 	if(transactiontype != T_MSG_LOGOUT_RESP)
+ 	{
+ 		s->critical("logic error");
+@@ -473,8 +504,11 @@
+ 	logintime = time(NULL);
+ 
+ 	s->debug(0,"Logged out successful at %s",asctime(localtime(&logintime)));
+-	
++
++	returnvalue = 1;
++
++exit:
+ 	closesocket(authsocket);
+-	
+-	return 1;
++	alarm(0);
++	return returnvalue;
+ }
+--- bpalogin-2.0.2.orig/transaction.c
++++ bpalogin-2.0.2/transaction.c
+@@ -149,7 +149,13 @@
+ {
+ 	INT2 * v;
+ 	int r = recv(socket,(char *)t,1500,0);
++	extern int errno;
+ 
++	if (r == -1 && errno == 4)		/* EINTR */
++	{
++	  	t->length = 0;
++		return T_MSG_TIMEOUT;
++	}
+ 	t->length = r;
+ 	dump_recv_transaction(s,t);
+ 
+--- bpalogin-2.0.2.orig/bpalogin-configure.8
++++ bpalogin-2.0.2/bpalogin-configure.8
+@@ -0,0 +1,48 @@
++.\"                                      Hey, EMACS: -*- nroff -*-
++.\" First parameter, NAME, should be all caps
++.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
++.\" other parameters are allowed: see man(7), man(1)
++.TH BPALOGIN-CONFIGURE 8 "December 23, 2003"
++.\" Please adjust this date whenever revising the manpage.
++.\"
++.\" Some roff macros, for reference:
++.\" .nh        disable hyphenation
++.\" .hy        enable hyphenation
++.\" .ad l      left justify
++.\" .ad b      justify to both left and right margins
++.\" .nf        disable filling
++.\" .fi        enable filling
++.\" .br        insert line break
++.\" .sp <n>    insert n+1 empty lines
++.\" for manpage-specific macros, see man(7)
++.SH NAME
++bpalogin-configure \- configuration script for bpalogin.
++.SH SYNOPSIS
++.B bpalogin-configure
++[\fICONFFILE\fR]
++.SH DESCRIPTION
++This manual page documents briefly the
++.B bpalogin-configure
++command.
++It was written for the Debian GNU/Linux distribution because the original
++program does not have a manual page.
++.PP
++\fBbpalogin-configure\fP interactively prompts for settings (username, password,
++etc.) and updates CONFFILE (usually /etc/bpalogin.conf) accordingly.
++
++CONFFILE contains the password and should therefore not be world readable.
++
++\fBbpalogin\fP is an open source login client for the Telstra Bigpond Cable
++Network in Australia. It is neither written nor supported by Telstra or
++Bigpond. It is both simple to use and stable. Unlike the standard client it
++does not crash, reconnects when there is a network problem, is available for
++most operating systems, can run as a service on WinNT/2k/xp and comes with source.
++
++.SH AUTHOR
++Shane Hyde (shyde@trontech.com.au)
++
++Now maintained by William Rose <wdrose@sourceforge.net>
++
++This manual page was written by Sam Johnston <samj@aos.net.au>,
++for the Debian GNU/Linux system (but may be used by others)
++
+--- bpalogin-2.0.2.orig/debian/postinst
++++ bpalogin-2.0.2/debian/postinst
+@@ -0,0 +1,53 @@
++#! /bin/sh
++# postinst script for bpalogin
++#
++# see: dh_installdeb(1)
++
++set -e
++
++# summary of how this script can be called:
++#        * <postinst> `configure' <most-recently-configured-version>
++#        * <old-postinst> `abort-upgrade' <new version>
++#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
++#          <new-version>
++#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
++#          <failed-install-package> <version> `removing'
++#          <conflicting-package> <version>
++# for details, see http://www.debian.org/doc/debian-policy/ or
++# the debian-policy package
++#
++# quoting from the policy:
++#     Any necessary prompting should almost always be confined to the
++#     post-installation script, and should be protected with a conditional
++#     so that unnecessary prompting doesn't happen if a package's
++#     installation fails and the `postinst' is called with `abort-upgrade',
++#     `abort-remove' or `abort-deconfigure'.
++
++case "$1" in
++    configure)
++    	 /etc/init.d/bpalogin restart || exit 0
++
++	# Remove shutdown and reboot links; this init script does not need them.
++	if dpkg --compare-versions "$2" lt "2.0.2-9ubuntu1"; then
++		rm -f /etc/rc0.d/K20bpalogin /etc/rc6.d/K20bpalogin
++	fi
++    ;;
++
++    abort-upgrade|abort-remove|abort-deconfigure)
++
++    ;;
++
++    *)
++        echo "postinst called with unknown argument \`$1'" >&2
++        exit 1
++    ;;
++esac
++
++# dh_installdeb will replace this with shell code automatically
++# generated by other debhelper scripts.
++
++#DEBHELPER#
++
++exit 0
++
++
+--- bpalogin-2.0.2.orig/debian/manpages
++++ bpalogin-2.0.2/debian/manpages
+@@ -0,0 +1,2 @@
++bpalogin.8
++bpalogin-configure.8
+--- bpalogin-2.0.2.orig/debian/changelog
++++ bpalogin-2.0.2/debian/changelog
+@@ -0,0 +1,189 @@
++bpalogin (2.0.2-12) unstable; urgency=low
++
++  * NMU acknowledgement. Closes: #469624 
++  * Removed dependency on sysv-rc. Closes: #431478
++  * Build-Depends on autotools-dev
++  * Fixed the following lintian messages:
++    - bpalogin source: debian-rules-ignores-make-clean-error line 62
++    - bpalogin source: out-of-date-standards-version 3.7.2 (current is 3.7.3)
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Sun, 06 Apr 2008 07:40:43 +1000
++
++bpalogin (2.0.2-11.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * Added LSB formatted dependency info in init.d script (closes: #469624)
++  * Moved Homepage to control field
++
++ -- Peter Eisentraut <petere@debian.org>  Fri, 04 Apr 2008 11:20:28 +0200
++
++bpalogin (2.0.2-11) unstable; urgency=low
++
++  * Fixed "bpalogin hangs when it gets no response from telstra".
++    Patch by Russell Stuart <russell-debian@stuart.id.au>
++    Closes: #428537.
++  * Changed recomends to:
++    Recommends: dhcp-client | dhcp3-client
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Tue, 12 Jun 2007 22:20:43 +1000
++
++bpalogin (2.0.2-10) unstable; urgency=low
++
++  * Synchronise with Ubuntu.
++  * Fixed bashisms in bpalogin-configure. Closes: #418242.
++    Patch by Ted Percival <ted@midg3t.net>
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Sat, 12 May 2007 21:25:35 +1000
++
++bpalogin (2.0.2-9ubuntu1) edgy; urgency=low
++
++  * Remove stop script symlinks from rc0 and rc6.
++
++ -- Scott James Remnant <scott@ubuntu.com>  Fri, 15 Sep 2006 16:56:59 +0100
++
++bpalogin (2.0.2-9) unstable; urgency=low
++
++  * Synchronise with Ubuntu.
++    - debian/init.d: Prettified initscript
++    - debian/control: versioned depened on lsb-base
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Mon, 10 Jul 2006 15:40:51 +1000
++
++bpalogin (2.0.2-8) unstable; urgency=low
++
++  * Set Standards-Version to 3.7.2.
++  * Set debian/compat to 5.
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Thu, 22 Jun 2006 18:22:20 +1000
++
++bpalogin (2.0.2-7) unstable; urgency=low
++
++  * Added watch file.
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Sat, 26 Nov 2005 16:01:44 +1100
++
++bpalogin (2.0.2-6ubuntu1) dapper; urgency=low
++
++  * Resynchronise with Debian.
++
++ -- Scott James Remnant <scott@ubuntu.com>  Tue, 08 Nov 2005 04:49:46 +0000
++
++bpalogin (2.0.2-6) unstable; urgency=low
++
++  * Fixed "bpalogin depends on debconf without | debconf-2.0
++    alternate", closes: #331767.
++  * Fixed "unnecessary dependency on debconf", closes: #328179.
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Sat, 08 Oct 2005 15:33:47 +1000
++
++bpalogin (2.0.2-5) unstable; urgency=high
++
++  * Fixed "bpalogin must not be stopped during upgrade",
++    closes: #316466.
++  * Set standards-version to 3.6.2.
++  * Fixed FSF postal address in debian/copyright.
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Wed, 14 Sep 2005 08:03:06 +1000
++
++bpalogin (2.0.2-4ubuntu1) breezy; urgency=low
++
++  * Resynchronise with Debian.
++
++ -- Jeff Bailey <jbailey@ubuntu.com>  Wed, 20 Apr 2005 11:49:35 -0400
++
++bpalogin (2.0.2-4) unstable; urgency=low
++
++  * New maintainer's email address.
++
++ -- Anibal Monsalve Salazar <anibal@debian.org>  Sun, 06 Feb 2005 22:52:57 +1100
++
++bpalogin (2.0.2-3ubuntu1) hoary; urgency=low
++
++  * Resynchronise with Debian.
++
++ -- LaMont Jones <lamont@canonical.com>  Fri, 29 Oct 2004 20:41:27 -0600
++
++bpalogin (2.0.2-3) unstable; urgency=low
++
++  * New maintainer.
++  * Changed standard policy version to 3.6.1.1. Closes: #267554.
++  * lintian: bpalogin should not trigger debconf-is-not-a-registry.
++    Already fixed. Closes: #188292.
++  * Fixed debian/copyright.
++
++ -- Anibal Monsalve Salazar <A.Monsalve.Salazar@IEEE.org>  Wed, 25 Aug 2004 21:44:15 +1000
++
++bpalogin (2.0.2-2ubuntu1) warty; urgency=low
++
++  * debian/init.d: Prettified initscript
++  * debian/control: versioned depened on lsb-base
++
++ -- Nathaniel McCallum <npmccallum@canonical.com>  Fri, 10 Sep 2004 12:34:06 -0400
++
++bpalogin (2.0.2-2) unstable; urgency=low
++
++  * Restarts bpalogin service on installation. Closes: #231388. 
++
++ -- Sam Johnston <samj@aos.net.au>  Fri,  6 Feb 2004 20:49:25 +1100
++
++bpalogin (2.0.2-1) unstable; urgency=low
++
++  * New upstream release. Closes: #224895.
++  * Uses upstream configure script rather than debconf. Closes: #205798,
++    #206739.
++ 
++ -- Sam Johnston <samj@aos.net.au>  Tue, 23 Dec 2003 16:13:46 +1100
++
++bpalogin (2.0-5) unstable; urgency=low
++
++  * Updates standards version to 3.5.9.0.
++  * Resoves lintian errors (symlink-should-be-relative, duplicate-conffile)
++    and warnings (copyright-lists-upstream-authors-with-dh_make-boilerplate,
++    postinst-does-not-load-confmodule)
++  * Lintian warning debconf-is-not-a-registry to be resolved by override in
++    lintian itself.
++  * Updates maintainer email address.
++
++ -- Sam Johnston <samj@aos.net.au>  Wed,  9 Apr 2003 15:04:19 +1000
++
++bpalogin (2.0-4) unstable; urgency=low
++
++  * Resolved incorrect use of errno without #including errno.h which was
++    causing build problems on hurd.
++    Closes #106918
++  * Added German translation to debconf template. Thanks Sebastian Feltel.
++    Closes #114829
++  * Added Spanish translation to debconf template. Thanks Carlos Valdivia.
++    Closes #114829
++  * Resolved overwriting of existing conffile issue.
++    Closes #119398
++  * Separated out configuration script to
++    /usr/share/bpalogin/bpalogin-configure as suggested by policy
++
++ -- Sam Johnston <samj@debian.org>  Thu, 15 Nov 2001 19:36:55 +1100
++
++bpalogin (2.0-3) unstable; urgency=low
++
++  * Rectified orig.tar.gz md5 mismatch due to .orig extension
++
++ -- Sam Johnston <samj@debian.org>  Mon,  1 Oct 2001 00:49:39 +1000
++
++bpalogin (2.0-2) unstable; urgency=low
++
++  * Incremented version number to replace existing package,
++    which I am adopting. Kudos to Robert Graham Merkel
++    (rgmerk@mira.net) for the original package.
++
++ -- Sam Johnston <samj@debian.org>  Mon, 17 Sep 2001 12:53:22 +1000
++
++bpalogin (2.0-1) unstable; urgency=low
++
++  * Initial Release.
++  * Added man page
++  * Set up autogeneration of conf file using example and debconf
++
++ -- Sam Johnston <samj@debian.org>  Thu, 13 Sep 2001 00:17:06 +1000
++
++Local variables:
++mode: debian-changelog
++End:
+--- bpalogin-2.0.2.orig/debian/copyright
++++ bpalogin-2.0.2/debian/copyright
+@@ -0,0 +1,71 @@
++This package is currently maintained by
++Anibal Monsalve Salazar <anibal@debian.org>
++ 
++It was created by Sam Johnston <samj@aos.net.au> on
++Tue, 23 Dec 2003 16:28:25 +1100.
++
++It was downloaded from http://bpalogin.sourceforge.net/
++
++Upstream Author: William Rose <wdrose@sourceforge.net>
++
++Copyright (c) 2001-3 Shane Hyde, and others
++Copyright 2003 William Rose <wdrose@sourceforge.net>
++Copyright 1991 by the Massachusetts Institute of Technology
++Copyright (C) 1991-2, RSA Data Security, Inc.
++
++Copyright:
++
++  This package is free software; you can redistribute it and/or modify
++  it under the terms of the GNU General Public License as published by
++  the Free Software Foundation; version 2 dated June, 1991.
++
++  This package is distributed in the hope that it will be useful,
++  but WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++  GNU General Public License for more details.
++
++  You should have received a copy of the GNU General Public License
++  along with this package; if not, write to the Free Software
++  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301,
++  USA.
++
++On Debian systems, the complete text of the GNU General
++Public License can be found in `/usr/share/common-licenses/GPL'.
++
++Copyright notice in install-sh:
++
++  This comes from X11R5 (mit/util/scripts/install.sh).
++
++  Copyright 1991 by the Massachusetts Institute of Technology
++
++  Permission to use, copy, modify, distribute, and sell this software and its
++  documentation for any purpose is hereby granted without fee, provided that
++  the above copyright notice appear in all copies and that both that
++  copyright notice and this permission notice appear in supporting
++  documentation, and that the name of M.I.T. not be used in advertising or
++  publicity pertaining to distribution of the software without specific,
++  written prior permission.  M.I.T. makes no representations about the
++  suitability of this software for any purpose.  It is provided "as is"
++  without express or implied warranty.
++
++Copyright notice in gen_md5.c:
++
++  Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All rights
++  reserved.
++
++  License to copy and use this software is granted provided that it is
++  identified as the "RSA Data Security, Inc. MD5 Message-Digest Algorithm"
++  in all material mentioning or referencing this software or this function.
++
++  License is also granted to make and use derivative works provided that such
++  works are identified as "derived from the RSA Data Security, Inc. MD5
++  Message-Digest Algorithm" in all material mentioning or referencing the
++  derived work.
++
++  RSA Data Security, Inc. makes no representations concerning either the
++  merchantability of this software or the suitability of this software for
++  any particular purpose. It is provided "as is" without express or implied
++  warranty of any kind.
++
++  These notices must be retained in any copies of any part of this
++  documentation and/or software.
+--- bpalogin-2.0.2.orig/debian/README.Debian
++++ bpalogin-2.0.2/debian/README.Debian
+@@ -0,0 +1,6 @@
++bpalogin for Debian
++-------------------
++
++Configure bpalogin.conf using /usr/sbin/bpalogin-configure
++
++ -- Sam Johnston <samj@aos.net.au>, Tue, 23 Dec 2003 16:28:25 +1100
+--- bpalogin-2.0.2.orig/debian/rules
++++ bpalogin-2.0.2/debian/rules
+@@ -0,0 +1,77 @@
++#!/usr/bin/make -f
++# Sample debian/rules that uses debhelper.
++# GNU copyright 1997 to 1999 by Joey Hess.
++# Copyright (C) 2004-2008 Anibal Monsalve Salazar <anibal@debian.org>.
++
++# Uncomment this to turn on verbose mode.
++export DH_VERBOSE=1
++
++# These are used for cross-compiling and for saving the configure script
++# from having to guess our platform (since we know it already)
++DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
++DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
++
++CFLAGS = -Wall -g
++
++ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
++	CFLAGS += -O0
++else
++	CFLAGS += -O2
++endif
++ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
++	INSTALL_PROGRAM += -s
++endif
++
++config.status: configure
++	dh_testdir
++	cp /usr/share/misc/config.sub /usr/share/misc/config.guess .
++	# Add here commands to configure the package.
++	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
++
++build: build-stamp
++
++build-stamp:  config.status
++	dh_testdir
++	$(MAKE)
++	touch build-stamp
++
++clean:
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp 
++	rm -f config.sub config.guess
++	[ ! -f Makefile ] || $(MAKE) distclean
++	dh_clean
++
++install: build
++	dh_testdir
++	dh_testroot
++	dh_clean -k
++	dh_installdirs
++	$(MAKE) install DESTDIR=$(CURDIR)/debian/bpalogin
++
++# Build architecture-independent files here.
++binary-indep: build install
++# We have nothing to do by default.
++
++# Build architecture-dependent files here.
++binary-arch: build install
++	dh_testdir
++	dh_testroot
++	dh_installchangelogs 
++	dh_installdocs
++	dh_installexamples
++	dh_installinit --no-restart-on-upgrade -- multiuser
++	dh_installman
++	dh_link
++	dh_strip
++	dh_compress
++	dh_fixperms
++	dh_installdeb
++	dh_shlibdeps
++	dh_gencontrol
++	dh_md5sums
++	dh_builddeb
++
++binary: binary-indep binary-arch
++.PHONY: build clean binary-indep binary-arch binary install 
+--- bpalogin-2.0.2.orig/debian/watch
++++ bpalogin-2.0.2/debian/watch
+@@ -0,0 +1,2 @@
++version=3
++http://bpalogin.sourceforge.net/download/bpalogin-([\d\.]+).tar.gz debian uupdate
+--- bpalogin-2.0.2.orig/debian/init.d
++++ bpalogin-2.0.2/debian/init.d
+@@ -0,0 +1,69 @@
++#! /bin/sh
++### BEGIN INIT INFO
++# Provides:          bpalogin
++# Required-Start:    $remote_fs $syslog
++# Required-Stop:     $remote_fs $syslog
++# Default-Start:     2 3 4 5
++# Default-Stop:      0 1 6
++# Short-Description: BPAlogin daemon start/stop script
++### END INIT INFO
++#
++# by Sam Johnston <samj@debian.org>
++#
++
++PATH=/sbin:/bin:/usr/sbin:/usr/bin
++DAEMON=/usr/sbin/bpalogin
++DAEMONCONF=/etc/bpalogin.conf
++NAME=bpalogin
++DESC=bpalogin
++
++. /lib/lsb/init-functions
++
++test -x $DAEMON || exit 0
++test -f $DAEMONCONF || exit 0
++
++set -e
++
++case "$1" in
++  start)
++	log_begin_msg "Starting $DESC..."
++	# bpalogin does not create a pidfile
++	# start-stop-daemon creates the relevant pidfile (--make-pidfile)
++	# and backgrounds itself (--background). bpalogin is instructed
++	# not to fork (-D).
++	if start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
++		--exec $DAEMON --make-pidfile --background -- -D -c $DAEMONCONF; then
++		log_end_msg 0
++	else
++		log_end_msg 1
++	fi
++	;;
++  stop)
++	log_begin_msg "Stopping $DESC..."
++	if start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
++		--exec $DAEMON; then
++		log_end_msg 0
++	else
++		log_end_msg 1
++	fi
++	;;
++  restart|force-reload)
++	log_begin_msg "Restarting $DESC..."
++	start-stop-daemon --stop --quiet --pidfile \
++		/var/run/$NAME.pid --exec $DAEMON
++	sleep 1
++	if start-stop-daemon --start --quiet --pidfile \
++		/var/run/$NAME.pid --exec $DAEMON; then
++		log_end_msg 0
++	else
++		log_end_msg 1
++	fi
++	;;
++  *)
++	N=/etc/init.d/$NAME
++	log_success_msg "Usage: $N {start|stop|restart|force-reload}"
++	exit 1
++	;;
++esac
++
++exit 0
+--- bpalogin-2.0.2.orig/debian/compat
++++ bpalogin-2.0.2/debian/compat
+@@ -0,0 +1 @@
++5
+--- bpalogin-2.0.2.orig/debian/docs
++++ bpalogin-2.0.2/debian/docs
+@@ -0,0 +1 @@
++README
+--- bpalogin-2.0.2.orig/debian/control
++++ bpalogin-2.0.2/debian/control
+@@ -0,0 +1,18 @@
++Source: bpalogin
++Section: net
++Priority: extra
++Maintainer: Anibal Monsalve Salazar <anibal@debian.org>
++Build-Depends: debhelper (>= 5), autotools-dev
++Standards-Version: 3.7.3
++Homepage: http://bpalogin.sourceforge.net/
++
++Package: bpalogin
++Architecture: any
++Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 1.3-9ubuntu3)
++Recommends: dhcp-client | dhcp3-client
++Description: login client for the Telstra Bigpond Cable Network (Australia)
++ bpalogin is an open source login client for the Telstra Bigpond Cable
++ Network in Australia. It is neither written nor supported by Telstra or
++ Bigpond. It is both simple to use and stable. Unlike the standard client it
++ does not crash, reconnects when there is a network problem, is available for
++ most operating systems, can run as a service on WinNT/2k and comes with source
+--- bpalogin-2.0.2.orig/bpalogin.8
++++ bpalogin-2.0.2/bpalogin.8
+@@ -0,0 +1,51 @@
++.\"                                      Hey, EMACS: -*- nroff -*-
++.\" First parameter, NAME, should be all caps
++.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
++.\" other parameters are allowed: see man(7), man(1)
++.TH BPALOGIN 8 "June 29, 2001"
++.\" Please adjust this date whenever revising the manpage.
++.\"
++.\" Some roff macros, for reference:
++.\" .nh        disable hyphenation
++.\" .hy        enable hyphenation
++.\" .ad l      left justify
++.\" .ad b      justify to both left and right margins
++.\" .nf        disable filling
++.\" .fi        enable filling
++.\" .br        insert line break
++.\" .sp <n>    insert n+1 empty lines
++.\" for manpage-specific macros, see man(7)
++.SH NAME
++bpalogin \- login client for the Telstra Bigpond Cable Network (Australia)
++.SH SYNOPSIS
++.B bpalogin
++.RI -c " conffile " -D
++.SH DESCRIPTION
++This manual page documents briefly the
++.B bpalogin
++command.
++It was written for the Debian GNU/Linux distribution because the original
++program does not have a manual page.
++.PP
++\fBbpalogin\fP is an open source login client for the Telstra Bigpond Cable
++Network in Australia. It is neither written nor supported by Telstra or
++Bigpond. It is both simple to use and stable. Unlike the standard client it
++does not crash, reconnects when there is a network problem, is available for
++most operating systems, can run as a service on WinNT/2k/xp and comes with source.
++.SH OPTIONS
++A summary of options is included below
++.TP
++.B \-c conffile
++Specifies the location of the configuration file (usually /etc/bpalogin.conf).
++This file contains the password and should therefore not be world readable.
++.TP
++.B \-D
++Do not fork.
++.SH AUTHOR
++Shane Hyde (shyde@trontech.com.au)
++
++Now maintained by William Rose <wdrose@sourceforge.net>
++
++This manual page was written by Sam Johnston <samj@aos.net.au>,
++for the Debian GNU/Linux system (but may be used by others)
++
+--- bpalogin-2.0.2.orig/Makefile.in
++++ bpalogin-2.0.2/Makefile.in
+@@ -42,30 +42,9 @@
+ $(OBJS): bpalogin.h
+ 
+ install: bpalogin bpalogin.init bpalogin.bsd
+-	case `uname -s` in \
+-	  Linux*) \
+-	    mkdir -p $(RPM_BUILD_ROOT)$(ETCPATH)/rc.d/init.d ; \
+-	    $(INSTALL) -m 755 bpalogin.init \
+-	               $(RPM_BUILD_ROOT)$(ETCPATH)/rc.d/init.d/bpalogin ; \
+-	    \
+-	    if [ -z "$(RPM_BUILD_ROOT)" -a -x "$(CHKCONFIG)" ]; then \
+-	      $(CHKCONFIG) --add bpalogin ; \
+-	    fi ; \
+-	    ;; \
+-	  \
+-	  FreeBSD*) \
+-	    mkdir -p $(ETCPATH)/rc.d ; \
+-	    $(INSTALL) -m 755 bpalogin.bsd $(ETCPATH)/rc.d/bpalogin.sh ; \
+-	    ;; \
+-	    \
+-	  *) \
+-	    echo "###" ; \
+-	    echo "# You will need to add BPALogin to your startup scripts." ; \
+-	    echo "###" ; \
+-	    ;; \
+-	esac ; \
+-	
+-	mkdir -p $(RPM_BUILD_ROOT)$(SBINPATH)
+-	mkdir -p $(RPM_BUILD_ROOT)$(ETCPATH)
+-	$(INSTALL) -m 755 bpalogin $(RPM_BUILD_ROOT)$(SBINPATH)
+-	$(INSTALL) -m 600 bpalogin.conf $(RPM_BUILD_ROOT)$(ETCPATH)
++	mkdir -p $(DESTDIR)$(SBINPATH)
++	mkdir -p $(DESTDIR)$(ETCPATH)
++	$(INSTALL) -m 755 bpalogin $(DESTDIR)$(SBINPATH)
++	$(INSTALL) -m 755 bpalogin.conf.sh $(DESTDIR)$(SBINPATH)/bpalogin-configure
++	$(INSTALL) -m 600 bpalogin.conf $(DESTDIR)$(ETCPATH)
++
+--- bpalogin-2.0.2.orig/bpalogin.conf.sh
++++ bpalogin-2.0.2/bpalogin.conf.sh
+@@ -23,7 +23,7 @@
+ fi
+ 
+ eval `cat "$CONFIG_FILE" | \
+-(while read
++(while read REPLY
+   do
+     case "$REPLY" in
+       '# '*)
+@@ -85,7 +85,7 @@
+   for var in $variables
+   do
+     echo -n "Enter $var [`eval 'echo $'$var`]: "
+-    if read && [ -n "$REPLY" ]
++    if read REPLY && [ -n "$REPLY" ]
+     then
+       eval "$var=\"$REPLY\""
+     fi
+@@ -99,7 +99,7 @@
+ then
+   echo
+   echo -n "Would you like to configure additional options? (y/n): "
+-  read
++  read REPLY
+   case "$REPLY" in
+     [Yy]*)
+       cat <<EOF
+@@ -120,7 +120,7 @@
+       for var in $disabled
+       do
+ 	echo -n "Enter $var [`eval 'echo $'$var`]: "
+-	if read
++	if read REPLY
+ 	then
+ 	  if [ -n "$REPLY" ]
+ 	  then
+@@ -146,7 +146,7 @@
+ ##
+ # Create the new bpalogin.conf file
+ cat "$CONFIG_FILE" | \
+-(while read;
++(while read REPLY;
+   do
+     case "$REPLY" in
+       '# '*)
+@@ -193,7 +193,7 @@
+ echo
+ echo "New configuration successfully saved in $NEW_CONFIG"
+ echo -n "Overwrite $CONFIG_FILE with this file? (y/n) "
+-read
++read REPLY
+ 
+ case "$REPLY" in
+   [Yy]*)
+--- bpalogin-2.0.2.orig/bpalogin.h.in
++++ bpalogin-2.0.2/bpalogin.h.in
+@@ -131,6 +131,8 @@
+ #define T_MSG_RESTART_RESP 14
+ #define T_MSG_MAX 14
+ 
++#define T_MSG_TIMEOUT 9999
++
+ /*
+ ** message parameter codes
+ */
+--- bpalogin-2.0.2.orig/unixmain.c
++++ bpalogin-2.0.2/unixmain.c
+@@ -129,15 +129,25 @@
+     exit(1);
+ }
+ 
++void alarmsignal(int i)
++{
++    debug(1,"Alarm Signal\n");
++}
++
+ int main(int argc,char* argv[])
+ {
+     int makedaemon = 1;
+     char conffile[256];
+-
++    struct sigaction act;
+     int c;
+ 
+     signal(SIGINT,onsignal);
+     signal(SIGHUP,onsignal);
++    sigaction(SIGALRM,0,&act);
++    act.sa_handler = alarmsignal;
++    act.sa_flags = 0;
++    sigemptyset(&act.sa_mask);
++    sigaction(SIGALRM,&act,0);
+     signal(SIGTERM,onsignal);
+ 
+     strcpy(s.authserver,DEFAULT_AUTHSERVER);

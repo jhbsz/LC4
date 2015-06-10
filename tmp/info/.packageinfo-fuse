@@ -1,0 +1,35 @@
+Source-Makefile: package/fuse/Makefile
+Package: libfuse
+Submenu: disc
+Version: 2.9.3-1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: FUSE (library)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  FUSE (Filesystem in UserSpacE)
+ This package contains the FUSE shared library, needed by other programs.
+
+http://fuse.sourceforge.net/
+@@
+Package: kmod-fuse
+Submenu: Filesystems
+Version: <LINUX_VERSION>+2.9.3--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: FUSE (kernel module)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Kernel-Config: CONFIG_FUSE_FS
+Description:  FUSE (Filesystem in UserSpacE)
+ This package contains the FUSE kernel module.
+
+http://fuse.sourceforge.net/
+@@
+

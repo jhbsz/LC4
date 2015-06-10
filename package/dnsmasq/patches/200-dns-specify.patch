@@ -1,0 +1,34 @@
+--- a/src/rfc2131.c	2011-04-24 21:41:30.089167799 +0800
++++ b/src/rfc2131.c	2011-04-24 21:51:18.218924190 +0800
+@@ -2286,9 +2286,29 @@
+ 	  !option_find2(netid, config_opts, OPTION_ROUTER))
+ 	option_put(mess, end, OPTION_ROUTER, INADDRSZ, ntohl(context->router.s_addr));
+       
++   /* EZPacket */
++   /* 4 approaches to provide DNS server
++    * 1. dnsrelay
++    * 2. ispdns
++    * 3. opendns
++    * 4. custom
++    * Case 1, 3, and 4 will assign --dhcp-option, so that !option_find2() below
++    * will prevent it from getting the WAN's DNSs IP address.
++    */
+       if (in_list(req_options, OPTION_DNSSERVER) &&
+-	  !option_find2(netid, config_opts, OPTION_DNSSERVER))
+-	option_put(mess, end, OPTION_DNSSERVER, INADDRSZ, ntohl(context->local.s_addr));
++              !option_find2(netid, config_opts, OPTION_DNSSERVER)) {
++          option_put(mess, end, OPTION_DNSSERVER, INADDRSZ, ntohl(context->local.s_addr));
++          char tmp[256];
++          /* Case 2: WAN's DNSs */
++          struct server *ns = daemon->servers;
++          while (ns) {
++              if (ntohl(ns->addr.in.sin_addr.s_addr) != 0) {
++                  option_put(mess, end, OPTION_DNSSERVER, INADDRSZ,
++                          ntohl(ns->addr.in.sin_addr.s_addr));
++              }
++              ns = ns->next;
++          }
++      }
+     }
+ 
+   if (domain && in_list(req_options, OPTION_DOMAINNAME) && 

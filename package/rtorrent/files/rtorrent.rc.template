@@ -1,0 +1,26 @@
+min_peers = |MIN-PEERS|
+max_peers = |MAX-PEERS|
+max_uploads = |MAX-UPLOAD|
+download_rate = |DOWNLOAD-RATE|
+upload_rate = |UPLOAD-RATE|
+directory = /tmp/|MNT-POINT|/|DIRECTORY|/
+session = /tmp/|MNT-POINT|/|SESSION|/
+schedule = watch_directory,5,5,"load_start=/tmp/|MNT-POINT|/|LOAD-START|/*.torrent,d.set_custom2=1"
+schedule = low_diskspace,5,60,close_low_diskspace=50M
+system.method.set_key = event.download.finished,set_done_var,"d.set_custom2="
+system.method.set_key = event.download.erased,rm_files,"branch=d.get_custom2=,\"execute={rm,-rf,--,$d.get_base_path=}\""
+port_range = |PORT-RANGE|
+encoding_list = UTF-8
+dht = auto
+dht_port = |DHT-PORT|
+check_hash = |CHECK-HASH|
+# set rtorrent to move download complete file
+system.method.set_key = event.download.finished,move_complete,"execute=mv,-f,$d.get_base_path=,/tmp/|MNT-POINT|/download/;d.set_directory=/tmp/|MNT-POINT|/download/"
+#tos = default|lowdelay|throughput|reliability|mincost
+tos = throughput
+use_udp_trackers = yes
+peer_exchange = yes
+hash_interval = 100
+hash_read_ahead = 2
+execute_log = /var/log/rtorrent.log
+scgi_port = 127.0.0.1:5000

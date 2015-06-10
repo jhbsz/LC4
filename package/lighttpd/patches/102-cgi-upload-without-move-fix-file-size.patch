@@ -1,0 +1,183 @@
+--- lighttpd-1.4.30/src/chunk.h	2014-05-15 09:16:22.853548182 +0800
++++ lighttpd-1.4.30/src/chunk.h	2014-05-15 09:16:05.281547895 +0800
+@@ -32,6 +32,11 @@
+ 			  - file-chunk: file.length
+ 			*/
+ 
++    /* This is to maintain a multipart data, separating
++     * "file" and "parameter content" parts. With this implementation, 
++     * we can have a way that moving attachment file instead of copy them. */
++    off_t  multipart_chunk_hdr_len;
++    off_t  multipart_chunk_dat_len;
+ 	struct chunk *next;
+ } chunk;
+ 
+--- lighttpd-1.4.30/src/chunk.c	2014-05-15 09:16:23.081548184 +0800
++++ lighttpd-1.4.30/src/chunk.c	2014-05-15 09:16:07.029547924 +0800
+@@ -173,6 +173,8 @@
+ 	c->file.start = offset;
+ 	c->file.length = len;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 
+ 	chunkqueue_append_chunk(cq, c);
+ 
+@@ -187,6 +189,8 @@
+ 	c = chunkqueue_get_unused_chunk(cq);
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	buffer_copy_string_buffer(c->mem, mem);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -200,6 +204,8 @@
+ 	c = chunkqueue_get_unused_chunk(cq);
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	if (c->mem) buffer_free(c->mem);
+ 	c->mem = mem;
+ 
+@@ -216,6 +222,8 @@
+ 	c = chunkqueue_get_unused_chunk(cq);
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	buffer_copy_string_buffer(c->mem, mem);
+ 
+ 	chunkqueue_prepend_chunk(cq, c);
+@@ -232,6 +240,8 @@
+ 	c = chunkqueue_get_unused_chunk(cq);
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	buffer_copy_string_len(c->mem, mem, len - 1);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -246,6 +256,8 @@
+ 
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	buffer_reset(c->mem);
+ 
+ 	chunkqueue_prepend_chunk(cq, c);
+@@ -260,6 +272,8 @@
+ 
+ 	c->type = MEM_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 	buffer_reset(c->mem);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -283,6 +297,8 @@
+ 
+ 	c->type = FILE_CHUNK;
+ 	c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
+ 
+ 	if (cq->tempdirs && cq->tempdirs->used) {
+ 		size_t i;
+@@ -326,6 +342,8 @@
+ 
+         c->type = FILE_CHUNK;
+         c->offset = 0;
++        c->multipart_chunk_hdr_len = 0;
++        c->multipart_chunk_dat_len = 0;
+        
+         if (cq->tempdirs && cq->tempdirs->used) {
+                 size_t i;
+--- lighttpd-1.4.30/src/connections.c	2014-05-15 09:16:23.101548185 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-05-15 09:16:09.157547957 +0800
+@@ -1106,7 +1106,9 @@
+             }
+         }
+         int chked = 0;
+-		for (c = cq->first; c && (dst_cq->bytes_in != (off_t)con->request.content_length); c = c->next) {
++        off_t chunk_dat_len = 0;
++        chunk *dst_c = NULL;
++		for (c = cq->first; c && (dst_cq->bytes_in != ((off_t)con->request.content_length - chunk_dat_len)); c = c->next) {
+ 			off_t weWant, weHave, toRead;
+ 
+ 			weWant = con->request.content_length - dst_cq->bytes_in;
+@@ -1119,7 +1122,7 @@
+ 
+ 			/* the new way, copy everything into a chunkqueue whcih might use tempfiles */
+ 			if (con->request.content_length > 64 * 1024) {
+-				chunk *dst_c = NULL;
++				dst_c = NULL;
+ 				/* copy everything to max 1Mb sized tempfiles */
+ 
+ 				/*
+@@ -1219,6 +1224,8 @@
+                     }
+ 
+                     dst_c->file.length += toReadHeader;
++                    // ---
++                    dst_c->multipart_chunk_hdr_len += toReadHeader;
+ 
+                     // Write the remain buf
+                     if (totalRead != fwrite(pch, 1, totalRead, chunked_upload_file)) {
+@@ -1237,6 +1244,7 @@
+ 
+                         break;
+                     }
++                    dst_c->multipart_chunk_dat_len += totalRead;
+ 
+                 } else if (chunked_upload_file && (isHead == 0)) {
+ 
+@@ -1279,6 +1288,7 @@
+                             fclose(chunked_upload_file);
+                             break;
+                         }
++                        dst_c->multipart_chunk_dat_len += bytes;
+ 
+                         /* Write boundary to original file */
+                         buf += len -4;
+@@ -1298,6 +1309,7 @@
+                             fclose(chunked_upload_file);
+                             break;
+                         }
++                        dst_c->multipart_chunk_hdr_len += remain_boundary;
+ 
+                         dst_c->file.length += remain_boundary;
+ 
+@@ -1316,6 +1329,7 @@
+                             close(dst_c->file.fd);
+                             dst_c->file.fd = -1;
+                         }
++                        dst_c->multipart_chunk_dat_len += bytes;
+                     }
+ 
+                 } else {
+@@ -1359,12 +1374,19 @@
+ 				buffer_append_string_len(b, c->mem->ptr + c->offset, toRead);
+ 			}
+ 
+-			c->offset += toRead;
+-			dst_cq->bytes_in += toRead;
++            if(chunked_upload_file) {
++                if(dst_c->multipart_chunk_hdr_len > dst_cq->bytes_in) {
++                    dst_cq->bytes_in = dst_c->multipart_chunk_hdr_len;
++                }
++                chunk_dat_len = dst_c->multipart_chunk_dat_len;
++            } else {
++                dst_cq->bytes_in += toRead;
++            }
++            c->offset += toRead;
+ 		}
+ 
+ 		/* Content is ready */
+-		if (dst_cq->bytes_in == (off_t)con->request.content_length) {
++		if (dst_cq->bytes_in == ((off_t)con->request.content_length - chunk_dat_len)) {
+ 			connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+ 		}
+ 

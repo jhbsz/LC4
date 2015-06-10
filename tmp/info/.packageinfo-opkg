@@ -1,0 +1,22 @@
+Source-Makefile: package/opkg/Makefile
+Package: opkg
+Version: 4564-1
+Depends: 
+Provides: 
+Build-Depends: libtool
+Section: base
+Category: Base system
+Title: opkg package management system
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   Lightweight package management system
+  opkg is the opkg Package Management System, for handling
+  installation and removal of packages on a system. It can
+  recursively follow dependencies and download all packages
+  necessary to install a particular package.
+
+  opkg knows how to install both .ipk and .deb packages.
+
+http://wiki.openmoko.org/wiki/Opkg
+@@
+

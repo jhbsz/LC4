@@ -1,0 +1,18 @@
+--- Uboot-spi-4.1.2.0/net/net.c	2014-07-11 17:03:50.786182645 +0800
++++ Uboot-spi-4.1.2.0/net/net.c	2014-07-11 17:03:37.686182848 +0800
+@@ -176,6 +176,7 @@
+ volatile uchar *NetTxPacket = 0;	/* THE transmit packet			*/
+ 
+ static int net_check_prereq (proto_t protocol);
++static void startAgainTimeout(void);
+ 
+ /**********************************************************************/
+ 
+@@ -405,6 +406,7 @@
+ 	 *	packets and timer events.
+ 	 */
+ 
++	NetSetTimeout (10 * CFG_HZ, startAgainTimeout);
+ 	switch (protocol) {
+         case HTTP:
+             NetCopyIP(&NetOurIP, &bd->bi_ip_addr);

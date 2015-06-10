@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+START=88
+log_msg="client"
+
+start () {
+    RELAY1="$(nvram show relay_rule 0 enable)"
+    RELAY2="$(nvram show relay_rule 1 enable)"
+    [ $RELAY1 == 1 ] && {
+        /usr/bin/gpioctl dirout 32
+        /usr/bin/gpioctl set 32
+    } || { 
+        /usr/bin/gpioctl dirout 32
+        /usr/bin/gpioctl clear 32
+    }
+
+    [ $RELAY2 == 1 ] && {
+        /usr/bin/gpioctl dirout 33
+        /usr/bin/gpioctl set 33
+    } || { 
+        /usr/bin/gpioctl dirout 33 
+        /usr/bin/gpioctl clear 33
+    }
+}
+
+stop () {
+    return 1
+}
+

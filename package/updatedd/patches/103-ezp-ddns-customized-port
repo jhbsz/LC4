@@ -1,0 +1,69 @@
+--- updatedd-2.6/src/plugins/libdyndns.c	2012-02-02 17:06:27.330406263 +0800
++++ updatedd-2.6/src/plugins/libdyndns.c	2012-02-02 17:05:44.351545322 +0800
+@@ -54,6 +54,7 @@
+ 		      "                                 (dyndns [default], statdns, custom)\n"
+ 		      "   -w    --wildcard <on|off>     switch wildcard on or off\n"
+ 		      "   -p    --server <host>         customized dyndns server\n"
++		      "   -P    --port   <port>         customized dyndns server port\n"
+ 		      "         --help                  print help and exit\n"
+ 		      "         --version               display version information and exit\n\n"
+ 		      "Report bugs to <"EMAIL">.\n\n");
+@@ -100,6 +101,7 @@
+ 	struct arguments args;
+ 	int s, ret;
+ 	const char *ptr;
++    int port=0;
+ 
+ 	(void)memset(&args, 0, sizeof(struct arguments));
+ 	
+@@ -111,7 +113,13 @@
+     if (!args.server) {
+         args.server = DYNDNSHOST;
+     }
+-	s = get_connection(args.server, PORT, &ptr);
++
++    /* EZP: connect to customized port */
++    if (args.port) port=atoi(args.port);
++    if (!port) {
++        port = PORT;
++    }
++	s = get_connection(args.server, port, &ptr);
+ 	if(s == -1) {
+ 		ret_msg(HERR, "%s: %s", ptr, DYNDNSHOST);
+ 		ret = RET_WARNING;
+@@ -166,13 +174,14 @@
+ 			{ "offline",		0, 0, 'o' },
+ 			{ "system",		1, 0, 's' },
+ 			{ "server",		1, 0, 'p' },
++			{ "port",		1, 0, 'P' },
+ 			{ "wildcard",		1, 0, 'w' },
+ 			{ "with-backmx",	0, 0, 'b' },
+ 			{ "version",		0, 0, 'v' },
+ 			{ NULL,			0, 0, 0   }
+ 		};
+                 
+-		c = getopt_long(argc, argv, "4:bm:os:w:p:",
++		c = getopt_long(argc, argv, "4:bm:os:w:p:P:",
+ 				long_options, &option_index);
+                 
+ 		if(c == -1) break;
+@@ -196,6 +205,9 @@
+ 		case 'p':
+ 			args->server = optarg;
+ 			break;
++		case 'P':
++			args->port = optarg;
++			break;
+ 		case 's':
+ 			stolower(optarg, buf, BUFSIZE);
+ 			for(n = 0;; n++) {
+--- updatedd-2.6/src/plugins/libdyndns.h	2012-02-02 17:06:27.320407050 +0800
++++ updatedd-2.6/src/plugins/libdyndns.h	2012-02-02 17:05:44.351545322 +0800
+@@ -44,6 +44,7 @@
+ 	char *login;
+ 	const char *wildcard;
+ 	char *server;
++    char *port;
+ };
+ 
+ static struct yesno {

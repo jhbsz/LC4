@@ -1,0 +1,255 @@
+--- linux-2.6.36/drivers/char/i2c_drv.h	2013-10-09 13:48:37.000000000 +0800
++++ linux-2.6.36/drivers/char/i2c_drv.h	2014-01-22 22:37:41.326992412 +0800
+@@ -43,6 +43,18 @@
+ #define RT2880_I2C_READ			3
+ #define RT2880_I2C_WRITE		5
+ #define RT2880_I2C_SET_ADDR		7
++#define RT2880_I2C_SECURITY_WRITE	8
++#define RT2880_I2C_SECURITY_READ	9
++#define RT2880_I2C_GAUGE_WRITE	10
++#define RT2880_I2C_GAUGE_READ	11
++#define RT2880_I2C_NORMAL_READ	    21
++#define RT2880_I2C_NORMAL_READ2	    22
++#define RT2880_I2C_NORMAL_READ3	    23
++#define RT2880_I2C_NORMAL_READ4	    24
++#define RT2880_I2C_NORMAL_WRITE	    31
++#define RT2880_I2C_NORMAL_WRITE2	32
++#define RT2880_I2C_NORMAL_WRITE3	33
++#define RT2880_I2C_NORMAL_WRITE4	34
+ 
+ #define I2C_DEV_NAME			"i2cM0"
+ 
+@@ -109,7 +109,11 @@
+  *	Hence, CLKDIV = 133 / 0.4 = 332.5 -> Use 333 ( If use 150Mhz, then 150 / 0.4 = 375 )
+  */
+ #if (!defined (FPGA_BOARD_RT2880)) && (!defined (FPGA_BOARD_RT3052))
++#ifdef CONFIG_BOARD_M2E
++#define CLKDIV_VALUE	100
++#else
+ #define CLKDIV_VALUE	333
++#endif
+ #else
+ #define CLKDIV_VALUE	60
+ #endif 
+--- linux-2.6.36/drivers/char/i2c_drv.c	2013-10-09 13:48:37.000000000 +0800
++++ linux-2.6.36/drivers/char/i2c_drv.c	2014-01-22 22:37:47.654992314 +0800
+@@ -42,9 +42,10 @@
+ #include <linux/types.h>    
+ #include <linux/proc_fs.h>
+ #include <linux/fcntl.h>    
+-#include <linux/delay.h>
+ #include <asm/system.h>     
+ #include <linux/wireless.h>
++#include <linux/random.h>
++#include <linux/delay.h>
+ 
+ #include "i2c_drv.h"
+ 
+@@ -58,6 +59,7 @@
+ 
+ int i2cdrv_major =  218;
+ unsigned long i2cdrv_addr = ATMEL_ADDR;
++static DEFINE_SPINLOCK(master_spinlock);
+ 
+ /*----------------------------------------------------------------------*/
+ /*   Function                                                           */
+@@ -351,6 +353,110 @@
+ 	i2c_eeprom_read(0, data, len);
+ }
+ 
++#define CHK_STATUS_REG_BUSY(__ST__)     (__ST__ & 0x01)
++#define CHK_STATUS_REG_SDOEMPTY(__ST__) (__ST__ & 0x02)
++#define CHK_STATUS_REG_DATADRY(__ST__)  (__ST__ & 0x04)
++#define CHK_STATUS_REG_ACKERR(__ST__)   (__ST__ & 0x08)
++static inline int i2c_check_busy(char *debugid) {
++    int i = 0;
++    while(IS_BUSY && i<i2c_busy_loop){
++        i++;
++    };
++    if(i >= i2c_busy_loop) {
++        printk("i2c read busy timeout, status 0x%02x, debugid:%s\n", RT2880_REG(RT2880_I2C_STATUS_REG), debugid);
++        return -EIO;
++    }
++    return 0;
++}
++
++/* Input :
++ * dev_addr : I2C device address on the bus
++ * wbuf     : Read buffer, rbuf[0] indicates the read data number bytes.
++ *            Data is begin from rbuf[1] to rbuf[length]
++ * Return value :
++ * 0        : Read success
++ * -EIO     : Read fail with SCL/SDA timeout,
++ *            wbuf[1 ~ length] will store 0xff as invalid data
++ */
++int i2c_read_bytes(unsigned long dev_addr, unsigned char *rbuf) {
++    int i,j;
++    unsigned char status_reg;
++    i2cdrv_addr = dev_addr;
++    i2c_master_init();
++    if((i = i2c_check_busy("read start check ready")) < 0) {
++        return i;
++    }
++    RT2880_REG(RT2880_I2C_DEVADDR_REG) = i2cdrv_addr;
++    RT2880_REG(RT2880_I2C_BYTECNT_REG) = rbuf[0] - 1 + ADDRESS_BYTES;
++    RT2880_REG(RT2880_I2C_STARTXFR_REG) = READ_CMD;
++    for (i=0; i<rbuf[0]; i++) {
++        j = 0;
++        do {
++            status_reg = RT2880_REG(RT2880_I2C_STATUS_REG);
++            if (CHK_STATUS_REG_DATADRY(status_reg)) {
++                /* We check first ack error which is related to send address ack */
++                if(!i && CHK_STATUS_REG_ACKERR(status_reg)) {
++                    printk("i2c read %d failed with ack error, status 0x%02x\n", i + 1, status_reg);
++                    return -EIO;
++                } else {
++                    rbuf[i+1] = RT2880_REG(RT2880_I2C_DATAIN_REG);
++                    break;
++                }
++            }
++        } while(++j<max_ee_busy_loop);
++        if(j >= max_ee_busy_loop) {
++            printk("i2c read %d byte timeout, status 0x%02x\n", i + 1, RT2880_REG(RT2880_I2C_STATUS_REG));
++            return -EIO;
++        }
++    }
++    if((i = i2c_check_busy("read finish check ready, not busy")) < 0) {
++        return i;
++    }
++    return 0;
++}
++/* Input 
++ * dev_addr : i2c device address on the bus
++ * wbuf     : write buffer, wbuf[0] indicates the write data length.
++ *            Data is begin from wbuf[1] to wbuf[length]
++ * Return value :
++ * 0        : write success
++ * -EIO     : write fail with SCL/SDA timeout, 
++ *            wbuf[1 ~ length] will store 0xff as invalid data
++ */
++int i2c_write_bytes(unsigned long dev_addr, unsigned char *wbuf) {
++    int i,j;
++    i2cdrv_addr = dev_addr;
++    i2c_master_init();
++    if((i = i2c_check_busy("write start check ready")) < 0) {
++        return i;
++    }
++    RT2880_REG(RT2880_I2C_DEVADDR_REG) = i2cdrv_addr ;
++    RT2880_REG(RT2880_I2C_BYTECNT_REG) = wbuf[0]-1;
++    RT2880_REG(RT2880_I2C_DATAOUT_REG) = wbuf[1];
++    RT2880_REG(RT2880_I2C_STARTXFR_REG) = WRITE_CMD;
++    for (i=1; i<wbuf[0]; i++) {
++        j = 0;
++        do {
++            if (IS_SDOEMPTY) {
++                RT2880_REG(RT2880_I2C_DATAOUT_REG) = wbuf[i+1];
++                break;
++            }
++        } while (++j<max_ee_busy_loop);
++        if(j >= max_ee_busy_loop) {
++            printk("i2c write %d byte timeout, status 0x%02x\n", i + 1, RT2880_REG(RT2880_I2C_STATUS_REG));
++            return -EIO;
++        }
++    }
++    if((i = i2c_check_busy("write finish check ready, not busy")) < 0) {
++        return i;
++    }
++    if(CHK_STATUS_REG_ACKERR(RT2880_REG(RT2880_I2C_STATUS_REG))) {
++        printk("i2c write failed with ack error, status 0x%02x\n", RT2880_REG(RT2880_I2C_STATUS_REG));
++        return -EIO;
++    }
++    return 0; 
++}
++
+ void i2c_eeprom_dump(void)
+ {
+ 	u32 a;
+@@ -379,11 +485,74 @@
+ 	unsigned int address, size;
+ 	unsigned long value;
+ 	I2C_WRITE *i2c_write;
++    int i=0, j=0;
++    unsigned char *p_arg=(unsigned char *)arg;
++    int result = 0;
++    spin_lock(&master_spinlock);
+ 
+ 	switch (cmd) {
+ 	case RT2880_I2C_DUMP:
+ 		i2c_eeprom_dump();
+ 		break;
++	case RT2880_I2C_GAUGE_WRITE:
++        result = i2c_write_bytes(0x58, p_arg);
++		break;
++	case RT2880_I2C_GAUGE_READ:
++        result = i2c_read_bytes(0x58, p_arg);
++		break;
++	case RT2880_I2C_NORMAL_WRITE:
++        /* Normal write for one byte */
++        result = i2c_write_bytes(i2cdrv_addr, p_arg);
++		break;
++	case RT2880_I2C_NORMAL_READ:
++        /* Normal read for one byte */
++        result = i2c_read_bytes(i2cdrv_addr, p_arg);
++        break;
++	case RT2880_I2C_SECURITY_WRITE:
++		i2c_master_init();
++        get_random_bytes(p_arg,4);
++        for (i=0;i<4;i++){
++            p_arg[i]=((p_arg[i]>>2)<<2|i);
++        }
++		RT2880_REG(RT2880_I2C_DEVADDR_REG) = i2cdrv_addr ;
++        RT2880_REG(RT2880_I2C_BYTECNT_REG) = 3+ADDRESS_BYTES;
++        RT2880_REG(RT2880_I2C_DATAOUT_REG) =  p_arg[0];
++        RT2880_REG(RT2880_I2C_STARTXFR_REG) = WRITE_CMD;
++        for (i=1; i<4; i++) {
++            j = 0;
++            do {
++                if (IS_SDOEMPTY) {
++                    RT2880_REG(RT2880_I2C_DATAOUT_REG) = p_arg[i];
++                    break;
++                }
++            } while (++j<max_ee_busy_loop);
++        }
++
++        i = 0;
++        while(IS_BUSY && i<i2c_busy_loop){
++            i++;
++        };
++		break;
++	case RT2880_I2C_SECURITY_READ:
++		i2c_master_init();
++		RT2880_REG(RT2880_I2C_DEVADDR_REG) = i2cdrv_addr ;
++        RT2880_REG(RT2880_I2C_BYTECNT_REG) = 3+ADDRESS_BYTES;
++        RT2880_REG(RT2880_I2C_STARTXFR_REG) = READ_CMD;
++        for (i=0; i<4; i++) {
++            j = 0;
++            do {
++                if (IS_DATARDY) {
++                    p_arg[i] = RT2880_REG(RT2880_I2C_DATAIN_REG);
++                    break;
++                }
++            } while(++j<max_ee_busy_loop);
++        }
++
++        i = 0;
++        while(IS_BUSY && i<i2c_busy_loop){
++            i++;
++        };
++		break;
+ 	case RT2880_I2C_READ:
+ 		value = 0; address = 0;
+ 		address = (unsigned int)arg;
+@@ -420,9 +589,12 @@
+ 		i2cdrv_addr = (unsigned long)arg;
+ 		break;
+ 	default :
+-		printk("i2c_drv: command format error\n");
++		printk("i2c_drv: command format error, cmd=%2x\n",cmd);
+ 	}
+ 
++    spin_unlock(&master_spinlock);
++    if(result < 0)
++        return result;
+ 	return 0;
+ }
+ 

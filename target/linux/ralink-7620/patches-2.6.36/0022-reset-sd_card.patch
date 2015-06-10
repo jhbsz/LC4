@@ -1,0 +1,20 @@
+--- old/drivers/char/ralink_gpio.c	2014-04-10 18:37:58.990882573 +0800
++++ new/drivers/char/ralink_gpio.c	2014-04-10 18:14:27.811480468 +0800
+@@ -2428,7 +2428,7 @@
+             sd_card=0;
+         }
+         if (!sd_done) sd_count++;
+-        if (sd_count > 10) {
++        if (sd_count > 4) {
+             sd_done=1;
+             sd_count=0;
+             button_data.button_helper_data = BUTTON_SD_CARD;
+@@ -2469,7 +2469,7 @@
+             reset_push = 0;
+             combo_push = 0;
+         }
+-        if((reset_count >= 100)) {
++        if((reset_count >= 30)) {
+             button_data.button_helper_data = BUTTON_RESET;
+             schedule_work(&button_data.button_helper);
+             reset_count = 0;

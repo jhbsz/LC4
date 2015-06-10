@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-reboot/Makefile
+Package: ezp-reboot
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: EZP Reboot - EZ Packet reboot utility.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Reboot utility.
+@@
+

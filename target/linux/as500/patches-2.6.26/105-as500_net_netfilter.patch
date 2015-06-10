@@ -1,0 +1,63 @@
+diff -Nur linux-2.6.27.official/net/netfilter/nf_conntrack_core.c linux-2.6.27/net/netfilter/nf_conntrack_core.c
+--- linux-2.6.27.official/net/netfilter/nf_conntrack_core.c	2008-10-10 06:13:53.000000000 +0800
++++ linux-2.6.27/net/netfilter/nf_conntrack_core.c	2009-04-29 22:11:00.000000000 +0800
+@@ -64,6 +64,7 @@
+ HLIST_HEAD(unconfirmed);
+ static int nf_conntrack_vmalloc __read_mostly;
+ static struct kmem_cache *nf_conntrack_cachep __read_mostly;
++void (*hnat_detach_function)(struct nf_conn *ct);
+ 
+ DEFINE_PER_CPU(struct ip_conntrack_stat, nf_conntrack_stat);
+ EXPORT_PER_CPU_SYMBOL(nf_conntrack_stat);
+@@ -186,6 +187,9 @@
+ 	NF_CT_ASSERT(atomic_read(&nfct->use) == 0);
+ 	NF_CT_ASSERT(!timer_pending(&ct->timeout));
+ 
++	if(hnat_detach_function)
++		(*hnat_detach_function)(ct);
++
+ 	nf_conntrack_event(IPCT_DESTROY, ct);
+ 	set_bit(IPS_DYING_BIT, &ct->status);
+ 
+@@ -242,6 +246,8 @@
+ 	NF_CT_STAT_INC(delete_list);
+ 	clean_from_lists(ct);
+ 	spin_unlock_bh(&nf_conntrack_lock);
++	if(hnat_detach_function)
++		(*hnat_detach_function)(ct);
+ 	nf_ct_put(ct);
+ }
+ 
+@@ -712,6 +718,13 @@
+ 		NF_CT_STAT_INC_ATOMIC(invalid);
+ 		return NF_ACCEPT;
+ 	}
++#if 0 //no, it should check it, otherwise, the conntrack will not sync with packet
++	// skip check for hnat
++	if (ct->hnat_cb)
++	{
++		return NF_ACCEPT;
++	}
++#endif
+ 
+ 	if (IS_ERR(ct)) {
+ 		/* Too stressed to deal. */
+@@ -804,7 +817,10 @@
+ 	int event = 0;
+ 
+ 	NF_CT_ASSERT(ct->timeout.data == (unsigned long)ct);
++	if (do_acct)
++	{
+ 	NF_CT_ASSERT(skb);
++	}
+ 
+ 	spin_lock_bh(&nf_conntrack_lock);
+ 
+@@ -845,6 +861,7 @@
+ 	spin_unlock_bh(&nf_conntrack_lock);
+ 
+ 	/* must be unlocked when calling event cache */
++	if (skb) // special take care of hnat case we uesed. skb is 0 when it's called
+ 	if (event)
+ 		nf_conntrack_event_cache(event, skb);
+ }

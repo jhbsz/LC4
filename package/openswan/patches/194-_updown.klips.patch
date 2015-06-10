@@ -1,0 +1,33 @@
+--- openswan-2.6.21/programs/_updown.klips/_updown.ip2.in	2009-03-30 21:11:28.000000000 +0800
++++ openswan-2.6.21/programs/_updown.klips/_updown.ip2.in	2010-03-23 14:56:16.203584037 +0800
+@@ -411,6 +411,13 @@
+ 			ip route $1 128.0.0.0/1 $parms2 $parms3"
+ 		;;
+ 	*)	it="ip route $1 $parms $parms2 $parms3"
++        # EZP: add routing rule under each wan routing table
++        [ "$1" = "add" ] && IPT_PARMS="-I" || IPT_PARMS="-D"
++        LOCAL_SUBNET=$(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) 
++        iptables -t nat $IPT_PARMS EZP_SNAT -s $LOCAL_SUBNET -d $parms -j ACCEPT
++        type="${PLUTO_INTERFACE%%[0-9]*}"
++        num="${PLUTO_INTERFACE#${type}}"
++        it_tbl="ip route $1 table 1${num} $parms $parms2 $parms3"
+ 		;;
+ 	esac
+ 	oops="`eval $it 2>&1`"
+@@ -423,6 +430,17 @@
+ 	then
+ 	    echo "$0: doroute \`$it' failed ($oops)" >&2
+ 	fi
++    # EZP: add routing rule under each wan routing table
++	oops_tbl="`eval $it_tbl 2>&1`"
++	st_tbl=$?
++	if test " $oops_tbl" = " " -a " $st_tbl" != " 0"
++	then
++	    oops_tbl="wan route $1 silent error, exit status $st_tbl"
++	fi
++	if test " $oops_tbl" != " " -o " $st_tbl" != " 0"
++	then
++	    echo "$0: doroute \`$it_tbl' failed ($oops_tbl)" >&2
++	fi
+ 	return $st
+ }

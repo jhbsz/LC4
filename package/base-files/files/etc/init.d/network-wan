@@ -1,0 +1,42 @@
+#!/bin/sh /etc/rc.common
+# $NUM is optional.
+. /etc/functions.sh
+. /etc/network.sh
+
+START=96
+log_msg="network-wan"
+no_log=1
+start () {
+    gpioctl dirout 66
+    gpioctl clear 66
+
+    # if product is P1, config eth port to wan or lan
+    local prod_cat=$(nvram get prod_cat)
+    local prod_subcat=$(nvram get prod_subcat)
+    local det_interval=$(nvram get netstat_rule)
+    [ -z "$det_interval" ] && det_interval=3
+    [ "$(nvram show appmgr_rule 0 portcfg)" = "1" ] && {
+        ezp-vlan
+    }
+
+    # start wan control daemon
+    [ -z "$(pidof ezp-netstat)" ] && {
+	[ "$(nvram show wan0_ifname 0)" = "ppp0" -a "$(nvram show wan0_proto 0)" = "wwan" -a -z "$(cat /proc/bus/usb/devices | grep "Vendor=1e2d ProdID=0053")" ] && {
+            /bin/ezp-netstat -i 6
+	} || {
+            /bin/ezp-netstat -i 6
+	}
+    } || {
+        [ -z "$NUM" ] && NUM="0"
+        NUM=$NUM /sbin/ifcontrol wan_updown start-normal
+    }
+    
+    return $err
+}
+stop () {
+    [ -z "$NUM" ] && NUM="0"
+    killall ezp-netstat
+    NUM=$NUM /sbin/ifcontrol wan_updown active_stop
+    # ifdown wan$NUM
+    return $err
+}

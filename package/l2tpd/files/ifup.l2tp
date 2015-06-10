@@ -1,0 +1,148 @@
+#!/bin/sh -x
+. /etc/network.sh
+
+L2TPD_CONFIG_FILE=/etc/l2tpd/l2tpd.conf
+L2TPD_CONFIG_RFILE=/tmp/l2tpd.conf
+PPP_CONFIG_FILE=/etc/ppp/options.l2tpd
+PPP_CONFIG_RFILE=/tmp/options.l2tpd
+PPP_CLIENT_CONFIG_FILE=/etc/ppp/options.l2tpd.client
+PPP_CLIENT_CONFIG_RFILE=/tmp/options.l2tpd.client
+CHAP_FILE=/etc/ppp/chap-secrets
+CHAP_RFILE=/tmp/chap-secrets
+
+global_config () {
+    # mkdir /var/run/xl2tpd or it won't start correctly
+    [ ! -d /var/run/l2tpd ] && {
+        mkdir /var/run/l2tpd
+        chmod 755 /var/run/l2tpd
+    }
+    echo "[global]" >> $L2TPD_CONFIG_FILE
+    echo "auth file = $CHAP_FILE" >> $L2TPD_CONFIG_FILE
+    echo "" >> $L2TPD_CONFIG_FILE
+}
+
+client_config () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    local auth
+    while [ "$wanidx" -lt "$wannum" ]; do
+        echo "[lac l2tp-client$wanidx]" >> $L2TPD_CONFIG_FILE
+        echo "lns = $(nvram show wan_pptp_l2tp_rule $wanidx host)" >> $L2TPD_CONFIG_FILE
+        echo "redial = yes" >> $L2TPD_CONFIG_FILE
+        echo "length bit = yes" >> $L2TPD_CONFIG_FILE
+        auth="$(nvram show wan_pptp_l2tp_rule $wanidx auth)"
+        [ "$auth" = "pap" ] && {
+            echo "refuse pap = no" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+        } 
+        [ -z "$autn" -o "$auth" = "chap" ] && {
+            echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = no" >> $L2TPD_CONFIG_FILE
+        }
+        [ "$auth" = "none" ] && {
+            echo "refuse pap = yes" >> $L2TPD_CONFIG_FILE
+            echo "refuse chap = yes" >> $L2TPD_CONFIG_FILE
+        }
+        # For client, we don't use server to authenticate
+        echo "require authentication = no" >> $L2TPD_CONFIG_FILE
+        echo "name = l2tp-client$wanidx" >> $L2TPD_CONFIG_FILE
+        [ "${l2tp_debug}" = "1" ] && \
+            echo "ppp debug = yes" >> $L2TPD_CONFIG_FILE || \
+            echo "ppp debug = no" >> $L2TPD_CONFIG_FILE
+        echo "pppoptfile = ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx" >> $L2TPD_CONFIG_FILE
+        wanidx=$(($wanidx + 1))
+    done
+}
+ppp_client_config () {
+    local wannum=$(nvram get wan_num)
+    local wanidx=0
+    while [ "$wanidx" -lt "$wannum" ]; do
+        echo "user \"$(nvram show wan_pptp_l2tp_rule $wanidx username)\"" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "password \"$(nvram show wan_pptp_l2tp_rule $wanidx passwd)\"" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "noipdefault" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        [ "$(nvram show wan_pptp_l2tp_rule $wanidx pppiptype)" = "isp" ] && \
+            echo "ipcp-accept-local" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx || \
+            echo "$(nvram show wan_pptp_l2tp_rule $wanidx custom_ipaddr):" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "ipcp-accept-remote" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "lcp-echo-interval 30" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "lcp-echo-failure 6" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        [ "$(nvram show wan_pptp_l2tp_rule $wanidx nailup)" = "0" ] && \
+            echo "demand idle $(nvram show wan_pptp_l2tp_rule $wanidx timeout)" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "unit $(($wannum + $wanidx))" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        echo "ipparam wan$wanidx" >> ${PPP_CLIENT_CONFIG_RFILE}_WAN$wanidx
+        wanidx=$(($wanidx + 1))
+    done
+}
+
+static_link_up()
+{
+    localipaddr="$(nvram show wan_static_rule $3 ipaddr)"
+    localgateway="$(nvram show wan_static_rule $3 gateway)"
+    localnetmask="$(nvram show wan_static_rule $3 mask)"
+    PREFIX="$(ipcalc $localipaddr $localnetmask | grep 'PREFIX' | sed 's/PREFIX=//g')"
+    $DEBUG ip addr flush dev $4
+    $DEBUG ip addr add $localipaddr/$PREFIX broadcast + dev $4
+    $DEBUG ip link set dev $4 up
+    iface_up "$1" "$localipaddr" "$localnetmask" "$localgateway" "$localgateway"
+}
+
+dhcp_link_up()
+{
+    pidfile="/var/run/$1.pid"
+    ip link set dev $4 up
+    [ ! -f "${pidfile}" ] && {
+        udhcpc -i $4 -b -p ${pidfile} &
+    }
+}
+
+####################### VPN Client Start ####################################
+
+# ifup.l2tp $iface $type $num $ifname
+
+localiptype="$(nvram show wan_pptp_l2tp_rule $3 iptype)"
+ifname_orig="$(nvram get ${1}_ifname)"
+nvram set ${1}_proto=$localiptype
+[ "${localiptype}" = "static" ] && {
+    nvram set ${1}_ifname=$4
+    static_link_up $1 $2 $3 $4
+}
+[ "${localiptype}" = "dhcp" ] && {
+    nvram set ${1}_ifname=$4
+    dhcp_link_up $1 $2 $3 $4
+}
+sleeptime=0
+while [ -z "$(nvram get ${1}_ipaddr)" ];
+do
+    echo "$(sleep 1)"
+    sleeptime=$(($sleeptime + 1))
+    # if wait 10 seconds without ipaddress, leave
+    [ "$sleeptime" -gt "10" ] && exit 1
+done
+nvram set ${1}_proto=vpnc
+nvram set ${1}_ifname=${ifname_orig}
+# We use the same daemon as client and server for l2tpd
+# so we need to restart it because settings are changed
+#echo "" > $L2TPD_CONFIG_FILE
+#echo "" > $PPP_CLIENT_CONFIG_FILE
+#echo "" > $CHAP_FILE
+#global_config
+#client_config
+#ppp_client_config
+#echo "# username * password *" >> $CHAP_FILE
+#l2tpd
+sh /etc/rc.common /etc/init.d/l2tpd stop
+sh /etc/rc.common /etc/init.d/l2tpd start
+# !!! FIXME !!! When we uses l2tpd package to replace rp-l2tp,
+# it comes that the first time run l2tpd as a client, 
+# the connection will fail. We need to restart it.
+[ "$(nvram show wan_l2tp_status_rule $3 first_start)" = "1" ] && {
+    sleep 2
+    echo "c l2tp-client$3" > /var/run/l2tp-control
+    sleep 2
+    sh /etc/rc.common /etc/init.d/l2tpd stop
+    sh /etc/rc.common /etc/init.d/l2tpd start
+    nvram replace attr wan_l2tp_status_rule $3 first_start "0"
+}
+sleep 10
+echo "c l2tp-client$3" > /var/run/l2tp-control
+

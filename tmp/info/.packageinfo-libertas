@@ -1,0 +1,17 @@
+Source-Makefile: package/libertas/Makefile
+Package: kmod-libertas
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_olpc +kmod-ieee80211
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Marvell 88W8015 Wireless Driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Marvell 88W8015 Wireless Driver
+
+http://dev.laptop.org/pub/firmware/libertas
+@@
+

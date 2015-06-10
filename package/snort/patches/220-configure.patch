@@ -1,0 +1,51 @@
+diff -Naur snort-2.9.2.2.orig/configure snort-2.9.2.2/configure
+--- snort-2.9.2.2.orig/configure	2012-03-29 11:43:47.000000000 -0500
++++ snort-2.9.2.2/configure	2012-03-29 11:45:12.000000000 -0500
+@@ -14176,45 +14176,7 @@
+ fi
+ 
+ 
+-# In case INADDR_NONE is not defined (like on Solaris)
+-have_inaddr_none="no"
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for INADDR_NONE" >&5
+-$as_echo_n "checking for INADDR_NONE... " >&6; }
+-if test "$cross_compiling" = yes; then :
+-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See \`config.log' for more details" "$LINENO" 5; }
+-else
+-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+-/* end confdefs.h.  */
+-
+-#include <sys/types.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-
+-int
+-main ()
+-{
+-
+-	if (inet_addr("10,5,2") == INADDR_NONE);
+-    return 0;
+-
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-if ac_fn_c_try_run "$LINENO"; then :
+-  have_inaddr_none="yes"
+-else
+-  have_inaddr_none="no"
+-fi
+-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+-  conftest.$ac_objext conftest.beam conftest.$ac_ext
+-fi
+-
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_inaddr_none" >&5
+-$as_echo "$have_inaddr_none" >&6; }
++have_inaddr_none="yes"
+ if test "x$have_inaddr_none" = "xno"; then
+ 
+ $as_echo "#define INADDR_NONE -1" >>confdefs.h
+

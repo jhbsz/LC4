@@ -1,0 +1,51 @@
+diff -Naur linux-2.6.24.4/kernel/printk.c linux-2.6.24.4-oxnas/kernel/printk.c
+--- linux-2.6.24.4/kernel/printk.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/kernel/printk.c	2009-05-08 16:21:11.000000000 +0800
+@@ -625,6 +625,11 @@
+ 	return r;
+ }
+ 
++#if defined(CONFIG_DEBUG_LL) && defined(CONFIG_OXNAS_EARLY_PRINTK)
++/* Declare the printascii function that is specific to ARM platforms */
++extern void printascii(const char *);
++#endif
++
+ /* cpu currently holding logbuf_lock */
+ static volatile unsigned int printk_cpu = UINT_MAX;
+ 
+@@ -653,6 +658,11 @@
+ 	/* Emit the output into the temporary buffer */
+ 	printed_len = vscnprintf(printk_buf, sizeof(printk_buf), fmt, args);
+ 
++#if defined(CONFIG_DEBUG_LL) && defined(CONFIG_OXNAS_EARLY_PRINTK)
++    /* Send output down the early UART */
++    printascii(printk_buf);
++#endif
++
+ 	/*
+ 	 * Copy the output into log_buf.  If the caller didn't provide
+ 	 * appropriate log level tags, we insert them here
+diff -Naur linux-2.6.24.4/kernel/softirq.c linux-2.6.24.4-oxnas/kernel/softirq.c
+--- linux-2.6.24.4/kernel/softirq.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/kernel/softirq.c	2009-05-08 16:21:11.000000000 +0800
+@@ -72,7 +72,7 @@
+ {
+ 	unsigned long flags;
+ 
+-	WARN_ON_ONCE(in_irq());
++	//WARN_ON_ONCE(in_irq());
+ 
+ 	raw_local_irq_save(flags);
+ 	add_preempt_count(SOFTIRQ_OFFSET);
+@@ -134,9 +134,9 @@
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ 	unsigned long flags;
+ 
+-	WARN_ON_ONCE(in_irq());
++	//WARN_ON_ONCE(in_irq());
+ #endif
+-	WARN_ON_ONCE(irqs_disabled());
++	//WARN_ON_ONCE(irqs_disabled());
+ 
+ #ifdef CONFIG_TRACE_IRQFLAGS
+ 	local_irq_save(flags);

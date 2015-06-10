@@ -1,0 +1,70 @@
+Source-Makefile: target/linux/au1000/Makefile
+Target: au1000
+Target-Board: au1000
+Target-Kernel: 2.6
+Target-Name: RMI/AMD AU1x00 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: gpio jffs2 pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware for AMD Alchemy 1500 boards
+	(e.g. 4G-Systems Mesh/Access Cube ...)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall yamonenv
+Target-Profile: Atheros
+Target-Profile-Name: Atheros WiFi (default)
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: Broadcom
+Target-Profile-Name: Broadcom BCM43xx WiFi
+Target-Profile-Packages: kmod-net-bcm43xx
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: Intel
+Target-Profile-Name: Intel IPW2200 WiFi
+Target-Profile-Packages: kmod-net-ipw2200
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+
+@@
+
+Target-Profile: InternetBox
+Target-Profile-Name: T-Mobile InternetBox
+Target-Profile-Packages: kmod-madwifi ldconfig ldd hostapd hostapd-utils ip tc wpa-supplicant wpa-cli
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set for the T-Mobile "InternetBox" (TMD SB1-S)
+@@
+
+Target-Profile: MeshCube
+Target-Profile-Name: MeshCube MTX-1
+Target-Profile-Packages: kmod-madwifi kmod-hostap kmod-hostap-pci kmod-net-prism54 kmod-usb-core kmod-usb-ohci kmod-usb-storage kmod-fs-ext3 kmod-fs-vfat ldconfig ldd hostap-utils hostapd hostapd-utils ip tc wpa-supplicant wpa-cli
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set for the 4G MeshCube (MTX-1)
+@@
+
+

@@ -1,0 +1,71 @@
+--- new/drivers/char/ralink_gpio.h	2014-04-18 10:10:49.104781294 +0800
++++ old/drivers/char/ralink_gpio.h	2014-04-18 09:53:44.739567534 +0800
+@@ -569,5 +569,6 @@
+ #define BUTTON_SD_CARD      21
+ #define BUTTON_WPS	    14
+ #define BUTTON_RESET        10
++#define BUTTON_POWER    16
+ #define BUTTON_FUNC         0x60
+ 
+--- new/drivers/char/ralink_gpio.c	2014-04-18 10:10:49.312781299 +0800
++++ old/drivers/char/ralink_gpio.c	2014-04-18 09:55:10.111569820 +0800
+@@ -65,8 +65,12 @@
+     #define RALINK_GPIO_RESET_NUM    44
+ #endif
+     #define RALINK_GPIO_MCU_NUM      42
++#ifdef CONFIG_BOARD_ALS
++    #define RALINK_GPIO_POWER_NUM    -1
++#else
+     #define RALINK_GPIO_POWER_NUM    41
+ #endif
++#endif
+ 
+ /* EZP: set button GPIO definitions */
+ int ezp_gpio_start=0;
+@@ -74,6 +78,7 @@
+ int reset_count = 0, reset_push = 0;
+ int wps_count = 0, wps_push = 0;
+ int combo_push = 0;
++int power_count = 0, power_push = 0;
+ 
+ #define NAME			"ralink_gpio"
+ #define RALINK_GPIO_DEVNAME	"gpio"
+@@ -1172,6 +1177,10 @@
+ 	    printk("Reset button\n");
+ 	    gpio_argv[1] = "default";
+ 	    gpio_argv[2] = NULL;
++    } else if (button_data->button_helper_data == BUTTON_POWER) {
++	    printk("Power button\n");
++	    gpio_argv[1] = "showoled";
++	    gpio_argv[2] = NULL;
+     }
+     else {
+ 	    printk("no action!\n");
+@@ -2479,6 +2488,27 @@
+             reset_count = 0;
+         }
+     }
++#if defined (CONFIG_BOARD_M2E)
++    if(RALINK_GPIO_POWER_NUM != -1) {
++        ezp_gpio_wrapper(RALINK_GPIO_POWER_NUM, (u32*)(RALINK_REG_PIODATA), &gpio_reg, &gpio_num, &gpio_mask);
++        tmp = le32_to_cpu(*(volatile u32 *)(gpio_reg));
++        if ((tmp & (1 << gpio_num)) == 0)
++        {
++            power_count++;
++        }
++        else
++        {
++            power_count = 0;
++            power_push = 0;
++            combo_push = 0;
++        }
++        if((power_count == 1)) {
++            button_data.button_helper_data = BUTTON_POWER;
++            schedule_work(&button_data.button_helper);
++            power_push = 1; // power_count = 0; 
++        }
++    }
++#endif
+ #ifdef RALINK_GPIO_BUTTON_FUNC
+     ezp_gpio_handle_func_button(tmp,RALINK_GPIO_BUTTON_FUNC_MASK);
+ #endif /* RALINK_GPIO_BUTTON_FUNC */

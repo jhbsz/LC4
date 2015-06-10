@@ -1,0 +1,68 @@
+#!/bin/sh /etc/rc.common
+# MAC_SENSE.
+START=88
+log_msg="client"
+start () {
+	stop
+    
+    for i in 0 1 2
+    do
+        echo "alias=$(nvram show als_serial_rule $i alias)" > /etc/serial.conf.port$i
+        echo "device=$(nvram show als_serial_rule $i device)" >> /etc/serial.conf.port$i
+        echo "baudrate=$(nvram show als_serial_rule $i baudrate)" >> /etc/serial.conf.port$i
+        echo "data_bits=$(nvram show als_serial_rule $i databit)" >> /etc/serial.conf.port$i
+        echo "stop_bit=$(nvram show als_serial_rule $i stopbit)" >> /etc/serial.conf.port$i
+        echo "parity=$(nvram show als_serial_rule $i parity)" >> /etc/serial.conf.port$i
+        echo "flow_control=$(nvram show als_serial_rule $i flow)" >> /etc/serial.conf.port$i
+        echo "fifo=$(nvram show als_serial_rule $i fifo)" >> /etc/serial.conf.port$i
+
+        echo "sd=$(nvram show file_mode_rule 0 sd)" >> /etc/serial.conf.port$i
+        echo "usb=$(nvram show file_mode_rule 0 usb)" >> /etc/serial.conf.port$i
+        echo "record=$(nvram show file_mode_rule 0 record_$(($i + 1)))" >> /etc/serial.conf.port$i
+
+        echo "mode=$(nvram show als_operating_rule $i mode)" >> /etc/serial.conf.port$i
+        echo "tcp_alive=$(nvram show als_operating_rule $i alive)" >> /etc/serial.conf.port$i
+        echo "inactivity_time=$(nvram show als_operating_rule $i inactive)" >> /etc/serial.conf.port$i
+        echo "max_connect=$(nvram show als_operating_rule $i max_connect)" >> /etc/serial.conf.port$i
+        echo "ignore_ip=$(nvram show als_operating_rule $i jammed_ip)" >> /etc/serial.conf.port$i
+        echo "allow_control=$(nvram show als_operating_rule $i allow)" >> /etc/serial.conf.port$i
+
+        echo "packing_length=$(nvram show als_operating_data_packing_rule $i length)" >> /etc/serial.conf.port$i
+        echo "delimiter_1=$(nvram show als_operating_data_packing_rule $i limit_1)" >> /etc/serial.conf.port$i
+        echo "delimiter_enable_1=$(nvram show als_operating_data_packing_rule $i limit_1_1)" >> /etc/serial.conf.port$i
+        echo "delimiter_2=$(nvram show als_operating_data_packing_rule $i limit_2)" >> /etc/serial.conf.port$i
+        echo "delimiter_enable_1=$(nvram show als_operating_data_packing_rule $i limit_2_1)" >> /etc/serial.conf.port$i
+        echo "delimiter_proto=$(nvram show als_operating_data_packing_rule $i limit_pro)" >> /etc/serial.conf.port$i
+        echo "face_transmit=$(nvram show als_operating_data_packing_rule $i transmit)" >> /etc/serial.conf.port$i
+
+        echo "local_tcp_port=$(nvram show als_operating_option_rule $i tcp_port)" >> /etc/serial.conf.port$i
+        echo "ip_addr_1=$(nvram show als_operating_option_rule $i ip_1)" >> /etc/serial.conf.port$i
+        echo "port_1=$(nvram show als_operating_option_rule $i ip_port_1)" >> /etc/serial.conf.port$i
+        echo "ip_addr_2=$(nvram show als_operating_option_rule $i ip_2)" >> /etc/serial.conf.port$i
+        echo "port_2=$(nvram show als_operating_option_rule $i ip_port_2)" >> /etc/serial.conf.port$i
+        echo "ip_addr_3=$(nvram show als_operating_option_rule $i ip_3)" >> /etc/serial.conf.port$i
+        echo "port_3=$(nvram show als_operating_option_rule $i ip_port_3)" >> /etc/serial.conf.port$i
+        echo "ip_addr_4=$(nvram show als_operating_option_rule $i ip_4)" >> /etc/serial.conf.port$i
+        echo "port_4=$(nvram show als_operating_option_rule $i ip_port_4)" >> /etc/serial.conf.port$i
+        echo "local_port_1=$(nvram show als_operating_option_rule $i port_1)" >> /etc/serial.conf.port$i
+        echo "local_port_2=$(nvram show als_operating_option_rule $i port_2)" >> /etc/serial.conf.port$i
+        echo "local_port_3=$(nvram show als_operating_option_rule $i port_3)" >> /etc/serial.conf.port$i
+        echo "local_port_4=$(nvram show als_operating_option_rule $i port_4)" >> /etc/serial.conf.port$i
+        echo "connect_control=$(nvram show als_operating_option_rule $i control)" >> /etc/serial.conf.port$i
+        echo "local_listen_port=$(nvram show als_operating_option_rule $i udp_port)" >> /etc/serial.conf.port$i
+        echo "file_mode=$(nvram show file_mode_rule 0 enable)" >> /etc/serial.conf.port$i
+
+        echo "group=$i" >> /etc/serial.conf.port$i
+
+        [ -s "/etc/serial.conf.port$i" ] && {
+            /usr/sbin/UART /etc/serial.conf.port$i &
+            sleep 1
+        }    
+    done
+}
+stop () {
+    killall -9 UART
+    killall -9 UART
+    killall -9 UART
+    nvram fset als_status_rule="0^0^0^0^0^0^0^0|0^0^0^0^0^0^0^0|0^0^0^0^0^0^0^0"
+}

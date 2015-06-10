@@ -1,0 +1,23 @@
+Source-Makefile: package/ezp-httpd-v2/Makefile
+Package: ezp-httpd-v2
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: ezp-httpd-v2
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  - The new stype which
+ - 1. added bootstrap package
+ - 2. added togobox and togomusic gui
+ - 3. modified all original gui to bootstrap style
+@@
+Config: 
+	menu "Httpd Configuration"
+		depends on PACKAGE_ezp-httpd-v2
+		source "package/ezp-httpd-v2/config/Config.in"
+	endmenu
+@@
+

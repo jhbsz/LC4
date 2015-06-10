@@ -1,0 +1,17 @@
+.x-grid3-radio-col-td .x-grid3-cell-inner {               
+padding: 1px 0 0 0!important;                
+}                
+         
+.x-grid3-radio-col {                 
+width: 100%;                 
+height: 16px;                
+background: transparent url(../images/default/grid/radiooff.gif)
+no-repeat center center;                 
+}                
+           
+.x-grid3-radio-col-on {                  
+width: 100%;                 
+height: 16px;                
+background: transparent url(../images/default/grid/radioon.gif)
+no-repeat center center;                 
+}  

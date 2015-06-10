@@ -1,0 +1,42 @@
+--- lighttpd-1.4.30/src/connections.c	2014-10-23 18:26:54.904548554 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-10-23 18:26:47.476548466 +0800
+@@ -1241,7 +1241,7 @@
+                 char *head_dest_tmp_file = dest_tmp_file;
+                 sprintf(dest_tmp_file, "%s", root_dir);
+                 dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
+-                strcpy(cgi_tmp, "/tmp/mnt/");
++                strcpy(cgi_tmp, "/tmp/mnt/fslite/");
+                 strcat(cgi_tmp, dest_tmp_file);
+                 strcat(cgi_tmp, "/.upload_cache/");
+                 /* Get upload_id */
+@@ -1253,7 +1253,7 @@
+                 upload_id = upload_id + strlen("=")+strlen("upload_id");
+                 id = strtok(upload_id, "&");
+                 strcat(cgi_tmp, id);
+-                /* For instance, cgi_tmp should be: /tmp/mnt/USB/.upload_cache/XE3AzGX */
++                /* For instance, cgi_tmp should be: /tmp/mnt/fslite/USB/.upload_cache/XE3AzGX */
+                 if (con->is_first_packet) {
+                     chunked_upload_file = fopen(cgi_tmp, "a");
+                     con->is_first_packet = 0; 
+--- lighttpd-1.4.30/src/chunk.c	2014-10-28 16:28:19.008382226 +0800
++++ lighttpd-1.4.30/src/chunk.c	2014-10-28 16:27:53.504381924 +0800
+@@ -376,10 +376,10 @@
+ 
+         /* we have several tempdirs, only if all of them fail we jump out */
+         for (i = 0; i < cq->tempdirs->used; i++) {
+-            buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
+             // Support cgi-bin upload file path
+             char *pch = strstr(dst_file, "cgi-bin");
+             if (pch != NULL) {
++                buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt/fslite")); /*FIX ME: get base-DIR to replace hard-code*/
+                 // Dst file contains cgi-bin characters
+                 char *root_dir = strstr(dst_file, "upload_root_dir");
+                 if (root_dir) {
+@@ -396,6 +396,7 @@
+                     break;
+                 }
+             } else {
++                buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
+                 buffer_append_string_len(template, dst_file, strlen(dst_file));
+             }
+             buffer_urldecode_path(template);

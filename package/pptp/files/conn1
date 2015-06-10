@@ -1,0 +1,6 @@
+pty "pptp 10.1.1.254 --nolaunchpppd"
+name test
+remotename PPTP
+require-mppe-128
+file /etc/ppp/options.pptp
+ipparam conn1

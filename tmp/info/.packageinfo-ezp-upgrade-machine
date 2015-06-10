@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-upgrade-machine/Makefile
+Package: ezp-upgrade-machine
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: ezp-upgrade-machine - build a m2 based firmware upgrade machine
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	product authentication tool
+@@
+

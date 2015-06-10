@@ -1,0 +1,7 @@
+./
+./host
+./usr
+./usr/include
+./usr/include/dns_sd.h
+./usr/lib
+./usr/lib/libdns_sd.so

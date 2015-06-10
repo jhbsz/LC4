@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. 
+. /etc/network.sh
+
+START=97
+TRIGGER=90
+log_msg="UPnP-server"
+
+stop()
+{
+    /sbin/ezp-iptables upnp stop
+    route del -net 239.0.0.0 netmask 255.0.0.0 dev "$(nvram get lan0_ifname)"
+    iptables -t nat -F MINIUPNPD 2> /dev/null > /dev/null || err=1
+    iptables -t filter -F MINIUPNPD 2> /dev/null > /dev/null || err=1
+    killall upnpd
+}
+
+start()
+{
+    [ "$(nvram show upnp_rule 0 enable)" = "1" ] || exit
+    stop
+    sleep 3
+    /sbin/ezp-iptables upnp start
+    # multicasting
+    route add -net 239.0.0.0 netmask 255.0.0.0 dev "$(nvram get lan0_ifname)"
+    # generating xml
+    upnp_xml.sh "$(nvram get lan0_ipaddr)"
+    port=$(nvram show upnp_rule 0 port)
+    upnpd -f "$(nvram get wan0_ifname)" "$(nvram get lan0_ifname)" "$port" &
+}
+

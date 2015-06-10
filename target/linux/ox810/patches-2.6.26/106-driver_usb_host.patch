@@ -1,0 +1,154 @@
+diff -Naur linux-2.6.24.4/drivers/usb/Kconfig linux-2.6.24.4/drivers/usb/Kconfig
+--- linux-2.6.24.4/drivers/usb/Kconfig	2009-12-02 23:38:42.000000000 +0800
++++ linux-2.6.24.4/drivers/usb/Kconfig	2009-12-02 23:39:51.000000000 +0800
+@@ -37,6 +37,7 @@
+ 	default y if ARCH_EP93XX
+ 	default y if ARCH_AT91
+ 	default y if ARCH_PNX4008
++    default y if ARCH_OXNAS
+ 	# PPC:
+ 	default y if STB03xxx
+ 	default y if PPC_MPC52xx
+@@ -54,6 +55,7 @@
+ 	boolean
+ 	default y if PPC_83xx
+ 	default y if SOC_AU1200
++    default y if ARCH_OXNAS
+ 	default y if ARCH_IXP4XX
+ 	default PCI
+
+diff -Naur linux-2.6.24.4/drivers/usb/host/Makefile linux-2.6.24.4/drivers/usb/host/Makefile
+--- linux-2.6.24.4/drivers/usb/host/Makefile	2009-12-02 23:46:00.000000000 +0800
++++ linux-2.6.24.4/drivers/usb/host/Makefile	2009-12-02 23:47:50.000000000 +0800
+@@ -3,7 +3,11 @@
+ #
+ 
+ ifeq ($(CONFIG_USB_DEBUG),y)
+-	EXTRA_CFLAGS		+= -DDEBUG
++   EXTRA_CFLAGS        += -DDEBUG
++endif
++
++ifeq ($(CONFIG_EHCI_VERBOSE_DEBUG),y)
++   EXTRA_CFLAGS        += -DEHCI_VERBOSE_DEBUG
+ endif
+ 
+ isp1760-objs := isp1760-hcd.o isp1760-if.o
+@@ -18,4 +22,5 @@
+ obj-$(CONFIG_USB_SL811_CS)	+= sl811_cs.o
+ obj-$(CONFIG_USB_U132_HCD)	+= u132-hcd.o
+ obj-$(CONFIG_USB_R8A66597_HCD)	+= r8a66597-hcd.o
+ obj-$(CONFIG_USB_ISP1760_HCD)	+= isp1760.o
++
+diff -Naur linux-2.6.24.4/drivers/usb/host/ehci-dbg.c linux-2.6.24.4-oxnas/drivers/usb/host/ehci-dbg.c
+--- linux-2.6.24.4/drivers/usb/host/ehci-dbg.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/drivers/usb/host/ehci-dbg.c	2009-05-08 16:26:50.000000000 +0800
+@@ -28,11 +28,11 @@
+ 	dev_warn (ehci_to_hcd(ehci)->self.controller , fmt , ## args )
+ 
+ #ifdef VERBOSE_DEBUG
+-#	define vdbg dbg
+-#	define ehci_vdbg ehci_dbg
++	#define vdbg dbg
++	#define ehci_vdbg ehci_dbg
+ #else
+-#	define vdbg(fmt,args...) do { } while (0)
+-#	define ehci_vdbg(ehci, fmt, args...) do { } while (0)
++	#define vdbg(fmt,args...) do { } while (0)
++	#define ehci_vdbg(ehci, fmt, args...) do { } while (0)
+ #endif
+ 
+ #ifdef	DEBUG
+@@ -242,6 +242,10 @@
+ 		);
+ }
+ 
++#define PORT_SPD_HIGH    (2 << 26)
++#define PORT_SPD_FULL    (1 << 26)
++
++
+ static int
+ dbg_port_buf (char *buf, unsigned len, const char *label, int port, u32 status)
+ {
+@@ -256,7 +260,7 @@
+ 	}
+ 
+ 	return scnprintf (buf, len,
+-		"%s%sport %d status %06x%s%s sig=%s%s%s%s%s%s%s%s%s%s",
++		"%s%sport %d status %06x%s%s sig=%s %s%s%s%s%s%s%s%s%s %s",
+ 		label, label [0] ? " " : "", port, status,
+ 		(status & PORT_POWER) ? " POWER" : "",
+ 		(status & PORT_OWNER) ? " OWNER" : "",
+@@ -269,7 +273,9 @@
+ 		(status & PORT_PEC) ? " PEC" : "",
+ 		(status & PORT_PE) ? " PE" : "",
+ 		(status & PORT_CSC) ? " CSC" : "",
+-		(status & PORT_CONNECT) ? " CONNECT" : "");
++		(status & PORT_CONNECT) ? " CONNECT" : "",
++		(status & PORT_SPD_HIGH) ? ((status & PORT_SPD_FULL) ? "??" : "HIGH" ) : (status & PORT_SPD_FULL) ? "LOW" : "FULL"
++	    );
+ }
+ 
+ #else
+@@ -811,12 +811,40 @@
+ 	next += temp;
+ #endif
+ 
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT
++        long unsigned tt_status =readl((u32)ehci->regs +TT_STATUS);
++        temp = scnprintf (next, size,
++                "tt status %08lx \n",
++                tt_status);
++        size -= temp;
++        next += temp;
++#endif
++
+ done:
+ 	spin_unlock_irqrestore (&ehci->lock, flags);
+ 
+ 	return PAGE_SIZE - size;
+ }
+ 
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT
++static ssize_t
++reset_tt (struct class_device *class_dev, const char *buf, size_t len)
++{
++        struct usb_bus          *bus;
++        struct usb_hcd          *hcd;
++        struct ehci_hcd         *ehci;
++ 
++        bus = class_get_devdata(class_dev);
++        hcd = bus->hcpriv;
++        ehci = hcd_to_ehci (hcd);
++
++       *((u32 *) ((u32)ehci->regs +TT_STATUS)) = 2;
++        return len;
++}
++
++static CLASS_DEVICE_ATTR (tt_reset, S_IWUGO, NULL, reset_tt );
++#endif
++
+ static struct debug_buffer *alloc_buffer(struct usb_bus *bus,
+ 				ssize_t (*fill_func)(struct debug_buffer *))
+ {
+@@ -952,6 +980,10 @@
+ 	ehci->debug_periodic = NULL;
+ 	ehci->debug_async = NULL;
+ 	ehci->debug_dir = NULL;
++
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT	
++        class_device_create_file(cldev, &class_device_attr_tt_reset);
++#endif        
+ }
+ 
+ static inline void remove_debug_files (struct ehci_hcd *ehci)
+@@ -960,6 +992,10 @@
+ 	debugfs_remove(ehci->debug_periodic);
+ 	debugfs_remove(ehci->debug_async);
+ 	debugfs_remove(ehci->debug_dir);
++
++#ifdef CONFIG_USB_EHCI_ROOT_HUB_TT	
++        class_device_remove_file(cldev, &class_device_attr_tt_reset);
++#endif        
+ }
+ 
+ #endif /* STUB_DEBUG_FILES */

@@ -1,0 +1,38 @@
+#!/bin/sh /etc/rc.common
+
+START=70
+log_msg="NAT-Acceleration"
+
+start () {
+    # We need to check bandwidth mamangement, if not started,
+    # then we can start hardware NAT
+    local turbo_enable=$(nvram get turbonat_enable)
+    local hw_enable=$(nvram show nat_rule 0 hw_enable)
+    [ "$hw_enable" = "1" ] && {
+        insmod hw_nat || err=1
+        logger "EZP_USR" "HWNAT [start]"
+    }
+    [ "$turbo_enable" = "1" ] && {
+        /sbin/insmod ezp-nat || err=1
+        echo "1" > /proc/ezp_nat_ctrl
+        logger "EZP_USR" "turboNAT [start]"
+    }
+    [ "$hw_enable" = "0" -a "$turbo_enable" = "0" ]  && exit
+    return $err
+}
+
+stop () {
+    local turbo_enable=$(nvram get turbonat_enable)
+    local hw_enable=$(nvram show nat_rule 0 hw_enable)
+    [ "$hw_enable" = "0"  -a "$turbo_enable" = "0"  ]  && exit
+    [ "$hw_enable" = "1" ] && {
+        rmmod hw_nat
+        logger "EZP_USR" "HWNAT [stop]"
+    }
+    [ "$turbo_enable" = "1" ] && {
+        echo "0" > /proc/ezp_nat_ctrl
+        /sbin/rmmod ezp-nat || err=1
+        logger "EZP_USR" "turboNAT [stop]"
+    }
+    return $err
+}

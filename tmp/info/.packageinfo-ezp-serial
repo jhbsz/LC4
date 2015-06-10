@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-serial/Makefile
+Package: ezp-serial
+Version: 1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: TEST
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

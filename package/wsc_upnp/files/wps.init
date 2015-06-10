@@ -1,0 +1,68 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/wscd
+EXECCMD=wscd
+PID_FILE=/var/run/wscd.pid
+#run after wan started
+START=99
+TRIGGER=99
+TRIGGER_STOP=99
+
+log_msg="WPS-service"
+
+. /etc/arch.sh
+
+start() {
+
+    [ "$(nvram show wl_basic_rule 0 enable)" = "0" ] && exit
+    [ "$(nvram show wl_wps_rule 0 mode)" != "0" ] && {
+        arch_led_start wps_on
+        local lanipaddr=$(nvram get lan0_ipaddr)
+        local wscconfmode="$(nvram show wl_wps_rule 0 mode)"
+        $BIN -m 1 -a $lanipaddr -i ra0 -d 3 &
+        iwpriv ra0 set WscConfMode="$wscconfmode"
+        # unconfigured
+        wscconfstatus="1"
+        # if configured, set conf status to 2
+        [ "$(nvram show wl_wps_rule 0 configured)" = "1" ] \
+            && wscconfstatus="2"
+        iwpriv ra0 set WscConfStatus="$wscconfstatus"
+        wpspin=$(nvram show wl_wps_rule 0 pin)
+        [ "$wpspin" = "00000000" ] && {
+           wps-ctrl gen_pin
+        }
+
+        # WPS STA Mode
+        case "$(nvram show wl_wps_sta_rule 0 mode)" in
+        1)
+            pincode="$(nvram show wl_wps_sta_rule 0 pin)"
+            lanipaddr="$(nvram get lan0_ipaddr)"
+            iwpriv ra0 set WscVendorPinCode="$pincode"
+            iwpriv ra0 set WscMode=1
+            iwpriv ra0 set WscVendorPinCode="$pincode"
+            iwpriv ra0 set WscPinCode="$pincode"
+            iwpriv ra0 set WscGetConf=1
+            iwpriv ra0 set WscStatus=0
+        ;;
+        2)
+            # PBC mode
+            lanipaddr="$(nvram get lan0_ipaddr)"
+            iwpriv ra0 set WscMode=2
+            iwpriv ra0 set WscGetConf=1
+            iwpriv ra0 set WscStatus=0
+        ;;
+        *)
+            echo "No wps services"
+        ;;
+        esac
+    } || {
+      exit
+    }
+}
+
+stop() {
+    [ -z "$(pidof wscd)" ] && exit
+    killall ${EXECCMD}
+    iwpriv ra0 set WscConfMode=0
+    iwpriv ra0 set WscStatus=0
+    arch_led_stop wps_on
+}

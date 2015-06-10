@@ -1,0 +1,442 @@
+﻿<po>
+	<message msgid="band title" msgstr="Utilizzare i cursori per regolare la larghezza di banda per ogni applicazione di rete."/>
+	<message msgid="band Apply" msgstr="Applica"/>
+	<message msgid="band Cancel" msgstr="Annulla"/>
+	<message msgid="game title" msgstr="Quando si attiva il Game Engine, il router utilizza la sua configurazione ottimizzata per offrire la migliore esperienza di gioco possibile. L'opzione Game Console in Gestione della banda riceverà la priorità di livello più elevato e non potrà essere fissata di nuovo finché il Game Engine non sarà stato disattivato."/>
+	<message msgid="game ok" msgstr="OK"/>
+	<message msgid="g2-1 easy123" msgstr="eaZy 123"/>
+	<message msgid="g2-1 Internet" msgstr="Connetti a Internet"/>
+	<message msgid="g2-1 Password" msgstr="Password del router"/>
+	<message msgid="g2-1 Security" msgstr="Protezione Wireless"/>
+	<message msgid="g2-1 InternetType" msgstr="Tipo di connessione a Internet:"/>
+	<message msgid="g2-1 InternetType1" msgstr="IP statico"/>
+	<message msgid="g2-1 InternetType2" msgstr="DHCP"/>
+	<message msgid="g2-1 InternetType3" msgstr="PPPoE"/>
+	<message msgid="g2-1 InternetType4" msgstr="PPTP"/>
+	<message msgid="g2-1 InternetType5" msgstr="L2TP"/>
+	<message msgid="g2-1 title" msgstr="Consultare le informazioni fornite dal proprio ISP (Internet Service Provider) e compilare gli spazio bianchi seguenti."/>
+	<message msgid="g2-1 Dynamic" msgstr="IP dinamico"/>
+	<message msgid="g2-1 Static" msgstr="IP statico"/>
+	<message msgid="g2-1 IP" msgstr="Indirizzo IP:"/>
+	<message msgid="g2-1 User" msgstr="Nome utente:"/>
+	<message msgid="g2-1 Password1" msgstr="Password:"/>
+	<message msgid="g2-1 Next" msgstr="Avanti"/>
+	<message msgid="g2-1 Back" msgstr="Indietro"/>
+	<message msgid="g2-1 Exit" msgstr="Esci"/>
+	<message msgid="g2-1 No" msgstr="No"/>
+	<message msgid="g2-1 Yes" msgstr="Sì"/>
+	<message msgid="g2-1 msg" msgstr="Uscire?"/>
+	<message msgid="g2-2 easy123" msgstr="eaZy 123"/>
+	<message msgid="g2-2 Internet" msgstr="Connetti a Internet"/>
+	<message msgid="g2-2 Password" msgstr="Password del router "/>
+	<message msgid="g2-2 Security" msgstr="Protezione Wireless"/>
+	<message msgid="g2-2 InternetType" msgstr="Tipo di connessione a Internet:"/>
+	<message msgid="g2-2 InternetType1" msgstr="IP statico"/>
+	<message msgid="g2-2 InternetType2" msgstr="DHCP"/>
+	<message msgid="g2-2 InternetType3" msgstr="PPPoE"/>
+	<message msgid="g2-2 InternetType4" msgstr="PPTP"/>
+	<message msgid="g2-2 InternetType5" msgstr="L2TP"/>
+	<message msgid="g2-2 title" msgstr="Consultare le informazioni fornite dal proprio ISP (Internet Service Provider) e compilare gli spazio bianchi seguenti."/>
+	<message msgid="g2-2 IP" msgstr="Indirizzo IP:"/>
+	<message msgid="g2-2 Subnet" msgstr="Maschera di subnet:"/>
+	<message msgid="g2-2 Gateway" msgstr="Gateway predefinito:"/>
+	<message msgid="g2-2 DNS1" msgstr="DNS primario:"/>
+	<message msgid="g2-2 DNS2" msgstr="DNS secondario:"/>
+	<message msgid="g2-2 Gateway1" msgstr="Gateway predefinito"/>
+	<message msgid="g2-2 Next" msgstr="Avanti"/>
+	<message msgid="g2-2 Back" msgstr="Indietro"/>
+	<message msgid="g2-2 Exit" msgstr="Esci"/>
+	<message msgid="g2-2 No" msgstr="No"/>
+	<message msgid="g2-2 Yes" msgstr="Sì"/>
+	<message msgid="g2-2 msg" msgstr="Uscire?"/>
+	<message msgid="g2-3 title" msgstr="In linea generale, quando il tipo di connessione è DHCP significa che il servizio Internet è disponibile mentre si accende il computer. "/>
+	<message msgid="g2-3 title1" msgstr="Scegliere Avanti per continuare. "/>
+	<message msgid="g2-4 Dynamic" msgstr="IP dinamico"/>
+	<message msgid="g2-4 Static" msgstr="IP statico"/>
+	<message msgid="g2-4 Address" msgstr="Indirizzo PPTP:"/>
+	<message msgid="g2-4 Subnet" msgstr="Maschera di subnet PPTP:"/>
+	<message msgid="g2-4 Gateway" msgstr="Indirizzo IP gateway PPTP:"/>
+	<message msgid="g2-4 Server" msgstr="Indirizzo IP del server PPTP:"/>
+	<message msgid="g2-4 User" msgstr="Nome utente:"/>
+	<message msgid="g2-4 Password" msgstr="Password:"/>
+	<message msgid="g2-5 Dynamic" msgstr="IP dinamico"/>
+	<message msgid="g2-5 Static" msgstr="IP statico "/>
+	<message msgid="g2-5 Address" msgstr="Indirizzo L2TP:"/>
+	<message msgid="g2-5 Subnet" msgstr="Maschera di subnet L2TP:"/>
+	<message msgid="g2-5 Gateway" msgstr="Indirizzo IP gateway L2TP:"/>
+	<message msgid="g2-5 Server" msgstr="Indirizzo IP del server L2TP:"/>
+	<message msgid="g2-5 User" msgstr="Nome utente:"/>
+	<message msgid="g2-5 Password" msgstr="Password:"/>
+	<message msgid="g2-44 easy123" msgstr="eaZy 123 si sta connettendo a Internet."/>
+	<message msgid="g2-44 Connect" msgstr="Connessione in corso..."/>
+	<message msgid="g2h easy123" msgstr="eaZy 123 sta rilevando il tipo di connessione a Internet. "/>
+	<message msgid="g2h Detecting" msgstr="Rilevamento in corso..."/>
+	<message msgid="g2-e2 msg1" msgstr="Informazioni non corrette"/>
+	<message msgid="g2-e2 msg2" msgstr="Spiacenti! Il router è in grado di connettersi a Internet con le informazioni appena fornite.  Immettere nuovamente."/>
+	<message msgid="g2-e msg1" msgstr="Nessun servizio Internet rilevato"/>
+	<message msgid="g2-e msg2" msgstr="Controllare manualmente gli aspetti seguenti:"/>
+	<message msgid="g2-e msg3" msgstr="1. Computer, router e modem sono connessi correttamente tra loro."/>
+	<message msgid="g2-e msg4" msgstr="2. Un servizio Internet valido."/>
+	<message msgid="g2-e msg5" msgstr="È possibile scegliere Riprova per eseguire di nuovo il rilevamento."/>
+	<message msgid="g2-e msg6" msgstr="Riprova"/>
+	<message msgid="g3 title" msgstr="Cambia la password del router"/>
+	<message msgid="g3 msg" msgstr="È vivamente consigliato impostare una nuova password di amministratore in sostituzione di quella predefinita di fabbrica (1234)."/>
+	<message msgid="g3 Password" msgstr="Password:"/>
+	<message msgid="g3 VPassword" msgstr="Verifica password:"/>
+	<message msgid="g41 title" msgstr="Protezione Wireless"/>
+	<message msgid="g41 msg" msgstr="Una rete Wireless protetta rende sicuro il trasferimento dei dati quando si eseguono tutte le attività di rete Wireless. Proteggere la rete con una delle modalità di protezione seguenti e una password."/>
+	<message msgid="g41 SSID" msgstr="Nome della rete Wireless (SSID):"/>
+	<message msgid="g41 Security" msgstr="Modalità di protezione:"/>
+	<message msgid="g41 password" msgstr="Password Wireless:"/>
+	<message msgid="g41 Vpassword" msgstr="Verifica password:"/>
+	<message msgid="g41 Security0" msgstr="Nessuna protezione"/>
+	<message msgid="g41 Security1" msgstr="WPA-PSK"/>
+	<message msgid="g41 Security2" msgstr="WPA2-PSK"/>
+	<message msgid="g5 title" msgstr="Congratulazioni!"/>
+	<message msgid="g5 msg" msgstr="La connessione a Internet è stata stabilita. È il momento giusto per provare {VAI}, lo strumento di gestione del router più facile di tutti i tempi!"/>
+	<message msgid="g5 GO" msgstr="VAI"/>
+	<message msgid="Welcome" msgstr="Benvenuti"/>
+	<message msgid="g5 msg" msgstr="La connessione a Internet è stata stabilita. È il momento giusto per provare {VAI}, lo strumento di gestione del router più facile di tutti i tempi!"/>
+	<message msgid="g5 GO" msgstr="VAI"/>
+	<message msgid="pass title" msgstr="La configurazione guidata conduce l'utente nella definizione delle impostazioni di configurazione comuni. Si consiglia di utilizzare questa modalità se è la prima volta che si configura il router oppure se occorre fare modifiche di configurazione di base."/>
+	<message msgid="pass title1" msgstr="Utilizzare la modalità avanzata se occorre accedere per ulteriori funzioni avanzate non incluse nella modalità guidata."/>
+	<message msgid="pass Password" msgstr="Nuova password:"/>
+	<message msgid="pass Retype" msgstr="Digitare nuovamente per confermare:"/>
+	<message msgid="pass Ignore" msgstr="Ignora"/>
+	<message msgid="pass Apply" msgstr="Applica"/>
+	<message msgid="ws title" msgstr="I dati trasmessi wireless senza crittografia non sono sicuri. Proteggere la rete Wireless con una modalità di protezione e la password configurata. Quindi sarà possibile utilizzare WPS per connettere i computer alla rete Wireless con la semplice pressione di un pulsante."/>
+	<message msgid="ws SSID" msgstr="Nome della rete Wireless (SSID):"/>
+	<message msgid="ws Security" msgstr="Modalità di protezione:"/>
+	<message msgid="ws Security1" msgstr="Nessuna protezione"/>
+	<message msgid="ws Security2" msgstr="WPA-PSK"/>
+	<message msgid="ws Security3" msgstr="WPA2-PSK"/>
+	<message msgid="ws password" msgstr="Password Wireless:"/>
+	<message msgid="ws vpassword" msgstr="Verifica password:"/>
+	<message msgid="ws WPS" msgstr="WPS"/>
+	<message msgid="ws Cancel" msgstr="Annulla"/>
+	<message msgid="ws Apply" msgstr="Applica"/>
+	<message msgid="ws title1" msgstr="La configurazione WPS (WiFi Protected Setup) è un modo semplice e veloce per connettere i computer/dispositivi alla rete Wireless. Utilizzare uno dei sistemi seguenti per effettuare la connessione."/>
+	<message msgid="ws title2" msgstr="Fare clic sul pulsante WPS( Wi-Fi Protected Setup) del client Wireless e quindi fare clic sul pulsante nella parte inferiore."/>
+	<message msgid="ws title3" msgstr="Registrare il codice PIN del client wireless"/>
+	<message msgid="ws title4" msgstr="Se il client Wireless richiede il numero PIN "/>
+	<message msgid="ws title5" msgstr="del router, provvedere a immetterlo."/>
+	<message msgid="ws Confirm" msgstr="Conferma"/>
+	<message msgid="ws OK" msgstr="OK"/>
+	<message msgid="ws ws" msgstr="Protezione Wireless"/>
+	<message msgid="ws Exit" msgstr="Esci"/>
+	<message msgid="ws WPS1" msgstr="WPS"/>
+	<message msgid="ws Register" msgstr="Registra"/>
+	<message msgid="ps title" msgstr="Pianificare il servizio Wireless con la tabella seguente."/>
+	<message msgid="ps status" msgstr="Stato WLAN"/>
+	<message msgid="ps Day" msgstr="Giorno"/>
+	<message msgid="ps times" msgstr="Eccetto negli orari seguenti (formato 24 ore)"/>
+	<message msgid="ps Cancel" msgstr="Annulla"/>
+	<message msgid="ps Apply" msgstr="Applica"/>
+	<message msgid="pc title" msgstr="Tutti gli indirizzi URL che contengono le parole chiave seguenti saranno bloccate e non potranno essere visitati, a meno che non venga immessa la Chiave dei genitori."/>
+	<message msgid="pc Delete" msgstr="Elimina"/>
+	<message msgid="pc Add" msgstr="Aggiungi"/>
+	<message msgid="pc Cancel" msgstr="Annulla"/>
+	<message msgid="pc Apply" msgstr="Applica"/>
+	<message msgid="Firewall title" msgstr="Attivando il Firewall si proteggono i computer dagli attacchi dannosi provenienti da Internet."/>
+	<message msgid="Firewall ok" msgstr="OK"/>
+	<message msgid="g Welcome" msgstr="Benvenuti"/>
+	<message msgid="g title" msgstr="I passi successivi guidano l'utente nella configurazione del router e nella connessione a Internet. Selezionare l'icona della lingua di seguito prima per continuare."/>
+	<message msgid="g Connect" msgstr="Connetti a Internet"/>
+	<message msgid="g Language" msgstr="Lingua"/>
+	<message msgid="maintain title" msgstr="Configurazione del sistema"/>
+	<message msgid="maintain sys name" msgstr="Nome del sistema"/>
+	<message msgid="maintain dom name" msgstr="Nome dominio"/>
+	<message msgid="maintain adm in timer" msgstr="Timer inattività amministratore"/>
+	<message msgid="maintain minutes" msgstr="minuti, 0 significa nessun timeout"/>
+	<message msgid="maintain apply" msgstr="Applica"/>
+	<message msgid="maintain reset" msgstr="Reimposta"/>
+	<message msgid="pw title" msgstr="Configurazione password "/>
+	<message msgid="pw old pw" msgstr="Vecchia password"/>
+	<message msgid="pw new pw" msgstr="Nuova password"/>
+	<message msgid="pw confirm" msgstr="Digitare nuovamente per confermare"/>
+	<message msgid="pw apply" msgstr="Applica"/>
+	<message msgid="pw reset" msgstr="Reimposta"/>
+	<message msgid="dash ezmode" msgstr="Modalità Semplice"/>
+	<message msgid="dash about" msgstr="Informazioni su"/>
+	<message msgid="dash home" msgstr="Home"/>
+	<message msgid="dash logout" msgstr="Logout"/>
+	<message msgid="dash welcome" msgstr="Benvenuti: Amministrazione"/>
+	<message msgid="dash title" msgstr="Stato"/>
+	<message msgid="dash ref interval" msgstr="Intervallo di aggiornamento"/>
+	<message msgid="dash ref none" msgstr="Nessuno"/>
+	<message msgid="dash ref 5s" msgstr="60 secondi"/>
+	<message msgid="dash ref 10s" msgstr="120 secondi"/>
+	<message msgid="dash ref 15s" msgstr="180 secondi"/>
+	<message msgid="dash ref 20s" msgstr="240 secondi"/>
+	<message msgid="dash ref 25s" msgstr="300 secondi"/>
+	<message msgid="dash ref 30s" msgstr="30 secondi"/>
+	<message msgid="dash ref apply" msgstr="Aggiorna ora"/>
+	<message msgid="dash logout title" msgstr="Logout"/>
+	<message msgid="dash logout mes" msgstr="Eseguire il logout?"/>
+	<message msgid="dash logout no" msgstr="No"/>
+	<message msgid="dash logout yes" msgstr="Sì"/>
+	<message msgid="dash about title" msgstr="Informazioni su"/>
+	<message msgid="dash about check1" msgstr="To upgrade your NBG4615 with the latest firmware, please visit us on the web at " />
+	<message msgid="dash about check2" msgstr="." />
+	<message msgid="dash about close" msgstr="Chiudi"/>
+	<message msgid="dash_info title" msgstr="Informazioni sul dispositivo"/>
+	<message msgid="dash_info item" msgstr="Voce"/>
+	<message msgid="dash_info data" msgstr="Dati"/>
+	<message msgid="dash_info hostname" msgstr="Nome host"/>
+	<message msgid="dash_info fwver" msgstr="Versione firmware"/>
+	<message msgid="dash_info sys opmode" msgstr="Modalità operativa sistema"/>
+	<message msgid="dash_info sys router" msgstr="Modalità router"/>
+	<message msgid="dash_info sys ap" msgstr="Modalità Access Point"/>
+	<message msgid="dash_info sys clinet" msgstr="Modalità client"/>
+	<message msgid="dash_info sys wds" msgstr="Modalità Bridge (WDS)"/>
+	<message msgid="dash_info sys apwds" msgstr="Modalità AP + Ripetitore (AP +WDS)"/>
+	<message msgid="dash_info sys apcli" msgstr="Modalità client AP"/>
+	<message msgid="dash_info sys wisp" msgstr="Modalità WISP"/>
+	<message msgid="dash_info wan info" msgstr="Informazioni WAN"/>
+	<message msgid="dash_info wan mac" msgstr="Indirizzo MAC"/>
+	<message msgid="dash_info wan ip" msgstr="Indirizzo IP"/>
+	<message msgid="dash_info wan mask" msgstr="Maschera di subnet IP"/>
+	<message msgid="dash_info wan contype" msgstr="Tipo connesso"/>
+	<message msgid="dash_info lan info" msgstr="Informazioni LAN"/>
+	<message msgid="dash_info lan mac" msgstr="Indirizzo MAC"/>
+	<message msgid="dash_info lan ip" msgstr="Indirizzo IP"/>
+	<message msgid="dash_info lan mask" msgstr="Maschera di subnet IP"/>
+	<message msgid="dash_info lan dhcp" msgstr="DHCP"/>
+	<message msgid="dash_info lan dhcp srv" msgstr="Server"/>
+	<message msgid="dash_info lan dhcp dis" msgstr="Disattiva"/>
+	<message msgid="dash_info wlan info" msgstr="Informazioni WLAN"/>
+	<message msgid="dash_info wlan opmode" msgstr="Modalità OP WLAN"/>
+	<message msgid="dash_info wlan ap0" msgstr="Modalità Access Point"/>
+	<message msgid="dash_info wlan ap1" msgstr="Modalità Access Point"/>
+	<message msgid="dash_info wlan cli" msgstr="Modalità client"/>
+	<message msgid="dash_info wlan wds" msgstr="Modalità Bridge (WDS)"/>
+	<message msgid="dash_info wlan apwds" msgstr="Modalità AP + Bridge (AP +WDS)"/>
+	<message msgid="dash_info wlan apcli" msgstr="Modalità client AP"/>
+	<message msgid="dash_info wlan wisp" msgstr="Modalità client wireless"/>
+	<message msgid="dash_info wlan mac" msgstr="Indirizzo MAC"/>
+	<message msgid="dash_info wlan status" msgstr="Stato"/>
+	<message msgid="dash_info wlan status off" msgstr="DISATTIVATO"/>
+	<message msgid="dash_info wlan status on" msgstr="ATTIVATO"/>
+	<message msgid="dash_info wlan status essid" msgstr="ESSID"/>
+	<message msgid="dash_info wlan status namessid" msgstr="Nome (SSID)"/>
+	<message msgid="dash_info wlan chan" msgstr="Canale"/>
+	<message msgid="dash_info wlan chan auto" msgstr="Canale automatico"/>
+	<message msgid="dash_info wlan opchan" msgstr="Canale operativo"/>
+	<message msgid="dash_info wlan sec" msgstr="Modalità di sicurezza"/>
+	<message msgid="dash_info wlan sec nosec" msgstr="Nessuna protezione"/>
+	<message msgid="dash_info wlan 80211mode" msgstr="Mod. 802.11"/>
+	<message msgid="dash_info wlan 80211mode config" msgstr="Configurato"/>
+	<message msgid="dash_info ifstat title" msgstr="Stato dell'interfaccia"/>
+	<message msgid="dash_info ifstat if" msgstr="Interfaccia"/>
+	<message msgid="dash_info ifstat stat" msgstr="Stato"/>
+	<message msgid="dash_info ifstat rate" msgstr="Velocità"/>
+	<message msgid="dash_info ifstat wan" msgstr="WAN"/>
+	<message msgid="dash_info ifstat wan down" msgstr="In arrivo"/>
+	<message msgid="dash_info ifstat wan up" msgstr="In uscita"/>
+	<message msgid="dash_info ifstat lan" msgstr="LAN"/>
+	<message msgid="dash_info ifstat lan up" msgstr="In uscita"/>
+	<message msgid="dash_info ifstat wlan" msgstr="WLAN"/>
+	<message msgid="dash_info ifstat wlan down" msgstr="In arrivo"/>
+	<message msgid="dash_info ifstat wlan up" msgstr="In uscita"/>
+	<message msgid="dash_info systat title" msgstr="Stato del sistema"/>
+	<message msgid="dash_info systat item" msgstr="Voce"/>
+	<message msgid="dash_info systat data" msgstr="Dati"/>
+	<message msgid="dash_info systat sysuptime" msgstr="Tempo di attività sistema"/>
+	<message msgid="dash_info systat currtime" msgstr="Data/ora correnti"/>
+	<message msgid="dash_info systat sysres" msgstr="Risorsa del sistema"/>
+	<message msgid="dash_info systat cpu" msgstr="Uso della CPU"/>
+	<message msgid="dash_info systat mem" msgstr="Uso della memoria"/>
+	<message msgid="dash_info systat setting" msgstr="Impostazioni di sistema"/>
+	<message msgid="dash_info systat setting fw" msgstr="Firewall"/>
+	<message msgid="dash_info systat setting en" msgstr="Attivato"/>
+	<message msgid="dash_info systat setting dis" msgstr="Disattivato"/>
+	<message msgid="dash_info systat bm" msgstr="Gestione della banda"/>
+	<message msgid="dash_info systat bm en" msgstr="Attivato"/>
+	<message msgid="dash_info systat bm dis" msgstr="Disattivato"/>
+	<message msgid="dash_info systat upnp en" msgstr="Attivato"/>
+	<message msgid="dash_info systat upnp dis" msgstr="Disattivato"/>
+	<message msgid="dash_info systat confmode" msgstr="Modalità di configurazione"/>
+	<message msgid="dash_info systat confmode exp" msgstr="Esperto"/>
+	<message msgid="dash_info sum title" msgstr="Riepilogo"/>
+	<message msgid="dash_info sum bw" msgstr="Monitor Gestione banda"/>
+	<message msgid="dash_info sum bw det" msgstr="Dettagli"/>
+	<message msgid="dash_info sum dhcp" msgstr="Tabella DHCP"/>
+	<message msgid="dash_info sum dhcp det" msgstr="Dettagli"/>
+	<message msgid="dash_info sum pktstat" msgstr="Statistiche pacchetti"/>
+	<message msgid="dash_info sum pktstat det" msgstr="Dettagli"/>
+	<message msgid="dash_info sum wlan" msgstr="Stato stazione WLAN"/>
+	<message msgid="dash_info sum wlan det" msgstr="Dettagli"/>
+	<message msgid="networkmap Home" msgstr="Home"/>
+	<message msgid="networkmap ExpertMode" msgstr="Modalità Esperto"/>
+	<message msgid="networkmap Logout" msgstr="Logout"/>
+	<message msgid="networkmap Modem" msgstr="Modem"/>
+	<message msgid="networkmap Status" msgstr="Stato"/>
+	<message msgid="networkmap Name" msgstr="Nome del sistema :"/>
+	<message msgid="networkmap Time" msgstr="Orario :"/>
+	<message msgid="networkmap WANIP" msgstr="IP WAN :"/>
+	<message msgid="networkmap MACAddress" msgstr="Indirizzo MAC :"/>
+	<message msgid="networkmap FirmwareVersion" msgstr="Versione firmware :"/>
+	<message msgid="networkmap WirelessNetworkNameSSID" msgstr="Nome della rete Wireless (SSID) :"/>
+	<message msgid="networkmap Security" msgstr="Sicurezza :"/>
+	<message msgid="networkmap NetworkMAP" msgstr="MAP rete"/>
+	<message msgid="networkmap GameEngine" msgstr="Game Engine"/>
+	<message msgid="networkmap ParenetalControl" msgstr="Filtro contenuti"/>
+	<message msgid="networkmap BandwidthMGMT" msgstr="Gestione banda"/>
+	<message msgid="networkmap Firewall" msgstr="Firewall"/>
+	<message msgid="networkmap WirelessSecurity" msgstr="Protezione Wireless"/>
+	<message msgid="networkmap PowerSaving" msgstr="Risparmio energetico"/>
+	<message msgid="networkmap ScanningyourNetwork" msgstr="Analisi della rete..."/>
+	<message msgid="Logout" msgstr="Logout"/>
+	<message msgid="Home" msgstr="Home"/>
+	<message msgid="About" msgstr="Informazioni su"/>
+	<message msgid="EasyMode" msgstr="Modalità Semplice"/>
+	<message msgid="WelcomeAdmin" msgstr="Benvenuti: Amministrazione"/>
+	<message msgid="openall" msgstr="apri tutto"/>
+	<message msgid="closeall" msgstr="chiudi tutto"/>
+	<message msgid="CONFIGURATION" msgstr="Configurazione"/>
+	<message msgid="CONFIGURATION_TITLE" msgstr="CONFIGURAZIONE"/>
+	<message msgid="Network" msgstr="Rete"/>
+	<message msgid="Wireless LAN" msgstr="LAN Wireless"/>
+	<message msgid="General" msgstr="Generale"/>
+	<message msgid="WAN" msgstr="WAN"/>
+	<message msgid="Internet Connection" msgstr="Connessione a Internet"/>
+	<message msgid="LAN" msgstr="LAN"/>
+	<message msgid="DHCP Server" msgstr="Server DHCP"/>
+	<message msgid="Static Route" msgstr="Routing statico"/>
+	<message msgid="IP Static Route" msgstr="Routing statico IP"/>
+	<message msgid="Security" msgstr="Sicurezza"/>
+	<message msgid="Firewall" msgstr="Firewall"/>
+	<message msgid="Content Filter" msgstr="Filtro contenuti"/>
+	<message msgid="Utility" msgstr="Utility"/>
+	<message msgid="Bandwidth Management" msgstr="Gestione della banda"/>
+	<message msgid="IGMP Snooping" msgstr="IGMP Snooping"/>
+	<message msgid="IP Alias" msgstr="IP Alias"/>
+	<message msgid="MAC Filter" msgstr="Filtro MAC"/>
+	<message msgid="Advanced" msgstr="Avanzate"/>
+	<message msgid="WPS Station" msgstr="Stazione WPS"/>
+	<message msgid="Scheduling" msgstr="Pianificazione"/>
+	<message msgid="AP Client" msgstr="Client AP"/>
+	<message msgid="WDS" msgstr="WDS"/>
+	<message msgid="Client" msgstr="Client"/>
+	<message msgid="Application" msgstr="Applicazione"/>
+	<message msgid="Services" msgstr="Servizi"/>
+	<message msgid="SPI" msgstr="SPI"/>
+	<message msgid="RIP" msgstr="RIP"/>
+	<message msgid="Routing" msgstr="Routing"/>
+	<message msgid="Monitor" msgstr="Monitor"/>
+	<message msgid="Parental Control" msgstr="Filtro contenuti"/>
+	<message msgid="MAINTENANCE" msgstr="MANUTENZIONE"/>
+	<message msgid="Maintenance" msgstr="Manutenzione"/>
+	<message msgid="Password" msgstr="Password"/>
+	<message msgid="Time" msgstr="Orario"/>
+	<message msgid="Time Setting" msgstr="Impostazione orario"/>
+	<message msgid="Remote Management" msgstr="Gestione remota"/>
+	<message msgid="Firmware Upgrade" msgstr="Aggiornamento firmware"/>
+	<message msgid="Backup Restore" msgstr="Backup / Ripristino"/>
+	<message msgid="Reset Restart" msgstr="Reimposta/Riavvia"/>
+	<message msgid="Sys OP Mode" msgstr="Modalità operativa sistema"/>
+	<message msgid="Password Setup" msgstr="Configurazione password "/>
+	<message msgid="Restart" msgstr="Riavvia"/>
+	<message msgid="MONITOR" msgstr="MONITOR"/>
+	<message msgid="Monitor" msgstr="Monitor"/>
+	<message msgid="Log" msgstr="Registro"/>
+	<message msgid="View Log" msgstr="Visualizza registro"/>
+	<message msgid="Log Settings" msgstr="Impostazioni registri"/>
+	<message msgid="BW MGMT Monitor" msgstr="Monitor Gestione banda"/>
+	<message msgid="DHCP Table" msgstr="Tabella DHCP"/>
+	<message msgid="Packet Statistics" msgstr="Statistiche pacchetti"/>
+	<message msgid="WLAN Station Status" msgstr="Stato stazione WLAN"/>
+	<message msgid="Association List" msgstr="Elenco associazioni"/>
+	<message msgid="Sys OP Mode" msgstr="Modalità operativa sistema"/>
+	<message msgid="Password Setup" msgstr="Configurazione password "/>
+	<message msgid="Restart" msgstr="Riavvia"/>
+	<message msgid="message_header" msgstr="Messaggio"/>
+	<message msgid="Unconfigured" msgstr="Non configurato"/>
+	<message msgid="Configured" msgstr="Configurato"/>
+	<message msgid="System Name cannot be empty." msgstr="Il Nome del sistema non può essere vuoto."/>
+	<message msgid="Domain Name cannot be empty." msgstr="Il Nome dominio non può essere vuoto."/>
+	<message msgid="Please specify Administrator Inactivity Timer." msgstr="Specificare il timer inattività amministratore."/>
+	<message msgid="Invalid Administrator Inactivity Timer" msgstr="Timer inattività amministratore non valido"/>
+	<message msgid="Error: Confirm password not match!!" msgstr="Errore: La password di conferma non corrisponde."/>
+<!-- loading.asp -->
+<message msgid="proceeding message 1" msgstr="Aggiornamento della configurazione in corso.  Attendere prego..."/>
+<!-- loading.asp -->
+<!-- proceeding.asp -->
+<message msgid="proceeding message 2" msgstr="Il dispositivo sarà ora riavviato.Dato che non vi sarà alcuna indicazione di completamento del processo, attendere un minuto prima di provare nuovamente ad accedere al router. "/>
+<message msgid="proceeding Restart" msgstr="Il dispositivo si sta riavviando."/>
+<!-- proceeding.asp -->
+<!-- upload_process.html -->
+<message msgid="proceeding message 3" msgstr="Aggiornamento del firmware in corso...  Attendere...  "/>
+<message msgid="proceeding message 4" msgstr="Il dispositivo si sta riavviando. Attendere... "/>
+<message msgid="proceeding message 5" msgstr="Fare attenzione a NON spegnere il dispositivo."/>
+<!-- upload_process.html -->
+<message msgid="main Ready" msgstr="Pronto"/>
+<message msgid="main ConfigurationSuccess" msgstr="Aggiornamento della configurazione eseguito con successo"/>
+<message msgid="main ConfigurationProceeding" msgstr="Aggiornamento della configurazione in corso.  Attendere prego..."/>
+<message msgid="main firmware download in progress" msgstr="Download del firmware in corso. Attendere prego . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Aggiornamento del firmware in corso. Attendere e fare attenzione a NON spegnere il dispositivo."/>
+<message msgid="Management" msgstr="Management"/>
+<!-- parental_control.asp 20090624 add-->
+<message msgid="Key_Word" msgstr="Aggiungi parola chiave"/>
+<message msgid="change_password" msgstr="Usa questa schermata per cambiare la password"/>
+<message msgid="Disassociated" msgstr="Non associato"/>
+<message msgid="Associated" msgstr="Associato"/>
+<message msgid="Connect Status" msgstr="Stato della connessione"/>
+
+<!-- added by NBG4615 -->
+	<message msgid="g41 msg2" msgstr="È vivamente consigliato impostare la crittografia WPA o WPA2 per una migliore sicurezza wireless."/>
+	<message msgid="g5 msg2" msgstr="Per aggiornare il dispositivo con il firmware più recente, visitare il nostro sito Web all'indirizzo www.ZyXEL.com."/>
+	<message msgid="g5 msg3" msgstr="In alternativa, aprire Modalità Esperto &gt; Manutenzione &gt; Aggiornamento firmware per aggiornare il firmware on-line."/>
+	<message msgid="dash_info wlan sec wep" msgstr="WEP statico"/>
+	<message msgid="dash_info wlan sec wpapsk" msgstr="WPA-PSK"/>
+	<message msgid="dash_info wlan sec wpa2psk" msgstr="WPA2-PSK"/>
+	<message msgid="dash_info wlan sec wpapskwpa2psk" msgstr="WPA-PSK/WPA2-PSK"/>
+	<message msgid="dash_info wlan sec wpawpa2" msgstr="WPA/WPA2"/>
+	<message msgid="IPv6" msgstr="IPv6"/>
+	<message msgid="NAT" msgstr="NAT"/>
+	<message msgid="DDNS" msgstr="DDNS"/>
+	<message msgid="UPnP" msgstr="UPnP"/>
+	<message msgid="dash_info wan3G simstatus" msgstr="Stato carta SIM"/>
+	<message msgid="dash_info ifstat wan3G" msgstr="Modem 3G"/>
+	<message msgid="dash_info ifstat wan3G up" msgstr="In uscita"/>
+	<message msgid="dash_info ifstat wan3G down" msgstr="In arrivo"/>
+	<message msgid="dash_info sum3G title" msgstr="Stato 3G"/>
+	<message msgid="dash_info systat item" msgstr="Voce"/>
+	<message msgid="dash_info systat data" msgstr="Dati"/>
+	<message msgid="dash_info conn3G status" msgstr="Stato connessione 3G"/>
+	<message msgid="dash_info wan3G ISP" msgstr="Service Provider"/>
+	<message msgid="dash_info wan3G SSI" msgstr="Intensità segnale"/>
+	<message msgid="dash_info wan3G uptime" msgstr="Up-Time ultima connessione"/>
+	<message msgid="dash_info wan3G Manufacturer" msgstr="Produttore carta 3G"/>
+	<message msgid="dash_info wan3G Model" msgstr="Modello carta 3G"/>
+	<message msgid="dash_info wan3G firmware" msgstr="Revisione firmware carta 3G"/>
+	<message msgid="dash_info wan3G IMEI" msgstr="IMEI carta 3G"/>
+	<message msgid="dash_info wan3G SIM_IMEI" msgstr="IMEI carta SIM"/>
+	<message msgid="dash_info wan3G ready" msgstr="Pronto"/>
+	<message msgid="dash_info wan3G not_ready" msgstr="Non pronto"/>
+	<message msgid="dash_info wan3G SSIunit" msgstr="dBm"/>
+	<message msgid="g2-1 ServiceName" msgstr="Nome servizio:"/>
+	<message msgid="Site Survey" msgstr="Analisi sito"/>
+	<message msgid="System do not support specific invalid characters" msgstr="Il sistema non supporta caratteri non validi specifici"/>
+	<message msgid="It is strongly recommended to set WPA or WPA2 encryption for better wireless security." msgstr="È vivamente consigliato impostare la crittografia WPA o WPA2 per una migliore sicurezza wireless."/>
+	<message msgid="Please enter SSID!" msgstr="Inserire il codice SSID."/>
+	<message msgid="Please enter Password!" msgstr="Inserire la password."/>
+	<message msgid="Password should be with length 8~64" msgstr="La password deve essere lunga da 8 a 64."/>
+	<message msgid="Please enter Verify Password correctly!" msgstr="Inserire la password di verifica corretta."/>
+	<message msgid="Error. IP address is empty." msgstr="Errore. L'indirizzo IP è vuoto."/>
+	<message msgid="It should be a [0-9] number." msgstr="Deve essere un numero [0-9]."/>
+	<message msgid="IP adress format error." msgstr="Errore formato indirizzo IP."/>
+	<message msgid="PPPoE user name should not be empty!" msgstr="Il nome utente PPPoE non deve essere vuoto."/>
+	<message msgid="PPPoE password should not be empty!" msgstr="La password PPPoE non deve essere vuota."/>
+	<message msgid="First DNS Server should not be empty with User-Defined." msgstr="Server DNS principale non dovrebbe essere vuoto con Definito dall'utente."/>
+	<message msgid="First DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Server DNS principale non deve essere 0.0.0.0, fornire un indirizzo IP del DNS."/>
+	<message msgid="Second DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Server DNS secondario non deve essere 0.0.0.0, fornire un indirizzo IP del DNS."/>
+	<message msgid="PPTP user name should not be empty!" msgstr="Il nome utente PPTP non deve essere vuoto."/>
+	<message msgid="PPTP password should not be empty!" msgstr="La password PPTP non deve essere vuota."/>
+	<message msgid="L2TP user name should not be empty!" msgstr="Il nome utente L2TP non deve essere vuoto."/>
+	<message msgid="L2TP password should not be empty!" msgstr="La password L2TP non deve essere vuota."/>
+	<message msgid="WWW" msgstr="WWW"/>
+	<message msgid="QoS" msgstr="QoS"/>
+	<message msgid="WPS" msgstr="WPS"/>
+	<message msgid="Universal Repeater" msgstr="Ripetitore universale"/>
+</po>

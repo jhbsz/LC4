@@ -1,0 +1,47 @@
+--- UVNCRepeater.old/Makefile	2007-10-24 00:15:31.000000000 +0800
++++ UVNCRepeater.new/Makefile	2010-04-09 15:15:54.585573319 +0800
+@@ -1,28 +1,28 @@
+ CFLAGS=-Wall
+ OBJDIR=/etc/uvnc
+ repeater: repeater.o repeaterproc.o openbsd_stringfuncs.o iniparser.o readini.o repeaterutil.o repeaterevents.o
+-	g++ $(CFLAGS) -o repeater repeater.o repeaterproc.o openbsd_stringfuncs.o iniparser.o readini.o repeaterutil.o repeaterevents.o
+-	gcc $(CFLAGS) -o start-stop-daemon start-stop-daemon.c
+-repeater.o: repeater.cpp
+-	g++ $(CFLAGS) -c repeater.cpp
++	$(CC) $(CFLAGS) -o repeater repeater.o repeaterproc.o openbsd_stringfuncs.o iniparser.o readini.o repeaterutil.o repeaterevents.o
++	$(CC) $(CFLAGS) -o start-stop-daemon start-stop-daemon.c
++repeater.o: repeater.c
++	$(CC) $(CFLAGS) -c repeater.c
+ 
+-repeaterproc.o: repeaterproc.cpp
+-	g++ $(CFLAGS) -c repeaterproc.cpp
++repeaterproc.o: repeaterproc.c
++	$(CC) $(CFLAGS) -c repeaterproc.c
+ 
+-openbsd_stringfuncs.o: openbsd_stringfuncs.cpp
+-	g++ $(CFLAGS) -c openbsd_stringfuncs.cpp
++openbsd_stringfuncs.o: openbsd_stringfuncs.c
++	$(CC) $(CFLAGS) -c openbsd_stringfuncs.c
+ 
+-iniparser.o: iniparser.cpp
+-	g++ $(CFLAGS) -c iniparser.cpp
++iniparser.o: iniparser.c
++	$(CC) $(CFLAGS) -c iniparser.c
+ 
+-readini.o: readini.cpp
+-	g++ $(CFLAGS) -c readini.cpp
++readini.o: readini.c
++	$(CC) $(CFLAGS) -c readini.c
+ 
+-repeaterutil.o: repeaterutil.cpp
+-	g++ $(CFLAGS) -c repeaterutil.cpp
++repeaterutil.o: repeaterutil.c
++	$(CC) $(CFLAGS) -c repeaterutil.c
+ 
+-repeaterevents.o: repeaterevents.cpp
+-	g++ $(CFLAGS) -c repeaterevents.cpp
++repeaterevents.o: repeaterevents.c
++	$(CC) $(CFLAGS) -c repeaterevents.c
+ 
+ clean:
+ 	rm -f *.o repeater start-stop-daemon

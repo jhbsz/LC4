@@ -1,0 +1,27 @@
+diff -Naur lighttpd-1.4.30/src/mod_webdav.c _lighttpd-1.4.30/src/mod_webdav.c
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-03-07 11:32:55.945157454 +0800
++++ _lighttpd-1.4.30/src/mod_webdav.c	2013-03-07 19:16:50.847192118 +0800
+@@ -1524,13 +1524,14 @@
+ 		case 1:
+ 			if (NULL != (dir = opendir(con->physical.path->ptr))) {
+ 				struct dirent *de;
++				int iFile_Amount_Counter = 0;
+ 				physical d;
+ 				physical *dst = &(con->physical);
+ 
+ 				d.path = buffer_init();
+ 				d.rel_path = buffer_init();
+ 
+-				while(NULL != (de = readdir(dir))) {
++				while(NULL != (de = readdir(dir)) && (iFile_Amount_Counter <= 5000)) {
+ 					if (de->d_name[0] == '.' && de->d_name[1] == '.' && de->d_name[2] == '\0') {
+ 						continue;
+ 						/* ignore the parent dir */
+@@ -1554,6 +1555,7 @@
+ 
+ 					webdav_get_props(srv, con, p, &d, req_props, prop_200, prop_404);
+ 
++					iFile_Amount_Counter++;
+ 					buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
+ 					buffer_append_string_len(b,CONST_STR_LEN("<D:href>"));
+ 					buffer_append_string_buffer(b, con->uri.scheme);

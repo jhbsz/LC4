@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=72
+BIN="/sbin/sysctl -p"
+DIR="/etc/session_manager"
+log_msg="Session-Manager"
+
+start () {
+    local mode=$(nvram get sm_mode)
+    case $mode in 
+        "fast")
+            $BIN $DIR/sm_fast || err=1
+            ;;
+        "regular")
+            $BIN $DIR/sm_regular || err=1
+            ;;
+        "slow")
+            $BIN $DIR/sm_slow || err=1
+            ;;
+        *)
+            $BIN $DIR/sm_fast || err=1
+            ;;
+    esac
+    return $err
+}
+
+stop () {
+    return $err
+}

@@ -1,0 +1,12 @@
+--- lighttpd-1.4.30/src/mod_fastcgi.c	2011-08-20 21:47:09.000000000 +0800
++++ lighttpd-1.4.30/src/mod_fastcgi.c	2014-05-11 17:05:21.261872820 +0800
+@@ -2706,6 +2714,9 @@
+ 			if (host->mode != FCGI_AUTHORIZER ||
+ 			    !(con->http_status == 0 ||
+ 			      con->http_status == 200)) {
++                if(!con->file_started && (hctx->response_header->used > 0)) {
++                    http_chunk_append_mem(srv, con, hctx->response_header->ptr, hctx->response_header->used);
++                }
+ 				/* send chunk-end if necessary */
+ 				http_chunk_append_mem(srv, con, NULL, 0);
+ 				joblist_append(srv, con);

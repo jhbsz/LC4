@@ -1,0 +1,49 @@
+--- lighttpd-1.4.30/src/connections.c	2014-09-02 09:23:07.890294016 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-09-02 09:27:41.746297255 +0800
+@@ -912,7 +912,11 @@
+  * After 2 nested \n[\r*]\n, we will find file data.
+  * */
+ static int get_multipart_boundary(chunk *dst_c, connection *con) {
+-    if(!dst_c->boundary) {
++    if(!con->request.http_content_type) {
++        dst_c->boundary = NULL;
++        dst_c->boundary_len = 0;
++    }
++    else if(!dst_c->boundary) {
+         dst_c->boundary = strstr(con->request.http_content_type, "boundary=") + 9;
+         if(dst_c->boundary) {
+             trim_tail(dst_c->boundary, "\r\n");
+@@ -966,6 +970,7 @@
+ }
+ 
+ static char *find_header_data_boundary(char *startp) {
++    char *tmp = startp;
+     startp = strstr(startp, "Content-Type:");
+     if(startp) {
+         startp = strchr(startp, '\n');
+@@ -976,12 +981,25 @@
+         startp ++;
+         return startp;
+     }
++    else {
++        startp = strstr(tmp, "binfile");
++        if(startp) {
++            startp = strchr(startp, '\n');
++            if(!startp) goto header_data_boundary_not_found;
++            startp ++;
++            startp = strchr(startp, '\n');
++            if(!startp) goto header_data_boundary_not_found;
++            startp ++;
++            return startp;
++        }
++    }
+ header_data_boundary_not_found:
+     return NULL;
+ }
+ 
+ static char *find_data_remainder_boundary(chunk *dst_c, char *startp, off_t toRead) {
+     off_t len;
++    if(dst_c->boundary_len == 0) return NULL;
+     if(toRead > dst_c->boundary_len) {
+         for (len=0; len < toRead - dst_c->boundary_len ; len ++) {
+             /* Find across all receiving buffer to find if

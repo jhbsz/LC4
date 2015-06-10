@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+START=89
+start () {
+    ID="$(nvram get ddns_id_rule)" 
+    PASSWORD="$(nvram get ddns_password_rule)"       
+    NAME="$(nvram show wan_ddns_rule 0 hostname)"
+    TIME="$(nvram show wan_ddns_rule 0 server)"
+    MAC=`echo $(nvram get wan_hwaddr_rule_default) |sed s/://g`
+
+    touch /tmp/ddns_result
+    [ -z "$ID" -o -z "$PASSWORD" -o "$ID" = "DDNS" -o "$PASSWORD" = "DDNS" ] && {
+        result=`/usr/sbin/als-ddns register $MAC |sed s/\"//g|sed s/{//g|sed s/}//g`
+        ACTION="register"
+    } || {
+        #[ "$(nvram show wan_ddns_rule 0 enable)" = "0" ] && {
+        #    cp /etc/crontabs/root.bak /etc/crontabs/root
+        #    exit
+        #}
+        [ -n $NAME ] && {
+            result=`/usr/sbin/als-ddns update $ID $PASSWORD $NAME |sed s/\"//g|sed s/{//g|sed s/}//g`
+            ACTION="update"
+        }
+    }
+        IFS=","
+        export IFS;
+        for x in $result
+        do
+            IFS=":"                                                                                                                    
+            export IFS; 
+            title=`echo $x |awk '{printf $1}'`
+            [ $title = "status_text" ] && STATUS_TEXT=`echo $x |awk '{printf $2 " " $3 " " $4}'` 
+            data=`echo $x |awk '{printf $2}'`
+            [ $title = "status" ] && STATUS=$data 
+            [ $title = "id" ] && id=$data 
+            [ $title = "password" ] && password=$data 
+        done
+        
+        [ $ACTION = "register" ] && {
+            [ $STATUS = "OK" ] && {
+                nvram fset ddns_id_rule="$id"
+                nvram fset ddns_password_rule="$password"
+            } || {
+                nvram fset ddns_id_rule=""
+                nvram fset ddns_password_rule=""
+            }
+            nvram commit
+        }
+
+	[ $STATUS ] && {
+            echo "$STATUS,$STATUS [ $STATUS_TEXT] " > /tmp/ddns_result
+	}
+
+        [ $TIME ] && [ $TIME -gt 9 ] && { 
+            [ -z "$(cat /etc/crontabs/root |grep als)" ] && {
+           	cp /etc/crontabs/root /etc/crontabs/root.bak 
+            } 
+            [ "$(cat /etc/crontabs/root |grep als |awk '{print $1}')" != "*/$TIME" ] && {
+           	cp /etc/crontabs/root.bak /etc/crontabs/root
+                echo "*/$TIME * * * * /etc/rc.common /etc/init.d/als-ddns start" >> /etc/crontabs/root
+                /etc/rc.common /etc/init.d/cron stop
+            }
+        }
+}
+stop () {
+    killall als-ddns
+    return 1
+}

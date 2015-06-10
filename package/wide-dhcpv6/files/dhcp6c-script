@@ -1,0 +1,71 @@
+#!/bin/sh
+# dhcp6c-script for Debian/Ubuntu. Jaramie Corbier, April, 2006.
+# resolvconf support by Mattias Guns, May 2006.
+
+
+#RESOLVCONF="/sbin/resolvconf"
+#[ -f /etc/default/wide-dhcpv6-client ] && . /etc/default/wide-dhcpv6-client
+#if [ -n "$new_domain_name" -o -n "$new_domain_name_servers" ]; then
+#    new_resolv_conf=/etc/resolv.conf.dhcp6c-new
+#    rm -f $new_resolv_conf
+#    if [ -n "$new_domain_name" ]; then
+#        echo search $new_domain_name >> $new_resolv_conf
+#    fi
+#    if [ -n "$new_domain_name_servers" ]; then
+#        local i=1
+#        for nameserver in $new_domain_name_servers; do
+#            echo nameserver $nameserver >> $new_resolv_conf
+#            nvram replace attr wan_dnsv6_rule 0 dns$i $nameserver
+#            i=$(($i + 1))
+#        done
+#    fi
+#    # Use resolvconf if available
+#    if [ -h "/etc/resolv.conf" -a -x "$RESOLVCONF" ]; then
+#        for IFACE in $INTERFACES; do
+#            cat $new_resolv_conf | $RESOLVCONF -a $IFACE
+#        done
+#    else
+#        # To preserve IPv4 informations...
+#        cat /etc/resolv.conf >> $new_resolv_conf
+#        chown --reference=/etc/resolv.conf $new_resolv_conf
+#        chmod --reference=/etc/resolv.conf $new_resolv_conf
+#        cat $new_resolv_conf > /etc/resolv.conf
+#    fi
+#fi
+# We can have settings like
+# 1. new_domain_name="aximcom.com"
+# 2. new_domain_name_servers="2001:feed:1::1 2001:feed:1::2"
+# 3. new_ntp_servers
+# 4. new_nis_servers
+# 5. new_nis_name
+# 6. new_nisp_servers
+# 7. new_nisp_name
+# 8. new_bcmcs_servers
+# 9. new_bcmcs_name
+# 10. new_sip_servers
+# 11. new_sip_name
+# 12. ipaddr_name
+[ -f /etc/network.sh ] && . /etc/network.sh
+
+echo "$ipaddr_name" > /tmp/truncatestr
+ipaddr_name="$(sed 's/[\. ]* $//g' /tmp/truncatestr)"
+
+echo "$new_domain_name_servers" > /tmp/truncatestr
+new_domain_name_servers="$(sed 's/[\. ]* $//g' /tmp/truncatestr)"
+
+echo "$new_domain_name" > /tmp/truncatestr
+new_domain_name="$(sed 's/[\. ]* $//g' /tmp/truncatestr)"
+
+nvram fset wan0_ipaddrv6="${ipaddr_name}"
+nvram fset wan0_dnsv6="$new_domain_name_servers"
+gateway="$(nvram get wan0_gatewayv6)"
+mask="$(nvram get wan0_maskv6)"
+prefix="$(nvram get wan0_prefixv6)"
+nvram replace attr wan_dhcpv6_rule 0 domain "$new_domain_name" 
+# FIXME !! We have to verify which wan the ipaddress comes from
+echo "ifacev6_up \"wan0\" \"${ipaddr_name}\" \"$mask\" \"$gateway\" \"$new_domain_name_servers\" \"$new_domain_name\" \"$prefix\"" > /tmp/dhcp6c_iface
+ifacev6_up "wan0" "${ipaddr_name}" "$mask" "$gateway" "$new_domain_name_servers" "$new_domain_name" "$prefix"
+# Update resolv.conf explicitly fopr combining IPv4 and IPv6 dns
+# update_resolv wan
+exit 0
+

@@ -1,0 +1,18 @@
+--- lighttpd/configure	2012-08-15 13:14:11.463845142 +0800
++++ lighttpd/configure	2012-08-15 13:28:57.984289590 +0800
+@@ -15982,7 +15982,6 @@
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 
+-$as_echo "#define HAVE_SENDFILE_BROKEN 1" >>confdefs.h
+ 
+ fi
+ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+@@ -15993,7 +15992,6 @@
+ 	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 
+-$as_echo "#define HAVE_SENDFILE_BROKEN 1" >>confdefs.h
+ 
+ 	fi
+ fi

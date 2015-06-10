@@ -1,0 +1,20 @@
+--- linux-2.6.36/drivers/usb/serial/option.c	2013-10-09 13:48:59.000000000 +0800
++++ linux-2.6.36/drivers/usb/serial/option1.c	2014-03-10 17:53:53.328394902 +0800
+@@ -392,6 +392,9 @@
+ #define CELOT_VENDOR_ID				0x211f
+ #define CELOT_PRODUCT_CT680M			0x6801
+ 
++/* U-Blox products */
++#define UBLOX_VENDOR_ID                         0x05c6
++#define UBLOX_PRODUCT_C200                      0x9004
+ /* some devices interfaces need special handling due to a number of reasons */
+ enum option_blacklist_reason {
+ 		OPTION_BLACKLIST_NONE = 0,
+@@ -925,6 +928,7 @@
+ 	{ USB_DEVICE(CINTERION_VENDOR_ID, 0x0047) },
+ 	{ USB_DEVICE(OLIVETTI_VENDOR_ID, OLIVETTI_PRODUCT_OLICARD100) },
+ 	{ USB_DEVICE(CELOT_VENDOR_ID, CELOT_PRODUCT_CT680M) }, /* CT-650 CDMA 450 1xEVDO modem */
++        { USB_DEVICE(UBLOX_VENDOR_ID, UBLOX_PRODUCT_C200) },
+ 	{ } /* Terminating entry */
+ };
+ MODULE_DEVICE_TABLE(usb, option_ids);

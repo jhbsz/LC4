@@ -1,0 +1,29 @@
+diff -Naur linux-2.6.24.4/crypto/Kconfig linux-2.6.24.4-oxnas/crypto/Kconfig
+--- linux-2.6.24.4/crypto/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/crypto/Kconfig	2009-05-08 16:21:12.000000000 +0800
+@@ -502,6 +502,14 @@
+ 	  Authenc: Combined mode wrapper for IPsec.
+ 	  This is required for IPSec.
+ 
++config CRYPTO_LZO
++	tristate "LZO compression algorithm"
++	select CRYPTO_ALGAPI
++	select LZO_COMPRESS
++	select LZO_DECOMPRESS
++	help
++	  This is the LZO algorithm.
++
+ source "drivers/crypto/Kconfig"
+ 
+ endif	# if CRYPTO
+diff -Naur linux-2.6.24.4/crypto/Makefile linux-2.6.24.4-oxnas/crypto/Makefile
+--- linux-2.6.24.4/crypto/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/crypto/Makefile	2009-05-08 16:21:12.000000000 +0800
+@@ -51,6 +51,7 @@
+ obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
+ obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
+ obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
++obj-$(CONFIG_CRYPTO_LZO) += lzo.o
+ obj-$(CONFIG_CRYPTO_AUTHENC) += authenc.o
+ 
+ obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o

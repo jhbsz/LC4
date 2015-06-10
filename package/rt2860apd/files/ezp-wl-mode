@@ -1,0 +1,255 @@
+#!/bin/sh
+
+# change wan interface device, mainly used in wifiwan or wisp
+# parameters
+# 1: wan num
+# 2: new device
+change_wan_device_ifname()
+{
+    local num="${1}"
+    local newdev="${2}"
+    local wandev="$(nvram get wan${num}_device)"
+    local wanifname="$(nvram get wan${num}_ifname)"
+    # when wan uses ifname same as device, change device
+    # means we have to change ifname too.
+    [ "${wanifname}" = "${wandev}" ] && {
+        nvram set "wan${num}_ifname=$newdev"
+    }
+    nvram set "wan${num}_device=$newdev"
+}
+
+# revert device from backup to original
+# parameters
+# 1: wan num
+revert_wan_device_ifname()
+{
+    local num="${1}"
+    local wandev="$(nvram get wan${num}_device)"
+    local wanifname="$(nvram get wan${num}_ifname)"
+    # when wan uses ifname same as device, change device
+    # means we have to change ifname too.
+    revertdev="$(nvram get wan${num}_device_backup)"
+    [ "${wanifname}" = "${wandev}" ] && {
+        nvram set "wan${num}_ifname=$revertdev"
+    }
+    nvram set "wan${num}_device=$revertdev"
+}
+
+# Modify br_rule member
+# $1 : add/del
+# $2 : ifname
+mod_lan_member()
+{
+    case "$1" in
+    add)
+        ifname="$2"
+        brifnames="$(nvram show br_rule 0 ifnames)"
+        [ -z "$(echo \"$brifnames\" | grep $ifname)" ] && {
+            brifnames="$brifnames $ifname"
+            nvram replace attr br_rule 0 ifnames "$brifnames"
+        }
+    ;;
+    del)
+        ifname="$2"
+        brifnames="$(nvram show br_rule 0 ifnames)"
+        [ -n "$(echo \"$brifnames\" | grep $ifname)" ] && {
+            brifnames="$(nvram show br_rule 0 ifnames | sed s/$ifname//g | sed 's/  / /g' )"
+            nvram replace attr br_rule 0 ifnames "$brifnames"
+        }
+    ;;
+    *)
+    esac
+}
+
+sleep 1
+new_wl_mode="$1"
+post_action="$2"
+orig_wl_mode="$(nvram get op_mode)"
+local PLATFORM="$(nvram get platform)"
+[ "${orig_wl_mode}" = "${new_wl_mode}" ] && {
+    echo "nochange"
+    exit
+}
+case ${new_wl_mode} in
+gateway)
+    # switch to normal mode
+    [ "${orig_wl_mode}" = "wisp" -o "${orig_wl_mode}" = "ur" ] && {
+        revert_wan_device_ifname "0" 
+        # disable apcli function
+        nvram replace attr wl0_apcli_rule 0 enable 0
+    }
+    [ "$(nvram get switch_type)" = "ar8316" ] && {
+        # With Amit giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "AMC" -o "$PLATFORM" = "AMD" -o "$PLATFORM" = "GMA" ] && {
+            nvram replace attr vlan_rule 0 portmember "011111"
+            nvram replace attr vlan_rule 1 portmember "100001"
+            nvram replace attr vlanport_rule 0 pvid "2"
+        } || {
+            nvram replace attr vlan_rule 0 portmember "111101"
+            nvram replace attr vlan_rule 1 portmember "000011"
+            nvram replace attr vlanport_rule 4 pvid "2"
+        }
+    } || {
+        # With Baudtec giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "BAB" ] && {
+            nvram replace attr vlan_rule 0 portmember "0111101"
+            nvram replace attr vlan_rule 1 portmember "1000001"
+            nvram replace attr vlanport_rule 0 pvid "2"
+        } || {
+            nvram replace attr vlan_rule 0 portmember "1111001"
+            nvram replace attr vlan_rule 1 portmember "0000101"
+            nvram replace attr vlanport_rule 4 pvid "2"
+        }
+    }
+    mod_lan_member add apcli0
+    nvram replace attr wl_basic_rule 0 enable "1"
+    # enable wan
+    nvram replace attr wan_main_rule 0 enable "1"
+    # enable dhcp server
+    nvram replace attr lan_dhcps_rule 0 enable "1"
+;;
+bridge)
+    # switch to normal mode
+    [ "${orig_wl_mode}" = "wisp" -o "${orig_wl_mode}" = "ur" ] && {
+        revert_wan_device_ifname "0" 
+        # disable apcli function
+        nvram replace attr wl0_apcli_rule 0 enable 0
+    }
+    # set all port group together
+    [ "$(nvram get switch_type)" = "ar8316" ] && {
+        nvram replace attr vlan_rule 0 portmember "111111"
+        nvram replace attr vlan_rule 1 portmember "000001"
+        # With Amit giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "AMC" -o "$PLATFORM" = "AMD" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    } || {
+        nvram replace attr vlan_rule 0 portmember "1111101"
+        nvram replace attr vlan_rule 1 portmember "0000001"
+        # With Baudtec giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "BAB" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    }
+    mod_lan_member add apcli0
+    nvram replace attr wl_basic_rule 0 enable "1"
+    # disable wan
+    nvram replace attr wan_main_rule 0 enable "0"
+    # disable dhcp server
+    nvram replace attr lan_dhcps_rule 0 enable "0"
+;;
+ur)
+    [ "${orig_wl_mode}" = "wisp" ] && revert_wan_device_ifname "0" 
+    # set all port group together
+    [ "$(nvram get switch_type)" = "ar8316" ] && {
+        nvram replace attr vlan_rule 0 portmember "111111"
+        nvram replace attr vlan_rule 1 portmember "000001"
+        # With Amit giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "AMC" -o "$PLATFORM" = "AMD" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    } || {
+        nvram replace attr vlan_rule 0 portmember "1111101"
+        nvram replace attr vlan_rule 1 portmember "0000001"
+        # With Baudtec giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "BAB" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    }
+    mod_lan_member add apcli0
+    nvram replace attr wl_basic_rule 0 enable "1"
+    # disable wan
+    nvram replace attr wan_main_rule 0 enable "0"
+    # disable dhcp server
+    nvram replace attr lan_dhcps_rule 0 enable "0"
+    nvram replace attr wl0_apcli_rule 0 enable 1
+;;
+wisp)
+    # set all port group together
+    [ "$(nvram get switch_type)" = "ar8316" ] && {
+        nvram replace attr vlan_rule 0 portmember "111111"
+        nvram replace attr vlan_rule 1 portmember "000001"
+        # With Amit giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "AMC" -o "$PLATFORM" = "AMD" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    } || {
+        nvram replace attr vlan_rule 0 portmember "1111101"
+        nvram replace attr vlan_rule 1 portmember "0000001"
+        # With Baudtec giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "BAB" ] && {
+            nvram replace attr vlanport_rule 0 pvid "1"
+        } || {
+            nvram replace attr vlanport_rule 4 pvid "1"
+        }
+    }
+    mod_lan_member del apcli0
+    nvram replace attr wl_basic_rule 0 enable "1"
+    # setup wan device to universal repeater and device wan ifname
+    change_wan_device_ifname "0" "apcli0"
+    # enable wan
+    nvram replace attr wan_main_rule 0 enable "1"
+    # enable dhcp server
+    nvram replace attr lan_dhcps_rule 0 enable "1"
+    nvram replace attr wl0_apcli_rule 0 enable 1
+;;
+lrouter)
+    # switch to wired router mode
+    [ "${orig_wl_mode}" = "wisp" -o "${orig_wl_mode}" = "ur" ] && {
+        revert_wan_device_ifname "0" 
+        # disable apcli function
+        nvram replace attr wl0_apcli_rule 0 enable 0
+    }
+    [ "$(nvram get switch_type)" = "ar8316" ] && {
+        # With Amit giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "AMC" -o "$PLATFORM" = "AMD" ] && {
+            nvram replace attr vlan_rule 0 portmember "011111"
+            nvram replace attr vlan_rule 1 portmember "100001"
+            nvram replace attr vlanport_rule 0 pvid "2"
+        } || {
+            nvram replace attr vlan_rule 0 portmember "111101"
+            nvram replace attr vlan_rule 1 portmember "000011"
+            nvram replace attr vlanport_rule 4 pvid "2"
+        }
+    } || {
+        # With Baudtec giga board, it uses port 0 as wan, others are port 4
+        [ "$PLATFORM" = "BAB" ] && {
+            nvram replace attr vlan_rule 0 portmember "0111101"
+            nvram replace attr vlan_rule 1 portmember "1000001"
+            nvram replace attr vlanport_rule 0 pvid "2"
+        } || {
+            nvram replace attr vlan_rule 0 portmember "1111001"
+            nvram replace attr vlan_rule 1 portmember "0000101"
+            nvram replace attr vlanport_rule 4 pvid "2"
+        }
+    }
+    mod_lan_member add apcli0
+    nvram replace attr wl_basic_rule 0 enable "0"
+    # enable wan
+    nvram replace attr wan_main_rule 0 enable "1"
+    # enable dhcp server
+    nvram replace attr lan_dhcps_rule 0 enable "1"
+;;
+*)
+echo "nomatch"
+exit
+;;
+esac
+nvram fset op_mode="${new_wl_mode}"
+nvram commit
+#/sbin/ezp-chk-wl-enable
+#/sbin/ezp-setup-vlan
+#reboot
+echo "success"
+[ "${post_action}" = "reboot" ] && /sbin/reboot
+

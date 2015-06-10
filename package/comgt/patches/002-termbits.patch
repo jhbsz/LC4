@@ -1,0 +1,12 @@
+--- comgt.0.32/comgt.c	2006-10-20 22:49:46.000000000 +0800
++++ comgt.0.32.new/comgt.c	2009-02-16 17:09:48.000000000 +0800
+@@ -54,6 +54,9 @@
+ #define BOOL unsigned char
+ #define NVARS 286       /* a-z, a0-z9 == 26*11 */
+ 
++#ifndef EZPACKET
++#define B460800 0010004
++#endif
+ 
+ extern char *optarg;
+ extern int optind, opterr;

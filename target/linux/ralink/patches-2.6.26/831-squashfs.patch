@@ -1,0 +1,11 @@
+--- linux-2.6.26/fs/squashfs/inode.c	2013-06-25 14:53:43.324558422 +0800
++++ linux-2.6.26/fs/squashfs/inode.c	2013-06-25 14:48:34.786478161 +0800
+@@ -276,7 +276,7 @@
+ 			LZMA_WORKSPACE_SIZE, LZMA_LC, LZMA_LP, LZMA_PB,
+ 			c_buffer, c_byte, buffer, msblk->read_size, &bytes)) != LZMA_RESULT_OK)
+ 		{
+-			ERROR("lzma returned unexpected result 0x%x\n", zlib_err);
++			ERROR("lzma returned unexpected result 0x%x root:%s id[0]:%c\n", zlib_err, s->s_root->d_name.name, s->s_id[0]);
+ 			bytes = 0;
+ 		}
+ #else

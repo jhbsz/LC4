@@ -1,0 +1,127 @@
+--- transmission-1.91.old/libtransmission/session.h	2010-02-22 10:42:48.000000000 +0800
++++ transmission-1.91.new/libtransmission/session.h	2010-02-24 14:55:37.369328403 +0800
+@@ -31,6 +31,22 @@
+ 
+ typedef enum { TR_NET_OK, TR_NET_ERROR, TR_NET_WAIT } tr_tristate_t;
+ 
++/* EZP define download status for gui */
++enum {
++    DOWNLOADING = 0,
++    STOPPED,
++    PAUSED,
++    WAITING,
++    HASHING,
++    COMPLETED,
++    STOPPING,
++    PAUSING,
++    STARTING,
++    DELETING,
++    RESUMING,
++    HASH_FOR_CPL
++};
++
+ uint8_t*       tr_peerIdNew( void );
+ 
+ const uint8_t* tr_getPeerId( void );
+@@ -177,6 +193,8 @@
+ 
+     struct event               * nowTimer;
+     struct event               * saveTimer;
++    /* EZP add dump timer for dump download info */
++    struct event               * dumpTimer;
+ 
+     /* monitors the "global pool" speeds */
+     struct tr_bandwidth        * bandwidth;
+--- transmission-1.91.old/libtransmission/session.c	2010-02-22 10:42:48.000000000 +0800
++++ transmission-1.91.new/libtransmission/session.c	2010-02-24 14:55:37.369328403 +0800
+@@ -53,6 +53,11 @@
+     SAVE_INTERVAL_SECS = 120
+ };
+ 
++/* EZP time interval to dump download info */
++enum
++{
++        DUMP_INTERVAL_SECS = 5
++};
+ 
+ #define dbgmsg( ... ) \
+     do { \
+@@ -464,6 +469,67 @@
+     tr_timerAdd( session->saveTimer, SAVE_INTERVAL_SECS, 0 );
+ }
+ 
++/* EZP dump download info function */
++static void
++onDumpTimer( int foo UNUSED, short bar UNUSED, void * vsession )
++{
++    tr_torrent * tor = NULL;
++    tr_session * session = vsession;
++    FILE *fd;
++    tr_sessionLock( session );
++    if (fd = fopen("/var/stats/stats-widget-bt-upgrade1", "w")){
++        while(( tor = tr_torrentNext( session, tor ))) {
++            if (tr_isTorrent( tor )) {
++                const tr_info * inf = tr_torrentInfo( tor );
++                const tr_stat * st = tr_torrentStat( tor );
++                char download_status[128];
++                unsigned int status, process, up, down;
++                process = (unsigned int)(st->percentDone * 100);
++                up = (unsigned int)(st->rawUploadSpeed_KBps * 1024);
++                down = (unsigned int)(st->rawDownloadSpeed_KBps * 1024);
++
++                switch (st->activity)
++                {
++                    case TR_STATUS_STOPPED:
++                        strcpy(download_status ,"Stopped");
++                        status = STOPPED;
++                        break;
++
++                    case TR_STATUS_CHECK_WAIT:
++                    case TR_STATUS_CHECK:
++                        if (st->activity == TR_STATUS_CHECK_WAIT) {
++                            strcpy(download_status, "Waitting for hash");
++                            status = WAITING;
++                        } else {
++                            strcpy(download_status, "Hashing");
++                            status = HASHING;
++                            if( st->recheckProgress )
++                                process = (int)(st->recheckProgress * 100);
++                        }
++                        break;
++                    case TR_STATUS_DOWNLOAD:
++                    case TR_STATUS_SEED:
++                        strcpy(download_status, "Downloading");
++                        status = DOWNLOADING;
++                        if( process >= 100) {
++                            strcpy(download_status, "Completed");
++                            status = COMPLETED;
++                        }
++                        break;
++                }
++                fprintf(fd, "%s^%llu^%llu^%u^%d-%d^%u^%u^%s^%d^%s\n",
++                        inf->name, st->sizeWhenDone, st->downloadedEver,
++                        process, st->peersConnected, st->peersKnown,
++                        up, down, download_status, status,
++                        inf->hashString);
++            }
++        }
++        fclose(fd);
++    }
++    tr_sessionUnlock( session );
++    tr_timerAdd( session->dumpTimer, DUMP_INTERVAL_SECS, 0 );
++}
++
+ /***
+ ****
+ ***/
+@@ -603,6 +669,10 @@
+     session->saveTimer = tr_new0( struct event, 1 );
+     evtimer_set( session->saveTimer, onSaveTimer, session );
+     tr_timerAdd( session->saveTimer, SAVE_INTERVAL_SECS, 0 );
++    /* EZP */
++    session->dumpTimer = tr_new0( struct event, 1 );
++    evtimer_set( session->dumpTimer, onDumpTimer, session );
++    tr_timerAdd( session->dumpTimer, DUMP_INTERVAL_SECS, 0 );
+ 
+     tr_announcerInit( session );
+ 

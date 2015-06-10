@@ -1,0 +1,86 @@
+--- Uboot-1.1.3/.config	2010-08-25 22:28:17.999192532 +0800
++++ Uboot-1.1.3/.config	2010-08-25 22:28:03.034243231 +0800
+@@ -9,6 +9,7 @@
+ # ABOCOM_5204UA_BOARD is not set
+ # ABOCOM_5205G_BOARD is not set
+ # AMIT_CDM530AM_BOARD is not set
++# AMIT_CDW531AC_BOARD is not set
+ # AMIT_CDE530_BOARD is not set
+ # AMIT_CDE570_BOARD is not set
+ GPIO_WPS_BUTTON=0
+@@ -24,6 +25,8 @@
+ # MAC_TO_GIGAPHY_MODE is not set
+ CONFIG_AR8316=y
+ # CONFIG_RTL8366 is not set
++CONFIG_EM_ABO=y
++# CONFIG_EM_AXIM is not set
+ ON_BOARD_SDR=y
+ # ON_BOARD_64M_DRAM_COMPONENT is not set
+ # ON_BOARD_128M_DRAM_COMPONENT is not set
+--- Uboot-1.1.3/autoconf.h	2010-08-25 22:28:17.999192532 +0800
++++ Uboot-1.1.3/autoconf.h	2010-08-25 22:27:51.288049108 +0800
+@@ -10,6 +10,7 @@
+ #undef  ABOCOM_5204UA_BOARD
+ #undef  ABOCOM_5205G_BOARD
+ #undef  AMIT_CDM530AM_BOARD
++#undef  AMIT_CDW531AC_BOARD
+ #undef  AMIT_CDE530_BOARD
+ #undef  AMIT_CDE570_BOARD
+ #define GPIO_WPS_BUTTON (0)
+@@ -25,6 +26,8 @@
+ #undef  MAC_TO_GIGAPHY_MODE
+ #define CONFIG_AR8316 1
+ #undef  CONFIG_RTL8366
++#define CONFIG_EM_ABO 1
++#undef  CONFIG_EM_AXIM
+ #define ON_BOARD_SDR 1
+ #undef  ON_BOARD_64M_DRAM_COMPONENT
+ #undef  ON_BOARD_128M_DRAM_COMPONENT
+--- Uboot-1.1.3/config.in	2010-08-25 22:28:17.999192532 +0800
++++ Uboot-1.1.3/config.in	2010-08-25 22:14:53.687075284 +0800
+@@ -106,6 +106,10 @@
+ fi
+ fi
+ 
++choice 'Emergency mode server/client ip' "192.168.1.6/192.168.1.78 CONFIG_EM_ABO \
++            123.123.78.178/123.123.78.78 CONFIG_EM_AXIM \
++            " 123.123.78.178/123.123.78.78
++
+ #########
+ # RT3883
+ #########
+--- Uboot-1.1.3/include/configs/rt2880.h	2010-08-25 22:28:17.999192532 +0800
++++ Uboot-1.1.3/include/configs/rt2880.h	2010-08-25 22:14:14.727918905 +0800
+@@ -72,8 +72,19 @@
+ #define MK_STR(x)   XMK_STR(x)
+ #endif
+ 
+-#define CONFIG_SERVERIP 123.123.78.78
+-#define CONFIG_IPADDR 123.123.78.178
++#ifdef CONFIG_EM_AXIM
++  #warning "Using aximcom server ipaddr"
++  #define CONFIG_SERVERIP 123.123.78.78
++  #define CONFIG_IPADDR 123.123.78.178
++#elif CONFIG_EM_ABO
++  #warning "Using abocom server ipaddr"
++  #define CONFIG_SERVERIP 192.168.1.78
++  #define CONFIG_IPADDR 192.168.1.6
++#else
++  #warning "Using default server ipaddr"
++  #define CONFIG_SERVERIP 123.123.78.78
++  #define CONFIG_IPADDR 123.123.78.178
++#endif
+ #define CONFIG_ETHADDR "00:AA:BB:CC:DD:10"
+ #define CONFIG_DEFAULT_LINUX_IMAGE "aximcom-kernel-fw.bin"
+ /* valid baudrates */
+--- Uboot-1.1.3/lib_mips/board.c	2010-08-25 22:28:18.009192506 +0800
++++ Uboot-1.1.3/lib_mips/board.c	2010-08-25 22:22:51.712898810 +0800
+@@ -600,7 +600,7 @@
+ int emergency_config(int type, char *argv[])
+ {
+ 	//setenv ("ipaddr", "10.10.10.6");
+-	setenv ("ipaddr", "123.123.78.178");
++	setenv ("ipaddr", MK_STR(CONFIG_IPADDR));
+ 
+ 	if (type == SEL_EMERGENCY) 
+ 	{

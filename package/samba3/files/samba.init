@@ -1,0 +1,184 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+CONF="/var/samba/smb.conf.$$"
+R_CONF=/var/samba/smb.conf
+. /etc/functions.sh
+
+USBSTORAGE=95
+log_msg="SAMBA-server"
+
+smb_header() {
+    local platform=$(nvram get platform)
+#    local name=$(nvram show smbd_rule 0 name)
+    local name=$(nvram show wl0_ssid_rule 0)
+    [ "$platform" = "AXA" ] && name=togobox
+    local workgroup=$(nvram show smbd_rule 0 workgroup)
+    local description=$(nvram show smbd_rule 0 description)
+    local enable=$(nvram show smbd_rule 0 enable)
+    local guest_ok=$(nvram show smbd_rule 0 guest_ok)
+    local ext_access=$(nvram show smbd_rule 0 ext_access)
+#    local codepage=$(nvram show smbd_rule 0 codepage)
+#    local dev=$(nvram show storage_state_rule 0 dev_name)
+    local http_user=$(nvram show http_rule 0 username)
+    [ -z $(cat /etc/passwd | grep $http_user) ] && {
+        cp /etc/passwd /tmp
+            echo -e "$http_user:*:65534:65534:nobody:/var:/bin/false" >> /tmp/passwd
+            rm /etc/passwd
+            mv /tmp/passwd /etc
+    }
+    [ -z "$name" ] && name="$name"
+    [ -z "$workgroup" ] && workgroup="$workgroup"
+    [ -z "$description" ] && description="$name file server" 
+#    [ "$enable" = 0 -o -z "$dev" ] && exit
+    [ "$enable" = 0 ] && exit
+    mkdir -p /var/samba
+    cp /etc/samba/smb.conf.template $CONF
+    if [ "$ext_access" = "0" ]; then
+        [ "$platform" = "ALS" ] && {
+            echo -e "bind interfaces only = no" >> $CONF
+        } || {
+            echo -e "interfaces = br0" >> $CONF
+            echo -e "bind interfaces only = yes" >> $CONF
+        }
+    fi
+
+    #if [ "$guest_ok" = "0" -o "$platform" = "ALS" ]; then
+    if [ "$guest_ok" = "0" ]; then
+        security="user"
+    else
+        security="share"
+    fi
+    
+    sed -i "s/|NAME|/$name/g" $CONF
+    sed -i "s/|WORKGROUP|/Net-Cloud/g" $CONF
+    sed -i "s/|DESCRIPTION|/$description/g" $CONF
+    sed -i "s/|SECURITY|/$security/g" $CONF
+}
+
+
+smb_add_share() {
+#	 local name=$(nvram show smbd_rule 0 share_name)
+#	 local path=$(nvram show smbd_rule 0 share_path)
+#    local read_only=$(nvram show smbd_rule 0 read_only)
+#	 local guest_ok=$(nvram show smbd_rule 0 guest_ok)
+#    local create_mask=$(nvram show smbd_rule 0 create_mask)
+#    local dir_mask=$(nvram show smbd_rule 0 dir_mask)
+    local passwd=$(nvram show smbd_user_rule 0 passwd)
+    local PLATFORM="$(nvram get platform)"
+    local usb_mnt="$(nvram show storage_device_mount_rule 0 mnt)"
+    local sd_mnt="$(nvram show storage_device_mount_rule 1 mnt)"
+    local inter_mnt="$(nvram show storage_device_mount_rule 2 mnt)"
+#	[ -z "$name" -o -z "$path" ] && exit
+    touch /var/samba/smbpasswd
+	
+    local mount_dir="$(mount | grep $path | awk '{print $3}')"
+    # FIXME!! We should automatically generate mount drive list
+#    [ "$PLATFORM" = "LIS" -o "$PLATFORM" = "AXA" ] && mount_dir="/tmp/mnt/$usb_mnt /tmp/mnt/$sd_mnt"
+#    [ "$PLATFORM" = "a2E" ] && mount_dir="/tmp/mnt/$usb_mnt /tmp/mnt/$sd_mnt /tmp/mnt/$inter_mnt"
+
+    local i=0;
+    local n=$(nvram get storage_device_mount_rule_num);
+    local global_allow_guest="$(nvram get allow_guest)"
+    while [ "$i" -lt "$n" ];
+    do
+        local read_only=$(nvram show storage_device_mount_rule $i smb_read_only)
+        local guest_ok=$(nvram show storage_device_mount_rule $i smb_guest_ok)
+        local create_mask=$(nvram show storage_device_mount_rule $i smb_create_mask)
+        local dir_mask=$(nvram show storage_device_mount_rule $i smb_dir_mask)
+        local mount_point=$(nvram show storage_device_mount_rule $i mnt)
+        local http_user=$(nvram show http_rule 0 username)
+        local http_passwd=$(b64 -d $(nvram show http_rule 0 passwd))
+        [ "$(nvram get brand)" = "SONY" -a "$mount_point" = "SD" ] && {
+            echo -e "\n[MEMORY CARD]\n\tpath = /tmp/mnt/$mount_point" >> $CONF
+        } || {
+            echo -e "\n[$mount_point]\n\tpath = /tmp/mnt/$mount_point" >> $CONF
+        }
+        if [ "$read_only" = "1" ]; then
+            echo -e "\tread only = yes" >> $CONF
+        else
+            echo -e "\tread only = no" >> $CONF
+        fi
+        # Guest allowance policy based on
+        # 1. global setting "allow_guest" is 1
+        # 2. storage rule guest_ok attribute is 1
+        if [ "$guest_ok" = "1" -a "$global_allow_guest" = "1" ]; then
+            echo -e "\tguest ok = yes" >> $CONF
+        else
+            [ "$PLATFORM" = "ALS" ] && {
+                #echo -e "\tguest ok = no" >> $CONF
+                #echo -e "\tvalid users = $http_user" >> $CONF
+                echo -e "\tguest ok = yes" >> $CONF
+                #smbpasswd $http_user $http_passwd
+            } || {
+                echo -e "\tguest ok = no" >> $CONF
+                if [ "$(nvram get platform)" = "M2E" ]; then
+                   echo -e "\tvalid users = $http_user" >> $CONF
+                   smbpasswd $http_user $http_passwd
+                else
+                   echo -e "\tvalid users = admin" >> $CONF
+                   smbpasswd admin $passwd
+                fi
+            }
+        fi
+        [ -n "$create_mask" ] && echo -e "\tcreate mask = $create_mask" >> $CONF
+        [ -n "$dir_mask" ] && echo -e "\tdirectory mask = $dir_mask" >> $CONF
+        i=$(($i + 1))
+    done
+#    for mount_path in $mount_dir;do
+#        local mount_point="$(echo "$mount_path" | awk -F $path/ '{print $2}')"
+#        [ "$(nvram get brand)" = "SONY" -a "$mount_point" = "SD" ] && {
+#            echo -e "\n[MEMORY CARD]\n\tpath = /tmp/$path/$mount_point" >> $CONF
+#        } || {
+#            echo -e "\n[$mount_point]\n\tpath = /tmp/$path/$mount_point" >> $CONF
+#        }
+#        if [ "$read_only" = "1" ]; then 
+#            echo -e "\tread only = yes" >> $CONF
+#        else 
+#            echo -e "\tread only = no" >> $CONF
+#        fi
+#        if [ "$guest_ok" = "1" ]; then 
+#            echo -e "\tguest ok = yes" >> $CONF
+#        else
+#            echo -e "\tguest ok = no" >> $CONF
+#            echo -e "\tvalid users = admin" >> $CONF
+#            smbpasswd admin $passwd
+#        fi
+#        [ -n "$create_mask" ] && echo -e "\tcreate mask = $create_mask" >> $CONF
+#        [ -n "$dir_mask" ] && echo -e "\tdirectory mask = $dir_mask" >> $CONF
+#    done
+}
+
+start() {
+    local ext_enable=$(nvram show storage_rule 0 ext_enable)
+    # If use external storage, samba do not start
+    [ "$ext_enable" = "1" ] && exit 
+    [ -z "$(mount | grep /tmp/mnt)" ] && exit
+    [ -n "$(pidof smbd)" ] && exit
+	smb_header
+	smb_add_share
+    mv $CONF $R_CONF
+    smbd -D -s $R_CONF
+    nmbd -D -s $R_CONF
+}
+
+stop() {
+    local pid=$(pidof smbd)
+    [ -z "$pid" ] && return 
+	kill -9 $(pidof smbd)
+	kill -9 $(pidof nmbd)
+    for p in $pid
+    do
+        local count=0 
+        while [ -d "/proc/$p"  ]
+        do
+            sleep 2
+            count=$(($count + 1))
+            [ "$count" -gt "10" ] && {
+                err=1
+                return
+            }
+        done
+    done
+    rm $R_CONF
+    [ -f "/var/samba/smbpasswd" ] && rm /var/samba/smbpasswd
+}

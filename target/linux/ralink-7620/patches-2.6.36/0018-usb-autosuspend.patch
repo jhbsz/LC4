@@ -1,0 +1,197 @@
+--- linux-2.6.36/drivers/scsi/scsi_pm.c	2013-10-09 13:48:31.000000000 +0800
++++ linux-2.6.36/drivers/scsi/scsi_pm.c	2014-03-19 10:08:59.710074462 +0800
+@@ -17,9 +17,12 @@
+ static int scsi_dev_type_suspend(struct device *dev, pm_message_t msg)
+ {
+ 	struct device_driver *drv;
+-	int err;
++	int err = 0;
+ 
++    // FIX for suspend time message queue running
++#ifndef CONFIG_BOARD_M2E
+ 	err = scsi_device_quiesce(to_scsi_device(dev));
++#endif
+ 	if (err == 0) {
+ 		drv = dev->driver;
+ 		if (drv && drv->suspend)
+@@ -37,7 +40,10 @@
+ 	drv = dev->driver;
+ 	if (drv && drv->resume)
+ 		err = drv->resume(dev);
++    // FIX for suspend time message queue running
++#ifndef CONFIG_BOARD_M2E
+ 	scsi_device_resume(to_scsi_device(dev));
++#endif
+ 	dev_dbg(dev, "scsi resume: %d\n", err);
+ 	return err;
+ }
+@@ -47,7 +53,6 @@
+ static int scsi_bus_suspend_common(struct device *dev, pm_message_t msg)
+ {
+ 	int err = 0;
+-
+ 	if (scsi_is_sdev_device(dev))
+ 		err = scsi_dev_type_suspend(dev, msg);
+ 	return err;
+--- linux-2.6.36/drivers/scsi/sd.c	2013-10-09 13:48:31.000000000 +0800
++++ linux-2.6.36/drivers/scsi/sd.c	2014-03-19 10:10:11.134076375 +0800
+@@ -795,11 +795,11 @@
+ 	SCSI_LOG_HLQUEUE(3, sd_printk(KERN_INFO, sdkp, "sd_open\n"));
+ 
+ 	sdev = sdkp->device;
+-
++#ifndef CONFIG_BOARD_M2E
+ 	retval = scsi_autopm_get_device(sdev);
+ 	if (retval)
+ 		goto error_autopm;
+-
++#endif
+ 	/*
+ 	 * If the device is in error recovery, wait until it is done.
+ 	 * If the device is offline, then disallow any access to it.
+@@ -844,7 +844,9 @@
+ 	return 0;
+ 
+ error_out:
++#ifndef CONFIG_BOARD_M2E
+ 	scsi_autopm_put_device(sdev);
++#endif
+ error_autopm:
+ 	scsi_disk_put(sdkp);
+ 	return retval;	
+@@ -880,7 +882,9 @@
+ 	 * XXX is followed by a "rmmod sd_mod"?
+ 	 */
+ 
++#ifndef CONFIG_BOARD_M2E
+ 	scsi_autopm_put_device(sdev);
++#endif
+ 	scsi_disk_put(sdkp);
+ 	return 0;
+ }
+@@ -2407,9 +2411,10 @@
+ static int sd_remove(struct device *dev)
+ {
+ 	struct scsi_disk *sdkp;
+-
+ 	sdkp = dev_get_drvdata(dev);
++#ifndef CONFIG_BOARD_M2E
+ 	scsi_autopm_get_device(sdkp->device);
++#endif
+ 
+ 	async_synchronize_full();
+ 	blk_queue_prep_rq(sdkp->device->request_queue, scsi_prep_fn);
+--- linux-2.6.36/drivers/scsi/scsi_sysfs.c	2013-10-09 13:48:29.000000000 +0800
++++ linux-2.6.36/drivers/scsi/scsi_sysfs.c	2014-03-19 09:30:28.078012559 +0800
+@@ -850,7 +850,7 @@
+ 	device_enable_async_suspend(&sdev->sdev_gendev);
+ 	scsi_autopm_get_target(starget);
+ 	pm_runtime_set_active(&sdev->sdev_gendev);
+-	pm_runtime_forbid(&sdev->sdev_gendev);
++	// pm_runtime_forbid(&sdev->sdev_gendev);
+ 	pm_runtime_enable(&sdev->sdev_gendev);
+ 	scsi_autopm_put_target(starget);
+ 
+--- linux-2.6.36/drivers/usb/core/usb.c	2013-10-09 13:48:57.000000000 +0800
++++ linux-2.6.36/drivers/usb/core/usb.c	2014-03-19 10:05:58.586069612 +0800
+@@ -50,8 +50,13 @@
+ static int nousb;	/* Disable USB when built into kernel image */
+ 
+ #ifdef	CONFIG_USB_SUSPEND
++#ifdef CONFIG_BOARD_M2E
++static int usb_autosuspend_delay = 6;		/* Default delay value,
++						 * in seconds */
++#else
+ static int usb_autosuspend_delay = 2;		/* Default delay value,
+ 						 * in seconds */
++#endif
+ module_param_named(autosuspend, usb_autosuspend_delay, int, 0644);
+ MODULE_PARM_DESC(autosuspend, "default autosuspend delay");
+ 
+--- linux-2.6.36/drivers/usb/storage/scsiglue.c	2013-10-09 13:48:58.000000000 +0800
++++ linux-2.6.36/drivers/usb/storage/scsiglue.c	2014-03-18 22:11:11.583907745 +0800
+@@ -356,9 +356,13 @@
+ 	US_DEBUGP("%s called\n", __func__);
+ 
+ 	/* lock the device pointers and do the reset */
+-	mutex_lock(&(us->dev_mutex));
+-	result = us->transport_reset(us);
+-	mutex_unlock(&us->dev_mutex);
++    result = usb_autopm_get_interface(us->pusb_intf);
++    if (result == 0) {
++        mutex_lock(&(us->dev_mutex));
++        result = us->transport_reset(us);
++        mutex_unlock(&us->dev_mutex);
++        usb_autopm_put_interface(us->pusb_intf);
++    }
+ 
+ 	return result < 0 ? FAILED : SUCCESS;
+ }
+--- linux-2.6.36/drivers/usb/storage/usb.c	2014-03-18 15:41:27.361862118 +0800
++++ linux-2.6.36/drivers/usb/storage/usb.c	2014-03-19 10:08:32.722073740 +0800
+@@ -265,6 +265,9 @@
+ {
+ 	struct us_data *us = (struct us_data *)__us;
+ 	struct Scsi_Host *host = us_to_host(us);
++#ifdef CONFIG_BOARD_M2E
++    int autopm_rc;
++#endif
+ 
+ 	for(;;) {
+ 		US_DEBUGP("*** thread sleeping.\n");
+@@ -273,6 +276,11 @@
+ 
+ 		US_DEBUGP("*** thread awakened.\n");
+ 
++#ifdef CONFIG_BOARD_M2E
++        /* Autoresume the device */
++        autopm_rc = usb_autopm_get_interface(us->pusb_intf);
++#endif
++
+ 		/* lock the device pointers */
+ 		mutex_lock(&(us->dev_mutex));
+ 
+@@ -332,7 +340,14 @@
+ 			us->srb->result = SAM_STAT_GOOD;
+ 		}
+ 
+-		/* we've got a command, let's do it! */
++#ifdef CONFIG_BOARD_M2E
++        else if (autopm_rc < 0) {
++            US_DEBUGP("Could not wake device\n");
++            us->srb->result = DID_ERROR << 16;
++        }
++#endif
++
++        /* we've got a command, let's do it! */
+ 		else {
+ 			US_DEBUG(usb_stor_show_command(us->srb));
+ 			us->proto_handler(us->srb, us);
+@@ -371,7 +386,15 @@
+ 
+ 		/* unlock the device pointers */
+ 		mutex_unlock(&us->dev_mutex);
+-	} /* for (;;) */
++
++#ifdef CONFIG_BOARD_M2E
++        /* Start an autosuspend */
++        if (autopm_rc == 0) {
++            usb_autopm_put_interface(us->pusb_intf);
++        }
++#endif
++
++    } /* for (;;) */
+ 
+ 	/* Wait until we are told to stop */
+ 	for (;;) {
+--- linux-2.6.36/include/scsi/scsi_device.h	2013-10-09 13:48:18.000000000 +0800
++++ linux-2.6.36/include/scsi/scsi_device.h	2014-03-18 22:36:16.303884431 +0800
+@@ -170,6 +170,8 @@
+ 
+ 	struct scsi_dh_data	*scsi_dh_data;
+ 	enum scsi_device_state sdev_state;
++    /* Retry count for NOT_READY/ATTENTION */
++    unsigned char not_ready_retry_count;
+ 	unsigned long		sdev_data[0];
+ } __attribute__((aligned(sizeof(unsigned long))));
+ 

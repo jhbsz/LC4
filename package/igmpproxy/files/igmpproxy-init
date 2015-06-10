@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+TRIGGER=80
+TRIGGER_STOP=80
+log_msg="IGMPProxy"
+
+start () {
+CONF_FILE=/etc/igmpproxy.conf
+
+echo "##------------------------------------------------------"  > $CONF_FILE
+echo "## Enable Quickleave mode (Sends Leave instantly)" >> $CONF_FILE
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "quickleave" >> $CONF_FILE
+
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "## Configuration for eth0 (Upstream Interface)"  >> $CONF_FILE
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "phyint $(nvram get wan0_ifname) upstream  ratelimit 0  threshold 1" >> $CONF_FILE
+
+echo "##------------------------------------------------------"  >> $CONF_FILE
+echo "## Configuration for eth1 (Downstream Interface)" >> $CONF_FILE
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "phyint $(nvram get lan0_ifname) downstream  ratelimit 0  threshold 1" >> $CONF_FILE
+
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "## Configuration for eth2 (Disabled Interface)" >> $CONF_FILE
+echo "##------------------------------------------------------" >> $CONF_FILE
+echo "phyint ppp0 disabled" >> $CONF_FILE
+}
+stop () {
+    return $err
+}

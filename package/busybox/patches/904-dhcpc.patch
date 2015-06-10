@@ -1,0 +1,14 @@
+--- busybox-1.11.2.old/networking/udhcp/dhcpc.c	2009-08-12 15:50:11.545717100 +0800
++++ busybox-1.11.2.new/networking/udhcp/dhcpc.c	2009-08-14 18:22:07.100947574 +0800
+@@ -90,6 +90,11 @@
+ 		send_release(server_addr, requested_ip); /* unicast */
+ 		udhcp_run_script(NULL, "deconfig");
+ 	}
++    else {
++        /* For states of INIT_SELECTING, REQUESTING,
++         * INIT_REBOOT,RENEW_REQUESTED, RELEASED */
++        udhcp_run_script(NULL, "term");
++    }
+ 	bb_info_msg("Entering released state");
+ 
+ 	change_listen_mode(LISTEN_NONE);

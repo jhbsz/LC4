@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. 
+BIN=/usr/bin/autoip.sh
+TRIGGER=10
+log_msg="AutoIP"
+
+stop () {
+    $BIN
+}
+
+start () {
+    $BIN
+}
+

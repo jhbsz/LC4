@@ -1,0 +1,43 @@
+#!/bin/sh
+. /etc/functions.sh
+
+local_start() {
+    [ "$(nvram get ipsec_enable)" = "1" ] && {
+        i=0
+        limit=$(nvram get ipsec_rule_num)
+        while [ $i -lt $limit ];
+        do
+            [ "$(nvram show ipsec_rule $i enable)" = "1" -a "$(nvram show ipsec_rule $i mode)" = "net2net" ] && {
+                REMOTE_GW="$(nvram show ipsec_rule $i remote_gateway)"
+                DDNS_GW="$(nvram show ipsec_rule $i ddns_gateway)"
+                [ "$DDNS_GW" != "$REMOTE_GW" ] && {
+                    ret="$(ping_get_host $REMOTE_GW)"
+                    [ "$ret" != "$DDNS_GW" ] && {
+                        CONN="$(nvram show ipsec_rule $i name)"
+                        ipsec auto --replace $CONN
+                        nvram replace attr ipsec_rule $i ddns_gateway $ret
+                    }
+                }
+            }
+        i=$(($i+1))
+        done
+    }
+}
+
+
+# main
+[ -z "$1" ] && usage;
+err=0
+for action in $*; do
+        case $action in
+                config)         ;;
+                start)          local_start;;
+                stop)           stop;;
+                reload)         ;;
+                restart)        stop; sleep 1; local_start;;
+                *)              usage;;
+        esac
+        [ "$?" != "0" ] && err=1
+done
+
+exit $err

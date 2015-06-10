@@ -1,0 +1,58 @@
+--- l2tpd-0.70-pre20031121.orig/call.c	2004-07-09 04:47:52.000000000 +0800
++++ l2tpd-0.70-pre20031121/call.c	2010-12-24 15:40:28.620393708 +0800
+@@ -27,6 +27,7 @@
+ #include <signal.h>
+ #include <termios.h>
+ #include "l2tp.h"
++#include "nvram_ezpacket.h"
+ #ifdef USE_KERNEL
+ #include <sys/ioctl.h>
+ #endif
+@@ -641,6 +642,15 @@
+          * Well, nothing appropriate...  Let's add a new tunnel, if
+          * we are not at capacity.
+          */
++        /* EZP: check the tunnels.count. */
++        if (tunnels.count >= L2TPD_SESSION_MAX)
++        {
++            log (LOG_DEBUG,
++                    "%s: unable to allocate new tunnel for host %s, port %d.\n",
++                    __FUNCTION__, IPADDY (addr), ntohs (port));
++            return NULL;
++        }
++
+         if (debug_tunnel)
+         {
+             log (LOG_DEBUG,
+--- l2tpd-0.70-pre20031121.orig/control.c	2010-12-24 15:42:05.700392395 +0800
++++ l2tpd-0.70-pre20031121/control.c	2010-12-24 15:40:36.420393254 +0800
+@@ -23,6 +23,7 @@
+ #include <unistd.h>
+ #include <stdlib.h>
+ #include "l2tp.h"
++#include "nvram_ezpacket.h"
+ #ifdef USE_KERNEL
+ #include <sys/ioctl.h>
+ #endif
+@@ -936,6 +937,10 @@
+             po = add_opt (po, "file");
+             po = add_opt (po, c->lns->pppoptfile);
+         }
++        /* EZP: specify which pppX interface should be used. */
++        po = add_opt (po, "unit");
++        po = add_opt (po, "%d", WAN_NUM + PPTPD_SESSION_MAX - 1);
++
+         start_pppd (c, po);
+         opt_destroy (po);
+         log (LOG_LOG,
+--- l2tpd-0.70-pre20031121.orig/md5.h 2007-06-27 01:53:07.000000000 +0800
++++ l2tpd-0.70-pre20031121/md5.h 2008-07-28 09:05:18.000000000 +0800
+@@ -5,6 +5,7 @@
+ typedef unsigned int uint32;
+ #else
+ typedef unsigned long uint32;
++#define TYPEDEF_UINT32 1
+ #endif
+
+ struct MD5Context
+

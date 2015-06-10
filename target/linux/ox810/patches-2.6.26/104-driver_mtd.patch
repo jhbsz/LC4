@@ -1,0 +1,11 @@
+diff -Naur linux-2.6.24.4/drivers/mtd/nand/Makefile linux-2.6.24.4/drivers/mtd/nand/Makefile
+--- linux-2.6.24.4/drivers/mtd/nand/Makefile	2009-12-03 07:28:08.000000000 +0800
++++ linux-2.6.24.4/drivers/mtd/nand/Makefile	2009-12-03 07:29:23.000000000 +0800
+@@ -30,6 +30,7 @@
+ obj-$(CONFIG_MTD_NAND_PXA3xx)		+= pxa3xx_nand.o
+ obj-$(CONFIG_MTD_NAND_PLATFORM)		+= plat_nand.o
+ obj-$(CONFIG_MTD_ALAUDA)		+= alauda.o
++obj-$(CONFIG_MTD_OX810)            += ox810_nand.o
+ obj-$(CONFIG_MTD_NAND_PASEMI)		+= pasemi_nand.o
+ obj-$(CONFIG_MTD_NAND_ORION)		+= orion_nand.o
+ obj-$(CONFIG_MTD_NAND_FSL_ELBC)		+= fsl_elbc_nand.o

@@ -1,0 +1,9 @@
+#
+# NVRAM_CFG device configuration
+#
+
+config NVRAM_CFG
+	tristate "EZ Packet NVRAM kernel module"
+	---help---
+	  This is used for EZ Packet configuration respository.
+

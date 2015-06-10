@@ -1,0 +1,1431 @@
+diff -Naur linux-2.6.24.4/arch/arm/common/gic.c linux-2.6.24.4-oxnas/arch/arm/common/gic.c
+--- linux-2.6.24.4/arch/arm/common/gic.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/common/gic.c	2009-05-08 16:23:45.000000000 +0800
+@@ -182,6 +182,7 @@
+ 	if (gic_nr >= MAX_GIC_NR)
+ 		BUG();
+ 
++    /* make cpu mask repeat twice, then four times */
+ 	cpumask |= cpumask << 8;
+ 	cpumask |= cpumask << 16;
+ 
+@@ -248,7 +249,10 @@
+ 
+ 	gic_data[gic_nr].cpu_base = base;
+ 
++    /* unmask all interrupts */
+ 	writel(0xf0, base + GIC_CPU_PRIMASK);
++    
++    /* disable legcy mode */
+ 	writel(1, base + GIC_CPU_CTRL);
+ }
+ 
+@@ -261,3 +265,10 @@
+ 	writel(map << 16 | irq, gic_data[0].dist_base + GIC_DIST_SOFTINT);
+ }
+ #endif
++
++/*
++ * Enable or disable legacy interrupt mode on the current CPU 
++ */
++void gic_legacy_mode(unsigned int legacy_mode_on, void __iomem *base) {
++   writel((legacy_mode_on ? 0 : 1), base + GIC_CPU_CTRL);
++}
+diff -Naur linux-2.6.24.4/arch/arm/kernel/armksyms.c linux-2.6.24.4-oxnas/arch/arm/kernel/armksyms.c
+--- linux-2.6.24.4/arch/arm/kernel/armksyms.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/armksyms.c	2009-05-08 16:23:39.000000000 +0800
+@@ -114,9 +114,15 @@
+ EXPORT_SYMBOL(__strncpy_from_user);
+ 
+ #ifdef CONFIG_MMU
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++EXPORT_SYMBOL(__copy_from_user_alt);
++EXPORT_SYMBOL(__copy_to_user_alt);
++EXPORT_SYMBOL(__clear_user_alt);
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ EXPORT_SYMBOL(__copy_from_user);
+ EXPORT_SYMBOL(__copy_to_user);
+ EXPORT_SYMBOL(__clear_user);
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 
+ EXPORT_SYMBOL(__get_user_1);
+ EXPORT_SYMBOL(__get_user_2);
+diff -Naur linux-2.6.24.4/arch/arm/kernel/bios32.c linux-2.6.24.4-oxnas/arch/arm/kernel/bios32.c
+--- linux-2.6.24.4/arch/arm/kernel/bios32.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/bios32.c	2009-05-08 16:23:39.000000000 +0800
+@@ -616,7 +616,7 @@
+ 	}
+ }
+ 
+-char * __init pcibios_setup(char *str)
++char * __devinit pcibios_setup(char *str)
+ {
+ 	if (!strcmp(str, "debug")) {
+ 		debug_pci = 1;
+diff -Naur linux-2.6.24.4/arch/arm/kernel/head.S linux-2.6.24.4-oxnas/arch/arm/kernel/head.S
+--- linux-2.6.24.4/arch/arm/kernel/head.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/head.S	2009-05-08 16:23:39.000000000 +0800
+@@ -59,6 +59,34 @@
+ #define KERNEL_END	_end
+ #endif
+ 
++#ifdef CONFIG_OXNAS_MAP_SRAM
++	.macro	course_pgtbl, rd
++	ldr	\rd, =(__virt_to_phys(KERNEL_RAM_ADDR - 0x4400))
++	.endm
++
++	.globl	SMALL_AP
++	.equ	SMALL_AP, 0xAA
++
++	.globl	COURSE_DOMAIN
++	.equ	COURSE_DOMAIN, 0x04
++
++	.globl	SRAM_CODE_START
++	.globl	CODE_COPY_LEN
++
++#ifdef CONFIG_SUPPORT_LEON
++	/*
++	 * Allow 2 pages after GMAC/DMA descriptors for ARM/Leon TSO workspace
++	 * May have to change if Leon code is built to use more Tx descriptors, but
++	 * current 2 pages is easily enough for 54 descriptors
++	 */
++	.equ	SRAM_CODE_START, SRAM_PA+((CONFIG_DESCRIPTORS_PAGES+2)*4096)
++	.equ	CODE_COPY_LEN, ((CONFIG_SRAM_NUM_PAGES-CONFIG_LEON_PAGES-(CONFIG_DESCRIPTORS_PAGES+2))*4096)
++#else // CONFIG_SUPPORT_LEON
++	.equ	SRAM_CODE_START, SRAM_PA+(CONFIG_DESCRIPTORS_PAGES*4096)
++	.equ	CODE_COPY_LEN, ((CONFIG_SRAM_NUM_PAGES-CONFIG_DESCRIPTORS_PAGES)*4096)
++#endif // CONFIG_SUPPORT_LEON
++#endif // CONFIG_OXNAS_MAP_SRAM
++
+ /*
+  * Kernel startup entry point.
+  * ---------------------------
+@@ -82,6 +110,27 @@
+ ENTRY(stext)
+ 	msr	cpsr_c, #PSR_F_BIT | PSR_I_BIT | SVC_MODE @ ensure svc mode
+ 						@ and irqs disabled
++
++#ifdef CONFIG_OXNAS_CACHE_LOCKDOWN	
++	/*
++	 * Lock down ICache - do not care what ends up in locked down ways - 
++	 * eventually context switch etc will flush out anything that gets loaded
++	 * next
++	 */
++	mrc p15,0,r2,c9,c0,1
++	orr r2,r2,#CONFIG_OXNAS_CACHE_I_MASK
++	mcr p15,0,r2,c9,c0,1
++
++	/*
++	 * Lock down DCache - do not care what ends up in locked down ways - 
++	 * eventually context switch etc will flush out anything that gets loaded
++	 * next
++	 */
++	mrc p15,0,r2,c9,c0,0
++	orr r2,r2,#CONFIG_OXNAS_CACHE_D_MASK
++	mcr p15,0,r2,c9,c0,0
++#endif // CONFIG_OXNAS_CACHE_LOCKDOWN	
++
+ 	mrc	p15, 0, r9, c0, c0		@ get processor id
+ 	bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
+ 	movs	r10, r5				@ invalid processor (r5=0)?
+@@ -196,7 +245,7 @@
+ 	mcr	p15, 0, r0, c1, c0, 0		@ write control reg
+ 	mrc	p15, 0, r3, c0, c0, 0		@ read id reg
+ 	mov	r3, r3
+-	mov	r3, r3
++/*	mov	r3, r3 */
+ 	mov	pc, r13
+ 
+ 
+@@ -231,7 +280,33 @@
+ 	teq	r0, r6
+ 	bne	1b
+ 
+-	ldr	r7, [r10, #PROCINFO_MM_MMUFLAGS] @ mm_mmuflags
++	ldr	r7, [r10, #PROCINFO_MM_MMUFLAGS]	@ mmuflags
++                                                                                                                  
++#ifdef CONFIG_OXNAS_MAP_SRAM
++	/*
++	 * Create the contents of the first descriptor in the course table which
++	 * is to describe the first MB of the kernel with 256 4K small descriptors.
++	 * The descriptors' are composed of the top 20 bits of the physical
++	 * address plus the appropriate AP, cacheable and bufferable flags
++	 */
++	mov	r3, #PHYS_OFFSET
++	mov	r3, r3, lsr #12
++	mov	r3, r3, lsl #12
++	mov	r6, #SMALL_AP		@ TBC: AP values
++	orr	r3, r3, r6, lsl #4
++	orr	r3, r3, #0xe		@ Cachable, bufferable and small desc
++
++	/*
++	 * Fill all 256 entries in the course page table with descriptors for
++	 * contiguous pages
++	 */
++	course_pgtbl	r0
++	add	r6, r0, #0x0400
++1:	str	r3, [r0], #4
++	add	r3, r3, #1 << 12
++	teq	r0, r6
++	bne	1b
++#endif // CONFIG_OXNAS_MAP_SRAM
+ 
+ 	/*
+ 	 * Create identity mapping for first MB of kernel to
+@@ -243,12 +318,26 @@
+ 	orr	r3, r7, r6, lsl #20		@ flags + kernel base
+ 	str	r3, [r4, r6, lsl #2]		@ identity mapping
+ 
++#ifdef CONFIG_OXNAS_MAP_SRAM
++	/*
++	 * Write a course descriptor pointing to the small page mapping table
++	 * setup to map the first MB of kernel with 4K small pages
++	 */
++	course_pgtbl	r6
++	mov	r0, #COURSE_DOMAIN		@ TBC SBZ, Domain etc
++	orr	r6, r6, r0, lsl #2
++	orr	r6, r6, #1			@ Course descriptor identifier
++
++	add	r0, r4,  #(KERNEL_START & 0xff000000) >> 18
++	str	r6, [r0, #(KERNEL_START & 0x00f00000) >> 18]!
++#else // CONFIG_OXNAS_MAP_SRAM
+ 	/*
+ 	 * Now setup the pagetables for our kernel direct
+ 	 * mapped region.
+ 	 */
+ 	add	r0, r4,  #(KERNEL_START & 0xff000000) >> 18
+ 	str	r3, [r0, #(KERNEL_START & 0x00f00000) >> 18]!
++#endif // CONFIG_OXNAS_MAP_SRAM
+ 	ldr	r6, =(KERNEL_END - 1)
+ 	add	r0, r0, #4
+ 	add	r6, r4, r6, lsr #18
+@@ -276,6 +365,64 @@
+ 	bls	1b
+ #endif
+ 
++#ifdef CONFIG_OXNAS_COPY_CODE_TO_SRAM
++	/*
++	 * Copy smallest/most-used kernel code into SRAM
++	 */
++
++	/* Get start of kernel code to copy */
++	ldr	r0, =(_text)
++	mvn	r3, #0xff000000
++	and	r0, r0, r3
++	mov	r6, #PHYS_OFFSET
++	mov	r3, #0xff000000
++	and	r6, r6, r3
++	orr	r0, r0, r6
++
++	/* Get start of SRAM region to copy into */
++	ldr	r3, =(SRAM_CODE_START)
++
++	/* Get amount of code to copy */
++	ldr	r6, =(CODE_COPY_LEN)
++
++	/* NB r7 is corrupted here, but opt. debug code below needs it */
++	add	r6, r0, r6
++1:	ldr	r7, [r0], #4
++	str	r7, [r3], #4
++	teq	r0, r6
++	bne	1b
++
++	/*
++	 * Map SRAM resident code into kernel virtual address space by altering
++	 * course page table entries covering the smallest/most-used code
++	 */
++
++	/* Get the address of the first page table entry to modify */
++	course_pgtbl r3
++	ldr	r0, =(_text)
++	sub r0, r0, #PAGE_OFFSET
++	add	r3, r3, r0, lsr #10
++
++	/* Get the address after the last entry in the page table to be altered */
++	ldr	r6, =(CODE_COPY_LEN)
++	add	r6, r3, r6, lsr #10
++
++	/* Form the first small descriptor contents */
++	ldr	r0, =(SRAM_CODE_START)
++	mov	r0, r0, lsr #12
++	mov	r0, r0, lsl #12
++	mov	r7, #SMALL_AP
++	orr	r0, r0, r7, lsl #4
++	orr	r0, r0, #0xe
++
++	/* Modify the page table entries for all SRAM pages filled with code */
++1:	str	r0, [r3], #4
++	add	r0, r0, #1 << 12
++	teq	r3, r6
++	bne	1b
++
++#else // CONFIG_OXNAS_COPY_CODE_TO_SRAM
++#ifndef CONFIG_ARCH_OXNAS
+ 	/*
+ 	 * Then map first 1MB of ram in case it contains our boot params.
+ 	 */
+@@ -285,6 +432,8 @@
+ 	orr	r6, r6, #(PHYS_OFFSET & 0x00f00000)
+ 	.endif
+ 	str	r6, [r0]
++#endif // !CONFIG_ARCH_OXNAS
++#endif // CONFIG_OXNAS_COPY_CODE_TO_SRAM
+ 
+ #ifdef CONFIG_DEBUG_LL
+ 	ldr	r7, [r10, #PROCINFO_IO_MMUFLAGS] @ io_mmuflags
+diff -Naur linux-2.6.24.4/arch/arm/kernel/process.c linux-2.6.24.4-oxnas/arch/arm/kernel/process.c
+--- linux-2.6.24.4/arch/arm/kernel/process.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/process.c	2009-05-08 16:23:39.000000000 +0800
+@@ -117,7 +117,7 @@
+ void (*pm_idle)(void);
+ EXPORT_SYMBOL(pm_idle);
+ 
+-void (*pm_power_off)(void);
++void (*pm_power_off)(void) = arch_poweroff;
+ EXPORT_SYMBOL(pm_power_off);
+ 
+ void (*arm_pm_restart)(char str) = arm_machine_restart;
+diff -Naur linux-2.6.24.4/arch/arm/kernel/setup.c linux-2.6.24.4-oxnas/arch/arm/kernel/setup.c
+--- linux-2.6.24.4/arch/arm/kernel/setup.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/setup.c	2009-05-08 16:23:39.000000000 +0800
+@@ -314,7 +314,8 @@
+ 		    : "=r" (mmfr0));
+ 		if ((mmfr0 & 0x0000000f) == 0x00000003 ||
+ 		    (mmfr0 & 0x000000f0) == 0x00000030)
+-			cpu_arch = CPU_ARCH_ARMv7;
++			//cpu_arch = CPU_ARCH_ARMv7;
++			cpu_arch = CPU_ARCH_ARMv6;
+ 		else if ((mmfr0 & 0x0000000f) == 0x00000002 ||
+ 			 (mmfr0 & 0x000000f0) == 0x00000020)
+ 			cpu_arch = CPU_ARCH_ARMv6;
+diff -Naur linux-2.6.24.4/arch/arm/kernel/smp.c linux-2.6.24.4-oxnas/arch/arm/kernel/smp.c
+--- linux-2.6.24.4/arch/arm/kernel/smp.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/kernel/smp.c	2009-05-08 16:23:39.000000000 +0800
+@@ -22,6 +22,7 @@
+ #include <linux/smp.h>
+ #include <linux/seq_file.h>
+ #include <linux/irq.h>
++#include <linux/dma-mapping.h>
+ 
+ #include <asm/atomic.h>
+ #include <asm/cacheflush.h>
+@@ -32,6 +33,20 @@
+ #include <asm/processor.h>
+ #include <asm/tlbflush.h>
+ #include <asm/ptrace.h>
++#include <asm/cacheflush.h>
++
++/* This debug code uses the RPC hires timer to analyse the time spent on cache 
++operations. The data is available in /proc/cache_time */
++#undef SMP_CACHEOP_TIMING
++#if defined(SMP_CACHEOP_TIMING)
++#include <asm/arch/rps-timer.h>
++#include <linux/proc_fs.h>
++static DEFINE_PER_CPU(u64, timeipicacheop) = 0;
++static DEFINE_PER_CPU(u64, timespent) = 0;
++static DEFINE_PER_CPU(u64, timewaiting) = 0;
++static DEFINE_PER_CPU(u32, sgcalls) = 0;
++static DEFINE_PER_CPU(u32, onecalls) = 0;
++#endif
+ 
+ /*
+  * bitmask of present and online CPUs.
+@@ -69,6 +84,8 @@
+ 	IPI_RESCHEDULE,
+ 	IPI_CALL_FUNC,
+ 	IPI_CPU_STOP,
++	IPI_DMA_CACHE,
++	IPI_SGDMA_CACHE,
+ };
+ 
+ struct smp_call_struct {
+@@ -111,8 +128,7 @@
+ 	 */
+ 	pgd = pgd_alloc(&init_mm);
+ 	pmd = pmd_offset(pgd, PHYS_OFFSET);
+-	*pmd = __pmd((PHYS_OFFSET & PGDIR_MASK) |
+-		     PMD_TYPE_SECT | PMD_SECT_AP_WRITE);
++	*pmd = __pmd((PHYS_OFFSET & PGDIR_MASK) | PMD_TYPE_SECT | PMD_SECT_AP_WRITE);
+ 
+ 	/*
+ 	 * We need to tell the secondary core where to find
+@@ -290,6 +306,11 @@
+ 	local_irq_enable();
+ 	local_fiq_enable();
+ 
++	/*
++	 * Setup local timer for this CPU.
++	 */
++	local_timer_setup(cpu);
++
+ 	calibrate_delay();
+ 
+ 	smp_store_cpu_info(cpu);
+@@ -454,6 +470,27 @@
+ }
+ EXPORT_SYMBOL_GPL(smp_call_function);
+ 
++int smp_call_function_single(int cpu, void (*func)(void *info), void *info,
++			     int retry, int wait)
++{
++	/* prevent preemption and reschedule on another processor */
++	int current_cpu = get_cpu();
++	int ret = 0;
++
++	if (cpu == current_cpu) {
++		local_irq_disable();
++		func(info);
++		local_irq_enable();
++	} else
++		ret = smp_call_function_on_cpu(func, info, retry, wait,
++					       cpumask_of_cpu(cpu));
++
++	put_cpu();
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(smp_call_function_single);
++
+ void show_ipi_list(struct seq_file *p)
+ {
+ 	unsigned int cpu;
+@@ -503,6 +503,7 @@
+ {
+ 	irq_enter();
+ 	local_timer_interrupt();
++    update_process_times(user_mode(get_irq_regs()));
+ 	irq_exit();
+ }
+
+@@ -563,6 +563,8 @@
+ 		cpu_relax();
+ }
+ 
++ static inline void ipi_dma_cache_op(unsigned int cpu);
++ static inline void ipi_sgdma_cache_op(unsigned int cpu);
+ /*
+  * Main handler for inter-processor interrupts
+  *
+@@ -557,6 +596,13 @@
+ 	unsigned int cpu = smp_processor_id();
+ 	struct ipi_data *ipi = &per_cpu(ipi_data, cpu);
+ 	struct pt_regs *old_regs = set_irq_regs(regs);
++    
++    /* As a lot of IPI are generated by DMA cache ops, do speculatively ASAP
++    as the other CPU may be waiting */
++	ipi_dma_cache_op(cpu);
++    spin_lock(&ipi->lock);
++    ipi->bits &= ~(1 << IPI_DMA_CACHE);
++    spin_unlock(&ipi->lock);
+ 
+ 	ipi->ipi_count++;
+
+@@ -598,6 +644,14 @@
+ 				ipi_cpu_stop(cpu);
+ 				break;
+ 
++ 			case IPI_DMA_CACHE:
++ 				ipi_dma_cache_op(cpu);
++ 				break;
++ 
++ 			case IPI_SGDMA_CACHE:
++ 				ipi_sgdma_cache_op(cpu);
++ 				break;
++ 
+ 			default:
+ 				printk(KERN_CRIT "CPU%u: Unknown IPI message 0x%x\n",
+ 				       cpu, nextmsg);
+@@ -621,6 +675,11 @@
+ 	send_ipi_message(mask, IPI_TIMER);
+ }
+ 
++void smp_timer_broadcast(cpumask_t mask)
++{
++	send_ipi_message(mask, IPI_TIMER);
++}
++
+ void smp_send_stop(void)
+ {
+ 	cpumask_t mask = cpu_online_map;
+@@ -758,3 +817,338 @@
+ 
+ 	on_each_cpu(ipi_flush_tlb_kernel_range, &ta, 1, 1);
+ }
++
++/*
++ * DMA cache maintenance operations on SMP 
++ */ 
++struct smp_dma_cache_struct {
++    int type;
++    const void *start;
++    const void *end;
++    cpumask_t unfinished;
++};
++
++static struct smp_dma_cache_struct *smp_dma_cache_data;
++
++struct smp_sgdma_cache_struct {
++    struct scatterlist* sg;
++    enum dma_data_direction dir;
++    int nents;
++    cpumask_t unfinished;
++};
++
++static struct smp_sgdma_cache_struct* smp_sgdma_cache_data;
++
++static DEFINE_RWLOCK(smp_dma_cache_data_lock);
++static DEFINE_SPINLOCK(smp_dma_cache_lock);
++
++static inline void local_dma_cache_op(int type, const void *start, const void *end)
++{
++    switch (type) {
++    case SMP_DMA_CACHE_INV:
++        dmac_inv_range(start, end);
++        break;
++    case SMP_DMA_CACHE_CLEAN:
++        dmac_clean_range(start, end);
++        break;
++    case SMP_DMA_CACHE_FLUSH:
++        dmac_flush_range(start, end);
++        break;
++    default:
++        printk(KERN_CRIT "CPU%u: Unknown SMP DMA cache type %d\n",
++               smp_processor_id(), type);
++    }
++}
++
++/*
++ * This function must be executed with interrupts disabled.
++ */
++
++static inline void ipi_dma_cache_op(unsigned int cpu) {
++#if defined(SMP_CACHEOP_TIMING)
++    struct rps_hires_time timestart = oxnas_rps_get_hires_time();
++#endif
++    read_lock(&smp_dma_cache_data_lock);
++
++    /* check for spurious IPI */
++    if (likely(smp_dma_cache_data && cpu_isset(cpu, smp_dma_cache_data->unfinished))) {
++        local_dma_cache_op(smp_dma_cache_data->type,
++                           smp_dma_cache_data->start,
++                           smp_dma_cache_data->end);
++        cpu_clear(cpu, smp_dma_cache_data->unfinished);
++    }
++    read_unlock(&smp_dma_cache_data_lock);
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timeipicacheop, cpu) += oxnas_rps_hires_elapsed_time(timestart);
++#endif
++}
++
++
++/*
++ * Execute the DMA cache operations on all online CPUs. This function
++ * can be called with interrupts disabled or from interrupt context.
++ */
++static inline void __smp_dma_cache_op(int type, const void *start, const void *end) {
++    struct smp_dma_cache_struct data;
++    cpumask_t callmap = cpu_online_map;
++    unsigned int cpu = get_cpu();
++    unsigned long flags;
++#if defined(SMP_CACHEOP_TIMING)    
++    struct rps_hires_time timestart = oxnas_rps_get_hires_time();  
++    struct rps_hires_time waitstart;  
++    per_cpu(onecalls, cpu) += 1;
++#endif
++
++    cpu_clear(cpu, callmap);
++    data.type = type;
++    data.start = start;
++    data.end = end;
++    data.unfinished = callmap;
++
++    /*
++     * If the spinlock cannot be acquired, other CPU is trying to
++     * send an IPI. If the interrupts are disabled, we have to
++     * poll for an incoming IPI.
++     */
++    while (!spin_trylock_irqsave(&smp_dma_cache_lock, flags)) {
++        if (irqs_disabled()) {
++            ipi_dma_cache_op(cpu);
++            ipi_sgdma_cache_op(cpu);
++        }
++    }
++    
++    write_lock(&smp_dma_cache_data_lock);
++    smp_dma_cache_data = &data;
++    write_unlock(&smp_dma_cache_data_lock);
++
++    if (!cpus_empty(callmap))
++        send_ipi_message(callmap, IPI_DMA_CACHE);
++    /* run the local operation in parallel with the other CPUs */
++    local_dma_cache_op(type, start, end);
++
++#if defined(SMP_CACHEOP_TIMING)
++    waitstart = oxnas_rps_get_hires_time();
++#endif
++    while (!cpus_empty(data.unfinished))
++        barrier();
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timewaiting, cpu) += oxnas_rps_hires_elapsed_time(waitstart);
++#endif
++
++    write_lock(&smp_dma_cache_data_lock);
++    smp_dma_cache_data = NULL;
++    write_unlock(&smp_dma_cache_data_lock);
++
++    spin_unlock_irqrestore(&smp_dma_cache_lock, flags);
++    put_cpu();
++    
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timespent, cpu) += oxnas_rps_hires_elapsed_time(timestart);
++#endif
++}
++
++#define DMA_MAX_RANGE       SZ_4K
++
++/*
++ * Split the cache range in smaller pieces if interrupts are enabled
++ * to reduce the latency caused by disabling the interrupts during the
++ * broadcast.
++ */
++void smp_dma_cache_op(int type, const void *start, const void *end) {
++    if (irqs_disabled() || (end - start <= DMA_MAX_RANGE))
++        __smp_dma_cache_op(type, start, end);
++    else {
++        const void *ptr;
++        for (ptr = start; ptr < end - DMA_MAX_RANGE;
++             ptr += DMA_MAX_RANGE)
++            __smp_dma_cache_op(type, ptr, ptr + DMA_MAX_RANGE);
++        __smp_dma_cache_op(type, ptr, end);
++    }
++}
++
++#if defined(SMP_CACHEOP_TIMING)
++/** @debug: proc filing system stuff for cache processing time */
++static struct proc_dir_entry* cachetime_proc;
++static struct rps_hires_time prev;
++static int irqtimeproc_read(char *buf, char **start, off_t offset, int count,
++    int *eof, void *unused) 
++{
++    int cpu;
++    int len = 0;
++    u64 elapsed = oxnas_rps_hires_elapsed_time(prev);
++    prev = oxnas_rps_get_hires_time();
++    len += sprintf(buf+len, "key    :    total:    wait:  ipi op:sg calls:one call\n");
++    for_each_possible_cpu(cpu) {
++        len += sprintf(buf+len, "CPU %1d  : %8lld %8lld %8lld %8d %8d\n",
++            cpu,
++            per_cpu(timespent, cpu),
++            per_cpu(timewaiting, cpu),
++            per_cpu(timeipicacheop, cpu),
++            per_cpu(sgcalls, cpu),
++            per_cpu(onecalls, cpu)
++            );
++        
++        per_cpu(timespent, cpu) = 0;
++        per_cpu(timewaiting, cpu) = 0;
++        per_cpu(timeipicacheop, cpu) = 0;
++        per_cpu(sgcalls, cpu) = 0;
++        per_cpu(onecalls, cpu) = 0;
++    }
++    len += sprintf(buf+len, "Elapsed: %8lld\n", elapsed);
++    *eof=1;
++    return len;
++}
++
++static int __init irqtimeproc(void) {
++    cachetime_proc = create_proc_entry("cache_time", 0444, 0);
++    if (!cachetime_proc) {
++        printk("unable to create proc entry for cache time stuff\n");
++        return -ENOMEM;
++    }
++    prev = oxnas_rps_get_hires_time();
++    cachetime_proc->read_proc = irqtimeproc_read;
++    return 0;
++}
++module_init(irqtimeproc);
++#endif /* SMP_CACHEOP_TIMING */
++/*
++ * Make an area consistent for devices.
++ * Note: Drivers should NOT use this function directly, as it will break
++ * platforms with CONFIG_DMABOUNCE.
++ * Use the driver DMA support - see dma-mapping.h (dma_sync_*)
++ */
++static inline void local_dma_cache_maint(const void *start, size_t size, int direction)
++{
++	const void *end = start + size;
++
++	BUG_ON(!virt_addr_valid(start) || !virt_addr_valid(end - 1));
++
++	switch (direction) {
++	case DMA_FROM_DEVICE:		/* invalidate only */
++		dmac_inv_range(start, end);
++		outer_inv_range(__pa(start), __pa(end));
++		break;
++	case DMA_TO_DEVICE:		/* writeback only */
++		dmac_clean_range(start, end);
++		outer_clean_range(__pa(start), __pa(end));
++		break;
++	case DMA_BIDIRECTIONAL:		/* writeback and invalidate */
++		dmac_flush_range(start, end);
++		outer_flush_range(__pa(start), __pa(end));
++		break;
++	default:
++		BUG();
++	}
++}
++
++
++static inline int local_dma_map_sg(
++    struct scatterlist *sg,
++    int nents,
++	enum dma_data_direction dir) 
++{
++	int i;
++
++    for (i = 0; i < nents; i++, sg++) {
++        local_dma_cache_maint(sg_virt(sg), sg->length, dir);
++	}
++
++    return nents;
++}
++
++static inline void ipi_sgdma_cache_op(unsigned int cpu) {
++#if defined(SMP_CACHEOP_TIMING)
++    struct rps_hires_time timestart = oxnas_rps_get_hires_time();
++#endif
++    read_lock(&smp_dma_cache_data_lock);
++
++    /* check this isn't a spurious IPI */
++    if (likely(smp_sgdma_cache_data && cpu_isset(cpu, smp_sgdma_cache_data->unfinished))) 
++    {
++        local_dma_map_sg(smp_sgdma_cache_data->sg, smp_sgdma_cache_data->nents,
++                         smp_sgdma_cache_data->dir);
++        cpu_clear(cpu, smp_sgdma_cache_data->unfinished);
++    }
++    read_unlock(&smp_dma_cache_data_lock);
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timeipicacheop, cpu) += oxnas_rps_hires_elapsed_time(timestart);
++#endif
++}
++
++int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
++	   enum dma_data_direction dir)
++{
++	int i;
++    struct smp_sgdma_cache_struct data;
++    cpumask_t callmap = cpu_online_map;
++    unsigned int cpu = get_cpu();
++    unsigned long flags;
++    
++#if defined(SMP_CACHEOP_TIMING)
++    struct rps_hires_time waitstart;  
++    struct rps_hires_time timestart = oxnas_rps_get_hires_time();  
++    per_cpu(sgcalls, cpu) += 1;
++#endif    
++    cpu_clear(cpu, callmap);
++    
++    /* calculate dma_address */
++	for (i = 0; i < nents; i++) {
++		sg[i].dma_address = page_to_dma(dev, sg_page(&sg[i])) + sg[i].offset;
++	}
++    
++    /* if the architechture is coherent all is done */
++    if (arch_is_coherent())
++        return nents;
++    
++    /*
++     * If the spinlock cannot be acquired, other CPU is trying to
++     * send an IPI. If the interrupts are disabled, we have to
++     * poll for an incoming IPI.
++     */
++    while (!spin_trylock_irqsave(&smp_dma_cache_lock, flags)) {
++        if (irqs_disabled()) {
++            ipi_dma_cache_op(cpu);
++            ipi_sgdma_cache_op(cpu);
++        }
++    }
++    
++    data.sg = sg;
++    data.dir = dir;
++    data.unfinished = callmap;
++    data.nents = nents;
++
++    write_lock(&smp_dma_cache_data_lock);
++    smp_sgdma_cache_data = &data;
++    write_unlock(&smp_dma_cache_data_lock);
++    
++    /* inform the other processor that it has work to do */
++    if (!cpus_empty(callmap))
++        send_ipi_message(callmap, IPI_SGDMA_CACHE);
++    
++    /* do our own cache work whilst we wait */
++    local_dma_map_sg(sg, nents, dir);
++    
++    /* rendezvous the two cpus here */
++#if defined(SMP_CACHEOP_TIMING)
++    waitstart = oxnas_rps_get_hires_time();
++#endif    
++    while (!cpus_empty(data.unfinished))
++        barrier();
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timewaiting, cpu) += oxnas_rps_hires_elapsed_time(waitstart);
++#endif
++    
++    write_lock(&smp_dma_cache_data_lock);
++    smp_sgdma_cache_data = NULL;
++    write_unlock(&smp_dma_cache_data_lock);
++
++    spin_unlock_irqrestore(&smp_dma_cache_lock, flags);
++    put_cpu();
++    
++#if defined(SMP_CACHEOP_TIMING)
++    per_cpu(timespent, cpu) += oxnas_rps_hires_elapsed_time(timestart);
++#endif
++	return nents;
++}
++
++EXPORT_SYMBOL(dma_map_sg);
+diff -Naur linux-2.6.24.4/arch/arm/lib/bitops.h linux-2.6.24.4-oxnas/arch/arm/lib/bitops.h
+--- linux-2.6.24.4/arch/arm/lib/bitops.h	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/bitops.h	2009-05-08 16:23:42.000000000 +0800
+@@ -1,10 +1,18 @@
+ 
+ #if __LINUX_ARM_ARCH__ >= 6 && defined(CONFIG_CPU_32v6K)
++
+ 	.macro	bitop, instr
+ 	mov	r2, #1
+ 	and	r3, r0, #7		@ Get bit offset
+ 	add	r1, r1, r0, lsr #3	@ Get byte offset
+ 	mov	r3, r2, lsl r3
++#ifdef CONFIG_ARM_ERRATA_351422
++	mrc     p15, 0, r0, c0, c0, 5
++	and	r0, r0, #0xf
++	mov	r0, r0, lsl #8
++3:	subs	r0, r0, #1
++	bpl	3b
++#endif
+ 1:	ldrexb	r2, [r1]
+ 	\instr	r2, r2, r3
+ 	strexb	r0, r2, [r1]
+@@ -18,6 +26,13 @@
+ 	mov	r2, #1
+ 	add	r1, r1, r0, lsr #3	@ Get byte offset
+ 	mov	r3, r2, lsl r3		@ create mask
++#ifdef CONFIG_ARM_ERRATA_351422
++	mrc     p15, 0, r0, c0, c0, 5
++	and	r0, r0, #0xf
++	mov	r0, r0, lsl #8
++3:	subs	r0, r0, #1
++	bpl	3b
++#endif
+ 1:	ldrexb	r2, [r1]
+ 	ands	r0, r2, r3		@ save old value of bit
+ 	\instr	r2, r2, r3			@ toggle bit
+diff -Naur linux-2.6.24.4/arch/arm/lib/clear_user.S linux-2.6.24.4-oxnas/arch/arm/lib/clear_user.S
+--- linux-2.6.24.4/arch/arm/lib/clear_user.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/clear_user.S	2009-05-08 16:23:42.000000000 +0800
+@@ -18,7 +18,11 @@
+  *          : sz   - number of bytes to clear
+  * Returns  : number of bytes NOT cleared
+  */
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++ENTRY(__clear_user_alt)
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ ENTRY(__clear_user)
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 		stmfd	sp!, {r1, lr}
+ 		mov	r2, #0
+ 		cmp	r1, #4
+diff -Naur linux-2.6.24.4/arch/arm/lib/copy_from_user.S linux-2.6.24.4-oxnas/arch/arm/lib/copy_from_user.S
+--- linux-2.6.24.4/arch/arm/lib/copy_from_user.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/copy_from_user.S	2009-05-08 16:23:42.000000000 +0800
+@@ -33,6 +33,8 @@
+  *	Number of bytes NOT copied.
+  */
+ 
++	.section ".text.__copy_from_user"
++
+ 	.macro ldr1w ptr reg abort
+ 100:	ldrt \reg, [\ptr], #4
+ 	.section __ex_table, "a"
+@@ -83,7 +85,11 @@
+ 
+ 	.text
+ 
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++ENTRY(__copy_from_user_alt)
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ ENTRY(__copy_from_user)
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 
+ #include "copy_template.S"
+
+diff -Naur linux-2.6.24.4/arch/arm/lib/copy_to_user.S linux-2.6.24.4-oxnas/arch/arm/lib/copy_to_user.S
+--- linux-2.6.24.4/arch/arm/lib/copy_to_user.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/copy_to_user.S	2009-05-08 16:23:42.000000000 +0800
+@@ -33,6 +33,8 @@
+  *	Number of bytes NOT copied.
+  */
+ 
++	.section ".text.__copy_to_user"
++
+ 	.macro ldr1w ptr reg abort
+ 	ldr \reg, [\ptr], #4
+ 	.endm
+@@ -86,7 +88,11 @@
+ 
+ 	.text
+ 
++#ifdef CONFIG_OXNAS_INSTRUMENT_COPIES
++ENTRY(__copy_to_user_alt)
++#else // CONFIG_OXNAS_INSTRUMENT_COPIES
+ ENTRY(__copy_to_user)
++#endif // CONFIG_OXNAS_INSTRUMENT_COPIES
+ 
+ #include "copy_template.S"
+ 
+diff -Naur linux-2.6.24.4/arch/arm/lib/Makefile linux-2.6.24.4-oxnas/arch/arm/lib/Makefile
+--- linux-2.6.24.4/arch/arm/lib/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/Makefile	2009-05-08 16:23:42.000000000 +0800
+@@ -29,6 +29,10 @@
+ endif
+ endif
+ 
++ifeq ($(CONFIG_OXNAS_DMA_COPIES),y)
++  lib-y	+= oxnas_copies.o
++endif
++
+ lib-$(CONFIG_MMU) += $(mmu-y)
+ 
+ ifeq ($(CONFIG_CPU_32v3),y)
+diff -Naur linux-2.6.24.4/arch/arm/lib/memcpy.S linux-2.6.24.4-oxnas/arch/arm/lib/memcpy.S
+--- linux-2.6.24.4/arch/arm/lib/memcpy.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/memcpy.S	2009-05-08 16:23:42.000000000 +0800
+@@ -13,6 +13,8 @@
+ #include <linux/linkage.h>
+ #include <asm/assembler.h>
+ 
++	.section ".text.memcpy"
++
+ 	.macro ldr1w ptr reg abort
+ 	ldr \reg, [\ptr], #4
+ 	.endm
+diff -Naur linux-2.6.24.4/arch/arm/lib/memzero.S linux-2.6.24.4-oxnas/arch/arm/lib/memzero.S
+--- linux-2.6.24.4/arch/arm/lib/memzero.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/lib/memzero.S	2009-05-08 16:23:42.000000000 +0800
+@@ -10,9 +10,11 @@
+ #include <linux/linkage.h>
+ #include <asm/assembler.h>
+ 
+-	.text
++	.section ".text.__memzero"
++
+ 	.align	5
+ 	.word	0
++
+ /*
+  * Align the pointer in r0.  r3 contains the number of bytes that we are
+  * mis-aligned by, and r1 is the number of bytes.  If r1 < 4, then we
+diff -Naur linux-2.6.24.4/arch/arm/Makefile linux-2.6.24.4-oxnas/arch/arm/Makefile
+--- linux-2.6.24.4/arch/arm/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/Makefile	2009-05-08 16:23:51.000000000 +0800
+@@ -127,6 +127,7 @@
+  machine-$(CONFIG_ARCH_VERSATILE)  := versatile
+  machine-$(CONFIG_ARCH_IMX)	   := imx
+  machine-$(CONFIG_ARCH_H720X)	   := h720x
++ machine-$(CONFIG_ARCH_OXNAS)	   := oxnas
+  machine-$(CONFIG_ARCH_AAEC2000)   := aaec2000
+  machine-$(CONFIG_ARCH_REALVIEW)   := realview
+  machine-$(CONFIG_ARCH_AT91)	   := at91
+@@ -186,6 +187,7 @@
+ core-$(CONFIG_ARCH_OMAP)	+= arch/arm/plat-omap/
+ core-$(CONFIG_PLAT_S3C24XX)		+= arch/arm/plat-s3c24xx/
+ core-$(CONFIG_ARCH_MXC)		+= arch/arm/plat-mxc/
++core-$(CONFIG_ARCH_OXNAS)	+= arch/arm/plat-oxnas/
+ 
+ drivers-$(CONFIG_OPROFILE)      += arch/arm/oprofile/
+ drivers-$(CONFIG_ARCH_CLPS7500)	+= drivers/acorn/char/
+diff -Naur linux-2.6.24.4/arch/arm/mm/abort-ev6.S linux-2.6.24.4-oxnas/arch/arm/mm/abort-ev6.S
+--- linux-2.6.24.4/arch/arm/mm/abort-ev6.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/abort-ev6.S	2009-05-08 16:23:50.000000000 +0800
+@@ -20,11 +20,6 @@
+  */
+ 	.align	5
+ ENTRY(v6_early_abort)
+-#ifdef CONFIG_CPU_32v6K
+-	clrex
+-#else
+-	strex	r0, r1, [sp]			@ Clear the exclusive monitor
+-#endif
+ 	mrc	p15, 0, r1, c5, c0, 0		@ get FSR
+ 	mrc	p15, 0, r0, c6, c0, 0		@ get FAR
+ /*
+diff -Naur linux-2.6.24.4/arch/arm/mm/consistent.c linux-2.6.24.4-oxnas/arch/arm/mm/consistent.c
+--- linux-2.6.24.4/arch/arm/mm/consistent.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/consistent.c	2009-05-08 16:23:50.000000000 +0800
+@@ -488,15 +488,15 @@
+ 
+ 	switch (direction) {
+ 	case DMA_FROM_DEVICE:		/* invalidate only */
+-		dmac_inv_range(start, end);
++		smp_dma_inv_range(start, end);
+ 		outer_inv_range(__pa(start), __pa(end));
+ 		break;
+ 	case DMA_TO_DEVICE:		/* writeback only */
+-		dmac_clean_range(start, end);
++		smp_dma_clean_range(start, end);
+ 		outer_clean_range(__pa(start), __pa(end));
+ 		break;
+ 	case DMA_BIDIRECTIONAL:		/* writeback and invalidate */
+-		dmac_flush_range(start, end);
++		smp_dma_flush_range(start, end);
+ 		outer_flush_range(__pa(start), __pa(end));
+ 		break;
+ 	default:
+diff -Naur linux-2.6.24.4/arch/arm/mm/context.c linux-2.6.24.4-oxnas/arch/arm/mm/context.c
+--- linux-2.6.24.4/arch/arm/mm/context.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/context.c	2009-05-08 16:23:50.000000000 +0800
+@@ -10,12 +10,17 @@
+ #include <linux/init.h>
+ #include <linux/sched.h>
+ #include <linux/mm.h>
++#include <linux/smp.h>
++#include <linux/percpu.h>
+ 
+ #include <asm/mmu_context.h>
+ #include <asm/tlbflush.h>
+ 
+ static DEFINE_SPINLOCK(cpu_asid_lock);
+ unsigned int cpu_last_asid = ASID_FIRST_VERSION;
++#ifdef CONFIG_SMP
++DEFINE_PER_CPU(struct mm_struct *, current_mm);
++#endif
+ 
+ /*
+  * We fork()ed a process, and we need a new context for the child
+@@ -26,13 +31,98 @@
+ void __init_new_context(struct task_struct *tsk, struct mm_struct *mm)
+ {
+ 	mm->context.id = 0;
++	spin_lock_init(&mm->context.id_lock);
+ }
+ 
++static void flush_context(void)
++{
++	/* set the reserved ASID before flushing the TLB */
++	asm("mcr	p15, 0, %0, c13, c0, 1\n" : : "r" (0));
++	isb();
++	local_flush_tlb_all();
++	if (icache_is_vivt_asid_tagged()) {
++		__flush_icache_all();
++		dsb();
++	}
++}
++
++#ifdef CONFIG_SMP
++
++static void set_mm_context(struct mm_struct *mm, unsigned int asid)
++{
++	/*
++	 * Locking needed for multi-threaded applications where the
++	 * same mm->context.id could be set from different CPUs during
++	 * the broadcast.
++	 */
++	spin_lock(&mm->context.id_lock);
++	if (likely((mm->context.id ^ cpu_last_asid) >> ASID_BITS)) {
++		/*
++		 * Old version of ASID found. Set the new one and
++		 * reset mm->cpu_vm_mask.
++		 */
++		mm->context.id = asid;
++		cpus_clear(mm->cpu_vm_mask);
++	}
++	spin_unlock(&mm->context.id_lock);
++
++	/*
++	 * Set the cpu_vm_mask bit for the current CPU.
++	 */
++	cpu_set(smp_processor_id(), mm->cpu_vm_mask);
++}
++
++/*
++ * Reset the ASID on the current CPU. This function call is broadcast
++ * from the CPU handling the ASID rollover and holding cpu_asid_lock.
++ */
++static void reset_context(void *info)
++{
++	unsigned int asid;
++	unsigned int cpu = smp_processor_id();
++	struct mm_struct *mm = per_cpu(current_mm, cpu);
++
++	smp_rmb();
++	asid = cpu_last_asid + cpu + 1;
++
++	flush_context();
++	set_mm_context(mm, asid);
++
++	/* set the new ASID */
++	asm("mcr	p15, 0, %0, c13, c0, 1\n" : : "r" (mm->context.id));
++}
++
++#else
++
++static inline void set_mm_context(struct mm_struct *mm, unsigned int asid)
++{
++	mm->context.id = asid;
++	mm->cpu_vm_mask = cpumask_of_cpu(smp_processor_id());
++}
++
++#endif
++
+ void __new_context(struct mm_struct *mm)
+ {
+ 	unsigned int asid;
+ 
+ 	spin_lock(&cpu_asid_lock);
++#ifdef CONFIG_SMP
++	/*
++	 * Check the ASID again, in case the change was broadcast from
++	 * another CPU before we acquired the lock.
++	 */
++	if (unlikely(((mm->context.id ^ cpu_last_asid) >> ASID_BITS) == 0)) {
++		cpu_set(smp_processor_id(), mm->cpu_vm_mask);
++		spin_unlock(&cpu_asid_lock);
++		return;
++	}
++#endif
++	/*
++	 * At this point, it is guaranteed that the current mm (with
++	 * an old ASID) isn't active on any other CPU since the ASIDs
++	 * are changed simultaneously via IPI.
++	 */
+ 	asid = ++cpu_last_asid;
+ 	if (asid == 0)
+ 		asid = cpu_last_asid = ASID_FIRST_VERSION;
+@@ -42,23 +132,15 @@
+ 	 * to start a new version and flush the TLB.
+ 	 */
+ 	if (unlikely((asid & ~ASID_MASK) == 0)) {
+-		asid = ++cpu_last_asid;
+-		/* set the reserved ASID before flushing the TLB */
+-		asm("mcr	p15, 0, %0, c13, c0, 1	@ set reserved context ID\n"
+-		    :
+-		    : "r" (0));
+-		isb();
+-		flush_tlb_all();
+-		if (icache_is_vivt_asid_tagged()) {
+-			asm("mcr	p15, 0, %0, c7, c5, 0	@ invalidate I-cache\n"
+-			    "mcr	p15, 0, %0, c7, c5, 6	@ flush BTAC/BTB\n"
+-			    :
+-			    : "r" (0));
+-			dsb();
+-		}
++		asid = cpu_last_asid + smp_processor_id() + 1;
++		flush_context();
++#ifdef CONFIG_SMP
++		smp_wmb();
++		smp_call_function(reset_context, NULL, 1, 1);
++#endif
++		cpu_last_asid += NR_CPUS;
+ 	}
+-	spin_unlock(&cpu_asid_lock);
+ 
+-	mm->cpu_vm_mask = cpumask_of_cpu(smp_processor_id());
+-	mm->context.id = asid;
++	set_mm_context(mm, asid);
++	spin_unlock(&cpu_asid_lock);
+ }
+diff -Naur linux-2.6.24.4/arch/arm/mm/fault-armv.c linux-2.6.24.4-oxnas/arch/arm/mm/fault-armv.c
+--- linux-2.6.24.4/arch/arm/mm/fault-armv.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/fault-armv.c	2009-05-08 16:23:50.000000000 +0800
+@@ -144,13 +144,17 @@
+ 	page = pfn_to_page(pfn);
+ 	mapping = page_mapping(page);
+ 	if (mapping) {
++#ifndef CONFIG_SMP
+ 		int dirty = test_and_clear_bit(PG_dcache_dirty, &page->flags);
+ 
+ 		if (dirty)
+ 			__flush_dcache_page(mapping, page);
++#endif
+ 
+ 		if (cache_is_vivt())
+ 			make_coherent(mapping, vma, addr, pfn);
++		else if (vma->vm_flags & VM_EXEC)
++			__flush_icache_all();
+ 	}
+ }
+ 
+diff -Naur linux-2.6.24.4/arch/arm/mm/flush.c linux-2.6.24.4-oxnas/arch/arm/mm/flush.c
+--- linux-2.6.24.4/arch/arm/mm/flush.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/flush.c	2009-05-08 16:23:50.000000000 +0800
+@@ -199,6 +199,8 @@
+ 		__flush_dcache_page(mapping, page);
+ 		if (mapping && cache_is_vivt())
+ 			__flush_dcache_aliases(mapping, page);
++		else if (mapping)
++			__flush_icache_all();
+ 	}
+ }
+ EXPORT_SYMBOL(flush_dcache_page);
+diff -Naur linux-2.6.24.4/arch/arm/mm/init.c linux-2.6.24.4-oxnas/arch/arm/mm/init.c
+--- linux-2.6.24.4/arch/arm/mm/init.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/init.c	2009-05-08 16:23:50.000000000 +0800
+@@ -173,9 +173,19 @@
+ #ifdef CONFIG_MMU
+ 	struct map_desc map;
+ 
++#ifdef CONFIG_OXNAS_MAP_SRAM
++	/*
++	 * Assume only a single bank and stop the overwrite of the first section
++	 * descriptor
++	 */
++	map.pfn = __phys_to_pfn(bank->start + 1024*1024);
++	map.virtual = __phys_to_virt(bank->start) + 1024*1024;
++	map.length = bank->size - 1024*1024;
++#else // CONFIG_OXNAS_MAP_SRAM
+ 	map.pfn = __phys_to_pfn(bank->start);
+ 	map.virtual = __phys_to_virt(bank->start);
+ 	map.length = bank->size;
++#endif // CONFIG_OXNAS_MAP_SRAM
+ 	map.type = MT_MEMORY;
+ 
+ 	create_mapping(&map);
+diff -Naur linux-2.6.24.4/arch/arm/mm/Makefile linux-2.6.24.4-oxnas/arch/arm/mm/Makefile
+--- linux-2.6.24.4/arch/arm/mm/Makefile	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/Makefile	2009-05-08 16:23:50.000000000 +0800
+@@ -2,14 +2,13 @@
+ # Makefile for the linux arm-specific parts of the memory manager.
+ #
+ 
+-obj-y				:= consistent.o extable.o fault.o init.o \
+-				   iomap.o
++obj-y				:= extable.o fault.o init.o iomap.o
+ 
+ obj-$(CONFIG_MMU)		+= fault-armv.o flush.o ioremap.o mmap.o \
+-				   pgd.o mmu.o
++				   consistent.o pgd.o mmu.o
+ 
+ ifneq ($(CONFIG_MMU),y)
+-obj-y				+= nommu.o
++obj-y				+= consistent-nommu.o nommu.o
+ endif
+ 
+ obj-$(CONFIG_MODULES)		+= proc-syms.o
+diff -Naur linux-2.6.24.4/arch/arm/mm/mmu.c linux-2.6.24.4-oxnas/arch/arm/mm/mmu.c
+--- linux-2.6.24.4/arch/arm/mm/mmu.c	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/mmu.c	2009-05-08 16:23:50.000000000 +0800
+@@ -271,6 +271,13 @@
+ 		ecc_mask = 0;
+ 	}
+ 
++#ifdef CONFIG_SMP
++	/* To ensure the cache coherency between multiple ARMv6 cores,
++	 * the cache policy has to be write-allocate */
++	if (cpu_arch == CPU_ARCH_ARMv6 && cachepolicy >= CPOLICY_WRITEBACK)
++		cachepolicy = CPOLICY_WRITEALLOC;
++#endif
++
+ 	/*
+ 	 * ARMv5 and lower, bit 4 must be set for page tables.
+ 	 * (was: cache "update-able on write" bit on ARM610)
+@@ -617,6 +624,15 @@
+ 	reserve_bootmem_node(pgdat, __pa(swapper_pg_dir),
+ 			     PTRS_PER_PGD * sizeof(pgd_t));
+ 
++#ifdef CONFIG_OXNAS_MAP_SRAM
++	/*
++	 * Reserve the page table describing the first MB of address space in 4KB
++	 * pages so we can map SRAM over part of it. This didn't work for some reason
++	 * so instead reserve first 0x4000 as some other archs do
++	 */
++	 res_size = __pa(swapper_pg_dir) - PHYS_OFFSET;
++#endif // CONFIG_OXNAS_MAP_SRAM
++
+ 	/*
+ 	 * Hmm... This should go elsewhere, but we really really need to
+ 	 * stop things allocating the low memory; ideally we need a better
+diff -Naur linux-2.6.24.4/arch/arm/mm/proc-arm926.S linux-2.6.24.4-oxnas/arch/arm/mm/proc-arm926.S
+--- linux-2.6.24.4/arch/arm/mm/proc-arm926.S	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/mm/proc-arm926.S	2009-05-08 16:23:50.000000000 +0800
+@@ -245,6 +245,7 @@
+  *
+  * (same as v4wb)
+  */
++.section ".text.arm926_dma_clean_range"
+ ENTRY(arm926_dma_inv_range)
+ #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
+ 	tst	r0, #CACHE_DLINESIZE - 1
+@@ -259,6 +260,7 @@
+ 	blo	1b
+ 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
+ 	mov	pc, lr
++.section ".text.other"
+ 
+ /*
+  *	dma_clean_range(start, end)
+@@ -270,6 +272,7 @@
+  *
+  * (same as v4wb)
+  */
++.section ".text.arm926_dma_clean_range"
+ ENTRY(arm926_dma_clean_range)
+ #ifndef CONFIG_CPU_DCACHE_WRITETHROUGH
+ 	bic	r0, r0, #CACHE_DLINESIZE - 1
+@@ -280,6 +283,7 @@
+ #endif
+ 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
+ 	mov	pc, lr
++.section ".text.other"
+ 
+ /*
+  *	dma_flush_range(start, end)
+@@ -289,6 +293,7 @@
+  *	- start	- virtual start address
+  *	- end	- virtual end address
+  */
++.section ".text.arm926_dma_flush_range"
+ ENTRY(arm926_dma_flush_range)
+ 	bic	r0, r0, #CACHE_DLINESIZE - 1
+ 1:
+@@ -302,6 +307,7 @@
+ 	blo	1b
+ 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
+ 	mov	pc, lr
++.section ".text.other"
+ 
+ ENTRY(arm926_cache_fns)
+ 	.long	arm926_flush_kern_cache_all
+diff -Naur linux-2.6.24.4/arch/arm/mm/Kconfig linux-2.6.24.4-oxnas/arch/arm/mm/Kconfig
+--- linux-2.6.24.4/arch/arm/mm/Kconfig	2009-12-01 23:03:36.000000000 +0800
++++ linux-2.6.24.4/arch/arm/mm/Kconfig	2009-12-01 23:12:25.000000000 +0800
+@@ -180,8 +180,8 @@
+ # ARM926T
+ config CPU_ARM926T
+ 	bool "Support ARM926T processor"
+-	depends on ARCH_INTEGRATOR || ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || MACH_REALVIEW_EB || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_AT91SAM9263 || ARCH_AT91SAM9RL || ARCH_AT91CAP9 || ARCH_NS9XXX || ARCH_DAVINCI
+-	default y if ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_AT91SAM9263 || ARCH_AT91SAM9RL || ARCH_AT91CAP9 || ARCH_NS9XXX || ARCH_DAVINCI
++	depends on ARCH_INTEGRATOR || ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || MACH_REALVIEW_EB || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_AT91SAM9263 || ARCH_AT91SAM9RL || ARCH_AT91CAP9 || ARCH_NS9XXX || ARCH_DAVINCI || ARCH_OXNAS
++	default y if ARCH_VERSATILE_PB || MACH_VERSATILE_AB || ARCH_OMAP730 || ARCH_OMAP16XX || ARCH_PNX4008 || ARCH_NETX || CPU_S3C2412 || ARCH_AT91SAM9260 || ARCH_AT91SAM9261 || ARCH_AT91SAM9263 || ARCH_AT91SAM9RL || ARCH_AT91CAP9 || ARCH_NS9XXX || ARCH_DAVINCI || ARCH_OXNAS
+ 	select CPU_32v5
+ 	select CPU_ABRT_EV5TJ
+ 	select CPU_PABRT_NOIFAR
+diff -Naur linux-2.6.24.4/arch/arm/kernel/calls.S linux-2.6.24.4-oxnas/arch/arm/kernel/calls.S
+--- linux-2.6.24.4/arch/arm/kernel/calls.S 2009-12-01 11:59:11.000000000 +0800
++++ linux-2.6.24.4/arch/arm/kernel/calls.S 2009-12-01 12:00:17.000000000 +0800
+@@ -362,6 +362,7 @@
+ /* 350 */	CALL(sys_timerfd_create)
+ 		CALL(sys_eventfd)
+ 		CALL(sys_fallocate)
++        CALL(sys_samba_reserve)
+ 		CALL(sys_timerfd_settime)
+ 		CALL(sys_timerfd_gettime)
+ #ifndef syscalls_counted
+diff -Naur linux-2.6.24.4/arch/arm/Kconfig linux-2.6.24.4-oxnas/arch/arm/Kconfig
+--- linux-2.6.24.4/arch/arm/Kconfig	2008-03-25 02:49:18.000000000 +0800
++++ linux-2.6.24.4-oxnas/arch/arm/Kconfig	2009-05-08 16:23:51.000000000 +0800
+@@ -33,9 +33,10 @@
+ 	bool
+ 	default n
+ 
+-config MMU
++config GENERIC_CLOCKEVENTS_BROADCAST
+ 	bool
+-	default y
++	depends on GENERIC_CLOCKEVENTS
++	default y if SMP && !LOCAL_TIMERS
+ 
+ config NO_IOPORT
+ 	bool
+@@ -142,6 +143,13 @@
+ 
+ menu "System Type"
+ 
++config MMU
++	bool "MMU-based Paged Memory Management Support"
++	default y
++	help
++	  Select if you want MMU-based virtualised addressing space
++	  support by paged memory management. If unsure, say 'Y'.
++
+ choice
+ 	prompt "ARM system type"
+ 	default ARCH_VERSATILE
+@@ -409,6 +419,11 @@
+ 	help
+ 	  Support for TI's OMAP platform (OMAP1 and OMAP2).
+ 
++config ARCH_OXNAS
++	bool "Oxford Semiconductor NAS SoC"
++	help
++	  This enables support for Oxsemi NAS SoC
++      
+ endchoice
+ 
+ source "arch/arm/mach-clps711x/Kconfig"
+@@ -461,6 +476,10 @@
+ 
+ source "arch/arm/mach-versatile/Kconfig"
+ 
++source "arch/arm/mach-oxnas/Kconfig"
++
++source "arch/arm/plat-oxnas/Kconfig"
++
+ source "arch/arm/mach-aaec2000/Kconfig"
+ 
+ source "arch/arm/mach-realview/Kconfig"
+@@ -504,6 +523,18 @@
+ source "arch/arm/Kconfig-nommu"
+ endif
+ 
++config ARM_ERRATA_351422
++	bool "Spinlocks using LDREX and STREX instructions can livelock"
++	depends on CPU_V6 && SMP
++	default n
++	help
++	  According to the ARM11MPCore Erratum 351422 (r0p0), under
++	  extremely rare conditions, in an MPCore node consisting of
++	  at least 3 CPUs, two CPUs trying to perform a STREX to data
++	  on the same shared cache line can enter a livelock
++	  situation. This option adds variable spinning time to the
++	  locking routines.
++
+ endmenu
+ 
+ source "arch/arm/common/Kconfig"
+@@ -537,7 +568,7 @@
+ 	bool
+ 
+ config PCI
+-	bool "PCI support" if ARCH_INTEGRATOR_AP || ARCH_VERSATILE_PB || ARCH_IXP4XX || ARCH_KS8695 || MACH_ARMCORE
++	bool "PCI support" if ARCH_INTEGRATOR_AP || ARCH_VERSATILE_PB || ARCH_IXP4XX || ARCH_KS8695 || MACH_ARMCORE || ARCH_OXNAS
+ 	help
+ 	  Find out whether you have a PCI motherboard. PCI is the name of a
+ 	  bus system, i.e. the way the CPU talks to the other stuff inside
+@@ -725,12 +725,14 @@
+ 	  to have accurate timekeeping with dynamic tick.
+ 
+ config HZ
+-	int
+-	default 128 if ARCH_L7200
++	int "Kernel timer tick rate"
++    default 128 if ARCH_L7200
+ 	default 200 if ARCH_EBSA110 || ARCH_S3C2410
+ 	default OMAP_32K_TIMER_HZ if ARCH_OMAP && OMAP_32K_TIMER
+ 	default AT91_TIMER_HZ if ARCH_AT91
+ 	default 100
++    help
++        Sets the number of timer tick interrupts per second
+ 
+ config AEABI
+ 	bool "Use the ARM EABI to compile the kernel"
+@@ -774,6 +807,8 @@
+ 	  correct operation of some network protocols. With an IP-only
+ 	  configuration it is safe to say N, otherwise say Y.
+ 
++source "drivers/wixevent/Kconfig"
++
+ endmenu
+ 
+ menu "Boot optionsi"

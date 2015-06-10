@@ -1,0 +1,8 @@
+#!/bin/sh /etc/rc.common
+. /etc/arch.sh
+
+START=09
+log_msg="I2C"
+boot() {
+    mknod /dev/i2c c 218 0
+}

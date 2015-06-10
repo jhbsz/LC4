@@ -1,0 +1,34 @@
+#!/bin/sh
+
+. /etc/arch.sh
+PID_DIR="/tmp/usb-remove"
+
+[ -d "$PID_DIR" ] && {
+   return 
+} || {
+    mkdir -p $PID_DIR
+}
+
+local prod_cat=$(nvram get prod_cat)
+local ext_enable=$(nvram show storgae_rule 0 ext_enable)
+
+arch_led_start usbremove
+case "$prod_cat" in
+        G|C|T|D)
+            if [ "ext_enable" = "0" ]; then
+                ACTION="remove" /sbin/hotplug-call block
+            else
+                DEVPATH="nfs" ACTION="remove" /sbin/hotplug-call block
+            fi
+        ;;
+        K)
+            ACTION="remove" /sbin/hotplug-call block
+        ;;
+        M|P|U|I|N|A)
+            /usr/sbin/nvram fset wan_upnp_status_rule=1^down^
+            nvram default wan_wwan_probe_rule
+            sleep 5
+        ;;
+esac
+arch_led_stop usbremove
+rm -rf $PID_DIR

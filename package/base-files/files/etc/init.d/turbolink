@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. $IFNAME is given by hotplug.
+TRIGGER=70
+TRIGGER_STOP=70
+log_msg="TurboLink"
+
+start () {
+    local proto
+    local ipaddr
+    proto=$(nvram get wan${NUM}_proto)
+    ifname=$(nvram get wan${NUM}_ifname)
+        [ "$proto" = "wwan" -o "$proto" = "htc" -o "$proto" = "iphone" -o "$proto" = "barry" -o "$proto" = "wimax" ] && [ "$(nvram show wan_${proto}_rule $NUM turbolink)" = "1" ] && {
+            ping 208.67.222.222 -I $ifname 1>&- &
+        }
+
+}
+stop () {
+    return $err
+}

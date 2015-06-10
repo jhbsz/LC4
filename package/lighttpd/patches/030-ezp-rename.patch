@@ -1,0 +1,32 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2010-08-17 17:04:38.000000000 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-01-30 16:46:28.875279257 +0800
+@@ -1899,7 +1899,7 @@
+ 				 break;
+ 			}
+ 		} else if (S_ISDIR(st.st_mode)) {
+-			int r;
++			int r, result = -1;
+ 			/* src is a directory */
+ 
+ 			if (-1 == stat(p->physical.path->ptr, &st)) {
+@@ -1920,13 +1920,17 @@
+ 					}
+ 				}
+ 			}
+-
++            
++			if (con->request.http_method == HTTP_METHOD_MOVE) {
++                /*use rename */
++                result=rename(con->physical.path->ptr, p->physical.path->ptr);
++			}
+ 			/* copy the content of src to dest */
+-			if (0 != (r = webdav_copy_dir(srv, con, p, &(con->physical), &(p->physical), overwrite))) {
++			if ((result < 0) && (0 != (r = webdav_copy_dir(srv, con, p, &(con->physical), &(p->physical), overwrite)))) {
+ 				con->http_status = r;
+ 				return HANDLER_FINISHED;
+ 			}
+-			if (con->request.http_method == HTTP_METHOD_MOVE) {
++			if ((result < 0) && (con->request.http_method == HTTP_METHOD_MOVE)) {
+ 				b = buffer_init();
+ 				webdav_delete_dir(srv, con, p, &(con->physical), b); /* content */
+ 				buffer_free(b);

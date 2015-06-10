@@ -1,0 +1,21 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+
+# Focus on init.d only.
+# syslogd
+[ "$(nvram show log_rule 0 enable)" = "1" ] && {
+    syslog_ip=$(nvram show log_rule 0 ipaddr)
+    # run 'syslog-ng-init start' instead of 'syslogd'
+    if (which syslog-ng-init > /dev/null 2>&1) ;then
+        syslog-ng-init start
+    else
+        syslogd -C 16 ${syslog_ip:+-L -R $syslog_ip}
+    klogd
+    fi
+}
+                                              
+[ "$(nvram get no_rcd_run)" != "1" ] && {
+    for i in /etc/rc.d/$1*; do
+        [ -x $i ] && $i $2 2>/dev/null 1>/dev/null
+    done 
+}

@@ -1,0 +1,75 @@
+
+.ih_style div, .ih_style form, .ih_style input, .ih_style textarea, .ih_style th, .ih_style td {
+	margin: 0px;
+	padding: 0px;
+	font-family: Myriad,Arial,Helvetica,clean,sans-serif;
+	font-size: 11px;
+}
+.dj_iequirks .ih_style input {
+	margin-top: -1px;
+}
+.ih_style span {
+	margin: 0;
+	padding: 0;
+	font: inherit;
+}
+.ih_style fieldset, .ih_style img {
+	border: 0 none;
+}
+.ih_style th {
+	font-style: normal; 
+	font-weight: normal;
+}
+.ih_style caption, .ih_style th {
+	text-align: left;
+}
+.ih_style {
+	font-size: 11px;
+}
+.ih_style h1 {
+	font-size: 1.5em; 
+	font-weight: normal;
+	line-height: 1em; 
+	margin-top: 1em;
+	margin-bottom:0;
+}
+.ih_style h2 { 
+	font-size: 1.1667em; 
+	font-weight: bold; 
+	line-height: 1.286em; 
+	margin-top: 1.929em; 
+	margin-bottom:0.643em;
+}
+.ih_style h3, .ih_style h4, .ih_style h5, .ih_style h6 {
+	font-size: 1em; 
+	font-weight: bold; 
+	line-height: 1.5em; 
+	margin-top: 1.5em; 
+	margin-bottom: 0;
+}
+.ih_style p { 
+	font-size: 1em; 
+	margin-top: 1.5em; 
+	margin-bottom: 1.5em; 
+	line-height: 1.5em;
+}
+.ih_style blockquote { 
+	font-size: 0.916em; 
+	margin-top: 3.272em; 
+	margin-bottom: 3.272em; 
+	line-height: 1.636em; 
+	padding: 1.636em; 
+	border-top: 1px solid #ccc; 
+	border-bottom: 1px solid #ccc;
+}
+.ih_style pre, .ih_style code { 
+	font-size:115%;
+	*font-size:100%;
+	font-family: Courier, "Courier New"; 
+	background-color: #efefef; 
+	border: 1px solid #ccc;
+}
+.ih_style pre { 
+	border-width: 1px 0; 
+	padding: 1.5em;
+}

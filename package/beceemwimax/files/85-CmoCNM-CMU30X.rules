@@ -1,0 +1,17 @@
+# C-motech CMU-300/CMU-301 modem inserted before rdevchg
+ACTION=="add", KERNEL=="sg*", SUBSYSTEMS=="usb", SYSFS{idVendor}=="16d8", SYSFS{idProduct}=="6008", RUN+="/usr/local/bin/PreCmoCNM-CMU30X 0x6008"
+ACTION=="add", KERNEL=="sg*", SUBSYSTEMS=="usb", SYSFS{idVendor}=="16d8", SYSFS{idProduct}=="6002", RUN+="/usr/local/bin/PreCmoCNM-CMU30X 0x6002"
+ACTION=="add", KERNEL=="sg*", SUBSYSTEMS=="usb", SYSFS{idVendor}=="16d8", SYSFS{idProduct}=="6008", RUN+="/usr/local/bin/bcmswitchmode"
+ACTION=="add", KERNEL=="sg*", SUBSYSTEMS=="usb", SYSFS{idVendor}=="16d8", SYSFS{idProduct}=="6002", RUN+="/usr/local/bin/bcmswitchmode"
+
+# C-motech CMU-300/CMU-301 modem data interface symlink
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="02", ATTRS{modalias}=="usb:v16D8p6008*", SYMLINK+="cmoDM301"
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="00", ATTRS{modalias}=="usb:v16D8p6002*", SYMLINK+="cmoDM300"
+
+# C-motech CMU-300/CMU-301 modem data interface symlink for cdc_acm
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="00", ATTRS{modalias}=="usb:v16D8p6008*", SYMLINK+="cmoDM301"
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="00", ATTRS{modalias}=="usb:v16D8p6002*", SYMLINK+="cmoDM300"
+
+# Rob tries to auto-activate the WiMax interface...
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="00", ATTRS{modalias}=="usb:v16D8p6008*", RUN+="/usr/local/bin/U30X_set_iface /dev/%k"
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="00", ATTRS{modalias}=="usb:v16D8p6002*", RUN+="/usr/local/bin/U30X_set_iface /dev/%k"

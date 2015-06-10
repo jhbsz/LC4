@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+log_msg="SMB-Client"
+
+start () {
+    local ext_enable=$(nvram show storage_rule 0 ext_enable)
+    local dev=$(nvram show storage_state_rule 0 dev_name)
+    [ "$ext_enable" -eq "1" ] && {
+      # if user already connect to remote smb server, dev is not empty
+      # should stop smb-client first
+     [ "$dev" = "nfs" ] && stop
+     DEVPATH="nfs" ACTION="add" /sbin/hotplug-call block
+    } || exit
+    return $err
+}
+
+stop () {
+    local dev=$(nvram show storage_state_rule 0 dev_name)
+    [ -n "$dev" ] && {
+     DEVPATH="nfs" ACTION="remove" /sbin/hotplug-call block
+    }
+    return $err
+}

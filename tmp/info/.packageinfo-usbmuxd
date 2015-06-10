@@ -1,0 +1,14 @@
+Source-Makefile: package/usbmuxd/Makefile
+Package: usbmuxd
+Version: 1.0.9
+Depends: +libusb-1.0 +libusbmuxd +libimobiledevice +libplist +libssl +libcrypto
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: USB muxd
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	USB muxd
+@@
+

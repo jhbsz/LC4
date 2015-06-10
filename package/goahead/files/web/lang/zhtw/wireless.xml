@@ -1,0 +1,476 @@
+﻿<po>
+	<message msgid="general on" msgstr="開啟"/>
+	<message msgid="general off" msgstr="關閉"/>
+	<message msgid="general apply" msgstr="套用"/>
+	<message msgid="general reset" msgstr="取消"/>
+	<message msgid="general wireless setup" msgstr="無線設定"/>
+	<message msgid="general wireless lan" msgstr="無線區域網路："/>
+	<message msgid="general wireless ssid" msgstr="網路名稱(SSID)："/>
+	<message msgid="general hide ssid1" msgstr="隱藏 SSID"/>
+	<message msgid="general mssid hide" msgstr="隱藏"/>
+	<message msgid="general channel select" msgstr="頻道選擇："/>
+	<message msgid="general autochannel select" msgstr="自動選取頻道"/>
+	<message msgid="general operating channel" msgstr="作業頻道："/>
+	<message msgid="general ssid choice" msgstr="SSID 選擇"/>
+	<message msgid="general security title" msgstr="安全機制"/>
+	<message msgid="general security mode" msgstr="安全模式"/>
+	<message msgid="general nosecurity" msgstr="無安全模式"/>
+	<message msgid="general static wep" msgstr="靜態 WEP"/>
+	<message msgid="general wpapsk" msgstr="WPA-PSK"/>
+	<message msgid="general wpa" msgstr="WPA"/>
+	<message msgid="general wpa2psk" msgstr="WPA2-PSK"/>
+	<message msgid="general wpa2" msgstr="WPA2"/>
+	<message msgid="general wep passphrase" msgstr="通用金鑰"/>
+	<message msgid="general wep encryp" msgstr="WEP 加密"/>
+	<message msgid="general auth method" msgstr="認證方式"/>
+	<message msgid="general wep generate" msgstr="產生"/>
+	<message msgid="general wep encryp64" msgstr="64 位元"/>
+	<message msgid="general wep encryp128" msgstr="128 位元"/>
+	<message msgid="general encryp sharedkey" msgstr="共用金鑰"/>
+	<message msgid="general encryp auto" msgstr="自動"/>
+	<message msgid="general note1_1" msgstr="註："/>
+	<message msgid="general note1_2" msgstr="64 位元 WEP： 為金鑰 (1-4) 需輸入 5 個 ASCII 字元或 10 個十六進位字元 (「0-9」、「A-F」)。"/>
+	<message msgid="general note1_3" msgstr="128 位元 WEP： 為金鑰 (1-4) 需輸入 13 個 ASCII 字元或 26 個十六進位字元 (「0-9」、「A-F」)。"/>
+	<message msgid="general note1_4" msgstr="(選擇一個WEP密鑰作為一個積極的關鍵加密無線資料傳輸。)"/>
+	<message msgid="general wep ascii" msgstr="ASCII"/>
+	<message msgid="general wep hex" msgstr="HEX"/>
+	<message msgid="general wep key1" msgstr="金鑰 1"/>
+	<message msgid="general wep key2" msgstr="金鑰 2"/>
+	<message msgid="general wep key3" msgstr="金鑰 3"/>
+	<message msgid="general wep key4" msgstr="金鑰 4"/>
+	<message msgid="general wpapsk compatible" msgstr="WPA-PSK 相容"/>
+	<message msgid="general wpa compatible" msgstr="WPA 相容"/>
+	<message msgid="general wpapsk presharedkey" msgstr="預先共用金鑰"/>
+	<message msgid="general wpa keyrenewinterval" msgstr="群組金鑰更新計時器"/>
+	<message msgid="general wpa pmkcacheperiod" msgstr="PMK 快取期間"/>
+	<message msgid="general wpa keyrenewalintervalunit" msgstr="秒"/>
+	<message msgid="general wpa pmkcacheperiodunit" msgstr="分鐘"/>
+	<message msgid="general wpa preauth" msgstr="預先認證"/>
+	<message msgid="general wpa preauthdisable" msgstr="停用"/>
+	<message msgid="general wpa preauthenable" msgstr="啟用"/>
+	<message msgid="general ieee8021x settings" msgstr="IEEE 802.1x 設定"/>
+	<message msgid="general ieee8021x wep" msgstr="WEP"/>
+	<message msgid="general ieee8021x wepdisable" msgstr="停用"/>
+	<message msgid="general ieee8021x wepenable" msgstr="啟用"/>
+	<message msgid="general auth server" msgstr="認證伺服器"/>
+	<message msgid="general radius ipaddr" msgstr="IP 位址"/>
+	<message msgid="general radius port" msgstr="通訊埠編號"/>
+	<message msgid="general radius sharedsecret" msgstr="共用密碼"/>
+	<message msgid="general radius sessiontimeout" msgstr="連線工作階段等候時間"/>
+	<message msgid="general radius idletimeout" msgstr="閒置等候時間"/>
+	<message msgid="general note_2" msgstr="註： 當 WPS 啟用時，WPA-PSK 與 WPA2-PSK則可正常啟用。"/>
+	<message msgid="general encryp open" msgstr="開放"/>
+	<message msgid="secure access policy" msgstr="存取策略"/>
+	<message msgid="secure mac filter summary" msgstr="MAC 過濾摘要"/>
+	<message msgid="wireless enable" msgstr="啟用"/>
+	<message msgid="wireless disable" msgstr="停用"/>
+	<message msgid="wireless allow" msgstr="允許"/>
+	<message msgid="wireless reject" msgstr="拒絕"/>
+	<message msgid="secure access policy capable" msgstr="規則策略"/>
+	<message msgid="secure access policy new" msgstr="新增工作站 Mac 位址："/>
+	<message msgid="secure access policy del" msgstr="刪除"/>
+	<message msgid="secure mac delete" msgstr="刪除"/>
+	<message msgid="secure mac address" msgstr="MAC 位址"/>
+	<message msgid="advance title" msgstr="進階無線設定"/>
+	<message msgid="advance rts cts" msgstr="RTS/CTS 臨界值"/>
+	<message msgid="advance frag" msgstr="訊框切割臨界值"/>
+	<message msgid="advance intra bss" msgstr="啟用 Intra-BSS 伺服器"/>
+	<message msgid="advance tx power" msgstr="輸出功率"/>
+	<message msgid="advance net mode" msgstr="網路模式"/>
+	<message msgid="advance ht phymode" msgstr="HT 實體模式"/>
+	<message msgid="advance ht opmode" msgstr="作業模式"/>
+	<message msgid="advance ht mixed" msgstr="混合"/>
+	<message msgid="advance ht green" msgstr="環保機制"/>
+	<message msgid="advance ht channelbw" msgstr="頻道頻寬"/>
+	<message msgid="advance ht gi" msgstr="保護區間"/>
+	<message msgid="advance ht longgi" msgstr="長"/>
+	<message msgid="advance ht autogi" msgstr="自動"/>
+	<message msgid="advance mcs" msgstr="MCS"/>
+	<message msgid="advance ht automcs" msgstr="自動"/>
+	<message msgid="advance ht rdg" msgstr="反向授權 (RDG)"/>
+	<message msgid="advance rdg disable" msgstr="停用"/>
+	<message msgid="advance rdg enable" msgstr="啟用"/>
+	<message msgid="advance ht extchannel" msgstr="延伸頻道"/>
+	<message msgid="advance ht amsdu" msgstr="群集 MSDU(A-MSDU)"/>
+	<message msgid="advance ht amsdudisable" msgstr="停用"/>
+	<message msgid="advance ht amsduenable" msgstr="啟用"/>
+	<message msgid="advance ht addba" msgstr="自動封鎖 ACK"/>
+	<message msgid="advance ht addbadisable" msgstr="停用"/>
+	<message msgid="advance ht amsduenable" msgstr="啟用"/>
+	<message msgid="advance ht delba" msgstr="拒絕 BA 要求"/>
+	<message msgid="advance ht delbadisable" msgstr="停用"/>
+	<message msgid="advance ht delbaenable" msgstr="啟用"/>
+	<message msgid="advance other" msgstr="其他"/>
+	<message msgid="advance ht txstream" msgstr="HT TxStream"/>
+	<message msgid="advance ht rxstream" msgstr="HT RxStream"/>
+	<message msgid="qos qostitle" msgstr="WMM 設定"/>
+	<message msgid="qos wmm enable" msgstr="啟動WMM QoS"/>
+	<message msgid="wps wpstitle" msgstr="WPS 設定"/>
+	<message msgid="wps wpsenable" msgstr="啟用 WPS"/>
+	<message msgid="wps wpsstatus" msgstr="狀態"/>
+	<message msgid="wps unconfig1" msgstr="未設定"/>
+	<message msgid="wps unconfig2" msgstr="未設定"/>
+	<message msgid="wps config1" msgstr="已設定"/>
+	<message msgid="wps config2" msgstr="已設定"/>
+	<message msgid="wps unknown1" msgstr="未知"/>
+	<message msgid="wps unknown2" msgstr="未知"/>
+	<message msgid="wps pin number" msgstr="PIN 碼："/>
+	<message msgid="wps generate pincode" msgstr="產生"/>
+	<message msgid="wps oob reset" msgstr="清除_設定"/>
+	<message msgid="wps config status1" msgstr="狀態："/>
+	<message msgid="wps config status2" msgstr="狀態："/>
+	<message msgid="wps config mode" msgstr="802.11 模式："/>
+	<message msgid="wps config ssid" msgstr="SSID："/>
+	<message msgid="wps config security" msgstr="安全機制"/>
+	<message msgid="wps config note1" msgstr="註： 如果您啟用 WPS，"/>
+	<message msgid="wps config note2" msgstr="服務將自動開啟。"/>
+	<message msgid="wps station title" msgstr="新增 WPS 工作站"/>
+	<message msgid="wps station note1_0" msgstr="請點選下方的Push按鈕"/>
+	<message msgid="wps station note1_1" msgstr="按鈕"/>
+	<message msgid="wps station note1_2" msgstr="以將 WPS 工作站新增至無線網路。"/>
+	<message msgid="wps station pbc" msgstr="Push按鈕"/>
+	<message msgid="wps station pinnum" msgstr="或輸入工作站的 PIN 碼："/>
+	<message msgid="wps station pincode" msgstr="開始"/>
+	<message msgid="wps station note2_0" msgstr="註："/>
+	<message msgid="wps station note2_1" msgstr="1. 按鍵設定需要在 120 秒內按下無線基地台端與無線用戶端(無線網路卡)上的WPS加密按鈕。"/>
+	<message msgid="wps station note2_2" msgstr="2. 您可以無線用戶端(無線網路卡)的公用程式中找到 PIN 碼。"/>
+	<message msgid="scheduling title" msgstr="無線區域網路排程"/>
+	<message msgid="scheduling wlan enable" msgstr="啟用無線區域網路"/>
+	<message msgid="scheduling wlan schedule" msgstr="排程"/>
+	<message msgid="scheduling wlan status" msgstr="無線區域網路狀態"/>
+	<message msgid="scheduling wlan day" msgstr="日"/>
+	<message msgid="scheduling wlan except" msgstr="含下列時段 (24小時格式)"/>
+	<message msgid="scheduling day0 on" msgstr="開啟"/>
+	<message msgid="scheduling day0 off" msgstr="關閉"/>
+	<message msgid="scheduling day0 everyday" msgstr="每天"/>
+	<message msgid="scheduling day0 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day0 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day0 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day0 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day1 on" msgstr="開啟"/>
+	<message msgid="scheduling day1 off" msgstr="關閉"/>
+	<message msgid="scheduling day1 mon" msgstr="週一"/>
+	<message msgid="scheduling day1 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day1 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day1 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day1 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day2 on" msgstr="開啟"/>
+	<message msgid="scheduling day2 off" msgstr="關閉"/>
+	<message msgid="scheduling day2 tue" msgstr="週二"/>
+	<message msgid="scheduling day2 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day2 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day2 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day2 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day3 on" msgstr="開啟"/>
+	<message msgid="scheduling day3 off" msgstr="關閉"/>
+	<message msgid="scheduling day3 wed" msgstr="週三"/>
+	<message msgid="scheduling day3 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day3 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day3 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day3 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day4 on" msgstr="開啟"/>
+	<message msgid="scheduling day4 off" msgstr="關閉"/>
+	<message msgid="scheduling day4 thu" msgstr="週四"/>
+	<message msgid="scheduling day4 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day4 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day4 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day4 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day5 on" msgstr="開啟"/>
+	<message msgid="scheduling day5 off" msgstr="關閉"/>
+	<message msgid="scheduling day5 fri" msgstr="週五"/>
+	<message msgid="scheduling day5 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day5 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day5 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day5 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day6 on" msgstr="開啟"/>
+	<message msgid="scheduling day6 off" msgstr="關閉"/>
+	<message msgid="scheduling day6 sat" msgstr="週六"/>
+	<message msgid="scheduling day6 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day6 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day6 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day6 endmin" msgstr="(分)"/>
+	<message msgid="scheduling day7 on" msgstr="開啟"/>
+	<message msgid="scheduling day7 off" msgstr="關閉"/>
+	<message msgid="scheduling day7 sun" msgstr="週日"/>
+	<message msgid="scheduling day7 starthour" msgstr="(時)"/>
+	<message msgid="scheduling day7 startmin" msgstr="(分)"/>
+	<message msgid="scheduling day7 endhour" msgstr="(時)"/>
+	<message msgid="scheduling day7 endmin" msgstr="(分)"/>
+	<message msgid="wds title" msgstr="WDS 設定"/>
+	<message msgid="wds mode" msgstr="基本設定："/>
+	<message msgid="wds self mac" msgstr="本機 MAC 位址："/>
+	<message msgid="wds mode disable" msgstr="停用"/>
+	<message msgid="wds mode apbridge" msgstr="AP+橋接器"/>
+	<message msgid="wds mode bridge" msgstr="橋接器"/>
+	<message msgid="wds phy mode" msgstr="實體模式"/>
+	<message msgid="wds ap macaddr1" msgstr="遠端 MAC 位址"/>
+	<message msgid="wds ap macaddr2" msgstr="遠端 MAC 位址"/>
+	<message msgid="wds ap macaddr3" msgstr="遠端 MAC 位址"/>
+	<message msgid="wds ap macaddr4" msgstr="遠端 MAC 位址"/>
+	<message msgid="wds security title" msgstr="安全機制"/>
+	<message msgid="wds encryp type" msgstr="加密方式"/>
+	<message msgid="wds encryp key" msgstr="加密金鑰"/>
+	<message msgid="wds encryp no" msgstr="無安全模式"/>
+	<message msgid="wds encryp wep" msgstr="WEP"/>
+	<message msgid="wds encryp tkip" msgstr="TKIP"/>
+	<message msgid="wds encryp aes" msgstr="AES"/>
+	<message msgid="wds phy ofdm" msgstr="OFDM"/>
+	<message msgid="wds phy htmix" msgstr="HTMIX"/>
+	<message msgid="wds phy greenfield" msgstr="GREENFIELD"/>
+	<message msgid="wds phy cck" msgstr="CCK"/>
+	<message msgid="addprof system config" msgstr="無線設定"/>
+	<message msgid="addprof advance config" msgstr="進階無線設定"/>
+	<message msgid="addprof profile name" msgstr="設定組合名稱"/>
+	<message msgid="addprof station ssid" msgstr="網路名稱(SSID)"/>
+	<message msgid="addprof network type" msgstr="網路類型"/>
+	<message msgid="addprof adhoc" msgstr="802.11 點對點模式"/>
+	<message msgid="addprof infrastructure" msgstr="基礎架構"/>
+	<message msgid="addprof power save" msgstr="省電模式"/>
+	<message msgid="addprof station channel" msgstr="通道"/>
+	<message msgid="addprof cam" msgstr="CAM (持續傳收模式)"/>
+	<message msgid="addprof preamble type" msgstr="11B 前序編碼類型"/>
+	<message msgid="addprof wireless auto" msgstr="自動"/>
+	<message msgid="addprof wireless long" msgstr="長"/>
+	<message msgid="addprof rts threshold" msgstr="RTS 臨界值"/>
+	<message msgid="addprof fragment threshold" msgstr="訊框切割臨界值"/>
+	<message msgid="addprof secure policy" msgstr="安全機制"/>
+	<message msgid="addprof secure open" msgstr="開放"/>
+	<message msgid="addprof secure shared" msgstr="共用 WEP"/>
+	<message msgid="addprof secure wpapsk" msgstr="WPA-PSK"/>
+	<message msgid="addprof secure wpa2psk" msgstr="WPA2-PSK"/>
+	<message msgid="addprof security mode" msgstr="安全模式"/>
+	<message msgid="addprof wep key length" msgstr="WEP 金鑰長度"/>
+	<message msgid="addprof wep bit64" msgstr="64 位元"/>
+	<message msgid="addprof wep bit128" msgstr="128 位元"/>
+	<message msgid="addprof wep key entry method" msgstr="WEP 金鑰輸入方式"/>
+	<message msgid="addprof hex" msgstr="HEX"/>
+	<message msgid="addprof ascii" msgstr="ASCII"/>
+	<message msgid="addprof secure wep key" msgstr="WEP 金鑰"/>
+	<message msgid="addprof secure wep key1" msgstr="金鑰 1"/>
+	<message msgid="addprof secure wep key2" msgstr="金鑰 2"/>
+	<message msgid="addprof secure wep key3" msgstr="金鑰 3"/>
+	<message msgid="addprof secure wep key4" msgstr="金鑰 4"/>
+	<message msgid="addprof secure wpa" msgstr="WPA"/>
+	<message msgid="addprof secure wpa algorithm" msgstr="WPA 演算法"/>
+	<message msgid="addprof wpa tkip" msgstr="TKIP"/>
+	<message msgid="addprof wpa aes" msgstr="AES"/>
+	<message msgid="addprof secure wpa pass phrase" msgstr="共用密碼"/>
+	<message msgid="op mode title" msgstr="設定模式"/>
+	<message msgid="op mode router" msgstr="路由器模式"/>
+	<message msgid="op mode ap" msgstr="基地台模式"/>
+	<message msgid="op mode wisp" msgstr="WISP 模式"/>
+	<message msgid="op mode note1_0" msgstr="註："/>
+	<message msgid="op mode note1_1" msgstr="路由器： 在此模式下，裝置應透過 ADSL/纜線數據機連線至網際網路。 區域網路埠上的個人電腦共用一個 IP 經由廣域網路埠連線到網際網路透過廣域網路埠。"/>
+	<message msgid="op mode note1_2" msgstr="無線基地台：  在此模式下，所有網路埠(LAN &amp; WAN)都會橋接在一起。 請允許無線電腦也能同時連接到設備進行通訊。"/>
+	<message msgid="op mode note1_3" msgstr="WISP 模式：於此模式，本裝置可作為無線用戶端，並可透過無線方式連接至現有的網路；同時，路由器功能仍然可以在無線 WAN 與 LAN 之間運作。"/>
+	<message msgid="wireless assoc title" msgstr="關聯表"/>
+	<message msgid="wireless assoc number" msgstr="＃"/>
+	<message msgid="wireless assoc macaddr" msgstr="MAC 位址"/>
+	<message msgid="wireless assoc time" msgstr="關聯時間"/>
+	<message msgid="wireless assoc refresh" msgstr="重新整理"/>
+	<message msgid="packet statis title" msgstr="封包統計資料"/>
+	<message msgid="packet statis tabletitle" msgstr="封包統計資料"/>
+	<message msgid="packet statis port" msgstr="連接埠"/>
+	<message msgid="packet statis status" msgstr="狀態"/>
+	<message msgid="packet statis txpkts" msgstr="TxPkts"/>
+	<message msgid="packet statis rxpkts" msgstr="RxPkts"/>
+	<message msgid="packet statis collis" msgstr="碰撞"/>
+	<message msgid="packet statis txbs" msgstr="傳送 B/s"/>
+	<message msgid="packet statis rxbs" msgstr="接收 B/s"/>
+	<message msgid="packet statis uptime" msgstr="已執行時間"/>
+	<message msgid="packet statis wan" msgstr="廣域網路"/>
+	<message msgid="packet statis lan" msgstr="區域網路"/>
+	<message msgid="packet statis wlan" msgstr="無線區域網路"/>
+	<message msgid="packet statis systime" msgstr="系統已執行時間："/>
+	<message msgid="packet statis opllinterval" msgstr="查詢間隔："/>
+	<message msgid="packet statis timesec" msgstr="秒"/>
+	<message msgid="packet statis set interval" msgstr="設定間隔"/>
+	<message msgid="packet statis set stop" msgstr="停止"/>
+	<message msgid="Giving up :( Cannot create an XMLHTTP instance" msgstr="放棄：（無法建立 XMLHTTP 例項"/>
+	<message msgid="There was a problem with the request." msgstr="對於要求出現問題。"/>
+	<message msgid="The mac address in Access Policy form is invalid." msgstr="存取策略中的 MAC 位址無效。"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="You cannot set scheduling in this mode" msgstr="此模式無法設定排程"/>
+	<message msgid="Error : Start Time greater than End Time" msgstr="錯誤：開始時間在結束時間之後"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="Please fill WDS remote AP MAC Address in correct format! (XX:XX:XX:XX:XX:XX)" msgstr="請以正確格式填寫 WDS 遠端 AP MAC 位址！(XX:XX:XX:XX:XX:XX)"/>
+	<message msgid="WDS remote AP MAC Address are empty !!!" msgstr="遠端 WDS 基地台的 MAC 位址沒有填寫！"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="WISP 或用戶端必需選取「系統作業模式」(System Operation Mode)"/>
+	<message msgid="Pleaes input the Profile Name!" msgstr="請輸入組合設定名稱！"/>
+	<message msgid="Pleaes input the SSID!" msgstr="請輸入 SSID！"/>
+	<message msgid="Please input wpapsk key!" msgstr="請輸入 WPA-PSK 金鑰！"/>
+	<message msgid="Please input at least 8 character of wpapsk key !" msgstr="WPA-PSK 金鑰請至少輸入 8 個字元！"/>
+	<message msgid="Please input the 802.1x identity !" msgstr="請輸入 802.1x 識別身分！"/>
+	<message msgid="Please input the 802.1x password !" msgstr="請輸入 802.1x 密碼！"/>
+	<message msgid="Please input the 802.1x Client Certificate Path !" msgstr="請輸入 802.1x 用戶端憑證路徑！"/>
+	<message msgid="Please input the 802.1x Private Key Path !" msgstr="請輸入 802.1x 私人金鑰路徑！"/>
+	<message msgid="Please input the 802.1x Private Key Password !" msgstr="請輸入 802.1x 私人金鑰密碼！"/>
+	<message msgid="Please input the 802.1x CA Certificate Path !" msgstr="請輸入 802.1x CA 憑證路徑！"/>
+	<message msgid="Duplicate Profile Name!" msgstr="複製組合設定名稱！"/>
+	<message msgid="Invalid RTS Threshold" msgstr="無效的 RTS 臨界值"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="請指定切割長度"/>
+	<message msgid="Please input wep key" msgstr="請輸入 WEP 金鑰"/>
+	<message msgid="Please input" msgstr="請輸入"/>
+	<message msgid="character of wep key !" msgstr="個字元的 WEP 金鑰！"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="WISP 或用戶端必需選取「系統作業模式」(System Operation Mode)"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="WISP 或用戶端必需選取「系統作業模式」(System Operation Mode)"/>
+	<message msgid="Pleaes input the Profile Name!" msgstr="請輸入組合設定名稱！"/>
+	<message msgid="Pleaes input the SSID!" msgstr="請輸入 SSID！"/>
+	<message msgid="Please input wpapsk key!" msgstr="請輸入 WPA-PSK 金鑰！"/>
+	<message msgid="Please input at least 8 character of wpapsk key !" msgstr="WPA-PSK 金鑰請至少輸入 8 個字元！"/>
+	<message msgid="Please input the 802.1x identity !" msgstr="請輸入 802.1x 識別身分！"/>
+	<message msgid="Please input the 802.1x password !" msgstr="請輸入 802.1x 密碼！"/>
+	<message msgid="Please input the 802.1x Client Certificate Path !" msgstr="請輸入 802.1x 用戶端憑證路徑！"/>
+	<message msgid="Please input the 802.1x Private Key Path !" msgstr="請輸入 802.1x 私人金鑰路徑！"/>
+	<message msgid="Please input the 802.1x Private Key Password !" msgstr="請輸入 802.1x 私人金鑰密碼！"/>
+	<message msgid="Please input the 802.1x CA Certificate Path !" msgstr="請輸入 802.1x CA 憑證路徑！"/>
+	<message msgid="Duplicate Profile Name!" msgstr="複製組合設定名稱！"/>
+	<message msgid="Invalid RTS Threshold" msgstr="無效的 RTS 臨界值"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="請指定切割長度"/>
+	<message msgid="You MUST select System Operation Mode to WISP or Client" msgstr="WISP 或用戶端必需選取「系統作業模式」(System Operation Mode)"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="Please specify RTS Threshold" msgstr="請指定 RTS 臨界值"/>
+	<message msgid="Invalid RTS Threshold" msgstr="無效的 RTS 臨界值"/>
+	<message msgid="Please specify Fragmentation Length" msgstr="請指定切割長度"/>
+	<message msgid="Invalid Fragmentation Length" msgstr="無效的切割長度"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA" msgstr="當安全模式為 WPA 時，無法啟用 WPS"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA2" msgstr="當安全模式為 WPA2 時，無法啟用 WPS"/>
+	<message msgid="Cannot enable WPS, when security mode is WPA-WPA2" msgstr="當安全模式為 WPA-WPA2 時，無法啟用 WPS"/>
+	<message msgid="Giving up :( Cannot create an XMLHTTP instance" msgstr="放棄：（無法建立 XMLHTTP 例項"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+	<message msgid="Please enable WPS !!!" msgstr="請啟用 WPS！！！"/>
+	<message msgid="PIN number validation failed" msgstr="PIN 碼驗證失敗"/>
+	<message msgid="You CANNOT select WISP or Client mode to configure this page" msgstr="您無法選取 WISP 或用戶端模式來設定此頁面"/>
+<!-- for Sys OP Mode web pages alert message-->
+<message msgid="- Ports are LAN 4 Ethernet LAN ports, WLAN, WAN" msgstr="- 連接埠為 LAN（4 個乙太網路 LAN 連接埠），WLAN，WAN" /> 
+<message msgid="- Ports are LAN 5 Ethernet LAN ports, WLAN as WAN" msgstr="- 連接埠為 LAN（5 個乙太網路 LAN 連接埠），WLAN 為 WAN" />
+<message msgid="- LAN DHCP server is configurable" msgstr="- LAN DHCP 伺服器為可設定" />
+<message msgid="- LAN IP is" msgstr="- LAN IP 為" />
+<message msgid="- WAN IP is configurable" msgstr="- WAN IP 為可設定" />
+<message msgid="- Ports are LAN 5 Ethernet LAN ports,WLAN" msgstr="- 連接埠為 LAN（5 個乙太網路 LAN 連接埠），WLAN" />
+<message msgid="- LAN DHCP server is disabled &amp; unconfigurable" msgstr="- LAN DHCP 伺服器停用且不可設定" />
+<message msgid="- LAN IPb is" msgstr="- LAN IP 為" />
+<message msgid="- WAN IP is unreachable" msgstr="- WAN IP 無法連接" />
+<!-- for Sys OP Mode web pages alert message--> 
+<message msgid="main Ready" msgstr="準備就緒"/>
+<message msgid="main ConfigurationSuccess" msgstr="設定更新成功"/>
+<message msgid="main ConfigurationProceeding" msgstr="正在進行設定更新。請稍候..."/>
+<message msgid="main firmware download in progress" msgstr="韌體升級進行中。 請稍候..."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="正在進行韌體升級 請稍候並勿將裝置斷電。"/>
+	<message msgid="dash ref none" msgstr="無"/>
+	<message msgid="dash ref 5s" msgstr="60 秒"/>
+	<message msgid="dash ref 10s" msgstr="120 秒"/>
+	<message msgid="dash ref 15s" msgstr="180 秒"/>
+	<message msgid="dash ref 20s" msgstr="240 秒"/>
+	<message msgid="dash ref 25s" msgstr="300 秒"/>
+<!-- wisp_sute_survey.asp-->
+<message msgid="scan title" msgstr="Station Site Survey" />
+<message msgid="station ssid" msgstr="SSID" /> 
+<message msgid="scan bssid" msgstr="BSSID" />
+<message msgid="scan rssi" msgstr="Signal Strength" />
+<message msgid="scan rescan" msgstr="Rescan" />
+<message msgid="scan add profile" msgstr=" Setting " />
+<!-- wisp_sute_survey.asp-->
+<!-- wds.asp 20090624 add-->
+<message msgid="WDS WEP Key should be a 10/26 hexdecimal or a 5/13 ascii" msgstr="WDS 的 WEP 金鑰必須為 10/26 個字元的 16 進位碼或 5/13 個 ASCII 碼" />
+<message msgid="WDS TKIP or AES Key should be with length 8~64" msgstr="WDS 的 TKIP 或 AES 金鑰必須為 8 ~ 64 個字元" />
+<message msgid="WDS TKIP or AES Key should be a 64 hexdecimal" msgstr="WDS 的 TKIP 或 AES 金鑰必須為 64 個字元的 16 進位碼" />
+<message msgid="Do you wish to continue with this process ?" msgstr="請問您是否要繼續進行此程序?" />
+<message msgid="scheduling title note" msgstr="請依以下表格設定無線功能排程" />
+
+<!-- added by NBG4615 -->
+	<message msgid="op mode ur" msgstr="通用橋接器模式"/>
+	<message msgid="secure ssid choice" msgstr="SSID"/>
+	<message msgid="APClient MAC" msgstr="MAC 位址 (選擇性)"/>
+	<message msgid="general wireless ssid1" msgstr="網路名稱 (SSID1)："/>
+	<message msgid="general wireless ssid2" msgstr="網路名稱 (SSID2)："/>
+	<message msgid="general wireless ssid3" msgstr="網路名稱 (SSID3)："/>
+	<message msgid="main advance intra bss" msgstr="不同 SSID 的無線用戶端通訊"/>
+	<message msgid="channel selection" msgstr="通道選擇"/>
+	<message msgid="encryption type" msgstr="加密方式"/>
+	<message msgid="WISP Title" msgstr="WISP 參數"/>
+	<message msgid="Please input at least 8 character of wpapsk key!" msgstr="WPAPSK 金鑰請至少輸入 8 個字元！"/>
+	<message msgid="Invalid characters in Pass Phrase." msgstr="通關密語中有無效的文字。"/>
+	<message msgid="Please input a valid key renewal interval" msgstr="請輸入有效的金鑰更新間隔"/>
+	<message msgid="Warning: A short key renewal interval." msgstr="警告：金鑰更新間隔過短。"/>
+	<message msgid="Please choose the 802.1x WEP option." msgstr="請選擇 802.1x WEP 選項。"/>
+	<message msgid="Please choose the Pre-Authentication options." msgstr="請選擇 Pre-Authentication (預先認證) 選項。"/>
+	<message msgid="Please input the PMK Cache Period." msgstr="請輸入 PMK 快取期間。"/>
+	<message msgid="Please input 5 characters of wep key1 !" msgstr="請輸入 5 個字元的 WEP 金鑰1！"/>
+	<message msgid="Wep key1 contains invalid characters." msgstr="WEP 金鑰1 內含無效字元！"/>
+	<message msgid="Please input 13 characters of wep key1 !" msgstr="請輸入 13 個字元的 WEP 金鑰1！"/>
+	<message msgid="Please input 10 characters of wep key1 !" msgstr="請輸入 10 個字元的 WEP 金鑰1！"/>
+	<message msgid="Invalid Wep key1 format!" msgstr="WEP 金鑰1 格式無效！"/>
+	<message msgid="Please input 26 characters of wep key1 !" msgstr="請輸入 26 個字元的 WEP 金鑰1！"/>
+	<message msgid="Please input 5 characters of wep key2 !" msgstr="請輸入 5 個字元的 WEP 金鑰2！"/>
+	<message msgid="Wep key2 contains invalid characters." msgstr="WEP 金鑰2 內含無效字元！"/>
+	<message msgid="Please input 13 characters of wep key2 !" msgstr="請輸入 13 個字元的 WEP 金鑰2！"/>
+	<message msgid="Please input 10 characters of wep key2 !" msgstr="請輸入 10 個字元的 WEP 金鑰2！"/>
+	<message msgid="Invalid Wep key2 format!" msgstr="WEP 金鑰2 格式無效！"/>
+	<message msgid="Please input 26 characters of wep key2 !" msgstr="請輸入 26 個字元的 WEP 金鑰2！"/>
+	<message msgid="Please input 5 characters of wep key3 !" msgstr="請輸入 5 個字元的 WEP 金鑰3！"/>
+	<message msgid="Wep key3 contains invalid characters." msgstr="WEP 金鑰3 內含無效字元！"/>
+	<message msgid="Please input 13 characters of wep key3 !" msgstr="請輸入 13 個字元的 WEP 金鑰3！"/>
+	<message msgid="Please input 10 characters of wep key3 !" msgstr="請輸入 10 個字元的 WEP 金鑰3！"/>
+	<message msgid="Invalid Wep key3 format!" msgstr="WEP 金鑰3 格式無效！"/>
+	<message msgid="Please input 26 characters of wep key3 !" msgstr="請輸入 26 個字元的 WEP 金鑰3！"/>
+	<message msgid="Please input 5 characters of wep key4 !" msgstr="請輸入 5 個字元的 WEP 金鑰4！"/>
+	<message msgid="Wep key4 contains invalid characters." msgstr="WEP 金鑰4 內含無效字元！"/>
+	<message msgid="Please input 13 characters of wep key4 !" msgstr="請輸入 13 個字元的 WEP 金鑰4！"/>
+	<message msgid="Please input 10 characters of wep key4 !" msgstr="請輸入 10 個字元的 WEP 金鑰4！"/>
+	<message msgid="Invalid Wep key4 format!" msgstr="WEP 金鑰4 格式無效！"/>
+	<message msgid="Please input 26 characters of wep key4 !" msgstr="請輸入 26 個字元的 WEP 金鑰4！"/>
+	<message msgid="SSID field cannot empty when you select hide function." msgstr="選取隱藏功能時，SSID 欄位不可空白。"/>
+	<message msgid="SSID field cannot empty when you select Enable Intra-BSS Traffic function." msgstr="選取 Enable Intra-BSS Traffic (啟用 BSS 內部流量) 功能時，SSID 欄位不可空白。"/>
+	<message msgid="Please enter SSID!" msgstr="請輸入 SSID！"/>
+	<message msgid="Please input 5 or 13 characters of wep key" msgstr="請輸入 5 或 13 個字元的 WEP 金鑰"/>
+	<message msgid="contains invalid characters" msgstr="內含無效字元"/>
+	<message msgid="Please input 10 or 26 characters of wep key" msgstr="請輸入 10 或 26 個字元的 WEP 金鑰"/>
+	<message msgid="Pass Phrase length should be larger than 8!" msgstr="通關密語的長度應大於 8！"/>
+	<message msgid="Please input at least 8 character wpapsk key!" msgstr="WPAPSK 金鑰請至少輸入 8 個字元！"/>
+	<message msgid="Please input 8 - 63 characters of wpapsk key!" msgstr="WPAPSK 金鑰請輸入 8 - 63 個字元！"/>
+	<message msgid="empty SSID!" msgstr="未填入 SSID！"/>
+	<message msgid="BSSID format error!" msgstr="BSSID 格式錯誤！"/>
+	<message msgid="Unknown Security Mode!" msgstr="未知的安全模式！"/>
+	<message msgid="MAC Address has existed." msgstr="MAC 位址已存在。"/>
+	<message msgid="Duplicate Remote Mac Address!" msgstr="遠端 MAC位址重複！"/>
+	<message msgid="System do not support specific invalid characters." msgstr="系統不支援特定的無效字元。"/>
+
+<message msgid="wlan guest IP" msgstr=" IP 位址："/>
+<message msgid="wlan guest Subnet" msgstr=" IP 子網路遮罩："/>
+
+<message msgid="The value of bandwitdth can not accept empty." msgstr="頻寬的數值不能留空。"/>
+<message msgid="Error. IP address is empty." msgstr="錯誤! 未填入 IP 位址。"/>
+<message msgid="IP address format error." msgstr="IP 位址格式錯誤。"/>
+<message msgid="Error. Invalid Subnet Mask." msgstr="錯誤。子網路遮罩無效。"/>
+<message msgid="wlan guest priority" msgstr=" 優先權 : " />
+
+<message msgid="scheduling note" msgstr="註： 開始時間指定為 00:00，結束時間指定為 24:00，代表全天排程。" />
+<message msgid="op mode note1_4" msgstr="通用橋接器模式：在此模式下，本裝置既是無線基地台，也是無線用戶端，可傳輸兩個無線網路間的無線流量。" />
+
+<!-- Universal Repeater -->
+<message msgid="WEPKey Title" msgstr="WEP 金鑰"/>
+<message msgid="WEPKey Default" msgstr="預設 WEP 金鑰"/>
+<message msgid="apcli WEPkey1" msgstr="WEP 金鑰 1："/>
+<message msgid="apcli WEPkey2" msgstr="WEP 金鑰 2："/>
+<message msgid="apcli WEPkey3" msgstr="WEP 金鑰 3："/>
+<message msgid="apcli WEPkey4" msgstr="WEP 金鑰 4："/>
+
+<!-- need to translate -->
+<!-- MAC filter -->
+<message msgid="Table Full." msgstr="表格已滿" />
+
+<message msgid="wlan guest enable" msgstr="Enable Guest WLAN" />
+<message msgid="wlan guest BWControl" msgstr="Enable Bandwidth Management for Guest WLAN" />
+<message msgid="wlan guest High" msgstr="High" />
+<message msgid="wlan guest Middle" msgstr="Middle" />
+<message msgid="wlan guest Low" msgstr="Low" />
+<message msgid="wlan guest maxBW" msgstr=" Maximum Bandwidth : " />
+<message msgid="wlan guest BW_unit" msgstr="(kbps)" />
+
+<message msgid="Please set value between 64~32768" msgstr="Please set value between 64~32768" />
+</po>

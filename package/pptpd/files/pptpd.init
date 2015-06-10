@@ -1,0 +1,139 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/pptpd
+PID_FILE=/var/run/pptpd.pid
+PPTPD_CONFIG_FILE=/etc/pptpd.conf
+PPTPD_CONFIG_RFILE=/tmp/pptpd.conf
+PPP_CONFIG_FILE=/etc/ppp/options.pptpd
+PPP_CONFIG_RFILE=/tmp/options.pptpd
+CHAP_FILE=/etc/ppp/chap-secrets
+CHAP_RFILE=/tmp/chap-secrets
+START=80
+log_msg="PPTP-server"
+
+local_config () {
+    	local i;
+    	local limit;
+        local REMOTEIP="$(nvram show pptpd_rule 0 remoteip)"
+        local RANGE="$(nvram show pptpd_rule 0 remoteip_range)"
+	rm -rf $PPTPD_CONFIG_RFILE
+	rm -rf $PPTPD_CONFIG_FILE
+	rm -rf $PPP_CONFIG_FILE
+	rm -rf $PPP_CONFIG_RFILE
+	rm -rf $CHAP_FILE
+	rm -rf $CHAP_RFILE
+
+        # pptpd.conf
+	rm -rf $PPTPD_CONFIG_RFILE
+        echo "option $PPP_CONFIG_FILE" >> $PPTPD_CONFIG_FILE
+        echo "speed 115200" >> $PPTPD_CONFIG_FILE
+        echo "stimeout 10" >> $PPTPD_CONFIG_FILE
+        echo "localip $(nvram get lan0_ipaddr )" >> $PPTPD_CONFIG_FILE
+        eval $(ipcalc "$REMOTEIP" 24 "$REMOTEIP" "$RANGE")
+        RANGE="$(echo $END | awk '{FS=".";print $4}')"
+        echo "remoteip $(nvram show pptpd_rule 0 remoteip)-$RANGE" >> $PPTPD_CONFIG_FILE
+
+        # options.pptpd
+	rm -rf $PPP_CONFIG_RFILE
+        echo "auth" >> $PPP_CONFIG_FILE
+        echo "name \"$(nvram show pptpd_rule 0 name)\"" >> $PPP_CONFIG_FILE
+        echo "lcp-echo-failure 3" >> $PPP_CONFIG_FILE
+        echo "lcp-echo-interval $(nvram show pptpd_rule 0 redialperiod)" >> $PPP_CONFIG_FILE
+        echo "nopcomp" >> $PPP_CONFIG_FILE
+        echo "noaccomp" >> $PPP_CONFIG_FILE
+        echo "default-asyncmap" >> $PPP_CONFIG_FILE
+        echo "mtu $(nvram show pptpd_rule 0 mtu)" >> $PPP_CONFIG_FILE
+        echo "mru $(nvram show pptpd_rule 0 mru)" >> $PPP_CONFIG_FILE
+        echo "nobsdcomp" >> $PPP_CONFIG_FILE
+        echo "nodeflate" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 proxyarp_enable)" = "0" ] && \
+        	echo "noproxyarp" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 proxyarp_enable)" = "1" ] && \
+        	echo "proxyarp" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 mppe128_enable)" = "0" ] && \
+        	echo "nomppc" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 mppe128_enable)" = "1" ] && \
+        	echo "mppe required,no40,no56,stateless" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 dns_auto_enable)" = "0" ] && \
+        	echo "ms-dns $(nvram show pptpd_rule 0 dns)" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 dns_auto_enable)" = "1" ] && \
+        	echo "ms-dns $(nvram get lan0_ipaddr)" >> $PPP_CONFIG_FILE
+
+	# auth type chap
+	[ "$(nvram show pptpd_rule 0 chap_enable)" = "0" ] && \
+        	echo "refuse-chap" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 chap_enable)" = "1" ] && \
+        	echo "require-chap" >> $PPP_CONFIG_FILE
+
+	# auth type mschap
+	[ "$(nvram show pptpd_rule 0 mschap_enable)" = "0" ] && \
+        	echo "refuse-mschap" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 mschap_enable)" = "1" ] && \
+        	echo "require-mschap" >> $PPP_CONFIG_FILE
+
+	# auth type mschap-v2
+	[ "$(nvram show pptpd_rule 0 mschapv2_enable)" = "0" ] && \
+        	echo "refuse-mschap-v2" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 mschapv2_enable)" = "1" ] && \
+        	echo "require-mschap-v2" >> $PPP_CONFIG_FILE
+
+	# auth type eap
+	[ "$(nvram show pptpd_rule 0 eap_enable)" = "0" ] && \
+        	echo "refuse-eap" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 eap_enable)" = "1" ] && \
+        	echo "require-eap" >> $PPP_CONFIG_FILE
+
+	# auth type pap
+	[ "$(nvram show pptpd_rule 0 pap_enable)" = "0" ] && \
+        	echo "refuse-pap" >> $PPP_CONFIG_FILE
+	[ "$(nvram show pptpd_rule 0 pap_enable)" = "1" ] && \
+        	echo "require-pap" >> $PPP_CONFIG_FILE
+
+        # chap-secrets
+    	i=0
+    	limit=$(nvram get pptpd_user_rule_num)
+  	rm -rf $CHAP_RFILE
+    # For sharing with L2TP, provider should be *.
+	# provider=$(nvram show pptpd_rule 0 name)
+	while [ $i -lt $limit ]; do
+       	 [ "$(nvram show pptpd_user_rule $i enable)" = "1" ] && {
+       	     username=$(nvram show pptpd_user_rule $i username)
+       	     passwd=$(nvram show pptpd_user_rule $i passwd)
+       	     # echo "$username $provider $passwd *" >> $CHAP_FILE
+       	     echo "$username * $passwd *" >> $CHAP_FILE
+       	 }
+       	 i=$(($i+1))
+   	done
+}
+start () {
+     [ "$(nvram show pptpd_rule 0 enable)" = "1" ] && {
+        [ -n "$(pidof pptpd)" ] && stop
+        local_config
+	# kernel modules
+	    for m in arc4 sha1 slhc crc-ccitt slhc ppp_generic ppp_async ppp_mppe_mppc; do
+	  insmod $m >/dev/null 2>&1
+        done
+
+        # XXX: SNAT for Class C network
+        [ "$(nvram show pptpd_rule 0 nat_enable)" = "1" ] && {
+            /usr/sbin/iptables -I EZP_SNAT -t nat -o br0 -s $(nvram show pptpd_rule 0 remoteip)/24 -j RETURN
+            /usr/sbin/iptables -A EZP_SNAT -t nat -s $(nvram show pptpd_rule 0 remoteip)/24 -j MASQUERADE
+        }
+	nvram replace attr lan_dhcps_rule 0 enable "1"
+
+        $BIN $args || err=1
+    } || {
+        exit
+    }
+
+}
+
+stop () {
+    [ -z "$(pidof pptpd)" ] && exit
+    [ "$(nvram show pptpd_rule 0 enable)" = "1" ] && {
+	[ "$(nvram show pptpd_rule 0 nat_enable)" = "1" ] && {
+        /usr/sbin/iptables -D EZP_SNAT -t nat -o br0 -s $(nvram show pptpd_rule 0 remoteip)/24 -j RETURN
+		/usr/sbin/iptables -D EZP_SNAT -t nat -s $(nvram show pptpd_rule 0 remoteip)/24 -j MASQUERADE || err=1
+    }
+    }
+    killall pptpd
+}

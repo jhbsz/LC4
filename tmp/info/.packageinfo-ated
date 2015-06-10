@@ -1,0 +1,14 @@
+Source-Makefile: package/ated/Makefile
+Package: ated
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: ated
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:    Program for hardware test.
+@@
+

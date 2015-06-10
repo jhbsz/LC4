@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org 
+
+. /etc/arch.sh
+
+START=35
+STOP=90
+log_msg="USB-service"
+
+start() {
+    # Platform specific
+    arch_usb_start
+	[ -d /proc/bus/usb ] && {
+		/bin/mount -t usbfs none /proc/bus/usb || err=1
+	}		
+}
+
+stop() {
+	[ -d /proc/bus/usb ] && {
+        # Platform specific
+        arch_usb_stop
+	}		
+}

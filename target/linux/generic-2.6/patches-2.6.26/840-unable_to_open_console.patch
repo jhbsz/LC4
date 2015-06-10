@@ -1,0 +1,25 @@
+--- a/init/main.c
++++ b/init/main.c
+@@ -803,7 +803,7 @@
+ 	numa_default_policy();
+ 
+ 	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
+-		printk(KERN_WARNING "Warning: unable to open an initial console.\n");
++		printk(KERN_WARNING "EZ Packet system is loading...\n");
+ 
+ 	(void) sys_dup(0);
+ 	(void) sys_dup(0);
+--- a/init/do_mounts.c	2009-06-17 18:36:30.425523404 +0800
++++ b/init/do_mounts.c	2009-06-17 18:37:42.954592135 +0800
+@@ -219,10 +219,7 @@
+ 
+ 	sys_chdir("/root");
+ 	ROOT_DEV = current->fs->pwd.mnt->mnt_sb->s_dev;
+-	printk("VFS: Mounted root (%s filesystem)%s.\n",
+-	       current->fs->pwd.mnt->mnt_sb->s_type->name,
+-	       current->fs->pwd.mnt->mnt_sb->s_flags & MS_RDONLY ?
+-	       " readonly" : "");
++	printk("VFS: Mounted EZ Packet rootfs.\n");
+ 	return 0;
+ }
+ 

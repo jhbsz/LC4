@@ -1,0 +1,292 @@
+#!/bin/sh
+local AWK_INC="/sbin/nconfig.awk"
+local device=$1
+local output=$2
+local tar_version=$3
+local filename=$4
+local COOKIE="auth=YWRtaW46YWRtaW4%3D"
+local CURL_ARG="-s -m 5 -w \"%{http_code}\" -b $COOKIE --interface $device"
+local CURL_ARG_LONG="-s -m 30 -w \"%{http_code}\" -b $COOKIE --interface $device"
+local total_count=$(nvram get fac_total_count)
+local target_ip="192.168.1.1"
+local target_port="8080"
+local TARGET="$target_ip:$target_port"
+local curlfile="$output.curl"
+local tmp_awk="/tmp/$output.awk"
+local curlres
+local mac_res
+local MACHINE_ID="00:41:F3:72:65:1B"
+local max_count="40"
+
+
+tolog(){
+        echo "$1" > /tmp/$output
+}
+get_nvram() {
+    MODEL=$(nvram get fac_model)
+    PARA_PROD_SUPERCAT=$(nvram get fac_prod_supercat)
+    PARA_PROD_CAT=$(nvram get fac_prod_cat)
+    PARA_PROD_SUBCAT=$(nvram get fac_prod_subcat)
+    PARA_BRAND=$(nvram get fac_brand)
+    PARA_MODEL=$(nvram get fac_model)
+    PARA_HTTP_PORT_DEFAULT=$(nvram get fac_http_port)
+    PARA_LANG_DEFAULT=$(nvram get fac_lang)
+    PARA_LAN_IPADDR=$(nvram get fac_lan_ipaddr)
+    PARA_USER_ID=$(nvram get fac_user_id)
+    PARA_PASSWD=$(nvram get fac_passwd)
+    PARA_SSID=$(nvram get fac_ssid)
+    PARA_REGION=$(nvram get fac_region)
+}
+
+mac_add(){
+    inc=$2
+    cat $AWK_INC >  $tmp_awk
+    echo "{" >> $tmp_awk
+    echo "printf(\"%s\\n\", tomac(todec(\$1)+$2));" >> $tmp_awk
+    echo "}" >> $tmp_awk
+
+    M=`echo "$1" | tr -d ':' | tr a-z A-Z | awk  -f $tmp_awk`
+    mac_res=$M
+}
+
+get_page() {
+    [ -f "/tmp/$curlfile" ] && rm /tmp/$curlfile
+    arp -d $target_ip -i $device
+    HTCODE=$(curl $CURL_ARG http://$TARGET/$1 -o /tmp/$curlfile)
+    curlres=$?
+#    while [ ! -f "/tmp/$curlfile" ];do
+#       $(sleep 1)
+#    done
+    [ "$curlres" != "0" ] && {
+        HTCODE=$(curl $CURL_ARG http://192.168.1.1:8008/$1 -o /tmp/$curlfile)
+        curlres=$?
+        [ "$curlres" != "0" ] && {
+            tolog " Connection fail"
+            $(sleep 2)
+            continue
+        }
+    }
+}
+
+get_machine_version() {
+    local search
+    [ -n "$PARA_PROD_SUPERCAT" ] && {
+        search="/($PARA_PROD_SUPERCAT.$PARA_PROD_SUBCAT)/{print \$1}"
+    } || {
+        search="/($PARA_PROD_CAT.$PARA_PROD_SUBCAT)/{print \$1}"
+    }
+    version=$(awk "$search" /tmp/$curlfile | awk -F">" '{print $4}')
+    [ -z "$version" ] && {
+        search="/(X.4)/{print \$1}"
+        version=$(awk "$search" /tmp/$curlfile | awk -F">" '{print $2}')
+    	[  -z "$version" ] && {
+        	tolog " Prod cat error"
+        	continue
+        }
+    }
+}
+
+get_machine_auth() {
+    get_page st_basic.asp
+    res=$(awk "/Unauthorized/{print \$1}" /tmp/$curlfile)
+    [ -n "$res" ] && return 0 || return 1
+}
+
+get_machine_info() {
+   get_page factory.asp
+   if [ "$PARA_PROD_CAT" = "C" -o "$PARA_PROD_CAT" = "T" -o \
+         "$PARA_PROD_CAT" = "M" -o "$PARA_PROD_CAT" = "P" -o \
+         "$PARA_PROD_CAT" = "K" -o "$PARA_PROD_CAT" = "U" -o \
+         "$PARA_PROD_CAT" = "O" -o "$PARA_PROD_CAT" = "G" -o \
+         "$PARA_PROD_CAT" = "I"  ]; then
+        MID=$MACHINE_ID
+        WAN0_MAC=`awk '/ezp-wan0.*value*/ {print $4}' /tmp/$curlfile |awk -F'"'   '{print $2}'`
+        mac_add $WAN0_MAC -1
+        LAN0_MAC=$mac_res 
+        [ -z "$WAN0_MAC" -o -z "$LAN0_MAC" ] && {
+            tolog "Authentication device error!"
+            continue
+        }
+    elif [ "$PARA_PROD_CAT" = "N" -o "$PARA_PROD_CAT" = "A" -o \
+        "$PARA_PROD_CAT" = "D" ]; then
+
+        MID=$MACHINE_ID
+        WAN0_MAC=`awk '/ezp-wan0.*value*/ {print $4}' /tmp/$curlfile |awk -F'"'   '{print $2}'`
+        mac_add $WAN0_MAC -1
+        LAN0_MAC=$mac_res 
+        mac_add $WAN0_MAC 1
+        WAN1_MAC=$mac_res
+        [  -z "$WAN0_MAC" -o -z "$WAN1_MAC" -o  -z "$LAN0_MAC" ] && {
+            tolog "Authentication device error!"
+            continue
+        }
+    fi
+}
+
+set_mac() {
+
+   if  [ "$PARA_PROD_CAT" = "C" -o "$PARA_PROD_CAT" = "T" -o \
+         "$PARA_PROD_CAT" = "M" -o "$PARA_PROD_CAT" = "P" -o \
+         "$PARA_PROD_CAT" = "K" -o "$PARA_PROD_CAT" = "U" -o \
+         "$PARA_PROD_CAT" = "O" -o "$PARA_PROD_CAT" = "G" -o \
+         "$PARA_PROD_CAT" = "I" ]; then
+        MID_STR="-d machine_id=$MID"
+        L_Key=`echo -n "$WAN0_MAC$LAN0_MAC$MID$PARA_BRAND$PARA_MODEL"|md5sum|awk   '{printf("%s",toupper($1));}'`
+        WAN_STR_ALL="-d wan_num=1 -d wan1_hwaddr_default=$WAN0_MAC"
+        LAN_STR_ALL="-d lan_num=1 -d lan1_hwaddr_default=$LAN0_MAC"
+
+   elif [ "$PARA_PROD_CAT" = "N" -o "$PARA_PROD_CAT" = "A" ]; then
+        MID_STR="-d machine_id=$MID"
+        L_Key=`echo -n "$WAN0_MAC$LAN0_MAC$MID$PARA_BRAND$PARA_MODEL"|md5sum|awk   '{printf("%s",toupper($1));}'`
+        WAN_STR_ALL="-d wan_num=2 -d wan1_hwaddr_default=$WAN0_MAC \
+                     -d wan2_hwaddr_default=$WAN1_MAC"
+        LAN_STR_ALL="-d lan_num=1 -d lan1_hwaddr_default=$LAN0_MAC"
+   fi
+
+   WL_ENABLE=$(nvram get fac_wl_enable)
+   [ -z "$WL_ENABLE" ] && WL_ENABLE=1
+   WL_STR_ALL="-d wl_enable_default=$WL_ENABLE"
+
+   AUTH_CONF="-d factory= -d model=$PARA_MODEL -d brand=$PARA_BRAND \
+               -d http_port_default=$PARA_HTTP_PORT_DEFAULT \
+               -d lang_default=$PARA_LANG_DEFAULT -d prod_cat=$PARA_PROD_CAT \
+               -d prod_subcat=$PARA_PROD_SUBCAT \
+               -d prod_supercat=$PARA_PROD_SUPERCAT \
+               -d lan_ipaddr_default=$PARA_LAN_IPADDR \
+               -d userid_default=$PARA_USER_ID -d passwd_default=$PARA_PASSWD \
+               -d wl0_ssid_default=$PARA_SSID \
+               -d wl0_region_default=$PARA_REGION"
+
+   rm /tmp/$curlfile
+   HTCODE=$(curl $CURL_ARG http://$TARGET/apply.cgi -o /tmp/$curlfile \
+        $WAN_STR_ALL $WL_STR_ALL $LAN_STR_ALL $MID_STR $AUTH_CONF \
+        -d license_key=$L_Key -d machine_id=$MID \
+        -d action=Apply --trace  -ascii /tmp/r1)
+   curlres=$?
+
+   while [ ! -f "/tmp/$curlfile" ];do
+        $(sleep 1)
+   done
+
+   is_success=`grep return_value=0 /tmp/$curlfile|awk '{print $1}'`
+    # We hit some weird situation that the return value of curl command is
+    # 200000 when the command triggers reboot. Therefore, the check of the
+    # executing of curl return=0 relies on the HTTP file from the server.
+
+    if [  -z "$is_success"  ]; then
+        tolog "Authentication failed!"
+        $(sleep 3)
+        continue
+    fi
+
+    return 0
+}
+
+exec_default_reboot() {
+    HTCODE=$(curl $CURL_ARG http://$TARGET/default.cgi)
+    curlres=$?
+    [ "$curlres" != "0" ] && {
+         tolog " Connection fail"
+               $(sleep 2)
+         continue
+    }
+    return 0;
+}
+
+wait_reboot() {
+    local curlres
+    local count
+    curlres="1"
+    count="0"
+    
+    while [ "$curlres" != "0" ];do
+        tolog " Checking the firmware $count/$max_count"
+        arp -d $target_ip -i $device
+        HTCODE=$(curl $CURL_ARG http://$TARGET/st_basic.asp)
+        curlres=$?
+        # XXXXX: Some machines don't reboot after successfully upgraded. 
+        [ $count -gt $max_count ] && {
+          get_page reboot.cgi   
+        }
+        count=$(($count + 1))
+    done
+}
+
+mklock() {
+    mkdir $1
+    while [ "$?" = "1" ]; do
+        $(sleep 1)
+        mkdir $1
+    done
+}
+
+unlock() {
+    rm -r $1
+}
+
+add_license_count() {
+    mac_add $MACHINE_ID "2"
+    MACHINE_ID=$mac_res
+    mklock /tmp/nlock
+    local cur_count=$(nvram get fac_cur_count)
+    cur_count=$(($cur_count + 1))
+    nvram fset fac_cur_count=$cur_count
+    nvram commit
+    unlock /tmp/nlock
+}
+
+check_license_count () {
+    mklock /tmp/nlock
+    local cur_count=$(nvram get fac_cur_count)
+    unlock /tmp/nlock
+    [ "$cur_count" -ge "$total_count" ] && return 0 || return 1
+}
+
+init_mid() {
+    rand=$(uptime | awk -F":" '/up/{print $3}'| awk '{print $1}')
+    mac_add $MACHINE_ID $rand
+}
+
+
+###################### upgrade Start #########################################
+tolog " Connection to machine"
+get_nvram
+init_mid
+while [ "1" ]; do
+get_page st_info.asp
+if [ "$curlres" = "0" ]; then
+        get_machine_version
+        [ "$version" != "$tar_version" ] && {
+                tolog " Uploading firmware ..."
+                arp -d $target_ip -i $device
+                HTCODE=$(curl $CURL_ARG_LONG --interface $device -F binfile=@/tmp/$filename http://$TARGET/upgrade.cgi)
+                wait_reboot
+                tolog " Upgrade done"
+                $(sleep 2)
+        } || {
+            [ "$PARA_BRAND" = "PROX" -a "$PARA_PROD_CAT" = "I" ] && {
+                tolog "Waiting to Authentication"
+            } || {
+                get_machine_auth
+                [ "$?" = "0" ] && {
+                    check_license_count
+                    [ "$?" = "0" ] && {
+                        tolog " Firmware is the lastest but Authentication Fail"
+                    } || {
+                        tolog " Authenticaing ..."
+                        get_machine_info
+                        set_mac
+                        exec_default_reboot
+                        $(sleep 5)
+                        wait_reboot
+                        add_license_count
+                    }
+                } || {
+                    tolog " Firmware is the lastest and Authorized"
+                }
+            }
+        }
+else
+        tolog " Connection fail"
+fi
+done

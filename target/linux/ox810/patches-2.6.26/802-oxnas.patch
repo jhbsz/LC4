@@ -1,0 +1,95 @@
+--- linux-2.6.24.4/arch/arm/configs/oxnas_810_eabi_dse_defconfig	2009-09-07 15:18:13.000000000 +0800
++++ linux-2.6.24.4/arch/arm/configs/oxnas_810_eabi_dse_defconfig 2009-09-07 17:43:39.000000000 +0800
+@@ -553,6 +553,7 @@
+ # CONFIG_SATA_VITESSE is not set
+ # CONFIG_SATA_INIC162X is not set
+ CONFIG_SATA_OX810=y
++# CONFIG_SATA_OXNAS_HOTPLUG is not set
+ # CONFIG_SATA_OXNAS_SINGLE_SATA is not set
+ # CONFIG_SATA_OXNAS_DISK_LIGHT is not set
+ # CONFIG_PATA_ALI is not set
+--- linux-2.6.24.4/drivers/ata/ox810sata.c	2009-09-07 18:16:02.000000000 +0800
++++ linux-2.6.24.4/drivers/ata/ox810sata.c	2009-09-15 11:48:07.000000000 +0800
+@@ -18,8 +18,9 @@
+  *  Abstract:
+  *      A driver to interface the 934 based sata core present in the ox810
+  *      with libata and scsi
++ *      Updated to include SATA/eSATA hotplug
+  */
+-
++ 
+ #include <linux/types.h>
+ #include <linux/sched.h>
+ #include <linux/interrupt.h>
+@@ -641,7 +642,12 @@
+     modify the interrupt enable registers on the ata core as required */
+     if (tf->ctl & ATA_NIEN) {
+         /* interrupts disabled */
+-        ox810sata_irq_clear(ap);
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG
++        writel(~0, ioaddr + OX810SATA_INT_DISABLE);
++        writel(~0, ioaddr + OX810SATA_INT_CLEAR);
++#else
++	ox810sata_irq_clear(ap);
++#endif
+     } else {
+         /* interrupts enabled */
+         ox810sata_irq_on(ap);
+@@ -1261,7 +1267,22 @@
+         VPRINTK("queueing work \n");
+         queue_work(ox810sata_driver.spot_the_end_q, &pd->spot_the_end_work.worker);
+     }
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG 
++    /* maybe a hotplug event */
++    if (pd->int_status & OX810SATA_INT_LINK_SERROR ) {
++        u32 serror;
++        ox810sata_scr_read(ap, SCR_ERROR, &serror);
++        if(serror & (SERR_DEV_XCHG | SERR_PHYRDY_CHG)) {
++            ata_ehi_hotplugged(&ap->link.eh_info);
++            ata_port_freeze(ap);
++        }
++    }
++#endif
++    
+     VPRINTK("done\n");
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG
++    ap->ops->irq_on(ap);
++#endif
+     return IRQ_HANDLED;
+ }
+ 
+@@ -1374,7 +1395,9 @@
+     u32 *ioaddr = ox810sata_get_tfio_base(ap);
+     //DPRINTK(KERN_INFO"ox810sata_irq_clear\n");
+ 
++#ifndef CONFIG_SATA_OXNAS_HOTPLUG
+     writel(~0, ioaddr + OX810SATA_INT_DISABLE);
++#endif
+     writel(~0, ioaddr + OX810SATA_INT_CLEAR);
+ }
+ 
+@@ -1543,6 +1566,10 @@
+             break;
+ 		}
+     }
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG    
++    /* debug irq mask on serror*/
++    ox810sata_scr_write(ap, 5, 0x03feffff);
++#endif
+ 
+     /* enable interrupts for ports  */
+     VPRINTK("Enable interrupts\n");
+@@ -2110,6 +2137,13 @@
+ 	if (ap->ioaddr.ctl_addr)
+ 		iowrite8(ap->ctl, ap->ioaddr.ctl_addr);
+     #endif
++#ifdef CONFIG_SATA_OXNAS_HOTPLUG 
++    if (ap->print_id == 1){
++	writel(OX810SATA_INT_WANT, (u32*)SATA0_REGS_BASE + OX810SATA_INT_ENABLE);
++    }else if (ap->print_id == 2){
++	writel(OX810SATA_INT_WANT, (u32*)SATA1_REGS_BASE + OX810SATA_INT_ENABLE);
++    }
++#endif
+ 
+ 	DPRINTK("EXIT\n");
+ }

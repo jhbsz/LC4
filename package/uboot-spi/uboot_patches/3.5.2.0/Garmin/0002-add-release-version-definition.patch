@@ -1,0 +1,9 @@
+--- Uboot-spi-3.6.0.0/uboot_version.h	2013-03-21 21:47:46.862607015 +0800
++++ Uboot-spi-3.6.0.0/uboot_version.h	2013-03-21 21:48:04.282693395 +0800
+@@ -6,4 +6,6 @@
+  * y = minor change		(bug fix release)
+  * z = internal change		(internal debuging)
+  */
++#ifndef RALINK_LOCAL_VERSION
+ #define RALINK_LOCAL_VERSION    "3.5.2.0"
++#endif

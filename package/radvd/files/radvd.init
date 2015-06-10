@@ -1,0 +1,123 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008  Alina Friedrichsen <x-alina@gmx.net>
+START=50
+TRIGGER=50
+TRIGGER_STOP=60
+
+RADVD_CONFIG_FILE="/etc/radvd.conf"
+RADVD_CONFIG_RFILE="/tmp/radvd.conf"
+
+stop() {
+    local ifname="$(nvram get lan0_ifname)"
+    local proto="$(nvram get wan0_protov6)"
+    [ "${proto}" = "link-local" ] && return 1
+    [ "$proto" != "tunnel6" ] && {
+        local prefix="$(nvram show lan_staticv6_rule 0 ${proto}_prefix)"
+        local suffix="$(nvram show lan_staticv6_rule 0 ${proto}_suffix)"
+        local prefixlength="$(nvram show lan_staticv6_rule 0 length)"
+        ip -6 addr del ${prefix}${suffix}/$prefixlength dev ${ifname}
+    }
+    #local prefix="$(nvram show lan_dhcpsv6_rule 0 ${proto}_prefix)"
+    #local suffix="$(nvram show lan_staticv6_rule 0 ${proto}_suffix)"
+	killall radvd
+}
+
+config_stateless_service() {
+    [ -z "$NUM" ] && NUM=0
+    [ "$(nvram show lan_dhcpsv6_rule 0 enable)" = "1" ] || return 1
+    local ifname="$(nvram get lan0_ifname)"
+    local proto="$(nvram get wan0_protov6)"
+    [ "$proto" = "tunnel6" ] && {
+        # FIXME !!! We should specify wan num here
+        local prefix="$(nvram show wan_tunnel6_rule 0 v6ipaddr_length)"
+        local suffix=$(echo "$prefix" | awk 'BEGIN {FS = "::" } {print $2}')
+        local prefixlength=$(echo "$suffix" | awk 'BEGIN {FS = "/" } {print $2}')
+        suffix=$(echo "$suffix" | awk 'BEGIN {FS = "/" } {print $1}')
+        prefix=$(echo "$prefix" | awk 'BEGIN {FS = "::" } {print $1}')::
+    } || {
+        local prefix="$(nvram show lan_staticv6_rule 0 ${proto}_prefix)"
+        local suffix="$(nvram show lan_staticv6_rule 0 ${proto}_suffix)"
+        local prefixlength="$(nvram show lan_staticv6_rule 0 length)"
+        ip -6 addr add ${prefix}${suffix}/${prefixlength} dev ${ifname}
+    }
+    # dhcptype
+    # 0 or stateless : stateless
+    # 1 or stateful : stateful
+    local dhcptype="$(nvram show lan_dhcpsv6_rule 0 type)"
+    [ "$dhcptype" = "0" -o "$dhcptype" = "stateless" ] && {
+        dhcptype="AdvAutonomous on;"
+    } || {
+        dhcptype="AdvAutonomous off;"
+    }
+    # Assign static ip address
+    # Added router advertisement for lan device
+    echo "interface ${ifname} 
+{
+ AdvSendAdvert on;
+ MinRtrAdvInterval 3;
+ MaxRtrAdvInterval 10;
+ prefix ${prefix}/${prefixlength}
+ {
+  AdvOnLink on;
+  ${dhcptype}
+  AdvValidLifetime 86400;
+  AdvPreferredLifetime 86400;
+  AdvRouterAddr on;
+ };
+};" >> $RADVD_CONFIG_FILE
+    return 0
+}
+
+config_ra_receiver() {
+    local wanifname=$(nvram get wan0_ifname)
+    local proto="$(nvram get wan0_protov6)"
+    # When wan side is not dhcp, we don't need to start wad ra acknowledgement
+    [ "$proto" = "dhcp" ] || return
+    local prefix="$(nvram show lan_staticv6_rule 0 ${proto}_prefix)"
+    local prefixlength="$(nvram show lan_staticv6_rule 0 length)"
+    # Added router update for wan device
+    # FIXME !! Advertisement sending is disabled
+    # FIXME !! AdvAutonomous sending is disabled
+    echo "interface $wanifname
+{
+ AdvSendAdvert off;
+ MinRtrAdvInterval 3;
+ MaxRtrAdvInterval 10;
+ prefix ${prefix}/${prefixlength}
+ {
+  AdvOnLink on;
+  AdvAutonomous off;
+  AdvValidLifetime 86400;
+  AdvPreferredLifetime 86400;
+  AdvRouterAddr on;
+ };
+};" >> $RADVD_CONFIG_FILE
+    return 0
+}
+
+start() {
+    stop
+    rm ${RADVD_CONFIG_RFILE}
+	sysctl -w net.ipv6.conf.all.forwarding=1 > /dev/null 2> /dev/null
+    config_stateless_service
+    dhcp_serv=$?
+    config_ra_receiver
+    wan_serv=$?
+    # FIXME !!! Close the wan side forwarding to enable wan-autoconfig
+    # For formal implementation, we should have a service to handle router
+    # advertisement properly.
+    [ -n $NUM ] && {
+        [ "$(nvram get wan${NUM}_protov6)" = "dhcp" ] && {
+            sysctl -w net.ipv6.conf.$(nvram get wan${NUM}_ifname).forwarding=0 > /dev/null 2> /dev/null
+        }
+    } || {
+        wannum="$(nvram get wan_num)"
+        wanidx=0
+        while [ "$wanidx" -lt "$wannum" ]; do
+            sysctl -w net.ipv6.conf.$(nvram get wan${wanidx}_ifname).forwarding=0 > /dev/null 2> /dev/null
+            wanidx=$(($wanidx + 1))
+        done
+    }
+    [ ${dhcp_serv} = "0" -o ${wan_serv} = "0" ] && \
+        radvd -C "$RADVD_CONFIG_FILE" -m stderr_syslog -p /var/run/radvd.pid
+}

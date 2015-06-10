@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009 OpenWrt.org
+
+. /etc/functions.sh
+
+START=60
+log_msg="Camera"
+
+start() {
+    [ "$(nvram show camera_rule 0 enable)" = "1" -a -c "/dev/video0" ] || exit
+    [ -n "$(pidof mjpg_streamer)" ] && {
+        stop
+        sleep 3
+    }
+    PORT="$(nvram show camera_rule 0 port)"
+    FORMAT="$(nvram show camera_rule 0 format)"
+    AUTH_ENABLE="$(nvram show camera_rule 0 auth_enable)"
+    USER="$(nvram show camera_rule 0 user)"
+    PASSWD="$(nvram show camera_rule 0 passwd)"
+    RESOLUTION="$(nvram show camera_rule 0 resolution)"
+    local YUV=""
+    [ "$FORMAT" = "yuv" ] && YUV="-y"
+    local AUTH=""
+    [ "$AUTH_ENABLE" = "1" ] && AUTH="-c ${USER}:${PASSWD}"
+    mjpg_streamer -i "./input_uvc.so $YUV -r $RESOLUTION -d /dev/video0" -o "./output_http.so -w /mjwww -p $PORT $AUTH" &
+    togo_add "Camera" "_camera._tcp." "$(nvram get lan0_ipaddr)" "$(nvram show camera_rule 0 port)" "$(nvram get lan_hwaddr_rule_default)" $(nvram show camera_rule 0 config)
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}
+
+stop() {
+    kill -9 $(pidof mjpg_streamer)
+    while [ -n "$(pidof mjpg_streamer)" ]
+    do
+       sleep 1
+       count=$(($count + 1))
+       [ "$count" -gt "20" ] && {
+           err=1
+           return
+       }
+       kill -9 $(pidof mjpg_streamer)
+    done
+    togo_del "$(nvram get lan_hwaddr_rule_default)" "_camera._tcp."
+    sh /etc/rc.common /etc/init.d/mDNSResponder restart
+}
+

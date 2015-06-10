@@ -1,0 +1,390 @@
+diff -Nur dnsmasq-2.57/src/bpf.c dnsmasq-2.58test6/src/bpf.c
+--- dnsmasq-2.57/src/bpf.c	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/bpf.c	2011-04-02 04:13:03.000000000 +0800
+@@ -35,6 +35,13 @@
+ #include <net/if_dl.h>
+ #include <netinet/if_ether.h>
+ 
++#ifndef SA_SIZE
++#define SA_SIZE(sa)                                             \
++    (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?      \
++        sizeof(long)            :                               \
++        1 + ( (((struct sockaddr *)(sa))->sa_len - 1) | (sizeof(long) - 1) ) )
++#endif
++
+ int arp_enumerate(void *parm, int (*callback)())
+ {
+   int mib[6];
+diff -Nur dnsmasq-2.57/src/config.h dnsmasq-2.58test6/src/config.h
+--- dnsmasq-2.57/src/config.h	2011-02-18 18:18:39.000000000 +0800
++++ dnsmasq-2.58test6/src/config.h	2011-04-02 04:13:03.000000000 +0800
+@@ -14,7 +14,7 @@
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-#define VERSION "2.57"
++#define VERSION "2.58test6"
+ 
+ #define FTABSIZ 150 /* max number of outstanding requests (default) */
+ #define MAX_PROCS 20 /* max no children for TCP requests */
+diff -Nur dnsmasq-2.57/src/dhcp.c dnsmasq-2.58test6/src/dhcp.c
+--- dnsmasq-2.57/src/dhcp.c	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/dhcp.c	2011-04-02 04:13:03.000000000 +0800
+@@ -299,7 +299,7 @@
+     return;
+   lease_prune(NULL, now); /* lose any expired leases */
+   iov.iov_len = dhcp_reply(parm.current, ifr.ifr_name, iface_index, (size_t)sz, 
+-			   now, unicast_dest, &is_inform, pxe_fd);
++			   now, unicast_dest, &is_inform, pxe_fd, iface_addr);
+   lease_update_file(now);
+   lease_update_dns();
+     
+@@ -505,7 +505,7 @@
+       start = ntohl(tmp->start.s_addr);
+       end = ntohl(tmp->end.s_addr);
+ 
+-      if (!(tmp->flags & CONTEXT_STATIC) &&
++      if (!(tmp->flags & (CONTEXT_STATIC | CONTEXT_PROXY)) &&
+ 	  addr >= start &&
+ 	  addr <= end &&
+ 	  match_netid(tmp->filter, netids, 1))
+@@ -540,7 +540,8 @@
+       if (!tmp)
+ 	for (tmp = context; tmp; tmp = tmp->current)
+ 	  if (match_netid(tmp->filter, netids, 1) &&
+-	      is_same_net(taddr, tmp->start, tmp->netmask))
++	      is_same_net(taddr, tmp->start, tmp->netmask) &&
++	      !(tmp->flags & CONTEXT_PROXY))
+ 	    break;
+     }
+   
+@@ -626,16 +627,22 @@
+   
+   for (pass = 0; pass <= 1; pass++)
+     for (c = context; c; c = c->current)
+-      if (c->flags & CONTEXT_STATIC)
++      if (c->flags & (CONTEXT_STATIC | CONTEXT_PROXY))
+ 	continue;
+       else if (!match_netid(c->filter, netids, pass))
+ 	continue;
+       else
+ 	{
+-	  /* pick a seed based on hwaddr then iterate until we find a free address. */
+-	  start.s_addr = addr.s_addr = 
+-	    htonl(ntohl(c->start.s_addr) + 
+-		  ((j + c->addr_epoch) % (1 + ntohl(c->end.s_addr) - ntohl(c->start.s_addr))));
++	  if (option_bool(OPT_CONSEC_ADDR))
++	    /* seed is largest extant lease addr in this context */
++	    start = lease_find_max_addr(c);
++	  else
++	    /* pick a seed based on hwaddr */
++	    start.s_addr = htonl(ntohl(c->start.s_addr) + 
++				 ((j + c->addr_epoch) % (1 + ntohl(c->end.s_addr) - ntohl(c->start.s_addr))));
++
++	  /* iterate until we find a free address. */
++	  addr = start;
+ 	  
+ 	  do {
+ 	    /* eliminate addresses in use by the server. */
+@@ -660,9 +667,6 @@
+ 		
+ 		*addrp = addr;
+ 
+-		if (option_bool(OPT_NO_PING))
+-		  return 1;
+-		
+ 		/* check if we failed to ping addr sometime in the last
+ 		   PING_CACHE_TIME seconds. If so, assume the same situation still exists.
+ 		   This avoids problems when a stupid client bangs
+@@ -672,33 +676,51 @@
+ 		for (count = 0, r = daemon->ping_results; r; r = r->next)
+ 		  if (difftime(now, r->time) >  (float)PING_CACHE_TIME)
+ 		    victim = r; /* old record */
+-		  else if (++count == max || r->addr.s_addr == addr.s_addr)
+-		    return 1;
+-		    
+-		if (icmp_ping(addr))
+-		  /* address in use: perturb address selection so that we are
+-		     less likely to try this address again. */
+-		  c->addr_epoch++;
+-		else
++		  else 
++		    {
++		      count++;
++		      if (r->addr.s_addr == addr.s_addr)
++			{
++			  /* consec-ip mode: we offered this address for another client
++			     (different hash) recently, don't offer it to this one. */
++			  if (option_bool(OPT_CONSEC_ADDR) && r->hash != j)
++			    break;
++			  
++			  return 1;
++			}
++		    }
++
++		if (!r) 
+ 		  {
+-		    /* at this point victim may hold an expired record */
+-		    if (!victim)
++		    if ((count < max) && !option_bool(OPT_NO_PING) && icmp_ping(addr))
+ 		      {
+-			if ((victim = whine_malloc(sizeof(struct ping_result))))
+-			  {
+-			    victim->next = daemon->ping_results;
+-			    daemon->ping_results = victim;
+-			  }
++			/* address in use: perturb address selection so that we are
++			   less likely to try this address again. */
++			if (!option_bool(OPT_CONSEC_ADDR))
++			  c->addr_epoch++;
+ 		      }
+-		    
+-		    /* record that this address is OK for 30s 
+-		       without more ping checks */
+-		    if (victim)
++		    else
+ 		      {
+-			victim->addr = addr;
+-			victim->time = now;
++			/* at this point victim may hold an expired record */
++			if (!victim)
++			  {
++			    if ((victim = whine_malloc(sizeof(struct ping_result))))
++			      {
++				victim->next = daemon->ping_results;
++				daemon->ping_results = victim;
++			      }
++			  }
++			
++			/* record that this address is OK for 30s 
++			   without more ping checks */
++			if (victim)
++			  {
++			    victim->addr = addr;
++			    victim->time = now;
++			    victim->hash = j;
++			  }
++			return 1;
+ 		      }
+-		    return 1;
+ 		  }
+ 	      }
+ 
+@@ -709,6 +731,7 @@
+ 	    
+ 	  } while (addr.s_addr != start.s_addr);
+ 	}
++
+   return 0;
+ }
+ 
+diff -Nur dnsmasq-2.57/src/dns_protocol.h dnsmasq-2.58test6/src/dns_protocol.h
+--- dnsmasq-2.57/src/dns_protocol.h	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/dns_protocol.h	2011-04-02 04:13:03.000000000 +0800
+@@ -56,7 +56,7 @@
+   u16 id;
+   u8  hb3,hb4;
+   u16 qdcount,ancount,nscount,arcount;
+-} ;
++};
+ 
+ #define HB3_QR       0x80
+ #define HB3_OPCODE   0x78
+diff -Nur dnsmasq-2.57/src/dnsmasq.c dnsmasq-2.58test6/src/dnsmasq.c
+--- dnsmasq-2.57/src/dnsmasq.c	2011-02-18 00:14:22.000000000 +0800
++++ dnsmasq-2.58test6/src/dnsmasq.c	2011-04-02 04:13:03.000000000 +0800
+@@ -40,7 +40,7 @@
+ #ifndef LOCALEDIR
+ "no-"
+ #endif
+-"I18N "
++"i18n "
+ #ifndef HAVE_DHCP
+ "no-"
+ #endif
+diff -Nur dnsmasq-2.57/src/dnsmasq.h dnsmasq-2.58test6/src/dnsmasq.h
+--- dnsmasq-2.57/src/dnsmasq.h	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/dnsmasq.h	2011-04-02 04:13:03.000000000 +0800
+@@ -202,7 +202,8 @@
+ #define OPT_NO_REBIND      31
+ #define OPT_ADD_MAC        32
+ #define OPT_DNSSEC         33
+-#define OPT_LAST           34
++#define OPT_CONSEC_ADDR    34
++#define OPT_LAST           35
+ 
+ /* extra flags for my_syslog, we use a couple of facilities since they are known 
+    not to occupy the same bits as priorities, no matter how syslog.h is set up. */
+@@ -585,6 +586,7 @@
+ struct ping_result {
+   struct in_addr addr;
+   time_t time;
++  unsigned int hash;
+   struct ping_result *next;
+ };
+ 
+@@ -875,6 +877,7 @@
+ struct dhcp_lease *lease_find_by_client(unsigned char *hwaddr, int hw_len, int hw_type,  
+ 					unsigned char *clid, int clid_len);
+ struct dhcp_lease *lease_find_by_addr(struct in_addr addr);
++struct in_addr lease_find_max_addr(struct dhcp_context *context);
+ void lease_prune(struct dhcp_lease *target, time_t now);
+ void lease_update_from_configs(void);
+ int do_script_run(time_t now);
+@@ -884,7 +887,7 @@
+ /* rfc2131.c */
+ #ifdef HAVE_DHCP
+ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
+-		  size_t sz, time_t now, int unicast_dest, int *is_inform, int pxe_fd);
++		  size_t sz, time_t now, int unicast_dest, int *is_inform, int pxe_fd, struct in_addr fallback);
+ unsigned char *extended_hwaddr(int hwtype, int hwlen, unsigned char *hwaddr, 
+ 			       int clid_len, unsigned char *clid, int *len_out);
+ #endif
+diff -Nur dnsmasq-2.57/src/lease.c dnsmasq-2.58test6/src/lease.c
+--- dnsmasq-2.57/src/lease.c	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/lease.c	2011-04-02 04:13:03.000000000 +0800
+@@ -323,6 +323,21 @@
+   return NULL;
+ }
+ 
++/* Find largest assigned address in context */
++struct in_addr lease_find_max_addr(struct dhcp_context *context)
++{
++  struct dhcp_lease *lease;
++  struct in_addr addr = context->start;
++  
++  if (!(context->flags & (CONTEXT_STATIC | CONTEXT_PROXY)))
++    for (lease = leases; lease; lease = lease->next)
++      if (((unsigned)ntohl(lease->addr.s_addr)) > ((unsigned)ntohl(context->start.s_addr)) &&
++	  ((unsigned)ntohl(lease->addr.s_addr)) <= ((unsigned)ntohl(context->end.s_addr)) &&
++	  ((unsigned)ntohl(lease->addr.s_addr)) > ((unsigned)ntohl(addr.s_addr)))
++	addr = lease->addr;
++  
++  return addr;
++}
+ 
+ struct dhcp_lease *lease_allocate(struct in_addr addr)
+ {
+diff -Nur dnsmasq-2.57/src/log.c dnsmasq-2.58test6/src/log.c
+--- dnsmasq-2.57/src/log.c	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/log.c	2011-04-02 04:13:03.000000000 +0800
+@@ -154,6 +154,19 @@
+    
+   while (entries)
+     {
++      /* The data in the payoad is written with a terminating zero character 
++	 and the length reflects this. For a stream connection we need to 
++	 send the zero as a record terminator, but this isn't done for a 
++	 datagram connection, so treat the length as one less than reality 
++	 to elide the zero. If we're logging to a file, turn the zero into 
++	 a newline, and leave the length alone. */
++      int len_adjust = 0;
++
++      if (log_to_file)
++	entries->payload[entries->offset + entries->length - 1] = '\n';
++      else if (connection_type == SOCK_DGRAM)
++	len_adjust = 1;
++
+       /* Avoid duplicates over a fork() */
+       if (entries->pid != getpid())
+ 	{
+@@ -163,11 +176,11 @@
+ 
+       connection_good = 1;
+ 
+-      if ((rc = write(log_fd, entries->payload + entries->offset, entries->length)) != -1)
++      if ((rc = write(log_fd, entries->payload + entries->offset, entries->length - len_adjust)) != -1)
+ 	{
+ 	  entries->length -= rc;
+ 	  entries->offset += rc;
+-	  if (entries->length == 0)
++	  if (entries->length == len_adjust)
+ 	    {
+ 	      free_entry();
+ 	      if (entries_lost != 0)
+@@ -366,10 +379,6 @@
+       entry->length = len > MAX_MESSAGE ? MAX_MESSAGE : len;
+       entry->offset = 0;
+       entry->pid = pid;
+-
+-      /* replace terminator with \n */
+-      if (log_to_file)
+-	entry->payload[entry->length - 1] = '\n';
+     }
+   
+   /* almost always, logging won't block, so try and write this now,
+diff -Nur dnsmasq-2.57/src/option.c dnsmasq-2.58test6/src/option.c
+--- dnsmasq-2.57/src/option.c	2011-02-18 19:33:48.000000000 +0800
++++ dnsmasq-2.58test6/src/option.c	2011-04-02 04:13:03.000000000 +0800
+@@ -110,6 +110,7 @@
+ #define LOPT_LOC_REBND 299
+ #define LOPT_ADD_MAC   300
+ #define LOPT_DNSSEC    301
++#define LOPT_INCR_ADDR 302
+ 
+ #ifdef HAVE_GETOPT_LONG
+ static const struct option opts[] =  
+@@ -225,6 +226,7 @@
+     { "rebind-localhost-ok", 0, 0,  LOPT_LOC_REBND },
+     { "add-mac", 0, 0, LOPT_ADD_MAC },
+     { "proxy-dnssec", 0, 0, LOPT_DNSSEC },
++    { "dhcp-sequential-ip", 0, 0,  LOPT_INCR_ADDR },
+     { NULL, 0, 0, 0 }
+   };
+ 
+@@ -347,6 +349,7 @@
+   { LOPT_TEST, 0, NULL, gettext_noop("Check configuration syntax."), NULL },
+   { LOPT_ADD_MAC, OPT_ADD_MAC, NULL, gettext_noop("Add requestor's MAC address to forwarded DNS queries"), NULL },
+   { LOPT_DNSSEC, OPT_DNSSEC, NULL, gettext_noop("Proxy DNSSEC validation results from upstream nameservers"), NULL },
++  { LOPT_INCR_ADDR, OPT_CONSEC_ADDR, NULL, gettext_noop("Attempt to allocate sequential IP addresses to DHCP clients"), NULL },
+   { 0, 0, NULL, NULL, NULL }
+ }; 
+ 
+@@ -1842,6 +1845,7 @@
+ 	new->netmask.s_addr = 0;
+ 	new->broadcast.s_addr = 0;
+ 	new->router.s_addr = 0;
++	new->local.s_addr = 0;
+ 	new->netid.net = NULL;
+ 	new->filter = NULL;
+ 	new->flags = 0;
+diff -Nur dnsmasq-2.57/src/rfc2131.c dnsmasq-2.58test6/src/rfc2131.c
+--- dnsmasq-2.57/src/rfc2131.c	2011-02-17 23:30:15.000000000 +0800
++++ dnsmasq-2.58test6/src/rfc2131.c	2011-04-02 04:13:03.000000000 +0800
+@@ -67,7 +67,7 @@
+ 
+   
+ size_t dhcp_reply(struct dhcp_context *context, char *iface_name, int int_index,
+-		  size_t sz, time_t now, int unicast_dest, int *is_inform, int pxe)
++		  size_t sz, time_t now, int unicast_dest, int *is_inform, int pxe, struct in_addr fallback)
+ {
+   unsigned char *opt, *clid = NULL;
+   struct dhcp_lease *ltmp, *lease = NULL;
+@@ -85,7 +85,7 @@
+   unsigned int time;
+   struct dhcp_config *config;
+   struct dhcp_netid *netid, *tagif_netid;
+-  struct in_addr subnet_addr, fallback, override;
++  struct in_addr subnet_addr, override;
+   unsigned short fuzz = 0;
+   unsigned int mess_type = 0;
+   unsigned char fqdn_flags = 0;
+@@ -318,9 +318,6 @@
+       return 0;
+     }
+ 
+-  /* keep _a_ local address available. */
+-  fallback = context->local;
+-  
+   if (option_bool(OPT_LOG_OPTS))
+     {
+       struct dhcp_context *context_tmp;
+@@ -1432,7 +1429,7 @@
+ {
+   if (override.s_addr != 0)
+     return override;
+-  else if (context)
++  else if (context && context->local.s_addr != 0)
+     return context->local;
+   else
+     return fallback;

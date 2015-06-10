@@ -1,0 +1,11 @@
+--- linux-igd-1.0.0/gatedevice.c	2010-09-07 20:02:08.000000000 +0800
++++ linux-igd-1.0.0/gatedevice.c	2010-09-09 10:22:02.338044553 +0800
+@@ -32,7 +32,7 @@
+ 
+ // (Aaron patch 2009/8/19)->
+ //Steve add 2009/07/09
+-#define CONFIG_UPNP_QoS
++//#define CONFIG_UPNP_QoS
+ #ifdef CONFIG_UPNP_QoS
+ #define XBOX_ID 	0
+ #define PS_ID 		1

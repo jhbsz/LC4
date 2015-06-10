@@ -1,0 +1,18 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-07-11 16:09:41.750270722 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-07-11 16:14:51.660270640 +0800
+@@ -1730,6 +1730,7 @@
+ 						break;
+ 					}
+ 				} else {
++					sync();
+ 					con->http_status = 204;
+ 				}
+ 			}
+@@ -1748,6 +1749,7 @@
+ 				break;
+ 			}
+ 		} else {
++			sync();
+ 			con->http_status = 204;
+ 		}
+ 		return HANDLER_FINISHED;

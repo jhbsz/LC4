@@ -1,0 +1,31 @@
+Source-Makefile: package/libjson-c/Makefile
+Package: libjson-c
+Version: 0.11-2
+Depends: 
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: javascript object notation
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a library for javascript object notation backends.
+
+http://oss.metaparadigm.com/json-c/
+@@
+Package: libjson
+Version: 0.11-2
+Depends: +libjson-c
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: javascript object notation (compat library)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a compatibility library for packages that have not
+ been adapted to the json-c library rename yet
+
+http://oss.metaparadigm.com/json-c/
+@@
+

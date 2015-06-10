@@ -1,0 +1,19 @@
+--- lighttpd-1.4.30/src/mod_fastcgi.c	2014-05-20 10:49:37.759246451 +0800
++++ lighttpd-1.4.30/src/mod_fastcgi.c	2014-05-20 10:46:21.795241202 +0800
+@@ -2224,6 +2224,16 @@
+ 		ns[0] = '\0';
+ 
+ 		key = s;
++        /* Handling HTTP/1.1 and HTTP/1.0 case, ie:
++         * HTTP/1.1 206 Partial Content*/
++        if (!strncmp(s, "HTTP/1.", sizeof("HTTP/1.") - 1)) {
++            value = s;
++            value += sizeof("HTTP/1.");
++            while(isspace(*value)) value ++;
++            if(isdigit(*value)) {
++                con->http_status = strtol(value, NULL, 10);
++            }
++        }
+ 		if (NULL == (value = strchr(s, ':'))) {
+ 			/* we expect: "<key>: <value>\n" */
+ 			continue;

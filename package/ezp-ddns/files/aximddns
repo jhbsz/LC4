@@ -1,0 +1,144 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/ezp-ddns
+RET_MSG_FILE=/tmp/aximddns_ret_msg
+. /etc/network.sh
+. /etc/functions.sh
+TRIGGER=99
+log_msg="AXIMDDNS"
+wan0_mac=""
+wan_str=""
+wan0_ip=""
+old_wan0_ip=""
+
+
+log_aximddns_result () {
+    local err=0
+    grep "ERR" $RET_MSG_FILE && err=1
+    grep "Error" $RET_MSG_FILE && err=1
+    [ "$err" = "1" ] && {
+        nvram replace attr aximddns_rule "$NUM" trycnnt_countdown 30
+        exit 1
+    }
+}
+
+get_wan0mac () {
+    wan0_mac="$(cat /proc/ezp_machine_id | tr -d ':')"
+}
+update_aximddns ()
+{
+    if [ "$(nvram show aximddns_tmp_rule "$NUM" user_enable)" = "1" -o "$(nvram show aximddns_rule "$NUM" user_enable)" = "1" ]; then
+        if [ "$(nvram show aximddns_tmp_rule "$NUM" user_name)" = "" -a "$(nvram show aximddns_rule "$NUM" user_name)" != "" ]; then
+        #it is the booting time to update user ddns name
+            if [ "$(nvram show aximddns_rule "$NUM" user_counter)" = "0" ]; then
+            #if  never to update user ddns name
+                local username="$(nvram show aximddns_rule "$NUM" user_name)"
+                $BIN check_name $wan0_ip $username 2>&1 | tee $RET_MSG_FILE
+                log_aximddns_result
+                $BIN set_name $wan0_ip $username 2>&1 | tee $RET_MSG_FILE
+                log_aximddns_result
+                nvram replace attr aximddns_rule "$NUM" default_counter "0"
+                nvram replace attr aximddns_rule "$NUM" user_name "$username"
+                nvram replace attr aximddns_rule "$NUM" user_enable "1"
+                nvram replace attr aximddns_tmp_rule "$NUM" user_enable "0"
+                $BIN update_name $wan0_ip $username init 2>&1 | tee $RET_MSG_FILE
+                log_aximddns_result
+                nvram replace attr aximddns_rule "$NUM" user_counter "1"
+            else
+            #if  already have updated user ddns name 
+                local username="$(nvram show aximddns_rule "$NUM" user_name)"
+                $BIN update_name $wan0_ip $username regular 2>&1 | tee $RET_MSG_FILE
+                log_aximddns_result
+                nvram replace attr aximddns_rule "$NUM" user_counter "2"
+            fi
+        else
+        #it is the time that user to enable/change/update user ddns name
+            local username="$(nvram show aximddns_tmp_rule "$NUM" user_name)"
+            $BIN check_name $wan0_ip $username 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            $BIN set_name $wan0_ip $username 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            nvram replace attr aximddns_rule "$NUM" default_counter "0"
+            nvram replace attr aximddns_rule "$NUM" user_enable "1"
+            nvram replace attr aximddns_rule "$NUM" user_name "$username"
+            nvram replace attr aximddns_tmp_rule "$NUM" user_name ""
+            nvram replace attr aximddns_tmp_rule "$NUM" user_enable "0"
+            nvram replace attr aximddns_tmp_rule "$NUM" user_counter "0"
+            $BIN update_name $wan0_ip $username init 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            nvram replace attr aximddns_rule "$NUM" user_counter "1"
+
+        fi
+    else
+        get_wan0mac 
+ 
+        [ "$(nvram show aximddns_rule "$NUM" user_name)" != "" ] && { 
+            local username="$(nvram show aximddns_rule "$NUM" user_name)"
+            $BIN disable_name $wan0_ip $username 2>&1 | tee $RET_MSG_FILE
+            nvram replace attr aximddns_rule "$NUM" user_name ""
+            nvram replace attr aximddns_rule "$NUM" user_counter "0"
+            nvram replace attr aximddns_rule "$NUM" user_enable "0"
+            nvram replace attr aximddns_tmp_rule "$NUM" user_enable "0"
+            nvram replace attr aximddns_tmp_rule "$NUM" user_name ""
+        }     
+ 
+        if [ "$(nvram show aximddns_rule "$NUM" default_counter)" = "0" ]; then
+    	    $BIN check_name $wan0_ip $wan0_mac 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            #if the mac already have been used what shout we do?
+    	    $BIN set_name $wan0_ip $wan0_mac 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            nvram replace attr aximddns_rule "$NUM" user_name ""
+            nvram replace attr aximddns_rule "$NUM" user_enable "0"
+            nvram replace attr aximddns_rule "$NUM" user_counter "0"
+            $BIN update_name $wan0_ip $wan0_mac init 2>&1 | tee $RET_MSG_FILE 
+            log_aximddns_result
+            nvram replace attr aximddns_rule "$NUM" default_counter "1"
+    	else
+            $BIN update_name $wan0_ip $wan0_mac regular 2>&1 | tee $RET_MSG_FILE
+            log_aximddns_result
+            nvram replace attr aximddns_rule "$NUM" default_counter "2"
+    	fi
+    fi
+}
+
+compare_ip_then_update () {
+    local countdown="$(nvram show aximddns_rule "$NUM" trycnnt_countdown)"
+    if [ -z "$wan0_ip" ] ; then
+        logger -t "aximdns" "$wan_str" "Fail to get current public IP"
+    else
+        if [ "$old_wan0_ip" = "$wan0_ip" -a "$countdown" != "1" ] ; then
+            echo "don't retry"
+        else
+	    nvram replace attr aximddns_tmp_rule "$NUM" wan_ip $wan0_ip
+            update_aximddns    
+        fi
+    fi
+
+}
+
+start () {
+    [ "$TYPE" != "wan" -o -z "$NUM" ] && exit 1
+    wan_str="WAN $(expr $NUM + 1 )"
+    [ "$(nvram show wan_status_rule "$NUM" state)" != "4" ] && {
+        echo "Error Message:Wan is not enable" > /tmp/aximddns_ret_msg
+        log_aximddns_result
+
+    } 
+    
+    wan0_ip=$(nvram show wan${NUM}_ipaddr "$NUM")
+    [ "$wan0_ip" = "" ] && {
+        echo "Error Message:Wan IP is not avilibe" > /tmp/aximddns_ret_msg
+        log_aximddns_result
+    }
+
+    old_wan0_ip="$(nvram show aximddns_tmp_rule "$NUM" wan_ip)"
+    compare_ip_then_update
+}
+
+stop () {
+    echo "AXIMDDNS STOP"
+}
+
+[ "$1" = "all" ] && {
+        [ "$(nvram show wan_status_rule "0" state)" = "4" ] && TYPE=wan NUM="0" start
+}

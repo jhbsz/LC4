@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+binfile="/usr/sbin/qcloud_sample"
+log_msg="UPNP-port-redirect"
+TRIGGER=92
+start () {
+    local signin_status=""
+    [ -x "$binfile" ] && {
+        signin_status="$($binfile get_device_info | grep qid_status | grep sign-in)"
+    }
+    # signin_status : non empty --> signed-in status
+    [ -z "$signin_status" ] && {
+        err=1
+        return
+    }
+    [ -z "$NUM" ] && NUM=0
+    local wipaddr="$(nvram get wan${NUM}_ipaddr)"
+    local localnet=0
+    eval "$(ipcalc $wipaddr 8)"
+    [ "$NETWORK" = "10.0.0.0" ] && localnet=1
+    [ "$localnet" = "0" ] && {
+        eval "$(ipcalc $wipaddr 12)"
+        [ "$NETWORK" = "172.16.0.0" ] && localnet=1
+    }
+    [ "$localnet" = "0" ] && {
+        eval "$(ipcalc $wipaddr 16)"
+        [ "$NETWORK" = "192.168.0.0" ] && localnet=1
+    }
+    # We do upnp triggle only for private ip address
+    /usr/bin/setup_service_upnpc.sh
+}
+

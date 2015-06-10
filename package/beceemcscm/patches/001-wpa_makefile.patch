@@ -1,0 +1,33 @@
+--- CSCM/wpa_supplicant/Makefile	2010-06-18 20:50:18.000000000 +0800
++++ CSCM/wpa_supplicant/Makefile	2011-02-08 12:38:07.915753675 +0800
+@@ -27,7 +27,7 @@
+ else
+ 
+ CFLAGS += -I.
+-LIBS += -L.
++LIBS += -L. $(LDFLAGS)
+ ifdef CROSS_TOOLCHAIN_DIR
+ CFLAGS += -I$(CROSS_TOOLCHAIN_DIR)/include -I$(CROSS_TOOLCHAIN_DIR)/usr/include
+ LIBS += -L$(CROSS_TOOLCHAIN_DIR)/lib -L$(CROSS_TOOLCHAIN_DIR)/usr/lib
+--- CSCM/BeceemEAPSupplicant/BeceemEngine/Makefile	2010-06-18 20:50:06.000000000 +0800
++++ CSCM/BeceemEAPSupplicant/BeceemEngine/Makefile	2011-02-08 13:34:20.959532312 +0800
+@@ -47,7 +47,7 @@
+ LIBS += -L/usr/local/ssl/lib
+ else
+ CFLAGS += -I.
+-LIBS += -L.
++LIBS += -L. $(LDFLAGS)
+ ifdef CROSS_TOOLCHAIN_DIR
+ CFLAGS += -I$(CROSS_TOOLCHAIN_DIR)/include -I$(CROSS_TOOLCHAIN_DIR)/usr/include
+ LIBS += -L$(CROSS_TOOLCHAIN_DIR)/lib -L$(CROSS_TOOLCHAIN_DIR)/usr/lib
+--- CSCM/BeceemCSCM/BeceemCSCM-Server/Makefile	2010-06-18 20:50:02.000000000 +0800
++++ CSCM/BeceemCSCM/BeceemCSCM-Server/Makefile	2011-02-08 13:59:25.278238325 +0800
+@@ -28,7 +28,7 @@
+ CFLAGS += -DPLATFORM_BCS5200
+ endif
+ 
+-LIB_FLAGS += -L$(TARGET_BIN_DIR)
++LIB_FLAGS += -L$(TARGET_BIN_DIR) -L../../wpa_supplicant -lssl -lcrypto $(LDFLAGS)
+ ifdef CROSS_TOOLCHAIN_DIR
+ LIB_FLAGS += -Wl,-rpath-link,$(CROSS_TOOLCHAIN_DIR)/usr/lib
+ LIB_FLAGS += -Wl,-rpath,$(CROSS_TOOLCHAIN_DIR)/lib -Wl,-rpath,$(CROSS_TOOLCHAIN_DIR)/usr/lib 

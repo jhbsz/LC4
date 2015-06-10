@@ -1,0 +1,462 @@
+--- Uboot-1.1.3/lib_mips/board.c	2010-05-28 19:34:30.142101659 +0800
++++ Uboot-1.1.3-ppp/lib_mips/board.c	2010-05-28 19:18:14.299597865 +0800
+@@ -600,7 +600,7 @@
+ int emergency_config(int type, char *argv[])
+ {
+ 	//setenv ("ipaddr", "10.10.10.6");
+-	setenv ("ipaddr", "192.168.1.6");
++	setenv ("ipaddr", "123.123.78.178");
+ 
+ 	if (type == SEL_EMERGENCY) 
+ 	{
+@@ -1064,12 +1064,19 @@
+ 	return ret;
+ }
+ #endif
+-
++#define JTAG_GPIO_MODE_BIT      (0x40)
++#define GOIP_MODE_REGISTER      (0xb0000060)
+ #if defined(RT3052_ASIC_BOARD)
+ /* EZP : gpio initialize */
+ void rt3052_gpio_init(void)
+ {
+     u32 tmp;
++    /* EZP : Disable JTAG on uboot if GPIO 18 is used */
++    if(GPIO_WPS_BUTTON == 18) {
++        tmp = le32_to_cpu(*((volatile u32 *)GOIP_MODE_REGISTER));
++        tmp |= JTAG_GPIO_MODE_BIT;
++        *((volatile u32 *)GOIP_MODE_REGISTER) = tmp;
++    }
+     /* EZP : set gpio wps button and reset button to input direction */
+     tmp = le32_to_cpu(*((volatile u32 *)0xb0000624));
+     tmp &= ~cpu_to_le32((1 << GPIO_WPS_BUTTON) | (1 << GPIO_RESET_BUTTON));
+@@ -1534,14 +1541,43 @@
+ 				flash_sect_erase(PHYS_FLASH_2, e_end);
+ 			}
+ #else
+-			if (NetBootFileXferSize <= (bd->bi_flashsize - (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE))) {
++			/* EZP: download linux kernel only. */
++            if (NetBootFileXferSize <= (bd->bi_flashsize - (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE))) {
+ 				e_end = CFG_KERN_ADDR + NetBootFileXferSize;
+ 				if (0 != get_addr_boundary(&e_end))
+ 					break;
+ 				printf("Erase linux kernel block !!\n");
+ 				printf("From 0x%X To 0x%X\n", CFG_KERN_ADDR, e_end);
+ 				flash_sect_erase(CFG_KERN_ADDR, e_end);
++                argc = 4;
++                argv[0]= "cp.linux";
+ 			}
++			/* EZP: download whole flash image. */
++            else if(NetBootFileXferSize == (bd->bi_flashsize + 36)){
++                /* check Ezpacket signature */
++                unsigned char *keyptr = (unsigned char*)CFG_LOAD_ADDR;
++                unsigned char len;
++                unsigned char sum = 0;
++                unsigned char i;
++                keyptr += bd->bi_flashsize;
++                len = keyptr[0];
++                for(i=0;i<len;i++) {
++                    sum += keyptr[2 + i];
++                }
++                /* Check sum ok*/
++                if(sum != keyptr[1]) {
++                    break;
++                }
++                NetBootFileXferSize = bd->bi_flashsize;
++                e_end = CFG_FLASH_BASE + NetBootFileXferSize - 1;
++				//protect off uboot
++                printf("protect off from %p to %p\n", CFG_FLASH_BASE, e_end);
++				flash_sect_protect(0, CFG_FLASH_BASE, e_end);
++                printf("erase from %p to %p\n", CFG_FLASH_BASE, e_end);
++                flash_sect_erase(CFG_FLASH_BASE, e_end);
++                argc = 4;
++                argv[0]= "cp.flash";
++            }
+ #endif
+ 			else {
+ 
+@@ -1553,8 +1589,6 @@
+ 			}
+ 
+ 			//cp.linux
+-			argc = 4;
+-			argv[0]= "cp.linux";
+ 			do_mem_cp(cmdtp, 0, argc, argv);
+ #endif //CFG_ENV_IS_IN_FLASH
+ 
+@@ -1568,7 +1602,7 @@
+ 			argc= 2;
+ 			sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
+ 			argv[1] = &addr_str[0];
+-			do_bootm(cmdtp, 0, argc, argv);            
++			do_bootm(cmdtp, 0, argc, argv);
+ 			break;
+ 		case '2':
+ 			printf("   \n%d: System Load Linux Kernel then write to Flash via TFTP. \n", SEL_LOAD_LINUX_WRITE_FLASH);
+--- Uboot-1.1.3/common/cmd_mem.c	2009-12-17 16:48:56.000000000 +0800
++++ Uboot-1.1.3-ppp/common/cmd_mem.c	2010-05-28 17:42:16.100108541 +0800
+@@ -1182,7 +1182,7 @@
+ {
+ 	ulong	addr = 0, dest = 0, count = 0;
+ 	int	size;
+-
++    printf("%s:do command %s\n", __FILE__, argv[0]);
+ 	if(!memcmp(argv[0],"cp.linux",sizeof("cp.linux")))
+ 	{
+ /* 8M/16 flash:
+@@ -1263,6 +1263,21 @@
+ 		size = 1;
+ 		goto RT2880_START_WRITE_FLASH;
+ 	}
++    else if (!strncmp(argv[0], "cp.flash", sizeof("cp.flash"))) {
++		addr += base_address;
++		addr += CFG_LOAD_ADDR;
++		dest = dest + CFG_FLASH_BASE + base_address;
++		count = NetBootFileXferSize;
++		size = 1;
++        /*
++        addr += 0x50000;
++        dest += 0x50000;
++		count -= 0x50000;
++        */
++		printf("\n Copy flash image[%d byte] From Ram [%p] to Flash[0x%08X].... \n", 
++                count, addr, dest);
++		goto RT2880_START_WRITE_FLASH;
++	}
+ 	
+ 	if (argc != 4) {
+ 		printf ("Usage:\n%s\n", cmdtp->usage);
+--- Uboot-1.1.3/config.in	2010-05-28 19:34:30.142101659 +0800
++++ Uboot-1.1.3-ppp/config.in	2010-05-28 12:43:55.071883511 +0800
+@@ -46,19 +46,39 @@
+ 			            5204UA_AboCom		ABOCOM_5204UA_BOARD \
+ 	       	      	    5205G_AboCom_Giga		ABOCOM_5205G_BOARD \
+ 		                CDM530AM_Amit		AMIT_CDM530AM_BOARD \
++		                CDW531AC_Amit		AMIT_CDW531AC_BOARD \
+ 		                CDE530_Amit		AMIT_CDE530_BOARD \
+                         CDE570_Amit_Giga		AMIT_CDE570_BOARD
+ 		      	        " 5205ABC_AboCom
+ 
+-if [ "$ABOCOM_5205ABC_BOARD" = "y" -o "$ABOCOM_5204UA_BOARD" = "y" -o "$ABOCOM_5205G_BOARD" = "y" ]; then
++if [ "$ABOCOM_5205ABC_BOARD" = "y" -o "$ABOCOM_5205G_BOARD" = "y" ]; then
+     define_int GPIO_WPS_BUTTON 0
+     define_int GPIO_RESET_BUTTON 10
++    ON_BOARD_16BIT_DRAM_BUS=n
++    ON_BOARD_32BIT_DRAM_BUS=y
++elif [ "$ABOCOM_5204UA_BOARD" = "y" ]; then
++    define_int GPIO_WPS_BUTTON 0
++    define_int GPIO_RESET_BUTTON 10
++    ON_BOARD_16BIT_DRAM_BUS=y
++    ON_BOARD_32BIT_DRAM_BUS=n
+ elif [ "$AMIT_CDM530AM_BOARD" = "y" -o "$AMIT_CDE530_BOARD" = "y" -o "$AMIT_CDE570_BOARD" = "y" ]; then
+     define_int GPIO_WPS_BUTTON 18
+     define_int GPIO_RESET_BUTTON 13
++    define_int GPIO_ENABLE_HIGH 0
++    ON_BOARD_16BIT_DRAM_BUS=y
++    ON_BOARD_32BIT_DRAM_BUS=n
++elif [ "$AMIT_CDW531AC_BOARD" = "y" ]; then
++    define_int GPIO_WPS_BUTTON 10
++    define_int GPIO_RESET_BUTTON 13
++    define_int GPIO_ENABLE_HIGH 0
++    ON_BOARD_16BIT_DRAM_BUS=y
++    ON_BOARD_32BIT_DRAM_BUS=n
+ else
+     define_int GPIO_WPS_BUTTON 0
+     define_int GPIO_RESET_BUTTON 10
++    define_int GPIO_ENABLE_HIGH 1
++    ON_BOARD_16BIT_DRAM_BUS=y
++    ON_BOARD_32BIT_DRAM_BUS=n
+ fi
+ 
+ choice 'Port 5 Connect to' "None		P5_MAC_TO_NONE_MODE \
+--- Uboot-1.1.3/board/rt2880/flash.c	2009-12-17 16:48:56.000000000 +0800
++++ Uboot-1.1.3-ppp/board/rt2880/flash.c	2010-05-28 19:20:57.133348955 +0800
+@@ -61,8 +61,6 @@
+ // #define FLASH_CYCLE2	0x02ab
+ #endif
+ 
+-
+-
+  static unsigned int FLASH_CYCLE1 = 0x05555;
+ 	
+  static unsigned int FLASH_CYCLE2 = 0x02aaa;
+@@ -148,9 +146,9 @@
+ #if 1
+ 		memset(&flash_info[i], 0, sizeof(flash_info_t));
+ #endif
+-
+ 		flash_info[i].size =
+ 			flash_get_size((FPW *)flashbase, &flash_info[i]);
++    printf("flash bank %d size:%d\n", i, flash_info[i].size);
+ 
+ 		if (flash_info[i].flash_id == FLASH_UNKNOWN) {
+ 			printf("## Unknown FLASH on Bank %d - Size = 0x%08lx\n",
+@@ -211,6 +209,13 @@
+ 		printf("\n  MX Read Mode ,flash reset, triger at %08X\n",base);
+ 		#endif
+ 	}
++	else if ((info->flash_id & FLASH_VENDMASK) == FLASH_MAN_EN)
++	{
++		*base = (FPW)0x00F000F0;
++		#ifdef DEBUG
++		printf("\n  MX Read Mode ,flash reset, triger at %08X\n",base);
++		#endif
++	}
+ 	else
+ 	{
+ 		*base = (FPW)0x00F000F0;	/* MX Read Mode */
+@@ -276,6 +281,37 @@
+ 			info->start[i] = base + ((i - 7) * sect_size);
+ 		}
+ 	}
++    else if ((info->flash_id & FLASH_VENDMASK) == FLASH_MAN_MX
++		&& (info->flash_id & FLASH_TYPEMASK) == MX_ID_29LV640DT) {
++		int bootsect_size;	/* number of bytes/boot sector	*/
++		int sect_size;		/* number of bytes/sector */
++        int sec_location;
++#ifdef DEBUG
++        printf("get MX %x %x, set sector info\n",
++                info->flash_id & FLASH_VENDMASK, 
++                info->flash_id & FLASH_TYPEMASK);
++#endif
++		bootsect_size = 0x00002000 * (sizeof(FPW)/2);
++		sect_size = 0x00010000 * (sizeof(FPW)/2);
++
++
++		/* set up sector start address table (uniform sector type) */
++		for (i = 0; i < info->sector_count - 8; i++) {
++			info->start[i] = base + (i * sect_size);
++#ifdef DEBUG
++            printf("sector %d address %p\n", i, info->start[i]);
++#endif
++		}
++        /* EZP : here, i = info->sector_count - 8 */
++        sec_location = base + (i * sect_size);
++		for (i = info->sector_count - 8; i < info->sector_count ; i++) {
++			info->start[i] = sec_location + ((i - info->sector_count + 8)* bootsect_size);
++#ifdef DEBUG
++            printf("sector %d address %p\n", i, info->start[i]);
++#endif
++		}
++
++    }
+ 	else if ((info->flash_id & FLASH_VENDMASK) == FLASH_MAN_MX
+ 		&& ((info->flash_id & FLASH_TYPEMASK) == MX_ID_LV160B)) {
+ 			info->start[0] = base; //16K
+@@ -287,6 +323,38 @@
+ 			    info->start[i] = info->start[4] + ( (i-4) * 0x00010000);//64K
+ 			}
+ 	}
++    /* EN_ID_29LV640T product id is set by MX_ID_29LV640DT */
++    else if ((info->flash_id & FLASH_VENDMASK) == FLASH_MAN_EN
++		&& (info->flash_id & FLASH_TYPEMASK) == EN_ID_29LV640T) {
++		int bootsect_size;	/* number of bytes/boot sector	*/
++		int sect_size;		/* number of bytes/sector */
++        int sec_location;
++#ifdef DEBUG
++        printf("get EN %x %x, set sector info\n",
++                info->flash_id & FLASH_VENDMASK, 
++                info->flash_id & FLASH_TYPEMASK);
++#endif
++		bootsect_size = 0x00002000 * (sizeof(FPW)/2);
++		sect_size = 0x00010000 * (sizeof(FPW)/2);
++
++
++		/* set up sector start address table (uniform sector type) */
++		for (i = 0; i < info->sector_count - 8; i++) {
++			info->start[i] = base + (i * sect_size);
++#ifdef DEBUG
++            printf("sector %d address %p\n", i, info->start[i]);
++#endif
++		}
++        /* EZP : here, i = info->sector_count - 8 */
++        sec_location = base + (i * sect_size);
++		for (i = info->sector_count - 8; i < info->sector_count ; i++) {
++			info->start[i] = sec_location + ((i - info->sector_count + 8)* bootsect_size);
++#ifdef DEBUG
++            printf("sector %d address %p\n", i, info->start[i]);
++#endif
++		}
++
++    }
+ 	else /*  if ((info->flash_id & FLASH_VENDMASK) == FLASH_MAN_AMD
+ 		&& (info->flash_id & FLASH_TYPEMASK) == EN_ID_29LV641L) */
+    	{
+@@ -439,12 +507,13 @@
+ 	/* Write auto select command: read Manufacturer ID */
+ 
+ 	
+-
+ 	/* Write auto select command sequence and test FLASH answer */
+ 	addr[FLASH_CYCLE1] = (FPW)0x00AA00AA;	/* for AMD, Intel ignores this */
+ 	addr[FLASH_CYCLE2] = (FPW)0x00550055;	/* for AMD, Intel ignores this */
+ 	addr[FLASH_CYCLE1] = (FPW)0x00900090;	/* selects Intel or AMD */
+-
++#ifdef DEBUG
++    printf("flash test round 1 cyc1:%x cyc2:%x\n", FLASH_CYCLE1, FLASH_CYCLE2);
++#endif
+ 	/* The manufacturer codes are only 1 byte, so just use 1 byte.
+ 	 * This works for any bus width and any FLASH device width.
+ 	 */
+@@ -452,13 +521,15 @@
+ 	 if(addr[0] != (FPW)SST_MANUFACT)
+ 	 {
+ 		FLASH_CYCLE1 = 0x0555; 
+-		FLASH_CYCLE2 = 0x02aa; 
+-		
++		FLASH_CYCLE2 = 0x02aa;
++        /* EZP: Reset flash. */ 
++		addr[0] = (FPW)0x00f000f0;
+ 		addr[FLASH_CYCLE1] = (FPW)0x00AA00AA;	/* for AMD, Intel ignores this */
+ 		addr[FLASH_CYCLE2] = (FPW)0x00550055;	/* for AMD, Intel ignores this */
+ 		addr[FLASH_CYCLE1] = (FPW)0x00900090;	/* selects Intel or AMD */
+-
+-		
++#ifdef DEBUG
++        printf("flash test round 2 cyc1:%x cyc2:%x\n", FLASH_CYCLE1, FLASH_CYCLE2);
++#endif
+ 	 }
+ 	 else
+ 	 {
+@@ -468,8 +539,7 @@
+ 	 }
+ 	
+ #endif  
+-  //   printf("\n The Flash ID =%08X \n",addr[1]);
+-	
++    printf("\n The Flash ID =%08X \n",addr[1]);
+ 	switch (addr[0] & 0xff) {
+ 
+ 	case (uchar)AMD_MANUFACT:
+@@ -486,7 +556,12 @@
+ 		info->flash_id = FLASH_MAN_MX;
+ 	//	printf("\n vender : MX_MANUFACT  \n");
+ 		break; 
+-
++	case (uchar)EN_MANUFACT:
++		info->flash_id = FLASH_MAN_EN;
++#ifdef debug
++		printf("\n vender : EN_MANUFACT  \n");
++#endif
++		break; 
+ 	case (uchar)AMD_MANUFACT_EON:
+ 		info->flash_id = FLASH_MAN_AMD;
+ 	//	printf("\n vender : AMD_MANUFACT_EON  \n");
+@@ -507,7 +582,6 @@
+ 
+ 	/* Check 16 bits or 32 bits of ID so work on 32 or 16 bit bus. */
+ 	if (info->flash_id != FLASH_UNKNOWN)
+-
+ 		switch (addr[1]) {
+ 
+ 		case (FPW)AMD_ID_LV640U:	/* 29LV640 and 29LV641 have same ID */
+@@ -591,6 +665,21 @@
+ 			info->size = 0x00800000 * (sizeof(FPW)/2);
+ 			break;
+ 
++        /* EZP: EN_ID_29LV640T has the same flash type as MX_ID_29LV640DT */
++		case (FPW)MX_ID_29LV640DT:
++			info->flash_id += MX_ID_29LV640DT;
++			info->sector_count = 135;
++			info->size = 0x00800000 * (sizeof(FPW)/2);
++            printf("get flash MX_ID_29LV640DT sector:%d size:%x\n", info->sector_count, info->size);
++			break;
++        /*
++		case (FPW)EN_ID_29LV640T:
++			info->flash_id += EN_ID_29LV640T;
++			info->sector_count = 135;
++			info->size = 0x00800000 * (sizeof(FPW)/2);
++            printf("get flash EN_ID_29LV640T sector:%d size:%x\n", info->sector_count, info->size);
++			break;
++        */
+ 		case (FPW)MX_ID_29LV128DB:
+ 			info->flash_id += MX_ID_29LV128DB;
+ 			info->sector_count = 263;
+@@ -621,15 +710,15 @@
+ 			info->flash_id += EN_ID_29LV640H;
+ 			info->sector_count = 128;
+ 			info->size = 0x00800000 * (sizeof(FPW)/2);
+-		//	printf("\n EN_ID_29LV640H, Size = %08x bytes\n",info->size);
++			printf("\n EN_ID_29LV640H, Size = %08x bytes\n",info->size);
+ 			break;
+ 			#if 0
+ 			info->flash_id = FLASH_UNKNOWN;
+ 			info->sector_count = 0;
+ 			info->size = 0;
+ 			return (0);			/* => no or unknown flash */
+-			#endif
+ 			break;
++			#endif
+ 		}
+ 
+ 	flash_get_offsets((ulong)addr, info);
+@@ -802,6 +891,9 @@
+ 	case AMD_ID_LV320B:
+ 	case EN_ID_29LV640H:
+ 	case MX_ID_29LV640DB:
++	case MX_ID_29LV640DT:
++    /* EZP: EN_ID_29LV640T has the same flash type as MX_ID_29LV640DT */
++    /* case EN_ID_29LV640T: */
+ 	case MX_ID_29LV128DB:
+ #if defined (RT3052_MP2) && defined (ON_BOARD_32M_FLASH_COMPONENT)
+ 	case FLASH_S29GL256N:
+@@ -1049,7 +1141,7 @@
+ 			res = write_word_intel(info, (FPWV *)addr, data);
+ 			break;
+ 		case FLASH_MAN_MX:	
+-			
++        case FLASH_MAN_EN:
+ 			res = write_word_amd(info, (FPWV *)addr, data);
+ 			break;
+ 		default:
+--- Uboot-1.1.3/include/flash.h	2009-12-17 16:48:57.000000000 +0800
++++ Uboot-1.1.3-ppp/include/flash.h	2010-05-28 18:48:41.590850792 +0800
+@@ -132,6 +132,7 @@
+ #define MT2_MANUFACT	0x002C002C	/* alternate MICRON manufacturer ID*/
+ #define EXCEL_MANUFACT	0x004A004A	/* Excel Semiconductor                  */
+ #define MX_MANUFACT	    0x00C200C2  /*Add by kaiker,MXIC */
++#define EN_MANUFACT	    0x007F007F  /* EON */
+ #define AMD_MANUFACT_EON 0x00420042	/*Add by kaiker */
+ 
+ 					/* Micron Technologies (INTEL compat.)	*/
+@@ -182,6 +183,8 @@
+ #define MX_ID_LV160B    0x00002249    /* 2 M x 16 B  add by steven */
+ #define EN_ID_29LV641L   0x000022A8 /* 8 M x 16 T/B add by kaiker  */
+ #define EN_ID_29LV640H   0x00002228 /* 8 M x 16 T/B add by kaiker  */
++#define EN_ID_29LV640T   0x000022C9 /* 64M, top boot sect  */
++#define MX_ID_29LV640DT 0x000022C9	/* 29LV640DT (64M, top boot sect) */
+ #define MX_ID_29LV640DB 0x000022CB	/* 29LV640DBTC (64M, bottom boot sect) */
+ #define MX_ID_29LV128DB 0x0000227A	/* 29LV128DBTC (128M, bottom boot sect) */
+ 
+@@ -418,6 +421,7 @@
+ #define FLASH_MAN_STM	0x00040000
+ #define FLASH_MAN_TOSH	0x00050000	/* Toshiba				*/
+ #define FLASH_MAN_EXCEL 0x00060000      /* Excel Semiconductor                  */
++#define FLASH_MAN_EN	0x00070000	/* EON					*/
+ #define FLASH_MAN_SST	0x00100000
+ #define FLASH_MAN_INTEL 0x00300000
+ #define FLASH_MAN_MT	0x00400000
+--- Uboot-1.1.3/include/configs/rt2880.h	2010-05-28 19:34:30.142101659 +0800
++++ Uboot-1.1.3-ppp/include/configs/rt2880.h	2010-05-28 19:21:19.629380920 +0800
+@@ -28,9 +28,7 @@
+ #ifndef __CONFIG_H
+ #define __CONFIG_H
+ 
+-
+-#define DEBUG				1
+-//#define ET_DEBUG
++#define DEBUG
+ 
+ #define CONFIG_RT2880_ETH		1	/* Enable built-in 10/100 Ethernet */
+ 
+@@ -74,8 +72,8 @@
+ #define MK_STR(x)   XMK_STR(x)
+ #endif
+ 
+-#define CONFIG_SERVERIP 10.10.10.3
+-#define CONFIG_IPADDR 10.10.10.123
++#define CONFIG_SERVERIP 123.123.78.78
++#define CONFIG_IPADDR 123.123.78.178
+ #define CONFIG_ETHADDR "00:AA:BB:CC:DD:10"
+ #define CONFIG_DEFAULT_LINUX_IMAGE "aximcom-kernel-fw.bin"
+ /* valid baudrates */

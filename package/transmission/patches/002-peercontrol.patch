@@ -1,0 +1,201 @@
+--- transmission-2.03/libtransmission/session.h	2010-08-03 10:11:16.793760666 +0800
++++ transmission-2.03/libtransmission/session.h	2010-08-03 10:10:08.465010144 +0800
+@@ -183,6 +183,8 @@
+     struct event               * saveTimer;
+     /* EZP add dump timer for dump download info */
+     struct event               * dumpTimer;
++    /* EZP system loading */
++    int                          sysload;
+ 
+     /* monitors the "global pool" speeds */
+     struct tr_bandwidth        * bandwidth;
+--- transmission-2.03/libtransmission/session.c	2010-08-03 10:11:16.793760666 +0800
++++ transmission-2.03/libtransmission/session.c	2010-08-03 10:09:05.333882143 +0800
+@@ -20,6 +20,7 @@
+ #include <sys/stat.h> /* stat(), umask() */
+ #include <unistd.h> /* stat */
+ #include <dirent.h> /* opendir */
++#include <sys/sysinfo.h> /* get free memory info */
+ 
+ #include <event.h>
+ 
+@@ -185,6 +186,11 @@
+     tr_address clientAddr;
+     tr_session * session = vsession;
+ 
++    /* EZP Do not add any peer if system loading is high */
++    if ( getSysLoading( session ) > 0 ) {
++        return;
++    }
++
+     clientSocket = tr_netAccept( session, fd, &clientAddr, &clientPort );
+     if( clientSocket > 0 ) {
+         tr_deepLog( __FILE__, __LINE__, NULL, "new incoming connection %d (%s)",
+@@ -478,6 +484,44 @@
+     tr_timerAdd( session->saveTimer, SAVE_INTERVAL_SECS, 0 );
+ }
+ 
++/* EZP setup min free kbytes */
++static int 
++min_free_kbytes( int value )
++{
++    static int min_mem = 0;
++    if ( value > 0 ) {
++        min_mem = value;
++    }
++    return min_mem;
++}
++
++/* EZP To set system load */
++static void
++setSysLoading( tr_session * session )
++{
++    struct sysinfo info;
++    int min_mem = min_free_kbytes(0);
++    assert( tr_isSession( session ) );
++    tr_sessionLock( session );
++    sysinfo(&info);
++
++    if(session->sysload > 0) {
++        if((info.freeram / 1024) > (min_mem + 800)) {
++            session->sysload -= 1;
++        } else {
++            session->sysload = 10;
++        }
++    } else {
++        if((info.freeram / 1024) < (min_mem + 600)) {
++            session->sysload = 10;
++        } else {
++            session->sysload = 0;
++        }
++    }
++    tr_sessionUnlock( session );
++    return;
++}
++
+ /* EZP dump download info function */
+ static void
+ onDumpTimer( int foo UNUSED, short bar UNUSED, void * vsession )
+@@ -535,6 +579,7 @@
+         }
+         fclose(fd);
+     }
++    setSysLoading( session );
+     tr_sessionUnlock( session );
+     tr_timerAdd( session->dumpTimer, DUMP_INTERVAL_SECS, 0 );
+ }
+@@ -568,6 +613,15 @@
+ 
+     assert( tr_bencIsDict( clientSettings ) );
+ 
++    /* EZP get min_free_kbytes setting */
++    FILE *fd;
++    char buf[64];
++    if(fd = fopen("/proc/sys/vm/min_free_kbytes", "r")) {
++        fgets(buf, sizeof(buf), fd);
++        min_free_kbytes(atoi(buf));
++        fclose(fd);
++    }
++
+     /* initialize the bare skeleton of the session object */
+     session = tr_new0( tr_session, 1 );
+     session->bandwidth = tr_bandwidthNew( session, NULL );
+--- transmission-2.03/libtransmission/peer-mgr.c	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/peer-mgr.c	2010-08-03 10:14:46.033525454 +0800
+@@ -38,6 +38,9 @@
+ #include "utils.h"
+ #include "webseed.h"
+ 
++/* EZP for reduce system loading */
++#define REDUCE_FACTOR   20
++
+ enum
+ {
+     /* how frequently to cull old atoms */
+@@ -1715,6 +1718,14 @@
+     return success;
+ }
+ 
++/* EZP To get system loading */
++int
++getSysLoading( const tr_session * session )
++{
++    assert( tr_isSession( session ) );
++    return session->sysload;
++}
++
+ void
+ tr_peerMgrAddIncoming( tr_peerMgr * manager,
+                        tr_address * addr,
+@@ -1768,6 +1779,11 @@
+ tr_peerMgrAddPex( tr_torrent * tor, uint8_t from,
+                   const tr_pex * pex, int8_t seedProbability )
+ {
++    /* EZP Do not add any atom if system loading is high */
++    if ( getSysLoading( tor->session ) > 0 ) {
++        return;
++    }
++            
+     if( tr_isPex( pex ) ) /* safeguard against corrupt data */
+     {
+         Torrent * t = tor->torrentPeers;
+@@ -3010,7 +3026,12 @@
+ enforceTorrentPeerLimit( Torrent * t, uint64_t now )
+ {
+     int n = tr_ptrArraySize( &t->peers );
+-    const int max = tr_torrentGetPeerLimit( t->tor );
++    int max = tr_torrentGetPeerLimit( t->tor );
++    /* EZP kill peers to make sure peers count do not over max peers */
++    if ( getSysLoading( t->tor->session ) > 0 ) {
++        max /= REDUCE_FACTOR;
++    }
++            
+     if( n > max )
+     {
+         void * base = tr_ptrArrayBase( &t->peers );
+@@ -3027,12 +3048,17 @@
+ {
+     int n = 0;
+     tr_torrent * tor = NULL;
+-    const int max = tr_sessionGetPeerLimit( session );
++    int max = tr_sessionGetPeerLimit( session );
+ 
+     /* count the total number of peers */
+     while(( tor = tr_torrentNext( session, tor )))
+         n += tr_ptrArraySize( &tor->torrentPeers->peers );
+ 
++    /* EZP kill peers to make sure peers count do not over max peers */
++    if ( getSysLoading( session ) > 0 ) {
++        max /= REDUCE_FACTOR;
++    }
++
+     /* if there are too many, prune out the worst */
+     if( n > max )
+     {
+@@ -3092,6 +3118,10 @@
+     while(( tor = tr_torrentNext( mgr->session, tor )))
+         closeBadPeers( tor->torrentPeers );
+ 
++    /* EZP Do not make new peer connections if system loading high*/
++    if ( getSysLoading( mgr->session ) > 0 ) {
++        return;
++    }
+     /* try to make new peer connections */
+     makeNewPeerConnections( mgr, MAX_CONNECTIONS_PER_PULSE );
+ }
+@@ -3227,9 +3257,14 @@
+     {
+         int atomCount;
+         Torrent * t = tor->torrentPeers;
+-        const int maxAtomCount = getMaxAtomCount( tor );
++        int maxAtomCount = getMaxAtomCount( tor );
+         struct peer_atom ** atoms = (struct peer_atom**) tr_ptrArrayPeek( &t->pool, &atomCount );
+ 
++        /* EZP change max atom count if system loading high*/
++        if ( getSysLoading( mgr->session ) > 0 ) {
++            maxAtomCount /= REDUCE_FACTOR;
++        }
++
+         if( atomCount > maxAtomCount ) /* we've got too many atoms... time to prune */
+         {
+             int i;

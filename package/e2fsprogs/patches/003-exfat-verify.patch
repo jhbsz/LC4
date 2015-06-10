@@ -1,0 +1,24 @@
+--- e2fsprogs-1.40.11/lib/blkid/probe.c	2008-06-18 09:53:14.000000000 +0800
++++ e2fsprogs-1.40.11/lib/blkid/probe.c	2013-06-05 18:27:26.217512276 +0800
+@@ -1035,6 +1035,13 @@
+ 	return 1;
+ }
+ 
++static int probe_exfat(struct blkid_probe *probe __BLKID_ATTR((unused)),
++			 struct blkid_magic *id __BLKID_ATTR((unused)),
++			 unsigned char *buf)
++{
++	return 0;
++}
++
+ #define LVM2_LABEL_SIZE 512
+ static unsigned int lvm2_calc_crc(const void *buf, unsigned int size)
+ {
+@@ -1110,6 +1117,7 @@
+ /*  type     kboff   sboff len  magic			probe */
+   { "oracleasm", 0,	32,  8, "ORCLDISK",		probe_oracleasm },
+   { "ntfs",	 0,	 3,  8, "NTFS    ",		probe_ntfs },
++  { "exfat",	 0,	 3,  sizeof("EXFAT   "), "EXFAT   ",		probe_exfat },
+   { "jbd",	 1,   0x38,  2, "\123\357",		probe_jbd },
+   { "ext4dev",	 1,   0x38,  2, "\123\357",		probe_ext4dev },
+   { "ext4",	 1,   0x38,  2, "\123\357",		probe_ext4 },

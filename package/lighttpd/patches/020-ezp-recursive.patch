@@ -1,0 +1,18 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2010-08-17 17:04:38.000000000 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2012-11-09 15:03:14.176238414 +0800
+@@ -780,12 +780,12 @@
+ 				    errno != EEXIST) {
+ 					/* WTH ? */
+ 				} else {
+-#ifdef USE_PROPPATCH
+-					sqlite3_stmt *stmt = p->conf.stmt_copy_uri;
+-
+ 					if (0 != (status = webdav_copy_dir(srv, con, p, &s, &d, overwrite))) {
+ 						break;
+ 					}
++#ifdef USE_PROPPATCH
++					sqlite3_stmt *stmt = p->conf.stmt_copy_uri;
++
+ 					/* directory is copied, copy the properties too */
+ 
+ 					if (stmt) {

@@ -1,0 +1,4 @@
+config USB_BECEEM_WIMAX
+        tristate "Beseem WiMAX i314 support"
+        ---help---
+          This driver supports Beseem WiMAX i314

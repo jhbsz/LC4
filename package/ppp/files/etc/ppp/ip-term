@@ -1,0 +1,37 @@
+#!/bin/sh
+# EZPacket
+# This script do nothing but check lock state and unlock
+# If original pppd finished and meet this script, it will
+# uneffect to previous behavior. 
+# Only serializing lock will be effected and unlocked
+
+. /etc/functions.sh
+. /etc/network.sh
+
+iface_name=${1}
+num="${1#wan}"
+type="${1%%[0-9]}"
+lock_file="/tmp/.iface.changestate.${iface_name}.lock"
+proto="${iface_name}_proto"
+
+if_serialize_ulock $lock_file
+
+# remove demand state file
+PPP_DEMAND_STATE_FILE="/tmp/ppp-${iface_name}-demand.tmp"
+[ -f "${PPP_DEMAND_STATE_FILE}" ] && {
+    # Because in demand mode without being connected, the pppd will not
+    # invoking ip-down and we don't know the pppd stoped.
+    [ "$(cat ${PPP_DEMAND_STATE_FILE})" = "demand-start" ] && {
+    	iface_down "ppp" "${iface_name}"
+    }
+    rm -f "${PPP_DEMAND_STATE_FILE}"
+}
+
+[ "$type" = "pptp" ] && {
+    nvram set vpn${NUM}_ifname=""
+    nvram set vpn${NUM}_ipaddr=""
+    nvram set vpn${NUM}_gateway=""
+    [ "$(nvram get wan_pptp_l2tp_status)" = "Connecting" ] && nvram set wan_pptp_l2tp_status="Authentication Failed" || nvram set wan_pptp_l2tp_status="Disconnected"
+}
+[ "$(nvram show wan_status_rule $num state)" -ge "1" -a "$type" != "pptp"] && 
+    iface_down "$(nvram get $proto)" "${iface_name}"

@@ -1,0 +1,80 @@
+--- lighttpd-1.4.30/src/mod_cgi.c	2014-02-20 11:13:35.171947975 +0800
++++ lighttpd-1.4.30/src/mod_cgi.c	2014-02-20 10:41:42.623570113 +0800
+@@ -31,6 +31,7 @@
+ 
+ #include <stdio.h>
+ #include <fcntl.h>
++#include <poll.h>
+ 
+ #ifdef HAVE_SYS_FILIO_H
+ # include <sys/filio.h>
+@@ -338,11 +339,15 @@
+ static int cgi_demux_response(server *srv, handler_ctx *hctx) {
+ 	plugin_data *p    = hctx->plugin_data;
+ 	connection  *con  = hctx->remote_conn;
+-
+ 	while(1) {
+ 		int n;
+ 		int toread;
+ 
++        if ( (con->trans_progress != -1) && (con->trans_progress > 4 * MAX_READ_LIMIT) && (chunkqueue_length(con->write_queue) > 4 * MAX_READ_LIMIT)) {
++            return FDEVENT_HANDLED_NOT_FINISHED;
++        }
++        
++
+ #if defined(__WIN32)
+ 		buffer_prepare_copy(hctx->response, 4 * 1024);
+ #else
+@@ -459,6 +464,7 @@
+ 					}
+ 
+ 					http_chunk_append_mem(srv, con, hctx->response_header->ptr, hctx->response_header->used);
++                    con->trans_progress -= n;
+ 					joblist_append(srv, con);
+ 				} else {
+ 					const char *bstart;
+@@ -485,6 +491,7 @@
+ 					
+ 					/* parse the response header */
+ 					cgi_response_parse(srv, con, p, hctx->response_header);
++                    con->trans_progress = con->response.content_length;
+ 
+ 					/* enable chunked-transfer-encoding */
+ 					if (con->request.http_version == HTTP_VERSION_1_1 &&
+@@ -502,6 +509,7 @@
+ 			}
+ 		} else {
+ 			http_chunk_append_mem(srv, con, hctx->response->ptr, hctx->response->used);
++            con->trans_progress -= n;
+ 			joblist_append(srv, con);
+ 		}
+ 
+--- lighttpd-1.4.30/src/base.h	2014-02-20 11:12:45.063950209 +0800
++++ lighttpd-1.4.30/src/base.h	2014-02-20 11:41:41.355872799 +0800
+@@ -408,6 +408,8 @@
+ 	physical physical;
+ 	response response;
+ 
++    off_t trans_progress;  /* Added for mod-cgi for memory usage control */
++
+ 	size_t header_len;
+ 
+ 	buffer *authed_user;
+--- lighttpd-1.4.30/src/connections.c	2014-02-20 11:13:18.175948732 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-02-20 11:34:09.847892928 +0800
+@@ -669,6 +669,7 @@
+ 	con->bytes_read = 0;
+ 	con->bytes_header = 0;
+ 	con->loops_per_request = 0;
++    con->trans_progress = -1;
+ 
+ #define CLEAN(x) \
+ 	con->x = buffer_init();
+@@ -797,6 +798,7 @@
+ 	con->bytes_read = 0;
+ 	con->bytes_header = 0;
+ 	con->loops_per_request = 0;
++    con->trans_progress = -1;
+ 
+ 	con->request.http_method = HTTP_METHOD_UNSET;
+ 	con->request.http_version = HTTP_VERSION_UNSET;

@@ -1,0 +1,80 @@
+--- linux-2.6.26/fs/mini_fo/inode.c	2013-06-25 14:53:43.808558436 +0800
++++ linux-2.6.26/fs/mini_fo/inode.c	2013-06-25 14:48:57.838478779 +0800
+@@ -1246,37 +1246,49 @@
+ STATIC int
+ mini_fo_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
+ {
+-	int err = 0;
+-        dentry_t *hidden_dentry;
+-
+-	ASSERT(dentry->d_inode);
+-	ASSERT(itopd(dentry->d_inode));
+-
+-	if(itohi2(dentry->d_inode)) {
+-                hidden_dentry = dtohd2(dentry);
+-	} else if(itohi(dentry->d_inode)) {
+-                hidden_dentry = dtohd(dentry);
+-	} else {
+-                printk(KERN_CRIT "mini_fo_getattr: ERROR, invalid state detected.\n");
+-                err = -ENOENT;
+-                goto out;
++    int err = 0;
++    dentry_t *hidden_dentry = NULL;
++    ASSERT(dentry);
++    ASSERT(stat);
++    ASSERT(dentry->d_inode);
++    ASSERT(dentry->d_inode->i_private);
++    ASSERT(dentry->d_fsdata);
++    ASSERT(itopd(dentry->d_inode));
++    if(itohi2(dentry->d_inode)) {
++        if(!dtohd2(dentry)) {
++            printk("%s(%d) NULL pointer access, file name:%s\n", __func__, __LINE__, dentry->d_name.name);
+         }
+-	fist_copy_attr_all(dentry->d_inode, hidden_dentry->d_inode);
++        hidden_dentry = dtohd2(dentry);
++    } else if(itohi(dentry->d_inode)) {
++        if(!dtohd(dentry)) {
++            printk("%s(%d) NULL pointer access, file name:%s\n", __func__, __LINE__, dentry->d_name.name);
++        }
++        hidden_dentry = dtohd(dentry);
++
++    }
++    if(!hidden_dentry || IS_ERR(hidden_dentry)) {
++        printk(KERN_CRIT "mini_fo_getattr: ERROR, invalid state detected.\n");
++        err = -ENOENT;
++        goto out;
++    }
++    ASSERT(hidden_dentry);
++    ASSERT(hidden_dentry->d_inode);
++    fist_copy_attr_all(dentry->d_inode, hidden_dentry->d_inode);
+ 
+-	ASSERT(hidden_dentry);
+-	ASSERT(hidden_dentry->d_inode);
+-	ASSERT(hidden_dentry->d_inode->i_op);
++    ASSERT(hidden_dentry->d_inode->i_op);
++    ASSERT(hidden_dentry->d_inode->i_sb);
+ 
+-	generic_fillattr(dentry->d_inode, stat);
+-	if (!stat->blksize) {
+-		struct super_block *s = hidden_dentry->d_inode->i_sb;
+-		unsigned blocks;
+-		blocks = (stat->size+s->s_blocksize-1) >> s->s_blocksize_bits;
+-		stat->blocks = (s->s_blocksize / 512) * blocks;
+-		stat->blksize = s->s_blocksize;
+-	}
+- out:
+-        return err;
++    // printk("%s(%d) dentry->d_name.name:%s\n", __func__, __LINE__, dentry->d_name.name);
++    generic_fillattr(dentry->d_inode, stat);
++    if (!stat->blksize) {
++        struct super_block *s = hidden_dentry->d_inode->i_sb;
++        unsigned blocks;
++        blocks = (stat->size+s->s_blocksize-1) >> s->s_blocksize_bits;
++        stat->blocks = (s->s_blocksize / 512) * blocks;
++        stat->blksize = s->s_blocksize;
++    }
++out:
++    return err;
+ }
+ #endif
+ 

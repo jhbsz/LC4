@@ -1,0 +1,86 @@
+EXTRA_CFLAGS = -Idrivers/net/wireless/rt2860v2/include
+
+obj-$(CONFIG_RT2860V2_STA) += rt2860v2_sta.o
+
+rt2860v2_sta-objs += ../rt2860v2/common/md5.o
+rt2860v2_sta-objs += ../rt2860v2/common/mlme.o
+rt2860v2_sta-objs += ../rt2860v2/common/rtmp_wep.o
+rt2860v2_sta-objs += ../rt2860v2/common/action.o
+rt2860v2_sta-objs += ../rt2860v2/common/ba_action.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_data.o
+rt2860v2_sta-objs += ../rt2860v2/common/rtmp_init.o
+rt2860v2_sta-objs += ../rt2860v2/common/rtmp_tkip.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_sync.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_sanity.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_info.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_wpa.o
+rt2860v2_sta-objs += ../rt2860v2/common/2860_rtmp_init.o
+rt2860v2_sta-objs += ../rt2860v2/common/cmm_data_2860.o
+rt2860v2_sta-objs += ../rt2860v2/common/dfs.o
+rt2860v2_sta-objs += ../rt2860v2/common/dfs_mcu.o
+rt2860v2_sta-objs += ../rt2860v2/common/spectrum.o
+
+
+rt2860v2_sta-objs += ../rt2860v2/sta/assoc.o
+rt2860v2_sta-objs += ../rt2860v2/sta/aironet.o
+rt2860v2_sta-objs += ../rt2860v2/sta/auth.o
+rt2860v2_sta-objs += ../rt2860v2/sta/auth_rsp.o
+rt2860v2_sta-objs += ../rt2860v2/sta/sync.o
+rt2860v2_sta-objs += ../rt2860v2/sta/sanity.o
+rt2860v2_sta-objs += ../rt2860v2/sta/rtmp_data.o
+rt2860v2_sta-objs += ../rt2860v2/sta/connect.o
+rt2860v2_sta-objs +=  ../rt2860v2/sta/wpa.o
+
+
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_linux.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_profile.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_main_dev.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/sta_ioctl.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_2860_rbus.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_eeprom.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/2860_main_dev.o
+rt2860v2_sta-objs +=  ../rt2860v2/os/linux/rt_ate.o
+#rt2860v2_sta-objs +=  ../rt2860v2/common/netif_block.o
+
+
+###################
+#  CFLAGS
+##################
+EXTRA_CFLAGS += -DAGGREGATION_SUPPORT -DPIGGYBACK_SUPPORT -DWMM_SUPPORT  -DLINUX \
+	       -Wall -Wstrict-prototypes -Wno-trigraphs 
+
+EXTRA_CFLAGS += -DCONFIG_STA_SUPPORT -DDBG -DRALINK_ATE -DRALINK_28xx_QA -DRT2860 -DDOT11_N_SUPPORT -DRELASE_EXCLUDE #-DBLOCK_NET_IF
+
+
+ifeq ($(CONFIG_RT2860V2_STA_WPA_SUPPLICANT),y)
+EXTRA_CFLAGS += -DWPA_SUPPLICANT_SUPPORT
+endif
+
+ifeq ($(CONFIG_RT2860V2_STA_LED),y)
+rt2860v2_sta-objs += ../rt2860v2/common/led.o
+EXTRA_CFLAGS += -DSTA_LED
+endif
+
+ifeq ($(CONFIG_RT2860V2_STA_CARRIER),y)
+EXTRA_CFLAGS += -DCARRIER_DETECTION_SUPPORT
+endif
+
+ifeq ($(CONFIG_RT2860V2_STA_DLS),y)
+rt2860v2_sta-objs += ../rt2860v2/sta/dls.o
+EXTRA_CFLAGS += -DQOS_DLS_SUPPORT
+endif
+
+
+
+
+ifeq ($(CONFIG_RT2860V2_STA_WSC),y)
+rt2860v2_sta-objs += ../rt2860v2/common/wsc.o
+rt2860v2_sta-objs += ../rt2860v2/common/wsc_tlv.o
+rt2860v2_sta-objs += ../rt2860v2/common/sha2.o
+rt2860v2_sta-objs += ../rt2860v2/common/hmac.o
+rt2860v2_sta-objs += ../rt2860v2/common/dh_key.o
+rt2860v2_sta-objs += ../rt2860v2/common/evp_enc.o
+EXTRA_CFLAGS += -DWSC_INCLUDED -DWSC_STA_SUPPORT
+endif
+
+

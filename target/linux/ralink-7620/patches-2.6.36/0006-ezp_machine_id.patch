@@ -1,0 +1,225 @@
+--- linux-2.6.26/drivers/net/wireless/rt2860v2/common/rtmp_init_inf.c	2010-05-31 10:23:54.559598000 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2/common/rtmp_init_inf.c	2010-10-04 14:45:15.849193263 +0800
+@@ -104,6 +104,170 @@
+ #endif /* OS_ABL_FUNC_SUPPORT */
+ #endif /* LINUX */
+ 
++/* EZPacket */
++struct proc_dir_entry *proc_mach_id;
++#ifndef CONFIG_RALINK_RT3052
++struct proc_dir_entry *proc_rewind;
++#endif
++
++int ezp_machine_id_proc_read(char *page, char **start, off_t offset, int count, int *eof, void *data)
++{
++    char *p = page;
++    int len;
++    USHORT mac01, mac23, mac45;
++    PRTMP_ADAPTER pAd = (PRTMP_ADAPTER)data;
++    
++#ifndef CONFIG_RALINK_RT3052
++    /* If we didn't do authentication, then use factory MAC address,
++     * this is used for mini-PCI card */
++    USHORT flag;
++    RT28xx_EEPROM_READ16(pAd, 0x160, flag);
++    if (flag == (USHORT)0x00) {
++        DBGPRINT(RT_DEBUG_TRACE, ("Get the old MAC address.\n"));
++        RT28xx_EEPROM_READ16(pAd, 0x04, mac01);
++        RT28xx_EEPROM_READ16(pAd, 0x06, mac23);
++        RT28xx_EEPROM_READ16(pAd, 0x08, mac45);
++    } else {
++        DBGPRINT(RT_DEBUG_TRACE, ("Get the new MAC address.\n"));
++        RT28xx_EEPROM_READ16(pAd, 0x162, mac01);
++        RT28xx_EEPROM_READ16(pAd, 0x164, mac23);
++        RT28xx_EEPROM_READ16(pAd, 0x166, mac45);
++    }
++#else
++    RT28xx_EEPROM_READ16(pAd, 0x162, mac01);
++    RT28xx_EEPROM_READ16(pAd, 0x164, mac23);
++    RT28xx_EEPROM_READ16(pAd, 0x166, mac45);
++#endif
++    
++    p += sprintf(p, "%02X:%02X:%02X:%02X:%02X:%02X\n", 
++                        (UCHAR)(mac01 & 0xff), (UCHAR)(mac01 >> 8),
++                        (UCHAR)(mac23 & 0xff), (UCHAR)(mac23 >> 8),
++                        (UCHAR)(mac45 & 0xff), (UCHAR)(mac45 >> 8));
++    
++    len = (p - page) - offset;
++    if (len < 0) {
++        len = 0;
++    }
++    *eof = (len <= count) ? 1 : 0;
++    *start = page + offset;
++    
++    return len;
++}
++
++#define EZP_WRITE_MAX_SIZE 64
++
++int ezp_machine_id_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
++{
++    char p[EZP_WRITE_MAX_SIZE];
++    USHORT mac01, mac23, mac45;
++    PRTMP_ADAPTER pAd = (PRTMP_ADAPTER)data;
++    char *start, *end;
++    
++    DBGPRINT(RT_DEBUG_TRACE, ("ezp_machine_id_proc_write()\n"));
++
++    if (!count) {
++        return -EINVAL;
++    }
++
++    if (count > EZP_WRITE_MAX_SIZE) {
++        count = EZP_WRITE_MAX_SIZE;
++    }
++    
++    /* Copy the data from user space. */
++    if (copy_from_user(p, buffer, count)) {
++        return -EFAULT;
++    }
++    
++    /* 
++     * Write the machine id by sending "ezpacket:XX:XX:XX:XX:XX:XX".
++     * 8 + 1
++     * 8 + 1 + 2 + 1
++     * 8 + 1 + 2 + 1 + 2 + 1
++     * 8 + 1 + 2 + 1 + 2 + 1 + 2 + 1
++     * 8 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1
++     */
++    if (!strncmp(p, "ezpacket", 8)) {
++        start = p + 9;
++        end = start + 2;
++        mac01 = ((USHORT) simple_strtol(start, &end, 16));
++
++        start = p + 12;
++        end = start + 2;
++        mac01 |= (((USHORT) simple_strtol(start, &end, 16)) << 8);
++
++        start = p + 15;
++        end = start + 2;
++        mac23 = ((USHORT) simple_strtol(start, &end, 16));
++
++        start = p + 18;
++        end = start + 2;
++        mac23 |= (((USHORT) simple_strtol(start, &end, 16)) << 8);
++
++        start = p + 21;
++        end = start + 2;
++        mac45 = ((USHORT) simple_strtol(start, &end, 16));
++
++        start = p + 24;
++        end = start + 2;
++        mac45 |= (((USHORT) simple_strtol(start, &end, 16)) << 8);
++
++        RT28xx_EEPROM_WRITE16(pAd, 0x162, mac01);
++        RT28xx_EEPROM_WRITE16(pAd, 0x164, mac23);
++        RT28xx_EEPROM_WRITE16(pAd, 0x166, mac45);
++
++        /* Set the flag */
++        RT28xx_EEPROM_WRITE16(pAd, 0x160, (USHORT)0x01);
++    }
++    
++    return count;
++}
++
++#ifndef CONFIG_RALINK_RT3052
++int ezp_rewind_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
++{
++    char p[EZP_WRITE_MAX_SIZE];
++    USHORT flag, mac01, mac23, mac45;
++    PRTMP_ADAPTER pAd = (PRTMP_ADAPTER)data;
++    
++    DBGPRINT(RT_DEBUG_TRACE, ("ezp_rewind_proc_write()\n"));
++
++    if (!count) {
++        return -EINVAL;
++    }
++    if (count > EZP_WRITE_MAX_SIZE) {
++        count = EZP_WRITE_MAX_SIZE;
++    }
++    
++    /* Copy the data from user space. */
++    if (copy_from_user(p, buffer, count)) {
++        return -EFAULT;
++    }
++    
++    RT28xx_EEPROM_READ16(pAd, 0x160, flag);
++    /* The value at 0x160 indicates whether the old MAC address saves at
++     * 0x162.
++     */
++    if (p[0] == '1' && flag == (USHORT)0x01) {
++        RT28xx_EEPROM_READ16(pAd, 0x162, mac01);
++        RT28xx_EEPROM_READ16(pAd, 0x164, mac23);
++        RT28xx_EEPROM_READ16(pAd, 0x166, mac45);
++
++        DBGPRINT(RT_DEBUG_TRACE, 
++                 ("Rewind the MAC address to %02X:%02X:%02X:%02X:%02X:%02X\n",
++                                (UCHAR)(mac01 & 0xff), (UCHAR)(mac01 >> 8),
++                                (UCHAR)(mac23 & 0xff), (UCHAR)(mac23 >> 8),
++                                (UCHAR)(mac45 & 0xff), (UCHAR)(mac45 >> 8)));
++        
++        RT28xx_EEPROM_WRITE16(pAd, 0x04, mac01);
++        RT28xx_EEPROM_WRITE16(pAd, 0x06, mac23);
++        RT28xx_EEPROM_WRITE16(pAd, 0x08, mac45);
++        /* Reset the flag */
++        RT28xx_EEPROM_WRITE16(pAd, 0x160, (USHORT)0x00);
++    }
++    
++    return count;
++}
++#endif
+ 
+ int rt28xx_init(
+ 	IN VOID		*pAdSrc,
+@@ -601,6 +765,35 @@
+ 
+ 
+ 	DBGPRINT_S(Status, ("<==== rt28xx_init, Status=%x\n", Status));
++#ifdef CONFIG_PROC_FS
++	DBGPRINT_S(Status, ("<==== rt28xx_init, Status111=%x\n", Status));
++#else
++	DBGPRINT_S(Status, ("<==== rt28xx_init, Status222=%x\n", Status));
++#endif
++    /* EZPacket */
++#ifdef CONFIG_PROC_FS
++    /* Assign proc entry to access machine id from wireless MAC */
++
++    proc_mach_id = create_proc_entry("ezp_machine_id", 0644, NULL);
++    if (proc_mach_id) {
++        proc_mach_id->read_proc = &ezp_machine_id_proc_read;
++        proc_mach_id->write_proc = &ezp_machine_id_proc_write;
++        proc_mach_id->data = (void *)pAd;
++        DBGPRINT_S(Status, ("<==== rt28xx_init, proc=%x pread=%x pwrite=%x pdata=%x\n", 
++                    proc_mach_id, proc_mach_id->read_proc, proc_mach_id->write_proc, proc_mach_id->data));
++    } else {
++       printk("ezp_proc machine id create fail\n");
++    }
++#ifndef CONFIG_RALINK_RT3052
++    proc_rewind = create_proc_entry("ezp_rewind", 0644, NULL);
++    if (proc_rewind) {
++        proc_rewind->write_proc = &ezp_rewind_proc_write;
++        proc_rewind->data = (void *)pAd;
++    } else {
++        printk("ezp_proc proc rewind create fail\n");
++    }
++#endif
++#endif
+ 
+ 	return TRUE;
+ 
+--- linux-2.6.26/drivers/net/wireless/rt2860v2/os/linux/rt_main_dev.c	2010-05-31 10:23:42.749598000 +0800
++++ linux-2.6.26.new/drivers/net/wireless/rt2860v2/os/linux/rt_main_dev.c	2010-10-04 14:44:55.298257185 +0800
+@@ -263,6 +263,13 @@
+ 	GET_PAD_FROM_NET_DEV(pAd, net_dev);	
+ 
+ 	DBGPRINT(RT_DEBUG_TRACE, ("===> rt28xx_close\n"));
++    /* EZP Remove proc */
++#ifdef CONFIG_PROC_FS
++    remove_proc_entry("ezp_machine_id", NULL);
++#ifndef CONFIG_RALINK_RT3052
++    remove_proc_entry("ezp_rewind", NULL);
++#endif 
++#endif 
+ 
+ #ifdef CONFIG_AP_SUPPORT
+ #ifdef BG_FT_SUPPORT

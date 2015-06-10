@@ -1,0 +1,16 @@
+--- a/net/Makefile	2013-03-04 22:47:20.206299595 +0800
++++ b/net/Makefile	2013-03-04 22:47:48.996312505 +0800
+@@ -57,3 +57,13 @@
+ ifeq ($(CONFIG_NET),y)
+ obj-$(CONFIG_SYSCTL)		+= sysctl_net.o
+ endif
++ifneq ($(CONFIG_RA_NAT_NONE),y)
++obj-y                           += nat/foe_hook/
++endif
++
++obj-$(CONFIG_RA_HW_NAT)         += nat/hw_nat/
++
++ifneq ($(CONFIG_RA_CLASSIFIER),)
++obj-m     += ra_classifier/
++obj-y                           += ra_classifier/cls_hook/
++endif

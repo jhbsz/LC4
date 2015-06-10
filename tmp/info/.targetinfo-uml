@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/uml/Makefile
+Target: uml
+Target-Board: uml
+Target-Kernel: 2.6
+Target-Name: User Mode Linux [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: x86_64
+Target-Features: ext2
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: um
+Target-Description:
+
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+

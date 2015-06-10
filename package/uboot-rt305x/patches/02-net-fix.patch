@@ -1,0 +1,131 @@
+--- uboot/net/net.c	2010-04-21 10:07:55.513869740 +0800
++++ uboot/net/net.c	2010-04-21 10:23:24.820117346 +0800
+@@ -202,7 +202,9 @@
+ =======================================*/
+ #define RL_DEBUG 0
+ int EMERGENCY_MODE=0;
+-uchar	*NetTcpDestMAC;	/* MAC address of destination	*/
++/* EZP: do not use unallocated pointer, use array instead. */
++/*uchar	*NetTcpDestMAC; */	/* MAC address of destination	*/
++uchar    NetTcpDestMAC[12];
+ 
+ static unsigned int seq_num __attribute__ ((packed));
+ static unsigned int ack_num __attribute__ ((packed));
+@@ -217,8 +219,8 @@
+ }  TCPfakehdr;
+ 
+ TCPfakehdr fh;
+-
+-int Listen_FG;
++/* EZP: set Listen_FG initial value */
++int Listen_FG = 0;
+ int sendresult_flag;   //0:start 1:fail 2:reset
+ 
+ uchar *httpdReplyData; //httpd reply web page to client
+@@ -1848,7 +1850,8 @@
+ 		return;
+ 	}
+ 	//Check Run image length
+-	if ( ntohl(fwHeader->ih_size) != (HTTP_FileLen-sizeof(image_header_t)))
++	/* EZP: image size may less than or equal to transfered data size. */
++	if ( ntohl(fwHeader->ih_size) > (HTTP_FileLen-sizeof(image_header_t)))
+ 	{
+ 		puts("Check Image Length error\n\n");
+ 		sendresult_flag=1;//fail
+@@ -1908,8 +1911,8 @@
+ 			 	ack_num =(ntohl(tcpPkt->tcp_seq)+ tcp_data_len);
+ 			}
+ 			#endif
+-			
+-			NetTcpDestMAC = NULL;
++		    /* EZP: we used array instead */
++			/* NetTcpDestMAC = NULL; */
+ 			break;
+ 		#endif
+ 		} 
+--- uboot/include/net.h	2010-04-21 10:07:55.493869645 +0800
++++ uboot/include/net.h	2010-04-21 10:20:51.264359083 +0800
+@@ -445,7 +445,10 @@
+ 
+ //RL added HTTPD define
+ extern int EMERGENCY_MODE; //check if into EMERGENCY MODE
+-extern uchar *NetTcpDestMAC; // MAC address of destination
++/* EZP: do not use unallocated pointer, use array instead. */
++/* extern uchar *NetTcpDestMAC; */// MAC address of destination
++extern uchar    NetTcpDestMAC[];
++
+ extern uchar *httpdReplyData; //httpd reply web page to client
+ extern int Listen_FG;
+ extern int sendresult_flag;   //0:start 1:fail 2:reset
+--- uboot/net/httpd.c	2010-04-19 19:08:23.742618860 +0800
++++ uboot/net/httpd.c	2010-04-19 19:08:12.932618689 +0800
+@@ -30,7 +30,7 @@
+ *********************************************/
+ int            HTTP_FileLen;
+ int            MaxLen_flag;
+-#define        MAX_FILESIZE  (4*1024*1024 )
++#define        MAX_FILESIZE  (8*1024*1024 )
+ 
+ unsigned int strtoint(char *str, unsigned int count);
+ //char 		*file;
+--- uboot/include/configs/rt2880.h	2010-04-19 20:30:47.620223612 +0800
++++ uboot/include/configs/rt2880.h	2010-04-19 20:30:42.084656080 +0800
+@@ -276,8 +276,8 @@
+ #define CFG_KERN2_ADDR		(CFG_FLASH2_BASE + CFG_BOOTLOADER_SIZE)
+ #else
+ #define CFG_BOOTLOADER_SIZE	0x30000
+-#define CFG_CONFIG_SIZE		0x00000
+-#define CFG_FACTORY_SIZE	0x00000
++#define CFG_CONFIG_SIZE		0x10000
++#define CFG_FACTORY_SIZE	0x10000
+ #define CFG_ENV_ADDR		(CFG_FLASH_BASE + CFG_BOOTLOADER_SIZE)
+ #define CFG_KERN_ADDR		(CFG_FLASH_BASE + (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE))
+ #ifdef DUAL_IMAGE_SUPPORT
+--- uboot/autoconf.h	2009-12-17 16:48:57.000000000 +0800
++++ uboot/autoconf.h	2010-04-19 21:07:45.933168803 +0800
+@@ -17,10 +17,10 @@
+ #undef  MAC_TO_GIGAPHY_MODE
+ #define ON_BOARD_SDR 1
+ #undef  ON_BOARD_64M_DRAM_COMPONENT
+-#define ON_BOARD_128M_DRAM_COMPONENT 1
+-#undef  ON_BOARD_256M_DRAM_COMPONENT
+-#define ON_BOARD_16BIT_DRAM_BUS 1
+-#undef  ON_BOARD_32BIT_DRAM_BUS
++#undef  ON_BOARD_128M_DRAM_COMPONENT
++#define ON_BOARD_256M_DRAM_COMPONENT 1
++#undef  ON_BOARD_16BIT_DRAM_BUS
++#define ON_BOARD_32BIT_DRAM_BUS 1
+ #define ON_BOARD_NOR_FLASH_COMPONENT 1
+ #undef  ON_BOARD_NAND_FLASH_COMPONENT
+ #undef  ON_BOARD_SPI_FLASH_COMPONENT
+--- uboot/.config	2009-12-17 16:48:57.000000000 +0800
++++ uboot/.config	2010-04-19 21:12:41.235098717 +0800
+@@ -16,10 +16,10 @@
+ # MAC_TO_GIGAPHY_MODE is not set
+ ON_BOARD_SDR=y
+ # ON_BOARD_64M_DRAM_COMPONENT is not set
+-ON_BOARD_128M_DRAM_COMPONENT=y
+-# ON_BOARD_256M_DRAM_COMPONENT is not set
+-ON_BOARD_16BIT_DRAM_BUS=y
+-# ON_BOARD_32BIT_DRAM_BUS is not set
++# ON_BOARD_128M_DRAM_COMPONENT is not set
++ON_BOARD_256M_DRAM_COMPONENT=y
++# ON_BOARD_16BIT_DRAM_BUS is not set
++ON_BOARD_32BIT_DRAM_BUS=y
+ ON_BOARD_NOR_FLASH_COMPONENT=y
+ # ON_BOARD_NAND_FLASH_COMPONENT is not set
+ # ON_BOARD_SPI_FLASH_COMPONENT is not set
+--- uboot/lib_mips/board.c	2010-04-20 11:27:47.330120186 +0800
++++ uboot/lib_mips/board.c	2010-04-20 17:38:00.901458504 +0800
+@@ -1347,7 +1347,10 @@
+ 		sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
+ 		argv[1] = &addr_str[0];
+ 		printf("   \n3: System Boot system code via Flash.\n");
+-		do_bootm(cmdtp, 0, 2, argv);
++        if (do_bootm(cmdtp, 0, 2, argv) == 1)
++        {
++            goto Emergency_start;
++        }
+ 	}
+ 	else {
+ 		char *argv[4];

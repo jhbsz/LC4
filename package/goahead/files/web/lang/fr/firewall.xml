@@ -1,0 +1,146 @@
+﻿
+<po>
+	<message msgid="firewall disable" msgstr="Désactiver"/>
+	<message msgid="firewall enable" msgstr="Activer"/>
+	<message msgid="firewall apply" msgstr="bouton Apply (Appliquer)"/>
+	<message msgid="firewall reset" msgstr="Réinitialiser"/>
+	<message msgid="firewall del select" msgstr="Supprimer la sélection"/>
+	<message msgid="firewall no" msgstr="N°"/>
+	<message msgid="firewall protocol" msgstr="Protocole"/>
+	<message msgid="firewall comment" msgstr="Commentaire"/>
+	<message msgid="firewall default drop" msgstr="Les autres seront rejetés"/>
+	<message msgid="firewall default accept" msgstr="Les autres seront acceptés"/>
+	<message msgid="port title" msgstr="Paramètres de filtrage d'adresse MAC/IP/Port"/>
+	<message msgid="port introduction" msgstr="Vous pouvez établir des règles de pare feu pour protéger votre réseau contre les virus, vers et activités malveillantes sur Internet."/>
+	<message msgid="port basic setting" msgstr="Paramètres de base"/>
+	<message msgid="port basic filter" msgstr="Filtrage MAC/IP/Port"/>
+	<message msgid="port basic default policy" msgstr="Stratégie par défaut -- Le paquet ne correspondant à aucune règle sera :"/>
+	<message msgid="port basic default policy accepted" msgstr="Accepté."/>
+	<message msgid="port basic default policy dropped" msgstr="Rejeté."/>
+	<message msgid="port filter setting" msgstr="Paramètresde filtrage MAC/IP/Port"/>
+	<message msgid="port filter macaddr" msgstr="Adresse MAC"/>
+	<message msgid="port filter source ipaddr" msgstr="Adresse IP source"/>
+	<message msgid="port filter port range" msgstr="Plage des ports"/>
+	<message msgid="port filter dest ipaddr" msgstr="Adresse IP dest"/>
+	<message msgid="port filter action" msgstr="Action"/>
+	<message msgid="port filter action drop" msgstr="Rejeter"/>
+	<message msgid="port filter action accept" msgstr="Accepter"/>
+	<message msgid="port current filter" msgstr="Règles de filtrage MAC/IP/Port actuelles dans le système :"/>
+	<message msgid="port filter source port range" msgstr="Plage de port source"/>
+	<message msgid="port filter dest port range" msgstr="Plage de port dest"/>
+	<message msgid="port filter packetcount" msgstr="Pkt Cnt"/>
+	<message msgid="nat setup" msgstr="Installation de NAT"/>
+	<message msgid="nat translation" msgstr="Activer la traduction d'adresse réseau (NAT)"/>
+	<message msgid="nat default server setup" msgstr="Installation du serveur par défaut"/>
+	<message msgid="nat server ip" msgstr="Adresse IP du serveur :"/>
+	<message msgid="nat apply" msgstr="bouton Apply (Appliquer)"/>
+	<message msgid="nat reset" msgstr="Réinitialiser"/>
+	<message msgid="application add app" msgstr="Ajouter une règle d'application"/>
+	<message msgid="application active" msgstr="Actif"/>
+	<message msgid="application service name" msgstr="Nom du service"/>
+	<message msgid="application port" msgstr="Port"/>
+	<message msgid="application server ip" msgstr="Adresse IP du serveur"/>
+	<message msgid="application app rule sum" msgstr="Récapitulatif des règles d'application"/>
+	<message msgid="application app rule sum2" msgstr="Récapitulatif des règles d'application"/>
+	<message msgid="application td active" msgstr="Actif"/>
+	<message msgid="application td name" msgstr="Nom"/>
+	<message msgid="application td port" msgstr="Port"/>
+	<message msgid="application td server ip" msgstr="Adresse IP du serveur"/>
+	<message msgid="application td modify" msgstr="Modifier"/>
+	<message msgid="nat advance app rule sum" msgstr="Récapitulatif des règles d'application"/>
+	<message msgid="nat advance port trigger rule" msgstr="Règles de déclenchement de port"/>
+	<message msgid="nat advance name" msgstr="Nom"/>
+	<message msgid="nat advance incoming" msgstr="Entrant"/>
+	<message msgid="nat advance trigger" msgstr="Déclencheur"/>
+	<message msgid="nat advance port1" msgstr="Port"/>
+	<message msgid="nat advance endport1" msgstr="Port de fin"/>
+	<message msgid="nat advance port2" msgstr="Port"/>
+	<message msgid="nat advance endport2" msgstr="Port de fin"/>
+	<message msgid="firewall setup" msgstr="Installation du pare feu"/>
+	<message msgid="firewall enable" msgstr="Activer le pare feu"/>
+	<message msgid="spi setup" msgstr="Installation de SPI"/>
+	<message msgid="spi enable" msgstr="Activer SPI"/>
+	<message msgid="sc filter restrict" msgstr="Restreindre les fonctionnalités Web"/>
+	<message msgid="sc filter keyword blocking" msgstr="Blocage par mot clé"/>
+	<message msgid="sc filter enable keyword blocking" msgstr="Activer le blocage d’URL par mot clé"/>
+	<message msgid="sc filter keyword" msgstr="Mot clé"/>
+	<message msgid="sc filter keyword list" msgstr="Liste de mots clés"/>
+	<message msgid="sc filter add" msgstr="Ajouter"/>
+	<message msgid="sc filter delete" msgstr="Supprimer"/>
+	<message msgid="sc filter clear" msgstr="Effacer tout"/>
+	<message msgid="sc filter trusted ip" msgstr="Installation de l'IP approuvée"/>
+	<message msgid="sc filter str1" msgstr="Un ordinateur approuvé a un accès complet à toutes les ressources bloquées. 0.0.0.0 signifie qu'il n'y a pas d'ordinateur approuvé."/>
+	<message msgid="sc filter str2" msgstr="Adresse IP de l’ordinateur approuvé :"/>
+	<message msgid="remote management server port" msgstr="Port du serveur :"/>
+	<message msgid="remote management server access" msgstr="Accès au serveur :"/>
+	<message msgid="remote management secured ip" msgstr="Adresse IP sécurisée du client :"/>
+	<message msgid="remote management secured ip all" msgstr="Tout"/>
+	<message msgid="remote management secured ip sel" msgstr="Sélectionné"/>
+	<message msgid="port filter Respon To Ping On" msgstr="Répondre à la requête Ping sur :"/>
+	<message msgid="port filter PingFrmWANFilter WAN" msgstr="WAN"/>
+	<message msgid="port filter PingFrmWANFilter Disable" msgstr="Désactiver"/>
+	<message msgid="port filter enable firewall rule1" msgstr="Activer la règle du pare feu"/>
+	<message msgid="port filter enable firewall rule2" msgstr="Activer la règle du pare feu"/>
+	<message msgid="port filter firewall rule" msgstr="Règle du pare feu"/>
+	<message msgid="port filter add firewall rule" msgstr="Ajouter une règle de pare feu"/>
+	<message msgid="port filter service name" msgstr="Nom du service :"/>
+	<message msgid="port filter apply1" msgstr="bouton Apply (Appliquer)"/>
+	<message msgid="port filter apply2" msgstr="bouton Apply (Appliquer)"/>
+	<message msgid="port filter add Rule" msgstr="Ajouter une règle"/>
+	<message msgid="port filter table service name" msgstr="Nom du service"/>
+	<message msgid="port filter table mac address" msgstr="Adresse MAC"/>
+	<message msgid="port filter table dest ip" msgstr="Adresse IP dest"/>
+	<message msgid="port filter table source ip" msgstr="Adresse IP source"/>
+	<message msgid="port filter table source prorocol" msgstr="Protocole"/>
+	<message msgid="port filter table dest port range" msgstr="Plage de port dest"/>
+	<message msgid="port filter table source port range" msgstr="Plage de port dest"/>
+	<message msgid="port filter table source action" msgstr="Action"/>
+	<message msgid="port filter table source delete" msgstr="Supprimer"/>
+	<message msgid="User_Defined" msgstr="Personnalisé"/>
+	<message msgid="Services" msgstr="&quot;---Service---&quot;"/>
+	<message msgid="Please input any IP or/and port value." msgstr="Entrez une valeur d'IP ou/et de port."/>
+	<message msgid="Invalid port number: source port." msgstr="Numéro de port non valide: Port source. "/>
+	<message msgid="Invalid source port number." msgstr="Numéro de port source non valide."/>
+	<message msgid="Invalid source port range setting." msgstr="Paramètre de plage de port source non valide."/>
+	<message msgid="Invalid port number: dest port." msgstr="Numéro de port non valide: Port de dest."/>
+	<message msgid="Invalid dest port number." msgstr="Numéro de port de dest. non valide."/>
+	<message msgid="Invalid dest port range setting." msgstr="Paramètre de plage de port de dest. non valide."/>
+	<message msgid="Source IP address format error." msgstr="Erreur de format d'adresse IP."/>
+	<message msgid="Dest IP address format error." msgstr="Erreur de format d'adresse IP de dest."/>
+	<message msgid="Error. IP address is empty." msgstr="Erreur. L'adresse IP est vide."/>
+	<message msgid="It should be a [0-9] number." msgstr="Ce doit être un nombre [0-9]."/>
+	<message msgid="IP adress format error." msgstr="Erreur de format d'adresse IP."/>
+	<message msgid="Incoming End port is error" msgstr="Port entrant de fin en erreur"/>
+	<message msgid="Trigger port should not be zero" msgstr="Le port déclencheur ne doit pas être à zéro"/>
+	<message msgid="Trigger End port is error" msgstr=" Port entrant déclencheur de fin en erreur"/>
+	<message msgid="Incoming port is exist" msgstr="Le port entrant existe"/>
+	<message msgid="Incoming End port is exist" msgstr=" Le port entrant de Fin existe"/>
+	<message msgid="Trigger port is exist" msgstr="Le port déclencheur existe"/>
+	<message msgid="Port Service is exist" msgstr="Le service de port existe"/>
+	<message msgid="The value is invalid" msgstr="La valeur n'est pas valide"/>
+	<message msgid="Key word is exist" msgstr="Le mot clé existe"/>
+	<message msgid="The rule number is exceeded." msgstr="Le nombre de règles dépasse ."/>
+<!-- alert message from c file-->
+<message msgid="MAC is invaild" msgstr="MAC n'est pas valide" />
+<message msgid="IP error" msgstr="IP n'est pas valide" />
+<message msgid="Invaild setting" msgstr="Paramètre non valide " />
+<message msgid="IP is invaild" msgstr="IP n'est pas valide" />
+<message msgid="Please set port between 1~65535" msgstr="Veuillez définir le port entre 1~65535" />
+<message msgid="Invaild setting" msgstr="Paramètre non valide " />
+<message msgid="Length is too log." msgstr="La longueur est trop importante." />
+<!-- alert message from c file-->
+<message msgid="main Ready" msgstr="Prêt"/>
+<message msgid="main ConfigurationSuccess" msgstr="Mise à jour de la configuration réussie"/>
+<message msgid="main ConfigurationProceeding" msgstr="Mise à jour de la configuration en cours.  Veuillez patienter..."/>
+<message msgid="main firmware download in progress" msgstr="Téléchargement du microprogramme en cours. Patientez . . ."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Mise à niveau du microprogramme en cours. Patientez et N'ÉTEIGNEZ PAS votre appareil."/>
+<!-- 4615 SCFilter.asp-->
+<message msgid="sc filter rwf activex" msgstr=" ActiveX " />
+<message msgid="sc filter rwf java" msgstr=" Java " />
+<message msgid="sc filter rwf cookies" msgstr=" Cookies " />
+<message msgid="sc filter rwf web" msgstr="Proxy Web" />
+<!-- 4615 remote_web.asp-->
+<message msgid="remote management www" msgstr=" WWW " />
+<!--Steve add and reference other page-->
+<message msgid="System do not support specific invalid characters." msgstr="Le système ne prend pas en charge les caractères spécifiques non valides."/>
+</po>

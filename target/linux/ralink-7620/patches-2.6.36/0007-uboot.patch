@@ -1,0 +1,24 @@
+--- linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c	2013-11-25 11:50:56.911691083 +0800
++++ linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c	2013-11-22 18:51:23.168365846 +0800
+@@ -63,17 +63,17 @@
+ #ifdef CONFIG_RT3052_FLASH_16M
+                 size:           0xF90000,
+ #else
+-                size:           0x670000,
++                size:           0x790000,
+ #endif
+-                offset:         0x170000,
++                offset:         0x050000,
+         }, {
+                 name:           "rootfs",
+ #ifdef CONFIG_RT3052_FLASH_16M
+                 size:           0xDE0000,
+ #else
+-                size:           0x4a0000,
++                size:           0x5C0000,
+ #endif
+-                offset:         0x340000,
++                offset:         0x220000,
+ #ifndef EZPACKET
+         }, {
+                 name:           "nvram", /* mtdblock3 */

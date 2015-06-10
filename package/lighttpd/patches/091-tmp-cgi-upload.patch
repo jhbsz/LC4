@@ -1,0 +1,18 @@
+---  lighttpd-1.4.30/src/chunk.c	2014-01-08 13:42:30.601615778 +0800
++++  lighttpd-1.4.30/src/chunk.c	2014-01-03 15:58:11.529747128 +0800
+@@ -333,7 +333,14 @@
+                 /* we have several tempdirs, only if all of them fail we jump out */
+                 for (i = 0; i < cq->tempdirs->used; i++) {
+                         buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
+-                        buffer_append_string_len(template, dst_file, strlen(dst_file));
++			char *pch = strstr(dst_file, "cgi-bin");
++			if (pch != NULL) {
++				// Dst file contains cgi-bin characters
++				char *cgi_tmp = "/USB/.upload";
++				buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
++			} else {
++				buffer_append_string_len(template, dst_file, strlen(dst_file));
++			}
+                         buffer_urldecode_path(template);
+                         buffer_append_string_len(template, CONST_STR_LEN("-XXXXXX"));
+                         mktemp(template->ptr);

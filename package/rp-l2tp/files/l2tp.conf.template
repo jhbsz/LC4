@@ -1,0 +1,32 @@
+# comment
+
+# Global section (by default, we start in global mode)
+global
+
+# Load handlers
+load-handler "sync-pppd.so"
+load-handler "cmd.so"
+
+# Bind address
+listen-port 1701
+
+# Configure the sync-pppd handler.  You MUST have a "section sync-pppd" line
+# even if you don't set any options.
+section sync-pppd
+#lns-pppd-opts "require-pap 10.0.0.1:10.0.0.2 lcp-echo-interval 30 lcp-echo-failure 6"
+lac-pppd-opts "user L2TP_USERNAME password L2TP_PASSWORD"
+lac-pppd-opts "refuse-eap noipdefault L2TP_LOCAL_IPADDR ipcp-accept-remote lcp-echo-interval 5 lcp-echo-failure 5 unit L2TP_UNITID"
+# lac-pppd-opts "noipdefault L2TP_LOCAL_IPADDR ipcp-accept-remote lcp-echo-interval 30 lcp-echo-failure 6 persist unit L2TP_UNITID"
+lac-pppd-opts "ipparam IFACE"
+# Peer section
+section peer
+peer L2TP_HOST
+#secret s3cr3t
+port 1701
+lac-handler sync-pppd
+lns-handler sync-pppd
+hide-avps no
+
+# Configure the cmd handler.  You MUST have a "section cmd" line
+# even if you don't set any options.
+section cmd

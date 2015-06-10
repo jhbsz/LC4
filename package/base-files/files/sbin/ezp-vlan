@@ -1,0 +1,189 @@
+#!/bin/sh
+. /etc/network.sh
+
+config_eth_port() {
+    local type=$1
+    # config vlanport and vlan rule
+    i=0
+    portcfg_num=$(nvram get portcfg_rule_num)
+    while [ "$i" -lt "$portcfg_num" ];
+    do
+       [ "$(nvram show portcfg_rule $i name)" = "$type" ] && {
+            vlanport_num=$(nvram get vlanport_rule_num)
+            lan_member=$(nvram show portcfg_rule $i lan_member)
+            wan_member=$(nvram show portcfg_rule $i wan_member)
+            nvram replace attr vlan_rule 0 portmember $lan_member
+            nvram replace attr vlan_rule 1 portmember $wan_member
+            idx=0
+            while [ "$idx" -lt "$vlanport_num" ];
+            do
+                if [ "$(echo $wan_member | head -c $(($idx + 1)) | tail -c 1)" = "1" ];  then
+                    nvram replace attr vlanport_rule $idx pvid 2
+                else
+                    nvram replace attr vlanport_rule $idx pvid 1
+                fi
+                idx=$(($idx + 1))
+            done
+        }
+        i=$(($i + 1))
+    done
+    # config portconfig to indicate port state
+    nvram set port_config=$type
+    # config switch
+    ezp-vlan esw
+}
+
+# parse cmd
+for arg in $*
+do
+  if [ "$arg" = "add_device" ]; then
+     add_device=1
+  elif [ "$arg" = "config_p1_port" ]; then
+     p1_port=1
+  elif [ "$arg" = "lan" ]; then
+     port_arg="lan"
+  elif [ "$arg" = "wan" ]; then
+     port_arg="wan"
+  fi
+done
+
+[ "$p1_port" = "1" ] && {
+    config_eth_port $port_arg
+}
+
+switch_type=$(nvram get switch_type)
+
+case $switch_type in
+esw)
+    local platform="$(nvram get platform)"
+    [ "$platform" = "M2E" -o "$platform" = "ALS" ] && {
+        port_cfg="$(nvram get port_config)"
+        if [ "$port_cfg" = "wan" ]; then
+            /sbin/mt7620-config-wan.sh
+        else
+            /sbin/mt7620-config-lan.sh
+        fi
+    } || {
+        # Iterate vlanport_rule
+        local vnum="$(nvram get vlanport_rule_max)"
+        local i=0
+        local tag="";
+        local temp;
+        while [ "$i" -lt "$vnum" ];
+        do
+            portid="$(nvram show vlanport_rule $i portid)"
+            pvid="$(nvram show vlanport_rule $i pvid)"
+            temp="$(nvram show vlanport_rule $i tag)"
+            tag="$tag$temp"
+            #set up the switch IC           
+            switch vlan port $portid $pvid
+            #vlan group index
+            i="$(($i + 1))"
+        done
+    }
+    # Iterate vlan_rule 
+    vnum="$(nvram get vlan_rule_num)"
+    i=0
+    local idx=0
+    local enable=0
+    while [ "$i" -lt "$vnum" ];
+    do
+        enable="$(nvram show vlan_rule $i enable)"
+        [ "$enable" = "1" ] && { 
+            vid="$(nvram show vlan_rule $i vid)"
+            portmember="$(nvram show vlan_rule $i portmember)"
+            # set up the switch IC
+            [ "$platform" != "M2E" -o "$platform" != "ALS" ] && switch vlan set $idx $vid $portmember $tag
+            [ "$add_device" = "1" ] && {
+                # set up linux vlan by vconfig
+                if_valid vlan${vid} ${i}
+            }
+            # vlan group index
+            idx="$(($idx + 1))"
+        }
+        i="$(($i + 1))"
+    done
+    ;;
+ar8316)
+    # Iterate vlan_rule
+    vnum="$(nvram get vlan_rule_num)"
+    i=0
+    local enable=0
+    local idx=0
+    while [ "$i" -lt "$vnum" ];
+    do
+        enable="$(nvram show vlan_rule $i enable)"
+        [ "$enable" = "1" ] && {
+            vid="$(nvram show vlan_rule $i vid)"
+            portmember="$(nvram show vlan_rule $i portmember)"
+            # set up the switch IC 3052ESW
+            switch vlan set $idx $vid 0000011 0000011
+            # set up the switch IC AR8316
+            switch gvlan set $vid $portmember
+            # set up linux vlan by vconfig
+            if_valid vlan${vid} ${i} 
+            # ESW vlan group index
+            idx="$(($idx + 1))"
+        }
+        i="$(($i + 1))"
+    done
+    # Iterate vlanport_rule
+    local vnum="$(nvram get vlanport_rule_max)"
+    local i=0
+    while [ "$i" -lt "$vnum" ];
+    do
+        portid="$(nvram show vlanport_rule $i portid)"
+        pvid="$(nvram show vlanport_rule $i pvid)"
+        tag="$(nvram show vlanport_rule $i tag)"
+        mode="$(nvram show vlanport_rule $i mode)"
+        gmemb="$(nvram show vlanport_rule $i gmemb)"
+        #set up the switch IC
+        switch gport $portid $pvid $tag $mode $gmemb
+        #vlan group index
+        i="$(($i + 1))"
+    done
+    ;;
+ar8328)
+    # Iterate vlan_rule
+    vnum="$(nvram get vlan_rule_num)"
+    i=0
+    local enable=0
+    local idx=0
+    while [ "$i" -lt "$vnum" ];
+    do
+        enable="$(nvram show vlan_rule $i enable)"
+        [ "$enable" = "1" ] && {
+            vid="$(nvram show vlan_rule $i vid)"
+            portmember="$(nvram show vlan_rule $i portmember)"
+            # set up the switch IC 3052ESW
+            switch vlan set $idx $vid 0000011 0000011
+            # set up linux vlan by vconfig
+            if_valid vlan${vid} ${i} 
+            # ESW vlan group index
+            idx="$(($idx + 1))"
+        }
+        i="$(($i + 1))"
+    done
+    ;;
+upgrade)
+        local i=0 
+        # up eth2
+        ifconfig eth2 up
+        #config vlan port
+        while [ "$i" -lt "7" ]; do 
+            switch vlan port $i $(($i + 1)) 
+            i=$(($i + 1))
+        done
+        #config vlan 
+        switch vlan set 0 1 1000001 0000001
+        switch vlan set 1 2 0100001 0000001
+        switch vlan set 2 3 0010001 0000001
+        switch vlan set 3 4 0001001 0000001
+        switch vlan set 4 5 0000101 0000001
+        i=1
+        while [ "$i" -le "5" ]; do
+            vconfig add eth2 $i 
+            i=$(($i + 1))
+        done
+    ;;
+esac

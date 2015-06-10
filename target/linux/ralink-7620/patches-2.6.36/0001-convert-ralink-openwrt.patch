@@ -1,0 +1,1273 @@
+diff -Nur linux-2.6.36.x/arch/mips/ralink/cmdline.c linux-2.6.36.x/arch/mips/ralink/cmdline.c
+--- linux-2.6.36.x/arch/mips/ralink/cmdline.c	2010-11-09 10:08:20.000000000 +0800
++++ linux-2.6.36.x/arch/mips/ralink/cmdline.c	2013-10-15 16:36:49.773623849 +0800
+@@ -43,7 +43,7 @@
+ 
+ #if defined (CONFIG_RT2880_ROOTFS_IN_FLASH)
+ #ifdef CONFIG_SYSFS
+-char rt2880_cmdline[]="console=ttyS1,57600n8 root=/dev/mtdblock5";
++char rt2880_cmdline[]="console=ttyS1,57600n8 root=/dev/mtdblock5 rootfstype=squashfs init=/etc/preinit noinitrd";
+ #else
+ char rt2880_cmdline[]="console=ttyS1,57600n8 root=1f05";
+ #endif
+diff -Nur linux-2.6.36.x/arch/mips/ralink/Kconfig linux-2.6.36.x/arch/mips/ralink/Kconfig
+--- linux-2.6.36.x/arch/mips/ralink/Kconfig	2012-10-04 21:52:12.000000000 +0800
++++ linux-2.6.36.x/arch/mips/ralink/Kconfig	2013-10-15 16:36:49.773623849 +0800
+@@ -240,8 +240,8 @@
+ 	select BLK_DEV_INITRD 
+ 	select BLK_DEV_RAM 
+ 
+-#config  RT2880_ROOTFS_IN_FLASH
+-#        bool "RootFS_in_FLASH"
++config  RT2880_ROOTFS_IN_FLASH
++        bool "RootFS_in_FLASH"
+ endchoice
+ 
+ config BLK_DEV_RAM_SIZE
+diff -Nur linux-2.6.36.x/drivers/mtd/devices/block2mtd.c linux-2.6.36.x/drivers/mtd/devices/block2mtd.c
+--- linux-2.6.36.x/drivers/mtd/devices/block2mtd.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/drivers/mtd/devices/block2mtd.c	2013-10-15 16:36:54.977623987 +0800
+@@ -14,6 +14,7 @@
+ #include <linux/list.h>
+ #include <linux/init.h>
+ #include <linux/mtd/mtd.h>
++#include <linux/mtd/partitions.h>
+ #include <linux/buffer_head.h>
+ #include <linux/mutex.h>
+ #include <linux/mount.h>
+@@ -29,6 +30,8 @@
+ 	struct block_device *blkdev;
+ 	struct mtd_info mtd;
+ 	struct mutex write_mutex;
++	rwlock_t bdev_mutex;
++	char devname[0];
+ };
+ 
+ 
+@@ -81,6 +84,12 @@
+ 	size_t len = instr->len;
+ 	int err;
+ 
++	read_lock(&dev->bdev_mutex);
++	if (!dev->blkdev) {
++		err = -EINVAL;
++		goto done;
++	}
++
+ 	instr->state = MTD_ERASING;
+ 	mutex_lock(&dev->write_mutex);
+ 	err = _block2mtd_erase(dev, from, len);
+@@ -93,6 +102,10 @@
+ 
+ 	instr->state = MTD_ERASE_DONE;
+ 	mtd_erase_callback(instr);
++
++done:
++	read_unlock(&dev->bdev_mutex);
++
+ 	return err;
+ }
+ 
+@@ -104,10 +117,14 @@
+ 	struct page *page;
+ 	int index = from >> PAGE_SHIFT;
+ 	int offset = from & (PAGE_SIZE-1);
+-	int cpylen;
++	int cpylen, err = 0;
++
++	read_lock(&dev->bdev_mutex);
++	if (!dev->blkdev || (from > mtd->size)) {
++		err = -EINVAL;
++		goto done;
++	}
+ 
+-	if (from > mtd->size)
+-		return -EINVAL;
+ 	if (from + len > mtd->size)
+ 		len = mtd->size - from;
+ 
+@@ -122,10 +139,14 @@
+ 		len = len - cpylen;
+ 
+ 		page = page_read(dev->blkdev->bd_inode->i_mapping, index);
+-		if (!page)
+-			return -ENOMEM;
+-		if (IS_ERR(page))
+-			return PTR_ERR(page);
++		if (!page) {
++			err = -ENOMEM;
++			goto done;
++		}
++		if (IS_ERR(page)) {
++			err = PTR_ERR(page);
++			goto done;
++		}
+ 
+ 		memcpy(buf, page_address(page) + offset, cpylen);
+ 		page_cache_release(page);
+@@ -136,7 +157,10 @@
+ 		offset = 0;
+ 		index++;
+ 	}
+-	return 0;
++
++done:
++	read_unlock(&dev->bdev_mutex);
++	return err;
+ }
+ 
+ 
+@@ -188,12 +212,22 @@
+ 		size_t *retlen, const u_char *buf)
+ {
+ 	struct block2mtd_dev *dev = mtd->priv;
+-	int err;
++	int err = 0;
++
++	read_lock(&dev->bdev_mutex);
++	if (!dev->blkdev) {
++		err = -EINVAL;
++		goto done;
++	}
+ 
+ 	if (!len)
+-		return 0;
+-	if (to >= mtd->size)
+-		return -ENOSPC;
++		goto done;
++
++	if (to >= mtd->size) {
++		err = -ENOSPC;
++		goto done;
++	}
++
+ 	if (to + len > mtd->size)
+ 		len = mtd->size - to;
+ 
+@@ -202,6 +236,9 @@
+ 	mutex_unlock(&dev->write_mutex);
+ 	if (err > 0)
+ 		err = 0;
++
++done:
++	read_unlock(&dev->bdev_mutex);
+ 	return err;
+ }
+ 
+@@ -210,51 +247,30 @@
+ static void block2mtd_sync(struct mtd_info *mtd)
+ {
+ 	struct block2mtd_dev *dev = mtd->priv;
+-	sync_blockdev(dev->blkdev);
+-	return;
+-}
+-
+-
+-static void block2mtd_free_device(struct block2mtd_dev *dev)
+-{
+-	if (!dev)
+-		return;
+-
+-	kfree(dev->mtd.name);
+ 
+-	if (dev->blkdev) {
+-		invalidate_mapping_pages(dev->blkdev->bd_inode->i_mapping,
+-					0, -1);
+-		close_bdev_exclusive(dev->blkdev, FMODE_READ|FMODE_WRITE);
+-	}
++	read_lock(&dev->bdev_mutex);
++	if (dev->blkdev)
++		sync_blockdev(dev->blkdev);
++	read_unlock(&dev->bdev_mutex);
+ 
+-	kfree(dev);
++	return;
+ }
+ 
+ 
+-/* FIXME: ensure that mtd->size % erase_size == 0 */
+-static struct block2mtd_dev *add_device(char *devname, int erase_size)
++static int _open_bdev(struct block2mtd_dev *dev)
+ {
+ 	struct block_device *bdev;
+-	struct block2mtd_dev *dev;
+-	char *name;
+-
+-	if (!devname)
+-		return NULL;
+-
+-	dev = kzalloc(sizeof(struct block2mtd_dev), GFP_KERNEL);
+-	if (!dev)
+-		return NULL;
+ 
+ 	/* Get a handle on the device */
+-	bdev = open_bdev_exclusive(devname, FMODE_READ|FMODE_WRITE, NULL);
++	bdev = open_bdev_exclusive(dev->devname, FMODE_READ|FMODE_WRITE, NULL);
+ #ifndef MODULE
+ 	if (IS_ERR(bdev)) {
+ 
+ 		/* We might not have rootfs mounted at this point. Try
+ 		   to resolve the device name by other means. */
+ 
+-		dev_t devt = name_to_dev_t(devname);
++		wait_for_device_probe();
++		dev_t devt = name_to_dev_t(dev->devname);
+ 		if (devt) {
+ 			bdev = open_by_devnum(devt, FMODE_WRITE | FMODE_READ);
+ 		}
+@@ -262,27 +278,127 @@
+ #endif
+ 
+ 	if (IS_ERR(bdev)) {
+-		ERROR("error: cannot open device %s", devname);
+-		goto devinit_err;
++		ERROR("error: cannot open device %s", dev->devname);
++		return 1;
+ 	}
+ 	dev->blkdev = bdev;
+ 
+ 	if (MAJOR(bdev->bd_dev) == MTD_BLOCK_MAJOR) {
+ 		ERROR("attempting to use an MTD device as a block device");
+-		goto devinit_err;
++		return 1;
+ 	}
+ 
++	return 0;
++}
++
++static void _close_bdev(struct block2mtd_dev *dev)
++{
++	struct block_device *bdev;
++
++	if (!dev->blkdev)
++		return;
++
++	bdev = dev->blkdev;
++	invalidate_mapping_pages(dev->blkdev->bd_inode->i_mapping, 0, -1);
++	close_bdev_exclusive(dev->blkdev, FMODE_READ|FMODE_WRITE);
++	dev->blkdev = NULL;
++}
++
++static void block2mtd_free_device(struct block2mtd_dev *dev)
++{
++	if (!dev)
++		return;
++
++	kfree(dev->mtd.name);
++	_close_bdev(dev);
++	kfree(dev);
++}
++
++
++static int block2mtd_refresh(struct mtd_info *mtd)
++{
++	struct block2mtd_dev *dev = mtd->priv;
++	struct block_device *bdev;
++	dev_t devt;
++	int err = 0;
++
++	/* no other mtd function can run at this point */
++	write_lock(&dev->bdev_mutex);
++
++	/* get the device number for the whole disk */
++	devt = MKDEV(MAJOR(dev->blkdev->bd_dev), 0);
++
++	/* close the old block device */
++	_close_bdev(dev);
++
++	/* open the whole disk, issue a partition rescan, then */
++	bdev = open_by_devnum(devt, FMODE_WRITE | FMODE_READ);
++	if (!bdev || !bdev->bd_disk)
++		err = -EINVAL;
++#ifndef CONFIG_MTD_BLOCK2MTD_MODULE
++	else
++		err = rescan_partitions(bdev->bd_disk, bdev);
++#endif
++	if (bdev)
++		close_bdev_exclusive(bdev, FMODE_READ|FMODE_WRITE);
++
++	/* try to open the partition block device again */
++	_open_bdev(dev);
++	write_unlock(&dev->bdev_mutex);
++
++	return err;
++}
++
++/* FIXME: ensure that mtd->size % erase_size == 0 */
++static struct block2mtd_dev *add_device(char *devname, int erase_size, char *mtdname)
++{
++	struct block2mtd_dev *dev;
++	struct mtd_partition *part;
++	char *name;
++
++	if (!devname)
++		return NULL;
++
++	dev = kzalloc(sizeof(struct block2mtd_dev) + strlen(devname) + 1, GFP_KERNEL);
++	if (!dev)
++		return NULL;
++
++	strcpy(dev->devname, devname);
++
++	if (_open_bdev(dev))
++		goto devinit_err;
++
+ 	mutex_init(&dev->write_mutex);
++	rwlock_init(&dev->bdev_mutex);
+ 
+ 	/* Setup the MTD structure */
+ 	/* make the name contain the block device in */
++    /*
+ 	name = kasprintf(GFP_KERNEL, "block2mtd: %s", devname);
+ 	if (!name)
+ 		goto devinit_err;
++    */
++    /* If we dont specify mtdname or or device name is set as "block2mtd:", we
++     * go with new openwrt style logic, otherwise use original logic. */
++	if (!mtdname) {
++        if(strstr(devname,"block2mtd")) {
++            name = kasprintf(GFP_KERNEL, "%s", devname);
++            if (!name)
++                goto devinit_err;
++        } else {
++            name = kasprintf(GFP_KERNEL, "block2mtd: %s", devname);
++            if (!name)
++                goto devinit_err;
++        }
++    } else {
++	    name = kmalloc(strlen(mtdname) + 1, GFP_KERNEL);
++    	strcpy(name, mtdname);
++    }
++    printk("%s(%d) Using mtd device name %s\n", __func__, __LINE__, name);
++    dev->mtd.name = name;
+ 
+-	dev->mtd.name = name;
+-
+-	dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK;
++	/* dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK; */
++	dev->mtd.size = dev->blkdev->bd_inode->i_size & PAGE_MASK & ~(erase_size - 1);
+ 	dev->mtd.erasesize = erase_size;
+ 	dev->mtd.writesize = 1;
+ 	dev->mtd.type = MTD_RAM;
+@@ -294,15 +410,19 @@
+ 	dev->mtd.read = block2mtd_read;
+ 	dev->mtd.priv = dev;
+ 	dev->mtd.owner = THIS_MODULE;
++	dev->mtd.refresh_device = block2mtd_refresh;
+ 
+-	if (add_mtd_device(&dev->mtd)) {
++	part = kzalloc(sizeof(struct mtd_partition), GFP_KERNEL);
++	part->name = dev->mtd.name;
++	part->offset = 0;
++	part->size = dev->mtd.size;
++	if (add_mtd_partitions(&dev->mtd, part, 1)) {
+ 		/* Device didnt get added, so free the entry */
+ 		goto devinit_err;
+ 	}
+ 	list_add(&dev->list, &blkmtd_device_list);
+ 	INFO("mtd%d: [%s] erase_size = %dKiB [%d]", dev->mtd.index,
+-			dev->mtd.name + strlen("block2mtd: "),
+-			dev->mtd.erasesize >> 10, dev->mtd.erasesize);
++			mtdname, dev->mtd.erasesize >> 10, dev->mtd.erasesize);
+ 	return dev;
+ 
+ devinit_err:
+@@ -375,9 +495,9 @@
+ 
+ static int block2mtd_setup2(const char *val)
+ {
+-	char buf[80 + 12]; /* 80 for device, 12 for erase size */
++	char buf[80 + 12 + 80]; /* 80 for device, 12 for erase size, 80 for name */
+ 	char *str = buf;
+-	char *token[2];
++	char *token[3];
+ 	char *name;
+ 	size_t erase_size = PAGE_SIZE;
+ 	int i, ret;
+@@ -388,7 +508,7 @@
+ 	strcpy(str, val);
+ 	kill_final_newline(str);
+ 
+-	for (i = 0; i < 2; i++)
++	for (i = 0; i < 3; i++)
+ 		token[i] = strsep(&str, ",");
+ 
+ 	if (str)
+@@ -407,8 +527,10 @@
+ 			parse_err("illegal erase size");
+ 		}
+ 	}
++	if (token[2] && (strlen(token[2]) + 1 > 80))
++		parse_err("mtd device name too long");
+ 
+-	add_device(name, erase_size);
++	add_device(name, erase_size, token[2]);
+ 
+ 	return 0;
+ }
+@@ -442,7 +564,7 @@
+ 
+ 
+ module_param_call(block2mtd, block2mtd_setup, NULL, NULL, 0200);
+-MODULE_PARM_DESC(block2mtd, "Device to use. \"block2mtd=<dev>[,<erasesize>]\"");
++MODULE_PARM_DESC(block2mtd, "Device to use. \"block2mtd=<dev>[,<erasesize>[,<name>]]\"");
+ 
+ static int __init block2mtd_init(void)
+ {
+diff -Nur linux-2.6.36.x/drivers/mtd/Kconfig linux-2.6.36.x/drivers/mtd/Kconfig
+--- linux-2.6.36.x/drivers/mtd/Kconfig	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/drivers/mtd/Kconfig	2013-10-15 16:36:54.973623987 +0800
+@@ -53,6 +53,16 @@
+ 	  devices. Partitioning on NFTL 'devices' is a different - that's the
+ 	  'normal' form of partitioning used on a block device.
+ 
++config MTD_ROOTFS_ROOT_DEV
++	bool "Automatically set 'rootfs' partition to be root filesystem"
++	depends on MTD_PARTITIONS
++	default y
++
++config MTD_ROOTFS_SPLIT
++	bool "Automatically split 'rootfs' partition for squashfs"
++	depends on MTD_PARTITIONS
++	default y
++
+ config MTD_REDBOOT_PARTS
+ 	tristate "RedBoot partition table parsing"
+ 	depends on MTD_PARTITIONS
+diff -Nur linux-2.6.36.x/drivers/mtd/mtdchar.c linux-2.6.36.x/drivers/mtd/mtdchar.c
+--- linux-2.6.36.x/drivers/mtd/mtdchar.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/drivers/mtd/mtdchar.c	2013-10-15 16:36:55.009623988 +0800
+@@ -33,6 +33,7 @@
+ 
+ #include <linux/mtd/mtd.h>
+ #include <linux/mtd/map.h>
++#include <linux/mtd/partitions.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -854,6 +855,13 @@
+ 		file->f_pos = 0;
+ 		break;
+ 	}
++#ifdef CONFIG_MTD_PARTITIONS
++	case MTDREFRESH:
++	{
++		ret = refresh_mtd_partitions(mtd);
++		break;
++	}
++#endif
+ 
+ 	default:
+ 		ret = -ENOTTY;
+diff -Nur linux-2.6.36.x/drivers/mtd/mtdpart.c linux-2.6.36.x/drivers/mtd/mtdpart.c
+--- linux-2.6.36.x/drivers/mtd/mtdpart.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/drivers/mtd/mtdpart.c	2013-10-15 16:36:55.013623988 +0800
+@@ -29,6 +29,8 @@
+ #include <linux/kmod.h>
+ #include <linux/mtd/mtd.h>
+ #include <linux/mtd/partitions.h>
++#include <linux/root_dev.h>
++#include <linux/magic.h>
+ 
+ /* Our partition linked list */
+ static LIST_HEAD(mtd_partitions);
+@@ -46,7 +48,7 @@
+  * the pointer to that structure with this macro.
+  */
+ #define PART(x)  ((struct mtd_part *)(x))
+-
++#define IS_PART(mtd) (mtd->read == part_read)
+ 
+ /*
+  * MTD methods which simply translate the effective address and pass through
+@@ -524,6 +526,158 @@
+ 	return slave;
+ }
+ 
++#ifdef CONFIG_MTD_ROOTFS_SPLIT
++#define ROOTFS_SPLIT_NAME "rootfs_data"
++#define ROOTFS_REMOVED_NAME "<removed>"
++
++struct squashfs_super_block {
++	__le32 s_magic;
++	__le32 pad0[9];
++	__le64 bytes_used;
++};
++
++
++static int split_squashfs(struct mtd_info *master, int offset, int *split_offset)
++{
++	struct squashfs_super_block sb;
++	int len, ret;
++    char buf[256];
++    len = 4;
++    ret = master->read(master, 0x50000, 4, &len, buf);
++    printk("%s(%d) len:%d buf 0:%02x 1:%02x 2:%02x 3:%02x\n", __func__, __LINE__, len, buf[0], buf[1], buf[2], buf[3]);
++    ret = master->read(master, 0x170000, 4, &len, buf);
++    printk("%s(%d) len:%d buf 0:%02x 1:%02x 2:%02x 3:%02x\n", __func__, __LINE__, len, buf[0], buf[1], buf[2], buf[3]);
++
++    printk("%s(%d) offset:%d sb size:%d\n", __func__, __LINE__, offset, sizeof(sb));
++    len = sizeof(sb);
++	ret = master->read(master, offset, sizeof(sb), &len, (void *) &sb);
++	if (ret || (len != sizeof(sb))) {
++		printk(KERN_ALERT "split_squashfs: error occured while reading "
++			"from \"%s\"\n", master->name);
++		return -EINVAL;
++	}
++    printk("%s(%d) SQUASHFS_MAGIC:%x le32_to_cpu(sb.s_magic):%x\n", __func__, __LINE__, SQUASHFS_MAGIC, le32_to_cpu(sb.s_magic));
++	if (SQUASHFS_MAGIC != le32_to_cpu(sb.s_magic) ) {
++		printk(KERN_ALERT "split_squashfs: no squashfs found in \"%s\"\n",
++			master->name);
++		*split_offset = 0;
++		return 0;
++	}
++
++	if (le64_to_cpu((sb.bytes_used)) <= 0) {
++		printk(KERN_ALERT "split_squashfs: squashfs is empty in \"%s\"\n",
++			master->name);
++		*split_offset = 0;
++		return 0;
++	}
++
++	len = (u32) le64_to_cpu(sb.bytes_used);
++	len += (offset & 0x000fffff);
++	len +=  (master->erasesize - 1);
++	len &= ~(master->erasesize - 1);
++	len -= (offset & 0x000fffff);
++	*split_offset = offset + len;
++
++	return 0;
++}
++
++static int split_rootfs_data(struct mtd_info *master, struct mtd_info *rpart, const struct mtd_partition *part)
++{
++	struct mtd_partition *dpart;
++	struct mtd_part *slave = NULL;
++	int split_offset = 0;
++	int ret;
++
++	ret = split_squashfs(master, part->offset, &split_offset);
++	if (ret)
++		return ret;
++
++	if (split_offset <= 0)
++		return 0;
++
++	dpart = kmalloc(sizeof(*part)+sizeof(ROOTFS_SPLIT_NAME)+1, GFP_KERNEL);
++	if (dpart == NULL) {
++		printk(KERN_INFO "split_squashfs: no memory for partition \"%s\"\n",
++			ROOTFS_SPLIT_NAME);
++		return -ENOMEM;
++	}
++
++	memcpy(dpart, part, sizeof(*part));
++	dpart->name = (unsigned char *)&dpart[1];
++	strcpy(dpart->name, ROOTFS_SPLIT_NAME);
++
++	dpart->size -= split_offset - dpart->offset;
++	dpart->offset = split_offset;
++
++	if (dpart == NULL)
++		return 1;
++
++	printk(KERN_INFO "mtd: partition \"%s\" created automatically, ofs=%llX, len=%llX \n",
++		ROOTFS_SPLIT_NAME, dpart->offset, dpart->size);
++
++	slave = add_one_partition(master, dpart, 0, split_offset);
++	if (!slave) {
++		kfree(dpart);
++		return -ENOMEM;
++	}
++	rpart->split = &slave->mtd;
++
++	return 0;
++}
++
++static int refresh_rootfs_split(struct mtd_info *mtd)
++{
++	struct mtd_partition tpart;
++	struct mtd_part *part;
++	char *name;
++	//int index = 0;
++	int offset, size;
++	int ret;
++
++	part = PART(mtd);
++
++	/* check for the new squashfs offset first */
++	ret = split_squashfs(part->master, part->offset, &offset);
++	if (ret)
++		return ret;
++
++	if ((offset > 0) && !mtd->split) {
++		printk(KERN_INFO "%s: creating new split partition for \"%s\"\n", __func__, mtd->name);
++		/* if we don't have a rootfs split partition, create a new one */
++		tpart.name = (char *) mtd->name;
++		tpart.size = mtd->size;
++		tpart.offset = part->offset;
++
++		return split_rootfs_data(part->master, &part->mtd, &tpart);
++	} else if ((offset > 0) && mtd->split) {
++		/* update the offsets of the existing partition */
++		size = mtd->size + part->offset - offset;
++
++		part = PART(mtd->split);
++		part->offset = offset;
++		part->mtd.size = size;
++		printk(KERN_INFO "%s: %s partition \"" ROOTFS_SPLIT_NAME "\", offset: 0x%06x (0x%06x)\n",
++			__func__, (!strcmp(part->mtd.name, ROOTFS_SPLIT_NAME) ? "updating" : "creating"),
++			(u32) part->offset, (u32) part->mtd.size);
++		name = kmalloc(sizeof(ROOTFS_SPLIT_NAME) + 1, GFP_KERNEL);
++		strcpy(name, ROOTFS_SPLIT_NAME);
++		part->mtd.name = name;
++	} else if ((offset <= 0) && mtd->split) {
++		printk(KERN_INFO "%s: removing partition \"%s\"\n", __func__, mtd->split->name);
++
++		/* mark existing partition as removed */
++		part = PART(mtd->split);
++		name = kmalloc(sizeof(ROOTFS_SPLIT_NAME) + 1, GFP_KERNEL);
++		strcpy(name, ROOTFS_REMOVED_NAME);
++		part->mtd.name = name;
++		part->offset = 0;
++		part->mtd.size = 0;
++	}
++
++	return 0;
++}
++#endif /* CONFIG_MTD_ROOTFS_SPLIT */
++
+ /*
+  * This function, given a master MTD object and a partition table, creates
+  * and registers slave MTD objects which are bound to the master according to
+@@ -539,7 +693,7 @@
+ {
+ 	struct mtd_part *slave;
+ 	uint64_t cur_offset = 0;
+-	int i;
++	int i, ret;
+ 
+ 	printk(KERN_NOTICE "Creating %d MTD partitions on \"%s\":\n", nbparts, master->name);
+ 
+@@ -547,6 +701,21 @@
+ 		slave = add_one_partition(master, parts + i, i, cur_offset);
+ 		if (!slave)
+ 			return -ENOMEM;
++
++		if (!strcmp(parts[i].name, "rootfs")) {
++#ifdef CONFIG_MTD_ROOTFS_ROOT_DEV
++			if (ROOT_DEV == 0) {
++				printk(KERN_NOTICE "mtd: partition \"rootfs\" "
++					"set to be root filesystem\n");
++				ROOT_DEV = MKDEV(MTD_BLOCK_MAJOR, slave->mtd.index);
++			}
++#endif
++#ifdef CONFIG_MTD_ROOTFS_SPLIT
++			ret = split_rootfs_data(master, &slave->mtd, &parts[i]);
++			/* if (ret == 0)
++				j++; */
++#endif
++		}
+ 		cur_offset = slave->offset + slave->mtd.size;
+ 	}
+ 
+@@ -554,6 +723,32 @@
+ }
+ EXPORT_SYMBOL(add_mtd_partitions);
+ 
++int refresh_mtd_partitions(struct mtd_info *mtd)
++{
++	int ret = 0;
++
++	if (IS_PART(mtd)) {
++		struct mtd_part *part;
++		struct mtd_info *master;
++
++		part = PART(mtd);
++		master = part->master;
++		if (master->refresh_device)
++			ret = master->refresh_device(master);
++	}
++
++	if (!ret && mtd->refresh_device)
++		ret = mtd->refresh_device(mtd);
++
++#ifdef CONFIG_MTD_ROOTFS_SPLIT
++	if (!ret && IS_PART(mtd) && !strcmp(mtd->name, "rootfs"))
++		refresh_rootfs_split(mtd);
++#endif
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(refresh_mtd_partitions);
++
+ static DEFINE_SPINLOCK(part_parser_lock);
+ static LIST_HEAD(part_parsers);
+ 
+diff -Nur linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c
+--- linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c	2013-06-07 15:03:18.000000000 +0800
++++ linux-2.6.36.x/drivers/mtd/ralink/ralink_spi.c	2013-10-15 16:36:55.061623991 +0800
+@@ -59,18 +59,38 @@
+                 offset:         MTDPART_OFS_APPEND
+ #ifdef CONFIG_RT2880_ROOTFS_IN_FLASH
+         }, {
+-                name:           "Kernel",
+-                size:           MTD_KERN_PART_SIZE,
+-                offset:         MTDPART_OFS_APPEND,
++                name:           "linux",
++#ifdef CONFIG_RT3052_FLASH_16M
++                size:           0xF90000,
++#else
++                size:           0x670000,
++#endif
++                offset:         0x170000,
+         }, {
+-                name:           "RootFS",
+-                size:           MTD_ROOTFS_PART_SIZE,
+-                offset:         MTDPART_OFS_APPEND,
+-#ifdef CONFIG_ROOTFS_IN_FLASH_NO_PADDING
++                name:           "rootfs",
++#ifdef CONFIG_RT3052_FLASH_16M
++                size:           0xDE0000,
++#else
++                size:           0x4a0000,
++#endif
++                offset:         0x340000,
++#ifndef EZPACKET
+         }, {
+-                name:           "Kernel_RootFS",
+-                size:           MTD_KERN_PART_SIZE + MTD_ROOTFS_PART_SIZE,
+-                offset:         MTD_BOOT_PART_SIZE + MTD_CONFIG_PART_SIZE + MTD_FACTORY_PART_SIZE,
++                name:           "nvram", /* mtdblock3 */
++                size:           0x10000,
++#ifdef CONFIG_RT3052_FLASH_16M
++                offset:         0xFE0000,
++#else
++                offset:         0x7E0000,
++#endif
++        }, {
++                name:           "nvram_backup", /* mtdblock4 */
++                size:           0x10000,
++#ifdef CONFIG_RT3052_FLASH_16M
++                offset:         0xFF0000,
++#else
++                offset:         0x7F0000,
++#endif
+ #endif
+ #else //CONFIG_RT2880_ROOTFS_IN_RAM
+         }, {
+diff -Nur linux-2.6.36.x/fs/compat.c linux-2.6.36.x/fs/compat.c
+--- linux-2.6.36.x/fs/compat.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/fs/compat.c	2013-10-15 16:37:06.857624306 +0800
+@@ -849,7 +849,7 @@
+ 	char *kernel_dev;
+ 	char *dir_page;
+ 	int retval;
+-
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	retval = copy_mount_string(type, &kernel_type);
+ 	if (retval < 0)
+ 		goto out;
+@@ -880,18 +880,24 @@
+ 		}
+ 	}
+ 
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	retval = do_mount(kernel_dev, dir_page, kernel_type,
+ 			flags, (void*)data_page);
+ 
+  out4:
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	free_page(data_page);
+  out3:
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	kfree(kernel_dev);
+  out2:
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	putname(dir_page);
+  out1:
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	kfree(kernel_type);
+  out:
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	return retval;
+ }
+ 
+diff -Nur linux-2.6.36.x/fs/filesystems.c linux-2.6.36.x/fs/filesystems.c
+--- linux-2.6.36.x/fs/filesystems.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/fs/filesystems.c	2013-10-15 16:37:07.197624316 +0800
+@@ -76,6 +76,7 @@
+ 		return -EBUSY;
+ 	INIT_LIST_HEAD(&fs->fs_supers);
+ 	write_lock(&file_systems_lock);
++    printk("%s(%d) fs name:%s\n", __func__, __LINE__, fs->name);
+ 	p = find_filesystem(fs->name, strlen(fs->name));
+ 	if (*p)
+ 		res = -EBUSY;
+diff -Nur linux-2.6.36.x/fs/namei.c linux-2.6.36.x/fs/namei.c
+--- linux-2.6.36.x/fs/namei.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/fs/namei.c	2013-10-15 16:37:07.321624318 +0800
+@@ -1243,15 +1243,19 @@
+ 	char *s = getname(path);
+ 	int error;
+ 
++    printk("%s(%d) error:%d path:%s s:%s\n", __func__, __LINE__, error, path, s);
+ 	if (IS_ERR(s))
+ 		return PTR_ERR(s);
+ 
++    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	error = do_path_lookup(dfd, s, LOOKUP_PARENT, nd);
++    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	if (error)
+ 		putname(s);
+ 	else
+ 		*name = s;
+ 
++    printk("%s(%d) error:%d path:%s\n", __func__, __LINE__, error, s);
+ 	return error;
+ }
+ 
+@@ -1996,14 +2000,17 @@
+ 	char *tmp;
+ 	struct dentry *dentry;
+ 	struct nameidata nd;
+-
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	if (S_ISDIR(mode))
+ 		return -EPERM;
+ 
++    printk("%s(%d) error:%d filename:%s\n", __func__, __LINE__, error, filename);
+ 	error = user_path_parent(dfd, filename, &nd, &tmp);
++    printk("%s(%d) error:%d filename:%s tmp:%s\n", __func__, __LINE__, error, filename, tmp);
+ 	if (error)
+ 		return error;
+ 
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	dentry = lookup_create(&nd, 0);
+ 	if (IS_ERR(dentry)) {
+ 		error = PTR_ERR(dentry);
+@@ -2012,35 +2019,44 @@
+ 	if (!IS_POSIXACL(nd.path.dentry->d_inode))
+ 		mode &= ~current_umask();
+ 	error = may_mknod(mode);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_dput;
+ 	error = mnt_want_write(nd.path.mnt);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_dput;
+ 	error = security_path_mknod(&nd.path, dentry, mode, dev);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error)
+ 		goto out_drop_write;
+ 	switch (mode & S_IFMT) {
+ 		case 0: case S_IFREG:
+ 			error = vfs_create(nd.path.dentry->d_inode,dentry,mode,&nd);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 		case S_IFCHR: case S_IFBLK:
+ 			error = vfs_mknod(nd.path.dentry->d_inode,dentry,mode,
+ 					new_decode_dev(dev));
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 		case S_IFIFO: case S_IFSOCK:
+ 			error = vfs_mknod(nd.path.dentry->d_inode,dentry,mode,0);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 			break;
+ 	}
+ out_drop_write:
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	mnt_drop_write(nd.path.mnt);
+ out_dput:
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	dput(dentry);
+ out_unlock:
+ 	mutex_unlock(&nd.path.dentry->d_inode->i_mutex);
+ 	path_put(&nd.path);
+ 	putname(tmp);
+ 
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	return error;
+ }
+ 
+diff -Nur linux-2.6.36.x/fs/namespace.c linux-2.6.36.x/fs/namespace.c
+--- linux-2.6.36.x/fs/namespace.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/fs/namespace.c	2013-10-15 16:37:07.321624318 +0800
+@@ -1745,10 +1745,13 @@
+ 		return -EPERM;
+ 
+ 	lock_kernel();
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	mnt = do_kern_mount(type, flags, name, data);
+ 	unlock_kernel();
+-	if (IS_ERR(mnt))
++	if (IS_ERR(mnt)) {
++    printk("%s(%d)\n", __func__, __LINE__);
+ 		return PTR_ERR(mnt);
++    }
+ 
+ 	return do_add_mount(mnt, path, mnt_flags, NULL);
+ }
+@@ -2016,6 +2019,7 @@
+ 
+ 	/* Basic sanity checks */
+ 
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	if (!dir_name || !*dir_name || !memchr(dir_name, 0, PAGE_SIZE))
+ 		return -EINVAL;
+ 
+@@ -2023,12 +2027,15 @@
+ 		((char *)data_page)[PAGE_SIZE - 1] = 0;
+ 
+ 	/* ... and get the mountpoint */
++    printk("%s(%d) dirname:%s\n", __func__, __LINE__, dir_name);
+ 	retval = kern_path(dir_name, LOOKUP_FOLLOW, &path);
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	if (retval)
+ 		return retval;
+ 
+ 	retval = security_sb_mount(dev_name, &path,
+ 				   type_page, flags, data_page);
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	if (retval)
+ 		goto dput_out;
+ 
+@@ -2056,20 +2063,39 @@
+ 		   MS_NOATIME | MS_NODIRATIME | MS_RELATIME| MS_KERNMOUNT |
+ 		   MS_STRICTATIME);
+ 
+-	if (flags & MS_REMOUNT)
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++	if (flags & MS_REMOUNT) {
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 		retval = do_remount(&path, flags & ~MS_REMOUNT, mnt_flags,
+ 				    data_page);
+-	else if (flags & MS_BIND)
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++    }
++	else if (flags & MS_BIND) {
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 		retval = do_loopback(&path, dev_name, flags & MS_REC);
+-	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++    }
++	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE)) {
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 		retval = do_change_type(&path, flags);
+-	else if (flags & MS_MOVE)
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++    }
++	else if (flags & MS_MOVE) {
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 		retval = do_move_mount(&path, dev_name);
+-	else
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++    }
++	else {
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 		retval = do_new_mount(&path, type_page, flags, mnt_flags,
+ 				      dev_name, data_page);
++
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
++    }
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ dput_out:
+ 	path_put(&path);
++    printk("%s(%d) retval:%d\n", __func__, __LINE__, retval);
+ 	return retval;
+ }
+ 
+@@ -2191,7 +2217,7 @@
+ 	char *kernel_dir;
+ 	char *kernel_dev;
+ 	unsigned long data_page;
+-
++    printk("%s(%d) dev_name:%s dir:%s type:%s\n", __func__, __LINE__, dev_name, dir_name, type);
+ 	ret = copy_mount_string(type, &kernel_type);
+ 	if (ret < 0)
+ 		goto out_type;
+@@ -2210,9 +2236,11 @@
+ 	if (ret < 0)
+ 		goto out_data;
+ 
++    printk("%s(%d) dev_name:%s dir:%s type:%s\n", __func__, __LINE__, dev_name, dir_name, type);
+ 	ret = do_mount(kernel_dev, kernel_dir, kernel_type, flags,
+ 		(void *) data_page);
+ 
++    printk("%s(%d) dev_name:%s dir:%s type:%s ret:%d\n", __func__, __LINE__, dev_name, dir_name, type, ret);
+ 	free_page(data_page);
+ out_data:
+ 	kfree(kernel_dev);
+diff -Nur linux-2.6.36.x/fs/partitions/check.c linux-2.6.36.x/fs/partitions/check.c
+--- linux-2.6.36.x/fs/partitions/check.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/fs/partitions/check.c	2013-10-15 16:37:08.953624362 +0800
+@@ -690,6 +690,7 @@
+ 	kfree(state);
+ 	return 0;
+ }
++EXPORT_SYMBOL(rescan_partitions);
+ 
+ unsigned char *read_dev_sector(struct block_device *bdev, sector_t n, Sector *p)
+ {
+diff -Nur linux-2.6.36.x/fs/squashfs/super.c linux-2.6.36.x/fs/squashfs/super.c
+--- linux-2.6.36.x/fs/squashfs/super.c	2012-03-05 15:00:02.000000000 +0800
++++ linux-2.6.36.x/fs/squashfs/super.c	2013-10-15 16:37:09.185624368 +0800
+@@ -231,6 +231,7 @@
+ 	if (fragments == 0)
+ 		goto allocate_lookup_table;
+ 
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	msblk->fragment_cache = squashfs_cache_init("fragment",
+ 		SQUASHFS_CACHED_FRAGMENTS, msblk->block_size);
+ 	if (msblk->fragment_cache == NULL) {
+@@ -303,6 +304,7 @@
+ 
+ 	TRACE("Leaving squashfs_fill_super\n");
+ 	kfree(sblk);
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	return 0;
+ 
+ failed_mount:
+@@ -350,6 +352,7 @@
+ static int squashfs_remount(struct super_block *sb, int *flags, char *data)
+ {
+ 	*flags |= MS_RDONLY;
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	return 0;
+ }
+ 
+@@ -377,6 +380,7 @@
+ 				const char *dev_name, void *data,
+ 				struct vfsmount *mnt)
+ {
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	return get_sb_bdev(fs_type, flags, dev_name, data, squashfs_fill_super,
+ 				mnt);
+ }
+@@ -415,7 +419,7 @@
+ 
+ 	if (err)
+ 		return err;
+-
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	err = register_filesystem(&squashfs_fs_type);
+ 	if (err) {
+ 		destroy_inodecache();
+diff -Nur linux-2.6.36.x/fs/super.c linux-2.6.36.x/fs/super.c
+--- linux-2.6.36.x/fs/super.c	2011-08-30 17:37:04.000000000 +0800
++++ linux-2.6.36.x/fs/super.c	2013-10-15 16:37:09.185624368 +0800
+@@ -947,7 +947,9 @@
+ 			goto out_free_secdata;
+ 	}
+ 
++    printk("%s(%d) name:%s\n", __func__, __LINE__, name);
+ 	error = type->get_sb(type, flags, name, data, mnt);
++    printk("%s(%d) error:%d\n", __func__, __LINE__, error);
+ 	if (error < 0)
+ 		goto out_free_secdata;
+ 	BUG_ON(!mnt->mnt_sb);
+@@ -1111,11 +1113,14 @@
+ 	struct vfsmount *mnt;
+ 	if (!type)
+ 		return ERR_PTR(-ENODEV);
++    printk("%s(%d)\n", __func__, __LINE__);
+ 	mnt = vfs_kern_mount(type, flags, name, data);
++    printk("%s(%d) mnt:%p\n", __func__, __LINE__, mnt);
+ 	if (!IS_ERR(mnt) && (type->fs_flags & FS_HAS_SUBTYPE) &&
+ 	    !mnt->mnt_sb->s_subtype)
+ 		mnt = fs_set_subtype(mnt, fstype);
+ 	put_filesystem(type);
++    printk("%s(%d) mnt:%p\n", __func__, __LINE__, mnt);
+ 	return mnt;
+ }
+ EXPORT_SYMBOL_GPL(do_kern_mount);
+diff -Nur linux-2.6.36.x/include/linux/magic.h linux-2.6.36.x/include/linux/magic.h
+--- linux-2.6.36.x/include/linux/magic.h	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/include/linux/magic.h	2013-10-15 16:37:10.377624400 +0800
+@@ -16,6 +16,7 @@
+ #define TMPFS_MAGIC		0x01021994
+ #define HUGETLBFS_MAGIC 	0x958458f6	/* some random number */
+ #define SQUASHFS_MAGIC		0x73717368
++//#define SQUASHFS_MAGIC		0x37895233
+ #define EFS_SUPER_MAGIC		0x414A53
+ #define EXT2_SUPER_MAGIC	0xEF53
+ #define EXT3_SUPER_MAGIC	0xEF53
+diff -Nur linux-2.6.36.x/include/linux/mtd/mtd.h linux-2.6.36.x/include/linux/mtd/mtd.h
+--- linux-2.6.36.x/include/linux/mtd/mtd.h	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/include/linux/mtd/mtd.h	2013-10-15 16:37:10.433624401 +0800
+@@ -110,6 +110,7 @@
+ 	uint8_t		*oobbuf;
+ };
+ 
++struct mtd_info;
+ struct mtd_info {
+ 	u_char type;
+ 	uint32_t flags;
+@@ -251,6 +252,9 @@
+ 	struct device dev;
+ 	int usecount;
+ 
++	int (*refresh_device)(struct mtd_info *mtd);
++	struct mtd_info *split;
++
+ 	/* If the driver is something smart, like UBI, it may need to maintain
+ 	 * its own reference counting. The below functions are only for driver.
+ 	 * The driver may register its callbacks. These callbacks are not
+diff -Nur linux-2.6.36.x/include/linux/mtd/partitions.h linux-2.6.36.x/include/linux/mtd/partitions.h
+--- linux-2.6.36.x/include/linux/mtd/partitions.h	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/include/linux/mtd/partitions.h	2013-10-15 16:37:10.437624401 +0800
+@@ -34,12 +34,14 @@
+  * erasesize aligned (e.g. use MTDPART_OFS_NEXTBLK).
+  */
+ 
++struct mtd_partition;
+ struct mtd_partition {
+ 	char *name;			/* identifier string */
+ 	uint64_t size;			/* partition size */
+ 	uint64_t offset;		/* offset within the master MTD space */
+ 	uint32_t mask_flags;		/* master MTD flags to mask out for this partition */
+ 	struct nand_ecclayout *ecclayout;	/* out of band layout for this partition (NAND only)*/
++	int (*refresh_partition)(struct mtd_info *);
+ };
+ 
+ #define MTDPART_OFS_NXTBLK	(-2)
+@@ -51,6 +53,7 @@
+ 
+ int add_mtd_partitions(struct mtd_info *, const struct mtd_partition *, int);
+ int del_mtd_partitions(struct mtd_info *);
++int refresh_mtd_partitions(struct mtd_info *);
+ 
+ /*
+  * Functions dealing with the various ways of partitioning the space
+diff -Nur linux-2.6.36.x/include/mtd/mtd-abi.h linux-2.6.36.x/include/mtd/mtd-abi.h
+--- linux-2.6.36.x/include/mtd/mtd-abi.h	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/include/mtd/mtd-abi.h	2013-10-15 16:37:12.953624469 +0800
+@@ -126,6 +126,7 @@
+ #define MEMWRITEOOB64		_IOWR('M', 21, struct mtd_oob_buf64)
+ #define MEMREADOOB64		_IOWR('M', 22, struct mtd_oob_buf64)
+ #define MEMISLOCKED		_IOR('M', 23, struct erase_info_user)
++#define MTDREFRESH		_IO('M', 23)
+ 
+ /*
+  * Obsolete legacy interface. Keep it in order not to break userspace
+diff -Nur linux-2.6.36.x/init/do_mounts.c linux-2.6.36.x/init/do_mounts.c
+--- linux-2.6.36.x/init/do_mounts.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/init/do_mounts.c	2013-10-15 16:37:13.173624475 +0800
+@@ -173,6 +173,7 @@
+ static char * __initdata root_fs_names;
+ static int __init fs_names_setup(char *str)
+ {
++    printk("%s(%d) str:%s\n", __func__, __LINE__, str);
+ 	root_fs_names = str;
+ 	return 1;
+ }
+@@ -191,7 +192,7 @@
+ static void __init get_fs_names(char *page)
+ {
+ 	char *s = page;
+-
++    printk("%s(%d) root_fs_names:%s\n", __func__, __LINE__, root_fs_names);
+ 	if (root_fs_names) {
+ 		strcpy(page, root_fs_names);
+ 		while (*s++) {
+@@ -205,6 +206,7 @@
+ 		page[len] = '\0';
+ 		for (p = page-1; p; p = next) {
+ 			next = strchr(++p, '\n');
++    printk("%s(%d) next:%s\n", __func__, __LINE__, next);
+ 			if (*p++ != '\t')
+ 				continue;
+ 			while ((*s++ = *p++) != '\n')
+@@ -217,10 +219,13 @@
+ 
+ static int __init do_mount_root(char *name, char *fs, int flags, void *data)
+ {
++    printk("%s(%d) name:%s fs:%s\n", __func__, __LINE__, name, fs);
+ 	int err = sys_mount(name, "/root", fs, flags, data);
++    printk("%s(%d) name:%s fs:%s err:%d\n", __func__, __LINE__, name, fs, err);
+ 	if (err)
+ 		return err;
+ 
++    printk("%s(%d) name:%s fs:%s\n", __func__, __LINE__, name, fs);
+ 	sys_chdir("/root");
+ 	ROOT_DEV = current->fs->pwd.mnt->mnt_sb->s_dev;
+ 	printk("VFS: Mounted root (%s filesystem)%s on device %u:%u.\n",
+@@ -241,7 +246,9 @@
+ 	const char *b = name;
+ #endif
+ 
++    printk("%s(%d) name:%s fsname:%s\n", __func__, __LINE__, name, fs_names);
+ 	get_fs_names(fs_names);
++    printk("%s(%d) name:%s fsname:%s\n", __func__, __LINE__, name, fs_names);
+ retry:
+ 	for (p = fs_names; *p; p += strlen(p)+1) {
+ 		int err = do_mount_root(name, p, flags, root_mount_data);
+@@ -333,6 +340,7 @@
+ 
+ void __init mount_root(void)
+ {
++    int res;
+ #ifdef CONFIG_ROOT_NFS
+ 	if (MAJOR(ROOT_DEV) == UNNAMED_MAJOR) {
+ 		if (mount_nfs_root())
+@@ -355,7 +363,8 @@
+ 	}
+ #endif
+ #ifdef CONFIG_BLOCK
+-	create_dev("/dev/root", ROOT_DEV);
++	res = create_dev("/dev/root", ROOT_DEV);
++    printk("%s(%d) res:%d\n", __func__, __LINE__, res);
+ 	mount_block_root("/dev/root", root_mountflags);
+ #endif
+ }
+diff -Nur linux-2.6.36.x/init/do_mounts.h linux-2.6.36.x/init/do_mounts.h
+--- linux-2.6.36.x/init/do_mounts.h	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/init/do_mounts.h	2013-10-15 16:37:13.173624475 +0800
+@@ -15,8 +15,13 @@
+ 
+ static inline int create_dev(char *name, dev_t dev)
+ {
+-	sys_unlink(name);
+-	return sys_mknod(name, S_IFBLK|0600, new_encode_dev(dev));
++    int err;
++    printk("%s(%d) name:%s\n", __func__, __LINE__, name);
++	err = sys_unlink(name);
++    printk("%s(%d) name:%s err:%d\n", __func__, __LINE__, name, err);
++    err = sys_mknod(name, S_IFBLK|0600, new_encode_dev(dev));
++    printk("%s(%d) name:%s err:%d\n", __func__, __LINE__, name, err);
++	return err;
+ }
+ 
+ #if BITS_PER_LONG == 32
+diff -Nur linux-2.6.36.x/init/main.c linux-2.6.36.x/init/main.c
+--- linux-2.6.36.x/init/main.c	2010-11-04 17:28:51.000000000 +0800
++++ linux-2.6.36.x/init/main.c	2013-10-15 16:37:13.177624475 +0800
+@@ -844,6 +844,16 @@
+ 	 * trying to recover a really broken machine.
+ 	 */
+ 	if (execute_command) {
++        char vbuf[100];
++        int vfd = sys_open(execute_command, O_RDONLY, 0);
++        int len = sizeof(vbuf) - 1;
++        len = sys_read(vfd, (char *)vbuf, len);
++        if((len > 0) && (len < 100)){
++            vbuf[len] = 0;
++        }
++        vbuf[99] = 0;
++        printk("len:%d data:%s\n", len, vbuf);
++        sys_close(vfd);
+ 		run_init_process(execute_command);
+ 		printk(KERN_WARNING "Failed to execute %s.  Attempting "
+ 					"defaults...\n", execute_command);
+diff -Nur linux-2.6.36.x/Makefile linux-2.6.36.x/Makefile
+--- linux-2.6.36.x/Makefile	2012-04-20 22:11:06.000000000 +0800
++++ linux-2.6.36.x/Makefile	2013-10-15 16:36:44.193623700 +0800
+@@ -486,7 +486,7 @@
+ drivers-y	:= drivers/ sound/ firmware/
+ net-y		:= net/
+ libs-y		:= lib/
+-core-y		:= usr/
++# core-y		:= usr/
+ endif # KBUILD_EXTMOD
+ 
+ ifeq ($(dot-config),1)

@@ -1,0 +1,105 @@
+--- linux-2.6.26/drivers/mtd/chips/cfi_cmdset_0002.c	2009-06-16 10:09:00.526629509 +0800
++++ linux-2.6.26/drivers/mtd/chips/cfi_cmdset_0002.c	2009-06-16 10:56:20.925956830 +0800
+@@ -40,6 +40,7 @@
+ #include <linux/mtd/mtd.h>
+ #include <linux/mtd/cfi.h>
+ #include <linux/mtd/xip.h>
++#include <linux/semaphore.h>
+ 
+ #define AMD_BOOTLOC_BUG
+ #define FORCE_WORD_WRITE 0
+@@ -55,6 +56,9 @@
+ #define SST49LF008A		0x005a
+ #define AT49BV6416		0x00d6
+ 
++/* EZP : add semeaphore variable to avoid read flash when erasing flash 
++ * XXX: replace a macro to auto switch single or multi-processor platform */
++struct semaphore ezp_sem;
+ static int cfi_amdstd_read (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
+ static int cfi_amdstd_write_words(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
+ static int cfi_amdstd_write_buffers(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
+@@ -350,8 +354,11 @@
+ 	mtd->flags   = MTD_CAP_NORFLASH;
+ 	mtd->name    = map->name;
+ 	mtd->writesize = 1;
+-
+-	if (cfi->cfi_mode==CFI_MODE_CFI){
++    /* EZP: initital semaphore
++     * only fot single processor
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++    init_MUTEX(&ezp_sem);
++    if (cfi->cfi_mode==CFI_MODE_CFI){
+ 		unsigned char bootloc;
+ 		/*
+ 		 * It's a real CFI chip, not one for which the probe
+@@ -937,6 +940,11 @@
+ 	int chipnum;
+ 	int ret = 0;
+ 
++    /* EZP: down semaphore 
++     * only for single processor
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++	down(&ezp_sem);
++
+ 	/* ofs: offset within the first chip that the first read should start */
+ 
+ 	chipnum = (from >> cfi->chipshift);
+@@ -967,6 +975,10 @@
+ 		ofs = 0;
+ 		chipnum++;
+ 	}
++    /* EZP: up semaphore 
++     * only for single processor 
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++	up(&ezp_sem);
+ 	return ret;
+ }
+ 
+@@ -1082,9 +1094,12 @@
+ 	int ret = 0;
+ 	map_word oldd;
+ 	int retry_cnt = 0;
+-
+ 	adr += chip->start;
+ 
++    /* EZP: down semaphore 
++     * only for single processor 
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++    down(&ezp_sem);
+ 	spin_lock(chip->mutex);
+ 	ret = get_chip(map, chip, adr, FL_WRITING);
+ 	if (ret) {
+@@ -1168,8 +1183,11 @@
+ 	chip->state = FL_READY;
+ 	put_chip(map, chip, adr);
+ 	spin_unlock(chip->mutex);
+-
+-	return ret;
++    /* EZP: up semaphore 
++     * only for single processor 
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++    up(&ezp_sem);
++    return ret;
+ }
+ 
+ 
+@@ -1620,6 +1638,10 @@
+ 
+ 	adr += chip->start;
+ 
++    /* EZP: down semaphore 
++     * only for single processor 
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++    down(&ezp_sem);
+ 	spin_lock(chip->mutex);
+ 	ret = get_chip(map, chip, adr, FL_ERASING);
+ 	if (ret) {
+@@ -1703,6 +1725,10 @@
+ 	chip->state = FL_READY;
+ 	put_chip(map, chip, adr);
+ 	spin_unlock(chip->mutex);
++    /* EZP: up semaphore 
++     * only for single processor 
++     * XXX: replace a macro to auto switch single or multi-processor platform */
++    up(&ezp_sem);
+ 	return ret;

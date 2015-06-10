@@ -1,0 +1,31 @@
+--- lighttpd-1.4.30/src/connections.c	2014-08-25 16:28:39.905841931 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-08-25 16:32:24.413850304 +0800
+@@ -1202,9 +1202,9 @@
+ 		}
+ 		break;
+ 	case CON_STATE_READ_POST:
+-        /* For cgi chunked_upload, to open temporary file here */
++        /* For cgi chunked_upload and upgrade.cgi, to open temporary file here */
+         tmp_uri = strstr(con->request.uri->ptr, ".cgi");
+-        if (tmp_uri != NULL && (strstr(con->request.uri->ptr, "func=chunked_upload") != NULL)) {
++        if (tmp_uri != NULL && (strstr(con->request.uri->ptr, "func=chunked_upload") || strstr(con->request.uri->ptr, "upgrade.cgi"))) {
+ 
+             if (con->is_first_packet) {
+                 tmp_uri = strstr(con->request.uri->ptr, "offset=");
+@@ -1245,6 +1245,16 @@
+                 free(head_upload_id);
+                 free(head_dest_tmp_file);
+             }
++            else { /* for upgrade.cgi */
++                strcpy(cgi_tmp, "/tmp/ezp_firmware_XXXXXX");
++                if (con->is_first_packet) {
++                    chunked_upload_file = fopen(cgi_tmp, "a");
++                    con->is_first_packet = 0; 
++                } 
++                else {
++                    chunked_upload_file = fopen(cgi_tmp, "a");
++                }
++            }
+         }
+         off_t chunk_dat_len = 0;
+         chunk *dst_c = NULL;

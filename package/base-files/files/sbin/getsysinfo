@@ -1,0 +1,64 @@
+#!/bin/sh
+action=$1
+device_name=$2
+
+pptpc_num() {
+    ifconfig | grep -c $(nvram show pptpd_rule 0 remoteip | awk -F. '{printf "%d.%d.%d",$1,$2,$3}')
+}
+
+ipsec_tunnel_num() {
+    ipsec auto status | grep -c  "ISAKMP SA established"
+}
+
+wlan_clients() {
+    iwpriv ra0 get_mac_table | awk /[0-9a-fA-F]{12}/ | grep -c .
+}
+
+lan_clients() {
+    cat /proc/net/arp | grep -c br0
+}
+
+
+license_key() {
+    v1=$(nvram show wan_hwaddr_rule_default 0 hwaddr)
+    v2=$(nvram show lan_hwaddr_rule_default 0 hwaddr)
+    if [ -f /proc/ezp_machine_id ];then
+        v3=$(cat /proc/ezp_machine_id)
+    else {
+        # EZP XXX: 
+        ifconfig ra0 up
+        v3=$(cat /proc/ezp_machine_id)
+        ifconfig ra0 down
+    } fi
+
+    v4=$(nvram get brand)
+    v5=$(nvram get model)
+
+    echo -n "$v1$v2$v3$v4$v5" | md5sum | cut -d' ' -f1 | tr a-z A-Z
+}
+
+disk_info() {
+    df | grep "$device_name"
+}
+
+swap_onoff() {
+    free | awk '/Swap/{print $2}'
+}
+
+site_survey() {
+    iwpriv ra0 set SiteSurvey=1
+    sleep 3
+    # Filter empty SSID
+    iwpriv ra0 get_site_survey | sed '1,2d' | sed '/^$/d' | sed '/\$\$/d'
+}
+
+case $action in
+site_survey)       site_survey;;
+wlan_clients)      wlan_clients;;
+lan_clients)       lan_clients;;
+disk_info)         disk_info;;
+swap_onoff)        swap_onoff;;
+pptpc_num)         pptpc_num;;
+ipsec_tunnel_num)  ipsec_tunnel_num;;
+license_key)       license_key;;
+esac

@@ -1,0 +1,52 @@
+--- ppp-2.4.3/pppd/ipcp.c	2013-06-20 14:10:10.689750006 +0800
++++ ppp-2.4.3/pppd/ipcp.c	2013-06-20 14:09:38.787769573 +0800
+@@ -68,7 +68,7 @@
+ ipcp_options ipcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
+ ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
+ ipcp_options ipcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
+-
++int gateway_invalid = 1;        /* ppp get valid gateway or not  */
+ u_int32_t netmask = 0;		/* IP netmask to set on interface */
+ 
+ bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
+@@ -1701,7 +1701,7 @@
+     ipcp_options *ho = &ipcp_hisoptions[f->unit];
+     ipcp_options *go = &ipcp_gotoptions[f->unit];
+     ipcp_options *wo = &ipcp_wantoptions[f->unit];
+-
++    gateway_invalid = 1;
+     IPCPDEBUG(("ipcp: up"));
+ 
+     /*
+@@ -1723,6 +1723,7 @@
+     }
+     if (ho->hisaddr == 0) {
+ 	ho->hisaddr = htonl(0x0a404040 + ifunit);
++        gateway_invalid = 0;
+ 	warn("Could not determine remote IP address: defaulting to %I",
+ 	     ho->hisaddr);
+     }
+@@ -2008,7 +2009,7 @@
+     char *script;
+ {
+     char strspeed[32], strlocal[32], strremote[32];
+-    char *argv[8];
++    char *argv[9];
+ 
+     slprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
+     slprintf(strlocal, sizeof(strlocal), "%I", ipcp_gotoptions[0].ouraddr);
+@@ -2021,7 +2022,13 @@
+     argv[4] = strlocal;
+     argv[5] = strremote;
+     argv[6] = ipparam;
+-    argv[7] = NULL;
++    if(gateway_invalid==1) {
++        argv[7] = "1";
++    } else if(gateway_invalid==0) {
++        argv[7] = "0";
++    } else
++        argv[7] = NULL;
++    argv[8] = NULL;
+     ipcp_script_pid = run_program(script, argv, 0, ipcp_script_done, NULL);
+ }
+ 

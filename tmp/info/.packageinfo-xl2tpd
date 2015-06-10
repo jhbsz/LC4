@@ -1,0 +1,17 @@
+Source-Makefile: package/xl2tpd/Makefile
+Package: xl2tpd
+Submenu: VPN
+Version: 1.2.4-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: L2TP (Layer 2 Tunneling Protocol) daemon
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	L2TP (Layer 2 Tunneling Protocol) daemon
+
+http://www.xelerance.com/software/xl2tpd
+@@
+

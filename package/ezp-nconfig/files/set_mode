@@ -1,0 +1,15 @@
+#!/bin/sh
+
+local mode=$1
+[ -z "$mode" ] && exit
+case "$mode" in
+    auth)
+        nvram fset switch_type=esw
+        nvram fset auth_mode=0
+    ;;
+    upgrade)
+        nvram fset switch_type=upgrade
+        nvram fset auth_mode=1
+    ;;
+esac
+nvram commit

@@ -1,0 +1,24 @@
+[global]
+	netbios name = |NAME| 
+	workgroup = |WORKGROUP|
+	server string = |DESCRIPTION|
+	syslog = 10
+	#encrypt passwords = true
+	passdb backend = smbpasswd
+	obey pam restrictions = yes
+	socket options = TCP_NODELAY
+	preferred master = yes
+	os level = 20
+	security = |SECURITY|
+	invalid users = root
+	smb passwd file = /var/samba/smbpasswd
+    unix charset    = utf8
+    display charset = utf8
+    valid chars = 0xb9
+    use sendfile = yes
+    load printers = no
+    printing = bsd
+    printcap name = /dev/null
+    disable spoolss = yes
+    hide dot files = yes
+    veto files = /.??*/

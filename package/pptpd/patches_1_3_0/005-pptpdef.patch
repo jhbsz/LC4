@@ -1,0 +1,11 @@
+--- pptp_old/pptpdefs.h	2005-08-02 17:51:18.000000000 +0800
++++ pptp_new/pptpdefs.h	2009-07-20 10:44:44.594156809 +0800
+@@ -312,7 +309,7 @@
+ 	u_int32_t seq;		/* sequence number.  Present if S==1 */
+ 	u_int32_t ack;		/* seq number of highest packet recieved by */
+ 	/* sender in this session */
+-};
++} __attribute__((packed));
+ 
+ /* For our call ID pairs */
+ #define PNS_VALUE 0

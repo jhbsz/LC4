@@ -1,0 +1,15 @@
+#!/bin/sh -x
+delay_interval=$1
+idx=2
+while [ true ]; do
+    eval "action$idx=\$$idx"
+    eval "param=\$$idx"
+    [ -z "$param" ] && break
+    idx=$(($idx + 1))
+done
+[ -n "$DEBUG" ] && echo "Wait ${delay_interval} seconds"
+sleep ${delay_interval}
+[ -n "$DEBUG" ] && echo "Action start $action2 $action3 $action4 $action5 $action6"
+$action2 $action3 $action4 $action5 $action6
+[ -n "$DEBUG" ] && echo "Action complete $action2 $action3 $action4 $action5 $action6"
+

@@ -1,0 +1,15 @@
+--- barry-0.16/tools/Makefile.in	2009-10-01 12:16:17.000000000 +0800
++++ barry-0.16/tools/Makefile.in.new	2010-11-30 10:09:39.164145212 +0800
+@@ -37,10 +37,9 @@
+ build_triplet = @build@
+ host_triplet = @host@
+ bin_PROGRAMS = btool$(EXEEXT) bidentify$(EXEEXT) bjavaloader$(EXEEXT) \
+-	bjvmdebug$(EXEEXT) bdptest$(EXEEXT) bjdwp$(EXEEXT) \
++	bjvmdebug$(EXEEXT) bjdwp$(EXEEXT) \
+ 	upldif$(EXEEXT) btranslate$(EXEEXT) bktrans$(EXEEXT) \
+-	brecsum$(EXEEXT) brimtrans$(EXEEXT) $(am__EXEEXT_1) \
+-	$(am__EXEEXT_2)
++	brecsum$(EXEEXT) brimtrans$(EXEEXT) $(am__EXEEXT_1)
+ @WITH_BOOST_TRUE@am__append_1 = bs11nread
+ @WITH_FUSE_TRUE@am__append_2 = bfuse
+ sbin_PROGRAMS = bcharge$(EXEEXT) breset$(EXEEXT) pppob$(EXEEXT)

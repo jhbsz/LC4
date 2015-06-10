@@ -1,0 +1,39 @@
+--- openswan-2.6.28/Makefile.inc	2012-03-06 17:13:17.576503358 +0800
++++ openswan-2.6.28/Makefile.inc	2012-03-20 09:38:08.416534534 +0800
+@@ -548,3 +548,4 @@
+ # mode: makefile ;;;
+ # End Variables: ;;;
+ #
++WAN_NUM=${WAN_NUM}
+--- openswan-2.6.28/Makefile	2010-07-30 02:45:59.000000000 +0800
++++ openswan-2.6.28/Makefile	2012-03-20 09:53:54.036549264 +0800
+@@ -433,7 +433,7 @@
+ 	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6 kernel in what looks like a 2.4 tree"; \
+         fi ; \
+         ${MAKE}  ${MOD26BUILDDIR}/Makefile
+-	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
++	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} WAN_NUM=${WAN_NUM} modules
+ 	@echo 
+ 	@echo '========================================================='
+ 	@echo 
+--- openswan-2.6.28/linux/include/openswan/ipsec_param.h	2010-07-30 02:45:59.000000000 +0800
++++ openswan-2.6.28/linux/include/openswan/ipsec_param.h	2012-03-20 13:10:35.257159734 +0800
+@@ -44,7 +44,7 @@
+ #endif
+ 
+ /* default number of ipsecX devices to create */
+-#define IPSEC_NUM_IF	2
++#define IPSEC_NUM_IF  WAN_NUM
+
+ /* The field width must be < IF_NAM_SIZ - strlen("ipsec") - 1. */
+ /* With "ipsec" being 5 characters, that means 10 is the max field width */
+--- openswan-2.6.28/packaging/makefiles/module26.make	2012-03-20 13:15:25.317785189 +0800
++++ openswan-2.6.28/packaging/makefiles/module26.make	2012-03-20 13:17:39.636534377 +0800
+@@ -28,6 +28,7 @@
+ 
+ EXTRA_CFLAGS += -I${KLIPS_TOP}/include
+ EXTRA_CFLAGS += -I${KLIPSSRC}/.
++EXTRA_CFLAGS += -DWAN_NUM=${WAN_NUM}
+ 
+ # build version.c using version number from Makefile.ver
+ ${BUILDDIR}/version.c:	${KLIPSSRC}/version.in.c ${OPENSWANSRCDIR}/Makefile.ver

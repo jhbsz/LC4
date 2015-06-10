@@ -1,0 +1,13 @@
+--- linux-2.6.26/drivers/usb/storage/scsiglue.c	2013-04-24 10:34:40.467986734 +0800
++++ linux-2.6.26/drivers/usb/storage/scsiglue.c	2013-04-24 11:03:57.167771147 +0800
+@@ -491,8 +491,8 @@
+ 	/* lots of sg segments can be handled */
+ 	.sg_tablesize =			SG_ALL,
+ 
+-	/* limit the total size of a transfer to 120 KB */
+-	.max_sectors =                  240,
++	/* limit the total size of a transfer to 56 KB */
++	.max_sectors =                  112,
+ 
+ 	/* merge commands... this seems to help performance, but
+ 	 * periodically someone should test to see which setting is more

@@ -1,0 +1,11 @@
+--- quilt-0.47/configure	2008-08-21 20:18:42.000000000 +0800
++++ quilt-0.47/configure	2014-06-11 14:46:27.162172630 +0800
+@@ -5897,6 +5897,8 @@
+ if $PATCH --version 2> /dev/null | grep GNU >/dev/null; then
+   set -- `$PATCH --version 2> /dev/null`
+   patch_version=$2
++  # For new version of patch, its version number is offset 1 position
++  [ "$patch_version" = "patch" ] && patch_version=$3
+   { echo "$as_me:$LINENO: result: $patch_version" >&5
+ echo "${ECHO_T}$patch_version" >&6; }
+   saved_IFS=$IFS; IFS='.'

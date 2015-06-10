@@ -1,0 +1,16 @@
+Source-Makefile: package/ifenslave/Makefile
+Package: ifenslave
+Version: <LINUX_VERSION>-1
+Depends: @LINUX_2_6 +kmod-bonding
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: A utility to manipulate kernel ethernet bonding devices
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  ifenslave is needed to add/remove interfaces to/from ethernet bond devices.
+
+http://www.kernel.org
+@@
+

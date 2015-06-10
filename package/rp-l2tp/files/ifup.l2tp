@@ -1,0 +1,118 @@
+#!/bin/sh -x
+# ifup.l2tp $iface $type $num $ifname
+. /etc/network.sh
+
+static_link_up()
+{
+    localipaddr="$(nvram show wan_pptp_l2tp_rule $3 ipaddr)"
+    localgateway="$(nvram show wan_pptp_l2tp_rule $3 gateway)"
+    localnetmask="$(nvram show wan_pptp_l2tp_rule $3 netmask)"
+    PREFIX="$(ipcalc $localipaddr $localnetmask | grep 'PREFIX' | sed 's/PREFIX=//g')"
+    $DEBUG ip addr flush dev $4
+    $DEBUG ip addr add $localipaddr/$PREFIX broadcast + dev $4
+    $DEBUG ip link set dev $4 up
+    iface_up "$1" "$localipaddr" "$localnetmask" "$localgateway" "$localgateway"
+}
+
+dhcp_link_up()
+{
+    pidfile="/var/run/$1.pid"
+    ip link set dev $4 up
+    [ ! -f "${pidfile}" ] && {
+        udhcpc -i $4 -b -p ${pidfile} &
+    }
+}
+
+####################### VPN Client Start ####################################
+# ifup.l2tp $iface $type $num $ifname
+#############################################################################
+localiptype="$(nvram show wan_pptp_l2tp_rule $3 iptype)"
+ifname_orig="$(nvram get ${1}_ifname)"
+nvram set ${1}_proto=$localiptype
+# set to static/dhcp and get link-up ip address
+[ "${localiptype}" = "static" ] && {
+    nvram set ${1}_ifname=$4
+    static_link_up $1 $2 $3 $4
+}
+[ "${localiptype}" = "dhcp" ] && {
+    nvram set ${1}_ifname=$4
+    dhcp_link_up $1 $2 $3 $4
+}
+sleeptime=0
+while [ -z "$(nvram get ${1}_ipaddr)" ];
+do
+    echo "$(sleep 1)"
+    sleeptime=$(($sleeptime + 1))
+    # if wait 10 seconds without ipaddress, leave
+    [ "$sleeptime" -gt "10" ] && {
+        nvram set ${1}_proto=l2tp
+        nvram set ${1}_ifname=${ifname_orig}
+        exit 1
+    }
+done
+# wait 5 secs to be sure route table updated
+sleep 5
+# Reserve ip/mask/gateway information
+nvram replace attr wan_pptp_l2tp_rule $3 ipaddr $(nvram get wan0_ipaddr)
+nvram replace attr wan_pptp_l2tp_rule $3 netmask $(nvram get wan0_mask)
+nvram replace attr wan_pptp_l2tp_rule $3 gateway $(nvram get wan0_gateway)
+# delete intermediate routing rule
+iface_del_route \
+    "$3" "$(nvram get ${1}_ipaddr)" "$(nvram get ${1}_netmask)" \
+    "$(nvram get ${1}_gateway)" "$(nvram get ${1}_ifname)" "$2"
+nvram replace attr wan_pptp_l2tp_rule $3 ipaddr "$(nvram get ${1}_ipaddr)"
+nvram set ${1}_proto=l2tp
+nvram set ${1}_ifname=${ifname_orig}
+wan_num="$(nvram get wan_num)"
+unitid="$(($wan_num + $3))"
+username="$(nvram show wan_pptp_l2tp_rule $3 username)"
+password="$(nvram show wan_pptp_l2tp_rule $3 passwd)"
+host="$(nvram show wan_pptp_l2tp_rule $3 serverip)"
+conn_name=conn1
+
+#construct /etc/ppp/chap-secrets
+passline="${username} L2TP ${password} *"
+if [ -f "/tmp/chap-secrets" ]; then
+    retline=$(cat /etc/ppp/chap-secrets | grep "$passline")
+    [ -z "${retline}" ] && {
+        echo $passline >> /etc/ppp/chap-secrets
+        echo $passline >> /etc/ppp/pap-secrets
+    }
+else
+    cat /etc/ppp/chap-secrets.template >> /tmp/chap-secrets
+    echo "$passline" >> /tmp/chap-secrets
+    cp /tmp/chap-secrets /tmp/pap-secrets
+fi
+if [ "$(nvram show wan_pptp_l2tp_rule $3 pppiptype)" = "custom" -a \
+     -n "$(nvram show wan_pptp_l2tp_rule $3 custom_ipaddr)" ]; then
+    LOCAL_IPADDR_OPT="$(nvram show wan_pptp_l2tp_rule $3 custom_ipaddr):"
+else
+    LOCAL_IPADDR_OPT="ipcp-accept-local"
+fi
+
+if [ "$(nvram show wan_pptp_l2tp_rule $3 nailup)" = "1" -o \
+     -z "$(nvram show wan_pptp_l2tp_rule $3 timeout)" ]; then
+    L2TP_PERSIST_DEMAND=""
+else
+    L2TP_PERSIST_DEMAND="demand idle $(nvram show wan_pptp_l2tp_rule $3 timeout)"
+fi
+
+#construct /etc/ppp/peers/connextion-name
+cat /etc/l2tp.conf.template | sed "s/L2TP_HOST/${host}/g" | \
+    sed "s/L2TP_USERNAME/${username}/g" | \
+    sed "s/L2TP_PASSWORD/${password}/g" | \
+    sed "s/L2TP_PERSIST_DEMAND/${L2TP_PERSIST_DEMAND}/g" | sed "s/IFACE/$1/g" |\
+    sed "s/L2TP_UNITID/$unitid/g" | sed "s/L2TP_LOCAL_IPADDR/$LOCAL_IPADDR_OPT/g" > \
+    /etc/l2tp.conf
+
+cat /etc/options.l2tp.template | sed "s/L2TP_HOST/${host}/g" | \
+    sed "s/L2TP_USERNAME/${username}/g" | \
+    sed "s/L2TP_PASSWORD/${password}/g" | \
+    sed "s/L2TP_PERSIST_DEMAND/${L2TP_PERSIST_DEMAND}/g" | sed "s/IFACE/$1/g" |\
+    sed "s/L2TP_UNITID/$unitid/g" | sed "s/L2TP_LOCAL_IPADDR/$LOCAL_IPADDR_OPT/g" > \
+    /etc/options.l2tp
+
+l2tpd
+sleep 2
+l2tp-control "start-session ${host}"
+

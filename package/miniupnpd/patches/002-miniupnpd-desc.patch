@@ -1,0 +1,58 @@
+diff -Nur miniupnpd-1.0-RC13/upnpdescgen.c miniupnpd-1.0-RC13.new/upnpdescgen.c
+--- miniupnpd-1.0-RC13/upnpdescgen.c	2007-03-06 17:27:52.000000000 +0800
++++ miniupnpd-1.0-RC13.new/upnpdescgen.c	2008-01-21 16:09:25.000000000 +0800
+@@ -14,6 +14,8 @@
+ #include "upnpglobalvars.h"
+ #include "upnpdescstrings.h"
+ 
++#include <bcmnvram.h>
++
+ static const char * const upnptypes[] =
+ {
+ 	"string",
+@@ -68,6 +70,8 @@
+ static const char root_device[] = 
+ 	"root xmlns=\"urn:schemas-upnp-org:device-1-0\"";
+ 
++#define EZP_NVRAM_BRAND "CK_Rocks"
++#define EZP_NVRAM_MODEL "CK_Awesome"
+ /* root Description of the UPnP Device 
+  * fixed to match UPnP_IGD_InternetGatewayDevice 1.0.pdf */
+ static const struct XMLElt rootDesc[] =
+@@ -79,14 +83,14 @@
+ 	{"/major", "1"},
+ 	{"/minor", "0"},
+ 	{"/deviceType", "urn:schemas-upnp-org:device:InternetGatewayDevice:1"},
+-	{"/friendlyName", ROOTDEV_FRIENDLYNAME},	/* required */
+-	{"/manufacturer", ROOTDEV_MANUFACTURER},		/* required */
++	{"/friendlyName", EZP_NVRAM_BRAND /* ROOTDEV_FRIENDLYNAME */},	/* required */
++	{"/manufacturer", EZP_NVRAM_BRAND /* ROOTDEV_MANUFACTURER */},		/* required */
+ /* 8 */
+-	{"/manufacturerURL", ROOTDEV_MANUFACTURERURL},	/* optional */
+-	{"/modelDescription", ROOTDEV_MODELDESCRIPTION}, /* recommended */
+-	{"/modelName", ROOTDEV_MODELNAME},	/* required */
++	{"/manufacturerURL", "" /* ROOTDEV_MANUFACTURERURL */},	/* optional */
++	{"/modelDescription", EZP_NVRAM_MODEL /* ROOTDEV_MODELDESCRIPTION */}, /* recommended */
++	{"/modelName", EZP_NVRAM_MODEL /* ROOTDEV_MODELNAME */},	/* required */
+ 	{"/modelNumber", modelnumber},
+-	{"/modelURL", ROOTDEV_MODELURL},
++	{"/modelURL", "" /* ROOTDEV_MODELURL */},
+ 	{"/serialNumber", serialnumber},
+ 	{"/UDN", uuidvalue},	/* required */
+ 	{"serviceList", INITHELPER(57,1)},
+@@ -426,7 +430,14 @@
+ 			str = strcat_char(str, len, tmplen, '<');
+ 			str = strcat_str(str, len, tmplen, eltname+1);
+ 			str = strcat_char(str, len, tmplen, '>');
+-			str = strcat_str(str, len, tmplen, p[i].data);
++            /* EZP: Dynamically fetch the brand and model names. */
++            if (!strcmp(p[i].data, EZP_NVRAM_BRAND)) {
++                str = strcat_str(str, len, tmplen, nvram_safe_get("brand"));
++            } else if (!strcmp(p[i].data, EZP_NVRAM_MODEL)) {
++                str = strcat_str(str, len, tmplen, nvram_safe_get("model"));
++            } else {
++                str = strcat_str(str, len, tmplen, p[i].data);
++            }
+ 			str = strcat_char(str, len, tmplen, '<');
+ 			str = strcat_str(str, len, tmplen, eltname);
+ 			str = strcat_char(str, len, tmplen, '>');

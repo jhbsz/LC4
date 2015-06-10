@@ -1,0 +1,53 @@
+#!/bin/sh -x
+
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh
+
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+debug "### ifupv6 $iface $type $num###"
+lock_file=/tmp/.ifacev6.changestate.${iface}.lock
+if_serialize_check $lock_file
+
+# Exit if an interface is disabled.
+[ "$(nvram show ${type}_main_rule $num enable)" != "1" ] && exit
+
+# Get the physical interface.
+ifname=$(nvram get ${iface}_ifname)
+[ "${ifname%%[0-9]*}" = "ppp" ] && ifname=$(nvram get ${iface}_device)
+
+if_proto=$(nvram get ${iface}_protov6)
+# Exit if PPTP is used.
+if_valid $ifname || [ "$if_proto" = "pptp" ] || exit 
+
+# Exit if license is invalid! 
+[ "$type" = "wan" -a "$(nvram get license_invalid)" = "2" ] && exit
+
+nvram replace attr wan_up_down_state_rule $num v6 1
+# See if hwaddr clone is required
+if [ "$(nvram show ${type}_hwaddr_clone_rule $num enable)" = "1" ]; then
+    hwaddr=$(nvram show ${type}_hwaddr_clone_rule $num hwaddr)
+else
+    hwaddr=$(nvram show ${type}_hwaddr_rule_default $num hwaddr)
+fi
+# Because we have v4 and v6 ipaddress on the same device, we have to check
+# both in case of error turn other down
+[ "$(nvram show wan_up_down_state_rule $num v4)" = "0" ] && {
+    $DEBUG ip -6 link set dev $ifname down 2>&-
+}
+$DEBUG ip -6 link set dev $ifname up 2>&-
+
+if [ "${ifname%%[0-9]*}" = "br" ]; then
+	ifbr_valid $ifname $(nvram show lan_main_rule $num stp)
+elif [ "${ifname%%[0-9]*}" = "usb" ]; then
+    echo "no hwaddr for $ifname"
+else
+    
+    ${hwaddr:+$DEBUG ip -6 link set dev $ifname address $hwaddr}
+fi
+echo "1" > /proc/sys/net/ipv6/conf/all/forwarding
+# We don't start up wan if configured as link local
+[ "$if_proto" = "link-local" ] && return
+do_ifupv6 $if_proto $iface $type $num $ifname

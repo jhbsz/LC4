@@ -1,0 +1,15 @@
+Source-Makefile: package/button-hotplug/Makefile
+Package: kmod-button-hotplug
+Submenu: Other modules
+Version: <LINUX_VERSION>--1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Button Hotplug driver
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:   Kernel module to generate button hotplug events
+@@
+

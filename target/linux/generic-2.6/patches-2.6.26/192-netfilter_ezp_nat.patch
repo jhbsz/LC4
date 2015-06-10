@@ -1,0 +1,312 @@
+--- linux.old/net/netfilter/xt_IMQ.c	2009-05-05 21:23:31.000000000 +0800
++++ linux.new/net/netfilter/xt_IMQ.c	2009-05-02 22:43:33.000000000 +0800
+@@ -5,6 +5,14 @@
+ #include <linux/skbuff.h>
+ #include <linux/netfilter/x_tables.h>
+ #include <linux/netfilter/xt_IMQ.h>
++/* EZPacket */
++#include <linux/netfilter_ipv4.h>
++#include <linux/netfilter.h>
++#include <linux/netfilter/nf_conntrack_common.h>
++#include <linux/netfilter/nf_conntrack_tuple_common.h>
++#include <net/netfilter/nf_conntrack.h>
++#include <linux/netfilter_ipv4/ip_tables.h>
++/* EZPacket */
+ #include <linux/imq.h>
+ 
+ static unsigned int imq_target(struct sk_buff *pskb,
+@@ -16,8 +24,31 @@
+ {
+ 	const struct xt_imq_info *mr = targinfo;
+ 
+-	pskb->imq_flags = (mr->todev & IMQ_F_IFMASK) | IMQ_F_ENQUEUE;
+ 
++	pskb->imq_flags = (mr->todev & IMQ_F_IFMASK) | IMQ_F_ENQUEUE;
++    /* EZPacket */
++    if(hooknum == NF_INET_POST_ROUTING) 
++    {
++        /*struct ip_conntrack *ct;*/
++        struct nf_conn *ct;
++        enum ip_conntrack_info ctinfo;
++        enum ip_conntrack_dir dir;
++        /*ct = ip_conntrack_get(*pskb, &ctinfo);*/
++        ct = nf_ct_get(pskb, &ctinfo);
++        if(!ct)
++            return IPT_CONTINUE;
++        dir = CTINFO2DIR(ctinfo);
++        if (dir == IP_CT_DIR_ORIGINAL)
++        {
++            ct->ct_orig_imq_flags = pskb->imq_flags;
++        }
++        else
++        {
++            ct->ct_repl_imq_flags = pskb->imq_flags;
++        }
++    }
++    /* EZPacket */
++    
+ 	return XT_CONTINUE;
+ }
+ 
+--- linux.old/drivers/net/imq.c	2009-05-05 21:23:31.000000000 +0800
++++ linux.new/drivers/net/imq.c	2009-05-02 20:21:50.000000000 +0800
+@@ -362,7 +362,7 @@
+ 	if (err)
+ 		goto err1;
+ 
+-	err = nf_register_hook(&imq_egress_ipv4);
++	err = nf_register_hook_imq(&imq_egress_ipv4);
+ 	if (err)
+ 		goto err2;
+ 
+@@ -382,7 +382,7 @@
+ err4:
+ 	nf_unregister_hook(&imq_ingress_ipv6);
+ err3:
+-	nf_unregister_hook(&imq_egress_ipv4);
++	nf_unregister_hook_imq(&imq_egress_ipv4);
+ #endif
+ err2:
+ 	nf_unregister_hook(&imq_ingress_ipv4);
+@@ -487,7 +487,7 @@
+ 	nf_unregister_hook(&imq_egress_ipv6);
+ #endif
+ 	nf_unregister_hook(&imq_ingress_ipv4);
+-	nf_unregister_hook(&imq_egress_ipv4);
++	nf_unregister_hook_imq(&imq_egress_ipv4);
+ 
+ 	nf_unregister_queue_imq_handler();
+ }
+--- linux.old/net/ipv4/ip_output.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/ipv4/ip_output.c	2009-05-02 21:38:32.000000000 +0800
+@@ -176,7 +176,10 @@
+ 
+ EXPORT_SYMBOL_GPL(ip_build_and_send_pkt);
+ 
+-static inline int ip_finish_output2(struct sk_buff *skb)
++/* EZPacket */
++/* Remove "static inline" derelative. */
++/* EZPacket */
++int ip_finish_output2(struct sk_buff *skb)
+ {
+ 	struct dst_entry *dst = skb->dst;
+ 	struct rtable *rt = (struct rtable *)dst;
+@@ -213,6 +216,9 @@
+ 	kfree_skb(skb);
+ 	return -EINVAL;
+ }
++/*EZPacket*/
++EXPORT_SYMBOL(ip_finish_output2);
++/*EZPacket*/
+ 
+ static inline int ip_skb_dst_mtu(struct sk_buff *skb)
+ {
+--- linux.old/net/ipv4/ip_input.c	2013-04-09 12:35:40.555128618 +0800
++++ linux.new/net/ipv4/ip_input.c	2013-04-02 18:27:52.445728823 +0800
+@@ -197,7 +197,7 @@
+ 	return 0;
+ }
+ 
+-static int ip_local_deliver_finish(struct sk_buff *skb)
++int ip_local_deliver_finish(struct sk_buff *skb)
+ {
+ 	struct net *net = dev_net(skb->dev);
+ 
+@@ -449,3 +449,4 @@
+ }
+ 
+ EXPORT_SYMBOL(ip_statistics);
++EXPORT_SYMBOL(ip_local_deliver_finish);
+--- linux.old/net/netfilter/core.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/netfilter/core.c	2009-05-02 21:51:49.000000000 +0800
+@@ -55,6 +55,10 @@
+ EXPORT_SYMBOL(nf_hooks);
+ static DEFINE_MUTEX(nf_hook_mutex);
+ 
++/* EZPacket */
++static struct nf_hook_ops *imq_hook_ops = NULL;
++/* EZPacket */
++
+ int nf_register_hook(struct nf_hook_ops *reg)
+ {
+ 	struct nf_hook_ops *elem;
+@@ -83,6 +87,28 @@
+ }
+ EXPORT_SYMBOL(nf_unregister_hook);
+ 
++/* EZPacket */
++int nf_register_hook_imq(struct nf_hook_ops *reg)
++{
++    imq_hook_ops = reg;
++    return nf_register_hook(reg);
++}
++EXPORT_SYMBOL(nf_register_hook_imq);
++
++void nf_unregister_hook_imq(struct nf_hook_ops *reg)
++{
++    imq_hook_ops = NULL;
++    nf_unregister_hook(reg);
++}
++EXPORT_SYMBOL(nf_unregister_hook_imq);
++
++struct nf_hook_ops* nf_get_imq_ops(void)
++{
++    return imq_hook_ops;
++}
++EXPORT_SYMBOL(nf_get_imq_ops);
++/* EZPacket */
++
+ int nf_register_hooks(struct nf_hook_ops *reg, unsigned int n)
+ {
+ 	unsigned int i;
+diff -Nur linux.old/include/linux/netfilter.h linux.new/include/linux/netfilter.h
+--- linux.old/include/linux/netfilter.h	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/include/linux/netfilter.h	2009-05-02 17:33:28.000000000 +0800
+@@ -124,6 +124,11 @@
+ /* Function to register/unregister hook points. */
+ int nf_register_hook(struct nf_hook_ops *reg);
+ void nf_unregister_hook(struct nf_hook_ops *reg);
++/* EZPacket */
++int nf_register_hook_imq(struct nf_hook_ops *reg);
++void nf_unregister_hook_imq(struct nf_hook_ops *reg);
++struct nf_hook_ops* nf_get_imq_ops(void);
++/* EZPacket */
+ int nf_register_hooks(struct nf_hook_ops *reg, unsigned int n);
+ void nf_unregister_hooks(struct nf_hook_ops *reg, unsigned int n);
+ 
+diff -Nur linux.old/include/net/netfilter/nf_conntrack.h linux.new/include/net/netfilter/nf_conntrack.h
+--- linux.old/include/net/netfilter/nf_conntrack.h	2009-05-05 21:23:31.000000000 +0800
++++ linux.new/include/net/netfilter/nf_conntrack.h	2009-05-02 19:35:27.000000000 +0800
+@@ -141,7 +141,17 @@
+ #endif
+ 
+ 	/* Storage reserved for other modules: */
+-	union nf_conntrack_proto proto;
++
++    /* EZPacket */
++    struct  dst_entry *orgdir_dst;
++    struct  dst_entry *replydir_dst;
++    int orgdir_rid;
++    int replydir_rid;
++    unsigned char ct_orig_imq_flags;
++    unsigned char ct_repl_imq_flags;
++    /* EZPacket */
++
++    union nf_conntrack_proto proto;
+ 
+ 	/* Extensions */
+ 	struct nf_ct_ext *ext;
+diff -Nur linux.old/include/net/netfilter/nf_queue.h linux.new/include/net/netfilter/nf_queue.h
+--- linux.old/include/net/netfilter/nf_queue.h	2009-05-05 21:23:31.000000000 +0800
++++ linux.new/include/net/netfilter/nf_queue.h	2009-05-02 17:39:02.000000000 +0800
+@@ -36,6 +36,15 @@
+ 				       const struct nf_queue_handler *qh);
+ extern void nf_unregister_queue_handlers(const struct nf_queue_handler *qh);
+ extern void nf_reinject(struct nf_queue_entry *entry, unsigned int verdict);
++/*EzPacket*/
++extern int nf_queue(struct sk_buff *skb,
++             struct list_head *elem,
++             int pf, unsigned int hook,
++             struct net_device *indev,
++             struct net_device *outdev,
++             int (*okfn)(struct sk_buff *),
++             unsigned int queuenum);
++/*EzPacket*/
+ extern void nf_queue_entry_release_refs(struct nf_queue_entry *entry);
+ 
+ #if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
+diff -Nur linux.old/include/net/route.h linux.new/include/net/route.h
+--- linux.old/include/net/route.h	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/include/net/route.h	2009-05-02 19:46:14.000000000 +0800
+@@ -125,6 +125,12 @@
+ extern int		ip_rt_ioctl(struct net *, unsigned int cmd, void __user *arg);
+ extern void		ip_rt_get_source(u8 *src, struct rtable *rt);
+ extern int		ip_rt_dump(struct sk_buff *skb,  struct netlink_callback *cb);
++/* EZPacket */
++extern int ip_finish_output2(struct sk_buff *skb);
++extern int ip_local_deliver_finish(struct sk_buff *skb);
++/* EZPacket */
++
++
+ 
+ struct in_ifaddr;
+ extern void fib_add_ifaddr(struct in_ifaddr *);
+--- linux.old/net/netfilter/nf_conntrack_core.c	2009-05-05 21:23:31.000000000 +0800
++++ linux.new/net/netfilter/nf_conntrack_core.c	2009-05-03 12:25:47.000000000 +0800
+@@ -37,6 +37,9 @@
+ #include <net/netfilter/nf_conntrack_helper.h>
+ #include <net/netfilter/nf_conntrack_core.h>
+ #include <net/netfilter/nf_conntrack_extend.h>
++/*EZPacket*/
++#include <net/dst.h>
++/*EzPacket*/
+ 
+ #define NF_CONNTRACK_VERSION	"0.5.0"
+ 
+@@ -205,6 +208,22 @@
+ 	 * too. */
+ 	nf_ct_remove_expectations(ct);
+ 
++    /* EZPacket */
++    if (ct->orgdir_dst) {
++        dst_release(ct->orgdir_dst);
++        ct->orgdir_dst = NULL;
++        ct->orgdir_rid = 0;
++        ct->ct_orig_imq_flags = 0;
++    }
++    if (ct->replydir_dst) {
++        dst_release(ct->replydir_dst);
++        ct->replydir_dst = NULL;
++        ct->replydir_rid = 0;
++        ct->ct_repl_imq_flags = 0;
++    }
++    /* EZPacket */
++            
++    
+ 	#if defined(CONFIG_NETFILTER_XT_MATCH_LAYER7) || defined(CONFIG_NETFILTER_XT_MATCH_LAYER7_MODULE)
+ 	if(ct->layer7.app_proto)
+ 		kfree(ct->layer7.app_proto);
+--- linux.old/net/netfilter/Kconfig	2009-05-06 18:38:36.542334955 +0800
++++ linux.new/net/netfilter/Kconfig	2009-05-06 18:02:10.711250385 +0800
+@@ -911,5 +911,11 @@
+ 	  destination address' or `500pps from any given source address'
+ 	  with a single rule.
+ 
++config NETFILTER_EZP_NAT
++	tristate "EZPacket TurboNAT support"
++	default m
++	help
++	  Select on to support TutboNAT.
++
+ endmenu
+ 
+--- linux.old/net/netfilter/Makefile	2009-05-06 18:38:36.542334955 +0800
++++ linux.new/net/netfilter/Makefile	2009-05-06 18:03:00.924858862 +0800
+@@ -90,3 +90,6 @@
+ obj-$(CONFIG_NETFILTER_XT_MATCH_TIME) += xt_time.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_U32) += xt_u32.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_PORTSCAN) += xt_portscan.o
++
++# TurboNAT
++obj-$(CONFIG_NETFILTER_EZP_NAT) += ezp-nat.o
+--- linux.old/net/netfilter/nf_queue.c	2009-05-06 18:38:36.502334663 +0800
++++ linux.new/net/netfilter/nf_queue.c	2009-05-06 23:13:20.763585119 +0800
+@@ -278,6 +278,7 @@
+ 	} while (segs);
+ 	return 1;
+ }
++EXPORT_SYMBOL(nf_queue);
+ 
+ void nf_reinject(struct nf_queue_entry *entry, unsigned int verdict)
+ {
+--- linux.old/net/ipv4/netfilter/nf_nat_core.c	2008-07-14 05:51:29.000000000 +0800
++++ linux.new/net/ipv4/netfilter/nf_nat_core.c	2009-05-10 01:22:21.712335201 +0800
+@@ -414,7 +414,7 @@
+ 	}
+ 	return NF_ACCEPT;
+ }
+-EXPORT_SYMBOL_GPL(nf_nat_packet);
++EXPORT_SYMBOL(nf_nat_packet);
+ 
+ /* Dir is direction ICMP is coming from (opposite to packet it contains) */
+ int nf_nat_icmp_reply_translation(struct nf_conn *ct,

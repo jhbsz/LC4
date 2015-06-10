@@ -1,0 +1,30 @@
+#!/bin/sh
+
+action=$1
+port=$2
+device=$3
+
+[ -z $1 ] && {
+    echo "Please chose get/set option"
+    exit
+}
+
+[ $1 == "get" ] && {
+    [ -z $2 ] && { 
+        echo "Please chose port number (0/1/2) option" 
+        exit
+    }
+    nvram show als_serial_rule $2 device
+}    
+[ $1 == "set" ] && {
+    [ -z $2 ] && { 
+        echo "Please chose port number (0/1/2) option" 
+        exit
+    }
+    [ -z $3 ] && { 
+        echo "Please chose device name (ex: /dev/ttyUSB1)" 
+        exit
+    }
+    nvram replace attr als_serial_rule $2 device $3
+    nvram commit
+}    

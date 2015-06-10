@@ -1,0 +1,47 @@
+Source-Makefile: package/hostapd/Makefile
+Package: hostapd
+Version: 0.6.4-1
+Depends: @!TARGET_avr32 @!TARGET_etrax +PACKAGE_hostapd:libopenssl
+Provides: 
+Build-Depends: PACKAGE_kmod-madwifi:madwifi PACKAGE_kmod-mac80211:mac80211 PACKAGE_kmod-mac80211:libnl
+Section: net
+Category: Network
+Title: IEEE 802.1x Authenticator (full)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a full featured IEEE 802.1x/WPA/EAP/RADIUS 
+ Authenticator.
+
+http://hostap.epitest.fi/
+@@
+Package: hostapd-mini
+Version: 0.6.4-1
+Depends: @!TARGET_avr32 @!TARGET_etrax
+Provides: 
+Build-Depends: PACKAGE_kmod-madwifi:madwifi PACKAGE_kmod-mac80211:mac80211 PACKAGE_kmod-mac80211:libnl
+Section: net
+Category: Network
+Title: IEEE 802.1x Authenticator (WPA-PSK only)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a minimal IEEE 802.1x/WPA/EAP/RADIUS Authenticator 
+ (WPA-PSK only).
+
+http://hostap.epitest.fi/
+@@
+Package: hostapd-utils
+Version: 0.6.4-1
+Depends: @PACKAGE_hostapd||PACKAGE_hostapd-mini
+Provides: 
+Build-Depends: PACKAGE_kmod-madwifi:madwifi PACKAGE_kmod-mac80211:mac80211 PACKAGE_kmod-mac80211:libnl
+Section: net
+Category: Network
+Title: IEEE 802.1x Authenticator (utils)
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a command line utility to control the 
+ IEEE 802.1x/WPA/EAP/RADIUS Authenticator.
+
+http://hostap.epitest.fi/
+@@
+

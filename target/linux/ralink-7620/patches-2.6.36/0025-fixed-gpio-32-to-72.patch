@@ -1,0 +1,14 @@
+--- linux-2.6.36/drivers/char/ralink_gpio.c	2014-04-15 16:24:39.074498709 +0800
++++ linux-2.6.36/drivers/char/ralink_gpio.c	2014-04-15 16:23:45.602496715 +0800
+@@ -59,7 +59,11 @@
+     #define RALINK_GPIO_BUTTON_RESET RALINK_GPIO_10
+     #define RALINK_GPIO_SD_CARD_NUM  43
+     #define RALINK_GPIO_WPS_NUM      -1
++#ifdef CONFIG_BOARD_ALS
++    #define RALINK_GPIO_RESET_NUM    -1
++#else
+     #define RALINK_GPIO_RESET_NUM    44
++#endif
+     #define RALINK_GPIO_MCU_NUM      42
+     #define RALINK_GPIO_POWER_NUM    41
+ #endif

@@ -1,0 +1,145 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export LD_LIBRARY_PATH=/lib:/usr/lib
+. /etc/diag.sh
+. /etc/arch.sh
+
+cpu=$(nvram get arch)
+
+mount proc /proc -t proc
+mount sysfs /sys -t sysfs
+
+size=$(awk '/MemTotal:/ {l=5242880;mt=($2*1024);print((s=mt/2)<l)&&(mt>l)?mt-l:s}' /proc/meminfo)
+mount tmpfs /tmp -t tmpfs -o size=$size,nosuid,nodev,mode=1777
+
+if grep devfs /proc/filesystems > /dev/null; then
+	mount devfs /dev -t devfs
+	M0=/dev/pty/m0
+	M1=/dev/pty/m1
+	HOTPLUG=/sbin/hotplug-call
+
+elif [ -x /sbin/hotplug2 ]; then
+	mount -t tmpfs tmpfs /dev -o size=512K
+	mknod /dev/console c 5 1
+    mknod /dev/nvram c 253 0
+	/sbin/hotplug2 --coldplug --set-rules-file /etc/hotplug2-init.rules
+	/sbin/hotplug2 --no-coldplug --persistent --set-rules-file /etc/hotplug2-init.rules &
+	M0=/dev/ptmx
+	M1=/dev/ptmx
+	HOTPLUG=
+
+elif [ -x /sbin/udevd ]; then
+	mount -n -t tmpfs -o mode=0755 udev /dev
+    #pregenerate necessary devfs so we don't need to wait udev settle down
+    mknod /dev/nvram c 253 0
+    mknod	/dev/ram	    b	1   1
+    mknod	/dev/ram0    b	1   0
+    mknod	/dev/ram1    b	1   1
+    mknod	/dev/ram2    b	1   2
+    mknod	/dev/ram3    b	1   3
+
+    mknod	/dev/mem     c	1   1
+    mknod	/dev/kmem    c	1   2
+    mknod	/dev/null    c	1   3
+    mknod	/dev/random  c	1   8
+    mknod	/dev/urandom c   1   9 
+    mknod	/dev/full c   1   7 
+    mknod	/dev/fuse c   10   229 
+    mknod	/dev/console c   5   1
+    mknod   /dev/mtdblock0 b  31 0 
+    mknod   /dev/mtdblock1 b  31 1 
+    mknod   /dev/mtdblock2 b  31 2 
+    mknod   /dev/mtdblock3 b  31 3 
+    mknod   /dev/mtdblock4 b  31 4 
+    mknod   /dev/mtdblock5 b  31 5 
+    mknod   /dev/mtdblock6 b  31 6 
+    mknod   /dev/mtdblock7 b  31 7 
+    mknod   /dev/mtd0      c  90 0 
+    mknod   /dev/mtd0ro    c  90 1 
+    mknod   /dev/mtd1      c  90 2 
+    mknod   /dev/mtd1ro    c  90 3 
+    mknod   /dev/mtd2      c  90 4 
+    mknod   /dev/mtd2ro    c  90 5 
+    mknod   /dev/mtd3      c  90 6 
+    mknod   /dev/mtd3ro    c  90 7 
+    mknod   /dev/mtd4      c  90 8 
+    mknod   /dev/mtd4ro    c  90 9 
+    mknod   /dev/mtd5      c  90 10 
+    mknod   /dev/mtd5ro    c  90 11 
+    mknod   /dev/mtd6      c  90 12 
+    mknod   /dev/mtd6ro    c  90 13 
+    mknod   /dev/mtd7      c  90 14 
+    mknod   /dev/mtd7ro    c  90 15 
+
+	/sbin/udevd --daemon
+	/sbin/udevtrigger
+	# /sbin/udevsettle
+	M0=/dev/pty/ptmx
+	M1=/dev/pty/ptmx
+	HOTPLUG=
+fi
+
+mkdir -p /dev/pts /dev/shm
+mount devpts /dev/pts -t devpts
+
+# the shell really doesn't like having stdin/out closed
+# that's why we use /dev/pty/m0 and m1 as replacement
+# for /dev/console if there's no serial console available
+dd if=/dev/console of=/dev/null bs=1 count=0 >/dev/null 2>/dev/null && {
+	M0=/dev/console
+	M1=/dev/console
+}
+
+# We need gpio and power checking in early boot stage, which requires i2c and
+# gpio device node
+
+mknod /dev/i2c c 218 0
+mknod /dev/gpio c 252 0
+arch_led_config
+arch_led_start boot
+platform="$(nvram get platform)"
+if [ "$platform" = "M2E" ]; then
+    ezp-i2c gauge host booting
+fi
+
+# EZP: debug purpose
+# exec <$M0 >$M1 2>&0
+# NVRAM upgrade/boot
+nvram upgrade
+nvram boot
+
+#TODO: Add LED control here!
+[ -e /etc/preinit.arch ] && . /etc/preinit.arch
+set_state preinit
+echo "$HOTPLUG" > /proc/sys/kernel/hotplug
+
+# mini_fo
+# 7620 code base use new linux version which doesn't support mini_fo
+[ "$platform" != "M2E" ] && insmod mini_fo
+
+[ "$(nvram get platform)" = "M2E" ] && {
+    mkdir /tmp/jffs2
+    mount /dev/mtdblock7 /tmp/jffs2 -t jffs2
+}
+insmod raeth
+/etc/rc.common /etc/init.d/network-lan boot	
+[ "$platform" = "AXA" -o "$platform" = "M2E" ] && arch_led_stop boot
+if [ -z "$INITRAMFS" ]; then
+	mount_root
+	[ -f /sysupgrade.tgz ] && {
+		echo "- config restore -"
+		cd /
+		mv sysupgrade.tgz /tmp
+		tar xzf /tmp/sysupgrade.tgz
+		rm -f /tmp/sysupgrade.tgz
+		sync
+	}
+
+	echo "- init -"
+	
+    # We run "network-lan" to start wifi first instead in the rcS bootup
+    # sequence
+	exec /sbin/init
+fi
+

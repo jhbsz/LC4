@@ -1,0 +1,69 @@
+#!/bin/sh /etc/rc.common
+START=60
+log_msg="relay_schedule"
+
+start () {
+    stop
+    SCHEDULE="$(nvram show relay_rule 0 option)"
+    [ $SCHEDULE = "0" ] && exit 
+    WW="$(date +%w)"
+    hours="$(date +%k)"
+    hours=$(($hours * 2))
+    hours=$(($hours + 1))
+    point=0
+    [ "$(date +%M)" -ge 30 ] && {
+    	hours=$(($hours + 1))
+    }
+    for x in 0 1
+    do
+        point=1
+    	IFS=" "
+    	export IFS;
+    	case $WW in
+    	    0)week=sun;;           
+    	    1)week=mon;;           
+    	    2)week=tue;;           
+    	    3)week=wed;;           
+    	    4)week=thu;;           
+    	    5)week=fri;;           
+    	    6)week=sat;;           
+        esac
+        day="$(nvram show relay_schedule_rule $x $week)"
+        SEITCH="$(nvram show relay_rule $x enable)"
+        IFS=","
+        export IFS;
+        for y in $day
+        do
+            start=$(echo $y |awk 'BEGIN {FS="~"}{print $1}')
+            end=$(echo $y |awk 'BEGIN {FS="~"}{print $2}')
+            [ $hours -ge $start -a $hours -le $end ] && {
+                point=2
+            }
+
+        done
+        [ $point = "2" -a $SEITCH = "0" ] && {
+            nvram replace attr relay_rule $x enable 1
+            [ "$(nvram show mail_rule 0 relay)" = "1" ] && {
+    	        IFS=" "
+    	        export IFS;
+                /bin/sh /etc/init.d/send_mail relay $(($x+1)) On
+            }
+        }
+        [ $point = "1" -a $SEITCH = "1" ] && {
+            nvram replace attr relay_rule $x enable 0
+            [ "$(nvram show mail_rule 0 relay)" = "1" ] && {
+    	        IFS=" "
+    	        export IFS;
+                /bin/sh /etc/init.d/send_mail relay $(($x+1)) Off
+            }
+        }
+    done
+    
+    nvram commit
+    
+    /etc/rc.common /etc/init.d/relay start
+}
+
+stop () {
+    killall schedule
+}    

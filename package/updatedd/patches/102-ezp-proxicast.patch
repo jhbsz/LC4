@@ -1,0 +1,197 @@
+--- ../configure	2011-11-10 18:22:26.616183441 +0800
++++ ../configure	2011-11-10 18:25:04.195980753 +0800
+@@ -711,11 +711,19 @@
+ SHELL=${CONFIG_SHELL-/bin/sh}
+ 
+ # Identity of this package.
+-PACKAGE_NAME='UpdateDD'
+-PACKAGE_TARNAME='updatedd'
+-PACKAGE_VERSION='2.6'
+-PACKAGE_STRING='UpdateDD 2.6'
+-PACKAGE_BUGREPORT='updatedd@philipp-benner.de'
++if test ${EZP_BRAND} = "PROX"; then
++ PACKAGE_NAME='UpdateDD'
++ PACKAGE_TARNAME='updatedd'
++ PACKAGE_VERSION='2.6'
++ PACKAGE_STRING="Proxicast LAN-Cell 3 ${CUSTOM_VERSION}"
++ PACKAGE_BUGREPORT='support@proxicast.com'
++else
++ PACKAGE_NAME='UpdateDD'
++ PACKAGE_TARNAME='updatedd'
++ PACKAGE_VERSION='2.6'
++ PACKAGE_STRING='UpdateDD 2.6'
++ PACKAGE_BUGREPORT='updatedd@philipp-benner.de'
++fi
+ 
+ ac_unique_file../src/updatedd.c"
+ # Factoring default headers for most tests.
+@@ -19882,7 +19890,11 @@
+ 
+ PACKAGE_SUMMARY="template project"
+ 
+-PACKAGE_URL="http://www.philipp-benner.de"
++if test ${EZP_BRAND} = "PROX"; then
++ PACKAGE_URL="http://www.proxicast.com"
++else
++ PACKAGE_URL="http://www.philipp-benner.de"
++fi
+ 
+ PACKAGE_LICENSE="GPL"
+ 
+--- ../version.h.in	2011-11-10 18:22:00.784403224 +0800
++++ ../version.h.in 2011-11-10 18:25:30.967452563 +0800
+@@ -23,4 +23,5 @@
+ #define EMAIL		"@PACKAGE_BUGREPORT@"
+ #define PNAME		"@PACKAGE_NAME@"
+ #define AUTHOR		"Philipp Benner"
+-#define HOMEPAGE	"http://updatedd.philipp-benner.de"
++#define HOMEPAGE	"@PACKAGE_URL@"
++#define PSTRING         "@PACKAGE_STRING@"
+--- .../src/plugins/libdyndns.c	2011-11-22 00:56:41.369919591 +0800
++++ .../src/plugins/libdyndns.c	2011-11-22 00:34:33.705407118 +0800
+@@ -295,10 +295,18 @@
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
+                                "Authorization: Basic %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, b64user, PSTRING);
++#else
+                                DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
+ 	}
+ 	print_debug("\n\nMessage:"
+--- ../src/plugins/libchangeip.c	2006-09-08 04:32:59.000000000 +0800
++++ ../src/plugins/libchangeip.c	2011-11-27 23:35:26.111167874 +0800
+@@ -221,10 +221,18 @@
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
+                                "Authorization: Basic %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, b64user, PSTRING);
++#else
+                                DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
+ 	}
+ 	print_debug("\n\nMessage:"
+--- ../src/plugins/libhn.c	2006-09-08 04:32:59.000000000 +0800
++++ ../src/plugins/libhn.c	2011-11-27 23:35:26.122418778 +0800
+@@ -210,10 +210,18 @@
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
+                                "Authorization: Basic %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, b64user, PSTRING);
++#else
+                                DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFFREE(message));
+                 free(b64user);
+ 	}
+--- ../src/plugins/libnoip.c	2006-09-08 04:32:59.000000000 +0800
++++ ../src/plugins/libnoip.c	2011-11-27 23:58:56.985028720 +0800
+@@ -232,10 +232,18 @@
+ 		(void)snprintf(buffer, 1024,
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, PSTRING);
++#else
+                                DYNDNSHOST, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFFREE(message));
+ 	}
+ 	print_debug("\n\nMessage:"
+--- ../src/plugins/libovh.c	2006-09-08 04:32:59.000000000 +0800
++++ ../src/plugins/libovh.c	2011-11-27 23:35:26.111167874 +0800
+@@ -210,10 +210,18 @@
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
+                                "Authorization: Basic %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, b64user, PSTRING);
++#else
+                                DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
+ 	}
+ 	print_debug("\n\nMessage:"
+--- ../src/plugins/libzoneedit.c	2007-08-24 00:19:53.000000000 +0800
++++ ../src/plugins/libzoneedit.c	2011-11-27 23:35:26.122418778 +0800
+@@ -220,10 +220,18 @@
+                                " HTTP/1.1\r\n"
+                                "Host: %s\r\n"
+                                "Authorization: Basic %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                               "User-Agent: %s\r\n"
++#else
+                                "User-Agent: %s %s - %s\r\n"
++#endif
+                                "Connection: close\r\n"
+                                "Pragma: no-cache\r\n\r\n",
++#if defined EZP_PROD_BRAND_PROX
++                               DYNDNSHOST, b64user, PSTRING);
++#else
+                                DYNDNSHOST, b64user, PNAME, VERSION, HOMEPAGE);
++#endif
+ 		(void)strncat(message, buffer, BUFLEN - 1 - strlen(message));
+ 	}
+ 	print_debug("\n\nMessage:"
+--- ../src/plugins/libregfish.c	2006-09-08 04:32:59.000000000 +0800
++++ ../src/plugins/libregfish.c	2011-11-28 00:08:37.630905474 +0800
+@@ -276,11 +276,19 @@
+ 	(void)snprintf(message, BUFLEN,
+                        "GET /dyndns/2/?%s&fqdn=%s&forcehost=%i&ismx=%i HTTP/1.1\r\n"
+                        "Host: %s\r\n"
++#if defined EZP_PROD_BRAND_PROX
++                       "User-Agent: %s\r\n"
++#else
+                        "User-Agent: %s %s - %s\r\n"
++#endif
+                        "Connection: close\r\n"
+                        "Pragma: no-cache\r\n\r\n",
+                        buffer, args->hostname, args->force_host, args->ismx,
++#if defined EZP_PROD_BRAND_PROX
++                       DYNDNSHOST, PSTRING);
++#else
+                        DYNDNSHOST, PNAME, VERSION, HOMEPAGE);
++#endif
+ 
+ 	print_debug("\n\nMessage:"
+ 		    "\n--------------------------------------\n"

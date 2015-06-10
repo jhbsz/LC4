@@ -1,0 +1,14 @@
+Source-Makefile: package/logwrite/Makefile
+Package: logwrite
+Version: 1
+Depends: +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: A tool that writes messages into shared memory.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	'logwrite' takes STDIN as input and writes messages into log buffer in shared memory with specified key ID.
+@@
+

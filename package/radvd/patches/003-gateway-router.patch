@@ -1,0 +1,105 @@
+--- radvd/radvd.c	2010-01-28 21:34:26.000000000 +0800
++++ radvd/radvd.c	2011-03-03 15:35:16.384499658 +0800
+@@ -387,7 +387,7 @@
+ 		init_timer(&iface->tm, timer_handler, (void *) iface);
+ 
+ 		if (!iface->AdvSendAdvert)
+-			break;
++			continue;
+ 
+ 		/* send an initial advertisement */
+ 		if (send_ra_forall(sock, iface, NULL) == 0) {
+--- radvd-1.6/process.c	2009-09-07 15:59:57.000000000 +0800
++++ radvd-1.6/process.c	2011-03-03 19:38:01.419492311 +0800
+@@ -24,6 +24,14 @@
+ 	struct sockaddr_in6 *);
+ static int  addr_match(struct in6_addr *a1, struct in6_addr *a2,
+ 	int prefixlen);
++/* FIXME !! Maybe we need more than one gateway in ipv6 world */
++#define EXT_HANDLER_STRIPT "/etc/radvd/radvd-script"
++typedef struct {
++    struct in6_addr gateway, prefix;
++    uint8_t prefix_length;
++} inet6_network_setting;
++
++static inet6_network_setting network_setting = {{0},{0},0};
+ 
+ void
+ process(int sock, struct Interface *ifacel, unsigned char *msg, int len, 
+@@ -120,7 +128,7 @@
+ 		return;
+ 	}
+ 	
+-	if (!iface->AdvSendAdvert)
++	/* if (!iface->AdvSendAdvert) */ if (0)
+ 	{
+ 		dlog(LOG_DEBUG, 2, "AdvSendAdvert is off for %s", iface->Name);
+ 		return;
+@@ -147,6 +155,9 @@
+ 	struct timeval tv;
+ 	uint8_t *opt_str;
+ 
++    /* EZP: We don't plan to send RA for this interface */
++    if (!iface->AdvSendAdvert)
++        return;
+ 	/* validation */
+ 	len -= sizeof(struct nd_router_solicit);
+ 
+@@ -280,6 +291,7 @@
+ 		char prefix_str[INET6_ADDRSTRLEN];
+ 		char rdnss_str[INET6_ADDRSTRLEN];
+ 		uint32_t preferred, valid, count;
++        char advertise_from_self = 0;
+ 
+ 		if (len < 2)
+ 		{
+@@ -320,14 +332,17 @@
+ 			preferred = ntohl(pinfo->nd_opt_pi_preferred_time);
+ 			valid = ntohl(pinfo->nd_opt_pi_valid_time);
+ 			
+-			prefix = iface->AdvPrefixList;
++            prefix = iface->AdvPrefixList;
+ 			while (prefix)
+ 			{
+ 				if (prefix->enabled &&
+ 				    (prefix->PrefixLen == pinfo->nd_opt_pi_prefix_len) &&
+ 				    addr_match(&prefix->Prefix, &pinfo->nd_opt_pi_prefix,
+-				    	 prefix->PrefixLen))
++				    	 prefix->PrefixLen)) 
+ 				{
++                    /* EZP : We got an advertisement whose prefix and length are th
++                     * same with our own setting, ignore it. */
++                    advertise_from_self = 1;
+ 					print_addr(&prefix->Prefix, prefix_str);
+ 
+ 					if (valid != prefix->AdvValidLifetime)
+@@ -349,9 +364,27 @@
+ 						 );
+ 					}
+ 				}
+-
+ 				prefix = prefix->next;
+-			}			
++			}
++            /* Check network setting prefix and length */
++            if ((!advertise_from_self) && ((network_setting.prefix_length != pinfo->nd_opt_pi_prefix_len) ||
++                !addr_match(&network_setting.prefix, &pinfo->nd_opt_pi_prefix,
++                pinfo->nd_opt_pi_prefix_len) ||
++                !addr_match(&network_setting.gateway,&addr->sin6_addr, 128))) {
++                char script_str[256];
++		        char gateway_str[INET6_ADDRSTRLEN];
++                memcpy(&network_setting.gateway,&addr->sin6_addr, sizeof(network_setting.gateway));
++                memcpy(&network_setting.prefix, &pinfo->nd_opt_pi_prefix, sizeof(network_setting.prefix));
++                network_setting.prefix_length = pinfo->nd_opt_pi_prefix_len;
++                print_addr(&network_setting.gateway, gateway_str);
++                print_addr(&network_setting.prefix, prefix_str);
++                snprintf(script_str, sizeof(script_str), "GATEWAY=\"%s\" PREFIX=\"%s\" LENGTH=\"%d\" %s", 
++                        gateway_str, prefix_str, network_setting.prefix_length, EXT_HANDLER_STRIPT);
++                system(script_str);
++                flog(LOG_ERR,"Run script : %s", script_str);
++            }
++
++			
+ 			break;
+ 		case ND_OPT_ROUTE_INFORMATION:
+ 			/* not checked: these will very likely vary a lot */

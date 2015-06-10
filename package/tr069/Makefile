@@ -1,0 +1,118 @@
+# 
+# Copyright (C) 2006 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=tr069
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/poptop
+PKG_MD5SUM:=75d494e881f7027f4e60b114163f6b67
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/tr069
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=TR069 client server
+  URL:=http://www.poptop.org/
+endef
+
+# EZP: this should depend on menuconfig
+# TODO: Remove  WAN_NUM, LAN_NUM, WL_NUM
+ifeq ($(CONFIG_TARGET_ralink),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_ralink_7620),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_as500),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_AS500
+endif
+
+ifeq ($(BR2_LINUX_2_4_FV13XX),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_FV13XX
+endif
+
+ifeq ($(BR2_LINUX_2_4_BRCM),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_BRCM
+endif
+
+ifeq ($(CONFIG_EZP_PRODUCT_SUPERCATEGORY),"")
+# EZP: Pass WAN_NUM, LAN_NUM, WL_NUM while compiling
+EZP_CFLAGS+= -DWAN_NUM=$(CONFIG_WAN_NUM) -DLAN_NUM=$(CONFIG_LAN_NUM) -DWL_NUM=$(CONFIG_WL_NUM) \
+  -DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_CATEGORY) \
+  -DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_SUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_BRAND_$(CONFIG_EZP_SECRET) \
+  -DEZP_PROD_VERSION=$(CONFIG_EZP_PRODUCT_VERSION)
+else
+EZP_CFLAGS+= -DWAN_NUM=$(CONFIG_WAN_NUM) -DLAN_NUM=$(CONFIG_LAN_NUM) -DWL_NUM=$(CONFIG_WL_NUM) \
+  -DEZP_PROD_SUPERCAT=$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+  -DEZP_PROD_SUPERCAT_$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+  -DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+  -DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_MAJOR_SUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_MAJOR_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_MAJOR_SUBCAT=$(CONFIG_EZP_PRODUCT_MAJOR_SUBCATEGORY) \
+  -DEZP_PROD_ALT_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+  -DEZP_PROD_ALT_SUBCAT=$(CONFIG_EZP_PRODUCT_ALT_SUBCATEGORY) \
+  -DEZP_PROD_BRAND_$(CONFIG_EZP_SECRET) \
+  -DEZP_PROD_VERSION=$(CONFIG_EZP_PRODUCT_VERSION)
+endif
+
+# EZP: Pass WAN_NUM, LAN_NUM, WL_NUM while compiling
+EZP_CFLAGS+= -DTR106
+
+EZP_CFLAGS+= -I $(TOPDIR)/package/ezp-nvram/src -I $(TOPDIR)/package/ezp-nvram/include
+TARGET_CFLAGS+= $(EZP_CFLAGS)
+
+LIBS+= -L$(PKG_BUILD_DIR)/../root-rt305x/lib -L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib -lcrypto -lssl -lpthread
+
+define Build/Configure
+	$(call Build/Configure/Default, \
+		--with-bcrelay \
+	)
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default, \
+		COPTS="$(TARGET_CFLAGS) $(EZP_CFLAGS)" \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		LIBS="$(LIBS)" \
+		INSTALL="install" \
+		all \
+	)
+endef
+
+define Package/tr069/install
+	$(INSTALL_DIR) $(1)/usr/bin/tr069-agent
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agent $(1)/usr/bin/tr069-agent/agent
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/agent.conf $(1)/usr/bin/tr069-agent/agent.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/device.conf $(1)/usr/bin/tr069-agent/device.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/log.conf $(1)/usr/bin/tr069-agent/log.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/param.xml $(1)/usr/bin/tr069-agent/param.xml
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/conf/param106.xml $(1)/usr/bin/tr069-agent/param106.xml
+endef
+
+showver:
+	echo "$(TARGET_CFLAGS)"
+	echo "$(EZP_CFLAGS)"
+	echo "$(CFLAGS)"
+
+$(eval $(call BuildPackage,tr069))

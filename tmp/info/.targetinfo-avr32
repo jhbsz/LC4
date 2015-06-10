@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/avr32/Makefile
+Target: avr32
+Target-Board: avr32
+Target-Kernel: 2.6
+Target-Name: Atmel AVR32 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: avr32
+Target-Features: gpio squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.25.17
+Linux-Release: 1
+Linux-Kernel-Arch: avr32
+Target-Description:
+  Build firmware images for ATNGW100 board
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+

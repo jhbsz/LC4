@@ -1,0 +1,862 @@
+--- lighttpd-1.4.30/src/chunk.h	2014-05-23 11:29:38.106188366 +0800
++++ lighttpd-1.4.30/src/chunk.h	2014-05-23 22:18:23.132821861 +0800
+@@ -5,6 +5,12 @@
+ #include "array.h"
+ #include "sys-mmap.h"
+ 
++typedef enum {
++    UPLOADFILE_HEADER,
++    UPLOADFILE_START,
++    UPLOADFILE_FINISH,
++} chunk_upload_parse_state_enum;
++
+ typedef struct chunk {
+ 	enum { UNUSED_CHUNK, MEM_CHUNK, FILE_CHUNK } type;
+ 
+@@ -35,8 +41,12 @@
+     /* This is to maintain a multipart data, separating
+      * "file" and "parameter content" parts. With this implementation, 
+      * we can have a way that moving attachment file instead of copy them. */
+-    off_t  multipart_chunk_hdr_len;
+-    off_t  multipart_chunk_dat_len;
++    off_t multipart_chunk_hdr_len;
++    off_t multipart_chunk_dat_len;
++    off_t boundary_len;
++    chunk_upload_parse_state_enum upload_file_state;
++    char *boundary;
++
+ 	struct chunk *next;
+ } chunk;
+ 
+--- lighttpd-1.4.30/src/chunk.c	2014-05-23 11:29:38.106188366 +0800
++++ lighttpd-1.4.30/src/chunk.c	2014-05-23 22:19:13.424823208 +0800
+@@ -175,7 +175,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
+-
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	chunkqueue_append_chunk(cq, c);
+ 
+ 	return 0;
+@@ -191,6 +193,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	buffer_copy_string_buffer(c->mem, mem);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -206,6 +211,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	if (c->mem) buffer_free(c->mem);
+ 	c->mem = mem;
+ 
+@@ -224,6 +232,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	buffer_copy_string_buffer(c->mem, mem);
+ 
+ 	chunkqueue_prepend_chunk(cq, c);
+@@ -242,6 +253,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	buffer_copy_string_len(c->mem, mem, len - 1);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -258,6 +272,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	buffer_reset(c->mem);
+ 
+ 	chunkqueue_prepend_chunk(cq, c);
+@@ -274,6 +291,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 	buffer_reset(c->mem);
+ 
+ 	chunkqueue_append_chunk(cq, c);
+@@ -299,6 +319,9 @@
+ 	c->offset = 0;
+     c->multipart_chunk_hdr_len = 0;
+     c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
+ 
+ 	if (cq->tempdirs && cq->tempdirs->used) {
+ 		size_t i;
+@@ -336,64 +359,67 @@
+ }
+ 
+ chunk *chunkqueue_get_append_directfile(chunkqueue *cq, char *dst_file) {
+-        chunk *c;
+-        buffer *template = buffer_init_string("/var/tmp/lighttpd-upload-XXXXXX");
+-        c = chunkqueue_get_unused_chunk(cq);
+-
+-        c->type = FILE_CHUNK;
+-        c->offset = 0;
+-        c->multipart_chunk_hdr_len = 0;
+-        c->multipart_chunk_dat_len = 0;
+-       
+-        if (cq->tempdirs && cq->tempdirs->used) {
+-                size_t i;
+-
+-                /* we have several tempdirs, only if all of them fail we jump out */
+-                for (i = 0; i < cq->tempdirs->used; i++) {
+-                        buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
+-                        // Support cgi-bin upload file path
+-                        char *pch = strstr(dst_file, "cgi-bin");
+-                        if (pch != NULL) {
+-                            // Dst file contains cgi-bin characters
+-                            char *root_dir = strstr(dst_file, "upload_root_dir");
+-                            if (root_dir) {
+-                                char *dest_tmp_file = malloc(sizeof(char) * strlen(root_dir) + 1);
+-                                sprintf(dest_tmp_file, "%s", root_dir);
+-                                dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
+-                                char cgi_tmp[512];
+-                                strcpy(cgi_tmp, "/");
+-                                strcat(cgi_tmp, dest_tmp_file);
+-                                strcat(cgi_tmp, "/.upload");
+-                                buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
+-                            } else {
+-                                c->file.fd = -1;
+-                                break;
+-                            }
+-                        } else {
+-                            buffer_append_string_len(template, dst_file, strlen(dst_file));
+-                        }
+-                        buffer_urldecode_path(template);
+-                        buffer_append_string_len(template, CONST_STR_LEN("-XXXXXX"));
+-                        mktemp(template->ptr);
+-                        buffer_append_string_len(template, CONST_STR_LEN(".part"));
+-                        if (-1 != (c->file.fd = open(template->ptr, O_CREAT | O_RDWR))) {
+-                                /* only trigger the unlink if we created the temp-file successfully */
+-                                c->file.is_temp = 1;
+-                                break;
+-                        }
+-                }
+-        } else {
+-                if (-1 != (c->file.fd = mkstemp(template->ptr))) {
+-                        /* only trigger the unlink if we created the temp-file successfully */
+-                        c->file.is_temp = 1;
++    chunk *c;
++    buffer *template = buffer_init_string("/var/tmp/lighttpd-upload-XXXXXX");
++    c = chunkqueue_get_unused_chunk(cq);
++
++    c->type = FILE_CHUNK;
++    c->offset = 0;
++    c->multipart_chunk_hdr_len = 0;
++    c->multipart_chunk_dat_len = 0;
++    c->boundary = NULL;
++    c->boundary_len = 0;
++    c->upload_file_state = UPLOADFILE_HEADER;
++
++    if (cq->tempdirs && cq->tempdirs->used) {
++        size_t i;
++
++        /* we have several tempdirs, only if all of them fail we jump out */
++        for (i = 0; i < cq->tempdirs->used; i++) {
++            buffer_copy_string_len(template, CONST_STR_LEN("/tmp/mnt")); /*FIX ME: get base-DIR to replace hard-code*/
++            // Support cgi-bin upload file path
++            char *pch = strstr(dst_file, "cgi-bin");
++            if (pch != NULL) {
++                // Dst file contains cgi-bin characters
++                char *root_dir = strstr(dst_file, "upload_root_dir");
++                if (root_dir) {
++                    char *dest_tmp_file = malloc(sizeof(char) * strlen(root_dir) + 1);
++                    sprintf(dest_tmp_file, "%s", root_dir);
++                    dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
++                    char cgi_tmp[512];
++                    strcpy(cgi_tmp, "/");
++                    strcat(cgi_tmp, dest_tmp_file);
++                    strcat(cgi_tmp, "/.upload");
++                    buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
++                } else {
++                    c->file.fd = -1;
++                    break;
+                 }
++            } else {
++                buffer_append_string_len(template, dst_file, strlen(dst_file));
++            }
++            buffer_urldecode_path(template);
++            buffer_append_string_len(template, CONST_STR_LEN("-XXXXXX"));
++            mktemp(template->ptr);
++            buffer_append_string_len(template, CONST_STR_LEN(".part"));
++            if (-1 != (c->file.fd = open(template->ptr, O_CREAT | O_RDWR))) {
++                /* only trigger the unlink if we created the temp-file successfully */
++                c->file.is_temp = 1;
++                break;
++            }
++        }
++    } else {
++        if (-1 != (c->file.fd = mkstemp(template->ptr))) {
++            /* only trigger the unlink if we created the temp-file successfully */
++            c->file.is_temp = 1;
+         }
+-        buffer_copy_string_buffer(c->file.name, template);
+-        c->file.length = 0;
+-        chunkqueue_append_chunk(cq, c);
+-        buffer_free(template);
++    }
++    buffer_copy_string_buffer(c->file.name, template);
++    c->file.length = 0;
++    chunkqueue_append_chunk(cq, c);
++    buffer_free(template);
+ 
+-        return c;
++    return c;
+ }
+ 
+ 
+--- lighttpd-1.4.30/src/connections.c	2014-05-23 11:29:38.106188366 +0800
++++ lighttpd-1.4.30/src/connections.c	2014-05-24 22:42:25.692199800 +0800
+@@ -35,6 +35,10 @@
+ #endif
+ 
+ #include "sys-socket.h"
++/* Assume a 64k chunk size limit to differ mem chunk and file chunk */
++#define MEM_CHUNK_SIZE_LIMIT    64*1024
++
++void trim_tail(char *s, char *trim_chars);
+ 
+ typedef struct {
+ 	        PLUGIN_DATA;
+@@ -896,6 +900,143 @@
+ 	return 0;
+ }
+ 
++/*
++ * If c->mem->ptr + c->offset contains string:
++   
++ --0xKhTmLbOuNdArY-201D28C0-1940-4797-ADE4-767D98A4E696
++   Content-Disposition: form-data; name="Filedata"; filename="Photo_2014_04_28_12_42_02_1.JPG"
++   Content-Type: application/octet-stream
++
++ * This chunk contains part of header, we should seperate it
++ * Note that we only check this string in cq->first.
++ * After 2 nested \n[\r*]\n, we will find file data.
++ * */
++static int get_multipart_boundary(chunk *dst_c, connection *con) {
++    if(!dst_c->boundary) {
++        dst_c->boundary = strstr(con->request.http_content_type, "boundary=") + 9;
++        if(dst_c->boundary) {
++            trim_tail(dst_c->boundary, "\r\n");
++            dst_c->boundary_len = strlen(dst_c->boundary);
++        } else {
++            /* TODO : Add no boundary found prevention */
++            return -1;
++        }
++    }
++    return 1;
++}
++
++static chunk* get_chunk_from_write_queue(connection *con) {
++	chunkqueue *dst_cq = con->request_content_queue;
++    chunk* dst_c = NULL;
++    /* get dst_c */
++    if(con->request.content_length > MEM_CHUNK_SIZE_LIMIT) {
++        /* Using of file chunk, get processing dst_c chunk */
++        if (dst_cq->last &&
++                dst_cq->last->type == FILE_CHUNK &&
++                dst_cq->last->file.is_temp &&
++                dst_cq->last->offset == 0) {
++            /* ok, take the last chunk for our job */
++
++            dst_c = dst_cq->last;
++
++            if (dst_c->file.fd == -1) {
++                /* this should not happen as we cache the fd, but you never know */
++                dst_c->file.fd = open(dst_c->file.name->ptr, O_WRONLY | O_APPEND);
++#ifdef FD_CLOEXEC
++                fcntl(dst_c->file.fd, F_SETFD, FD_CLOEXEC);
++#endif
++            }
++        } else {
++            dst_c = chunkqueue_get_append_directfile(dst_cq, con->request.uri->ptr);
++        }
++    } else {
++        /* Using of memory chunk, get processing dst_c chunk */
++        buffer *b;
++
++        if (dst_cq->last &&
++                dst_cq->last->type == MEM_CHUNK) {
++            b = dst_cq->last->mem;
++        } else {
++            b = chunkqueue_get_append_buffer(dst_cq);
++            buffer_prepare_copy(b, con->request.content_length - dst_cq->bytes_in + 1);
++        }
++        dst_c = dst_cq->last;
++    }
++    return dst_c;
++}
++
++static char *find_header_data_boundary(char *startp) {
++    startp = strstr(startp, "Content-Type:");
++    if(startp) {
++        startp = strchr(startp, '\n');
++        if(!startp) goto header_data_boundary_not_found;
++        startp ++;
++        startp = strchr(startp, '\n');
++        if(!startp) goto header_data_boundary_not_found;
++        startp ++;
++        return startp;
++    }
++header_data_boundary_not_found:
++    return NULL;
++}
++
++static char *find_data_remainder_boundary(chunk *dst_c, char *startp, off_t toRead) {
++    off_t len;
++    if(toRead > dst_c->boundary_len) {
++        for (len=0; len < toRead - dst_c->boundary_len ; len ++) {
++            /* Find across all receiving buffer to find if
++             * boundary exists. We don't use strstr()
++             * since the content may be binary data with
++             * '\0' */
++            if(!strncmp(startp, dst_c->boundary, dst_c->boundary_len)) {
++                return startp;
++            }
++            startp++;
++        }
++    }
++    return NULL;
++}
++
++static off_t write_header(char *header_p, off_t header_len, chunk *dst_c) {
++    if(dst_c->type == FILE_CHUNK) {
++        if (header_len != write(dst_c->file.fd, header_p, header_len)) {
++            /* Write failed for some reason ... disk full? */
++            fprintf(stderr, "Write failed, errno:%d\n", errno);
++            return -1;
++        }
++    } else {
++        buffer *b = dst_c->mem;
++        buffer_append_string_len(b, header_p, header_len);
++    }
++    fprintf(stderr, "Successfully write %lld bytes\n", header_len);
++    dst_c->file.length += header_len;
++    dst_c->multipart_chunk_hdr_len += header_len;
++    return header_len;
++}
++
++static off_t write_data(char *data_p, off_t data_len, chunk *dst_c, FILE *chunked_upload_file) {
++    if (data_len != fwrite(data_p, 1, data_len, chunked_upload_file)) {
++        /* Write failed for some reason ... disk full? */
++        fprintf(stderr, "Write failed, errno:%d\n", errno);
++        return -1;
++    }
++    fprintf(stderr, "Successfully write %lld bytes\n", data_len);
++    dst_c->multipart_chunk_dat_len += data_len;
++    return data_len;
++}
++
++static void handle_write_file_error(server *srv, connection *con, chunk *dst_c) {
++    /* write failed for some reason ... disk full ? */
++    log_error_write(srv, __FILE__, __LINE__, "sbs",
++            "denying upload as writing to file failed:",
++            dst_c->file.name, strerror(errno));
++    con->http_status = 413; /* Request-Entity too large */
++    con->keep_alive = 0;
++    connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
++    close(dst_c->file.fd);
++    dst_c->file.fd = -1;
++}
++
+ /**
+  * handle all header and content read
+  *
+@@ -1052,7 +1197,7 @@
+ 			}
+ 
+ 			connection_set_state(srv, con, CON_STATE_REQUEST_END);
+-		} else if (chunkqueue_length(cq) > 64 * 1024) {
++		} else if (chunkqueue_length(cq) > MEM_CHUNK_SIZE_LIMIT) {
+ 			log_error_write(srv, __FILE__, __LINE__, "s", "oversized request-header -> sending Status 414");
+ 
+ 			con->http_status = 414; /* Request-URI too large */
+@@ -1105,228 +1250,200 @@
+                 free(head_dest_tmp_file);
+             }
+         }
+-        int chked = 0;
+         off_t chunk_dat_len = 0;
+         chunk *dst_c = NULL;
+-		for (c = cq->first; c && (dst_cq->bytes_in != ((off_t)con->request.content_length - chunk_dat_len)); c = c->next) {
+-			off_t weWant, weHave, toRead;
++        for (c = cq->first; c && (dst_cq->bytes_in != ((off_t)con->request.content_length - chunk_dat_len)); c = c->next) {
++            off_t weWant, weHave, toRead;
+ 
+-			weWant = con->request.content_length - dst_cq->bytes_in;
++            weWant = con->request.content_length - dst_cq->bytes_in;
+ 
+-			assert(c->mem->used);
++            assert(c->mem->used);
+ 
+-			weHave = c->mem->used - c->offset - 1;
++            weHave = c->mem->used - c->offset - 1;
+ 
+-			toRead = weHave > weWant ? weWant : weHave;
+-
+-			/* the new way, copy everything into a chunkqueue whcih might use tempfiles */
+-			if (con->request.content_length > 64 * 1024) {
+-				dst_c = NULL;
+-				/* copy everything to max 1Mb sized tempfiles */
+-
+-				/*
+-				 * if the last chunk is
+-				 * - smaller than 1Mb (size < 1Mb)
+-				 * - not read yet (offset == 0)
+-				 * -> append to it
+-				 * otherwise
+-				 * -> create a new chunk
+-				 *
+-				 * */
+-
+-				if (dst_cq->last &&
+-				    dst_cq->last->type == FILE_CHUNK &&
+-				    dst_cq->last->file.is_temp &&
+-				    dst_cq->last->offset == 0) {
+-					/* ok, take the last chunk for our job */
+-
+-					dst_c = dst_cq->last;
+-
+-					if (dst_c->file.fd == -1) {
+-						/* this should not happen as we cache the fd, but you never know */
+-						dst_c->file.fd = open(dst_c->file.name->ptr, O_WRONLY | O_APPEND);
++            toRead = weHave > weWant ? weWant : weHave;
++            if(chunked_upload_file) {
++                char *header_data_boundary = NULL, *data_remainder_boundary = NULL;
++                off_t header_len = 0;
++                off_t data_len = 0;
++                off_t header_remain = 0;
++
++                dst_c = get_chunk_from_write_queue(con);
++                switch(dst_c->upload_file_state) {
++                    case UPLOADFILE_HEADER:
++                        get_multipart_boundary(dst_c, con);
++                        header_data_boundary = find_header_data_boundary(c->mem->ptr + c->offset); /*strstr(c->mem->ptr + c->offset, "Content-Type:");*/
++                        header_len = 0;
++                        data_len = 0;
++                        header_remain = 0;
++                        data_remainder_boundary = NULL;
++
++                        if(header_data_boundary) {
++                            header_len = header_data_boundary - (c->mem->ptr + c->offset);
++                            data_remainder_boundary = find_data_remainder_boundary(dst_c, header_data_boundary, toRead - header_len);
++                            if(data_remainder_boundary) {
++                                /* A boundary contains not only boundary tokens but a \r\n__ in
++                                 * front of the boundary, so the data length
++                                 * must minus 4 */
++                                data_len = data_remainder_boundary - header_data_boundary -4;
++                                header_remain = toRead - data_len - header_len;
++                            } else {
++                                data_len = toRead - header_len;
++                                header_remain = 0;
++                            }
++                        }
++                        /* state :
++                         * (header_data_boundary, data_remainder_boundary) -> next_state
++                         * This chunk contains purely header
++                         * (NULL, NULL) -> UPLOADFILE_HEADER
++                         * This chunk contains header and part of content
++                         * (P, NULL)    -> UPLOADFILE_START
++                         * This chunk contains all transmission content
++                         * (P, P)       -> UPLOADFILE_FINISH
++                         * Invalid state, should happen in UPLOADFILE_HEADER state, but in UPLOADFILE_START state
++                         * (NULL, P)    -> UPLOADFILE_FINISH
++                         * */
++                        if(header_data_boundary) {
++                            /* We found header end, looks like
++                             * HHHHHDDDDD, save HHHH to temp file and DDDD to
++                             * data file, and change state.
++                             * */
++                            if(data_remainder_boundary) {
++                                /* We found data end, the content of this
++                                 * buffer looks like
++                                 * HHHHDDDDRRRR, RRRR also save to the temp
++                                 * file. */
++                                if(write_header(c->mem->ptr + c->offset, header_len, dst_c) < 0) {
++                                    /* Handle write error here */
++                                    handle_write_file_error(srv, con, dst_c);
++                                    break;
++                                }
++                                if(write_data(header_data_boundary, data_len, dst_c, chunked_upload_file) < 0) {
++                                    /* Handle write error here */
++                                    handle_write_file_error(srv, con, dst_c);
++                                    break;
++                                }
++                                if(write_header(data_remainder_boundary, header_remain, dst_c) < 0) {
++                                    /* Handle write error here */
++                                    handle_write_file_error(srv, con, dst_c);
++                                    break;
++                                }
++                                dst_c->upload_file_state = UPLOADFILE_FINISH;
++                            } else {
++                                if(write_header(c->mem->ptr + c->offset, header_len, dst_c) < 0) {
++                                    /* Handle write error here */
++                                    handle_write_file_error(srv, con, dst_c);
++                                    break;
++                                }
++                                if(write_data(header_data_boundary, data_len, dst_c, chunked_upload_file) < 0) {
++                                    /* Handle write error here */
++                                    handle_write_file_error(srv, con, dst_c);
++                                    break;
++                                }
++                                dst_c->upload_file_state = UPLOADFILE_START;
++                            }
++                        } else {
++                            /* Still a header, save to temp file */
++                            if(write_header(c->mem->ptr + c->offset, toRead, dst_c) < 0) {
++                                /* Handle write error here */
++                                handle_write_file_error(srv, con, dst_c);
++                                break;
++                            }
++                        }
++                        break;
++                    case UPLOADFILE_START:
++                        /* In this state, we don't have any header, only data, so find data part. */
++                        data_remainder_boundary = find_data_remainder_boundary(dst_c, c->mem->ptr + c->offset, toRead);
++                        if(data_remainder_boundary) {
++                            /* A boundary contains not only boundary tokens but a \r\n__ in
++                             * front of the boundary, so the data length
++                             * must minus 4 */
++                            data_len = data_remainder_boundary - (c->mem->ptr + c->offset) - 4;
++                            header_remain = toRead - data_len;
++                            /* We found boundary, this buffer looks like
++                             * DDDDRRRR. */
++                            if(write_data(c->mem->ptr + c->offset, data_len, dst_c, chunked_upload_file) < 0) {
++                                /* Handle write error here */
++                                handle_write_file_error(srv, con, dst_c);
++                                break;
++                            }
++                            if(write_header(data_remainder_boundary, header_remain, dst_c) < 0) {
++                                /* Handle write error here */
++                                handle_write_file_error(srv, con, dst_c);
++                                break;
++                            }
++                            dst_c->upload_file_state = UPLOADFILE_FINISH;
++                        } else {
++                            if(write_data(c->mem->ptr + c->offset, toRead, dst_c, chunked_upload_file) < 0) {
++                                /* Handle write error here */
++                                handle_write_file_error(srv, con, dst_c);
++                                break;
++                            }
++                        }
++                        break;
++                    case UPLOADFILE_FINISH:
++                        if(write_header(c->mem->ptr + c->offset, toRead, dst_c) < 0) {
++                            /* Handle write error here */
++                            handle_write_file_error(srv, con, dst_c);
++                            break;
++                        }
++                        break;
++                }
++            } else {
++                /* the new way, copy everything into a chunkqueue whcih might use tempfiles */
++                if (con->request.content_length > MEM_CHUNK_SIZE_LIMIT) {
++                    dst_c = NULL;
++                    /* copy everything to max 1Mb sized tempfiles */
++
++                    /*
++                     * if the last chunk is
++                     * - smaller than 1Mb (size < 1Mb)
++                     * - not read yet (offset == 0)
++                     * -> append to it
++                     * otherwise
++                     * -> create a new chunk
++                     *
++                     * */
++
++                    if (dst_cq->last &&
++                            dst_cq->last->type == FILE_CHUNK &&
++                            dst_cq->last->file.is_temp &&
++                            dst_cq->last->offset == 0) {
++                        /* ok, take the last chunk for our job */
++
++                        dst_c = dst_cq->last;
++
++                        if (dst_c->file.fd == -1) {
++                            /* this should not happen as we cache the fd, but you never know */
++                            dst_c->file.fd = open(dst_c->file.name->ptr, O_WRONLY | O_APPEND);
+ #ifdef FD_CLOEXEC
+-						fcntl(dst_c->file.fd, F_SETFD, FD_CLOEXEC);
++                            fcntl(dst_c->file.fd, F_SETFD, FD_CLOEXEC);
+ #endif
+-					}
+-				} else {
+-					dst_c = chunkqueue_get_append_directfile(dst_cq, con->request.uri->ptr);
+-				}
+-
+-				/* we have a chunk, let's write to it */
+-
+-				if (dst_c->file.fd == -1) {
+-					/* we don't have file to write to,
+-					 * EACCES might be one reason.
+-					 *
+-					 * Instead of sending 500 we send 413 and say the request is too large
+-					 *  */
+-
+-					log_error_write(srv, __FILE__, __LINE__, "sbs",
+-							"denying upload as opening to temp-file for upload failed:",
+-							dst_c->file.name, strerror(errno));
+-
+-					con->http_status = 413; /* Request-Entity too large */
+-					con->keep_alive = 0;
+-					connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-
+-					break;
+-				}
+-
+-                /*
+-                 * If c->mem->ptr + c->offset contains string:
+-                 * Content-Type: application/octstream
+-                 * This chunk contains part of header, we should seperate it
+-                 * Note that we only check this string in cq->first
+-                 * */
+-                char application[] = "Content-Type:";
+-                char *pch = NULL;
+-                int isHead = 0;
+-                if(!chked) {
+-                    pch = strstr(c->mem->ptr + c->offset, application);
+-                    if (pch != NULL) {
+-                        pch = strchr(pch, '\n');
+-                        pch++;
+-                        pch = strchr(pch, '\n');
+-                        pch++;
+-                        // In this part for the first packet, we can find
+-                        // the end of header multipart, and the following is multipart content
+-                        isHead = 1;
+-                        chked = 1;
+-                    } 
+-                }
++                        }
++                    } else {
++                        dst_c = chunkqueue_get_append_directfile(dst_cq, con->request.uri->ptr);
++                    }
+ 
+-                if (chunked_upload_file && isHead) {
++                    /* we have a chunk, let's write to it */
+ 
+-                    char *buf = c->mem->ptr + c->offset; 
++                    if (dst_c->file.fd == -1) {
++                        /* we don't have file to write to,
++                         * EACCES might be one reason.
++                         *
++                         * Instead of sending 500 we send 413 and say the request is too large
++                         *  */
+ 
+-                    // Write Header to original path
+-                    int toReadHeader = pch - buf;
+-                    int totalRead = toRead - toReadHeader;
+-                    if (toReadHeader != write(dst_c->file.fd, buf, toReadHeader)) {
+-                        /* Write failed for some reason ... disk full? */
+                         log_error_write(srv, __FILE__, __LINE__, "sbs",
+-                                "denying upload as writing to file failed:",
++                                "denying upload as opening to temp-file for upload failed:",
+                                 dst_c->file.name, strerror(errno));
+ 
+                         con->http_status = 413; /* Request-Entity too large */
+                         con->keep_alive = 0;
+                         connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+ 
+-                        close(dst_c->file.fd);
+-                        dst_c->file.fd = -1;
+-                        fclose(chunked_upload_file);
+-
+-                        break;
+-                    }
+-
+-                    dst_c->file.length += toReadHeader;
+-                    // ---
+-                    dst_c->multipart_chunk_hdr_len += toReadHeader;
+-
+-                    // Write the remain buf
+-                    if (totalRead != fwrite(pch, 1, totalRead, chunked_upload_file)) {
+-                        /* Write failed for some reason ... disk full? */
+-                        log_error_write(srv, __FILE__, __LINE__, "sbs",
+-                                "denying upload as writing to file failed:",
+-                                cgi_tmp, strerror(errno));
+-
+-                        con->http_status = 413; /* Request-Entity too large */
+-                        con->keep_alive = 0;
+-                        connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-
+-                        close(dst_c->file.fd);
+-                        dst_c->file.fd = -1;
+-                        fclose(chunked_upload_file);
+-
+                         break;
+                     }
+-                    dst_c->multipart_chunk_dat_len += totalRead;
+-
+-                } else if (chunked_upload_file && (isHead == 0)) {
+-
+-                    char *http_content_type = con->request.http_content_type;
+-                    char *boundary = strstr(http_content_type, "boundary=");
+-                    boundary += 9;
+-                    trim_tail(boundary, "\r\n");
+-
+-                    unsigned boundary_len = strlen(boundary);
+-
+-                    char *buf = c->mem->ptr + c->offset;
+-                    int len = 0;
+-                    int bytes = 0;
+-                    int current_index = 0, write_index = 0, buf_index = 0;
+-                    char content[256], buf_content[4097];
+-
+-                    len = 0;
+-                    if(toRead > boundary_len) {
+-                        for (len=0; len < toRead - boundary_len ; len ++) {
+-                            if(!strncmp(buf + len, boundary, boundary_len)) { /* Buffer meets boundary */
+-                                break;
+-                            }
+-                        }
+-                    }
+-                    if(len < toRead - boundary_len) {
+-                        /* Write buffer to the upload temp file */ 
+-                        bytes = fwrite(buf, 1, len - 4, chunked_upload_file);
+-                        if (bytes != (len - 4)) {
+-                            /* write failed for some reason ... disk full ? */
+-                            log_error_write(srv, __FILE__, __LINE__, "sbs",
+-                                    "denying upload as writing to file failed:",
+-                                    dst_c->file.name, strerror(errno));
+-
+-                            con->http_status = 413; /* Request-Entity too large */
+-                            con->keep_alive = 0;
+-                            connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-
+-                            close(dst_c->file.fd);
+-                            dst_c->file.fd = -1;
+-                            fclose(chunked_upload_file);
+-                            break;
+-                        }
+-                        dst_c->multipart_chunk_dat_len += bytes;
+ 
+-                        /* Write boundary to original file */
+-                        buf += len -4;
+-                        off_t remain_boundary = toRead - (len - 4);
+-                        if (remain_boundary != write(dst_c->file.fd, buf, remain_boundary)) {
+-                             /* write failed for some reason ... disk full ? */
+-                            log_error_write(srv, __FILE__, __LINE__, "sbs",
+-                                    "denying upload as writing to file failed:",
+-                                    dst_c->file.name, strerror(errno));
+-
+-                            con->http_status = 413; /* Request-Entity too large */
+-                            con->keep_alive = 0;
+-                            connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-
+-                            close(dst_c->file.fd);
+-                            dst_c->file.fd = -1;
+-                            fclose(chunked_upload_file);
+-                            break;
+-                        }
+-                        dst_c->multipart_chunk_hdr_len += remain_boundary;
+-
+-                        dst_c->file.length += remain_boundary;
+-
+-                    } else {
+-                        bytes = fwrite(buf, 1, toRead, chunked_upload_file);
+-                        if (bytes != toRead) {
+-                            /* write failed for some reason ... disk full ? */
+-                            log_error_write(srv, __FILE__, __LINE__, "sbs",
+-                                    "denying upload as writing to file failed:",
+-                                    dst_c->file.name, strerror(errno));
+-
+-                            con->http_status = 413; /* Request-Entity too large */
+-                            con->keep_alive = 0;
+-                            connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
+-
+-                            close(dst_c->file.fd);
+-                            dst_c->file.fd = -1;
+-                        }
+-                        dst_c->multipart_chunk_dat_len += bytes;
+-                    }
+-
+-                } else {
+                     // Original Write Path
+                     if (toRead != write(dst_c->file.fd, c->mem->ptr + c->offset, toRead)) {
+                         /* write failed for some reason ... disk full ? */
+@@ -1344,29 +1460,28 @@
+                         break;
+                     }
+                     dst_c->file.length += toRead;
+-                }
+-
+-                if (dst_cq->bytes_in + toRead == (off_t)con->request.content_length) {
+-                    /* we read everything, close the chunk */
+-                    close(dst_c->file.fd);
+-                    dst_c->file.fd = -1;
+-                }
+-
+ 
+-			} else {
+-				buffer *b;
++                    if (dst_cq->bytes_in + toRead == (off_t)con->request.content_length) {
++                        /* we read everything, close the chunk */
++                        close(dst_c->file.fd);
++                        dst_c->file.fd = -1;
++                    }
++                } else {
++                    buffer *b;
+ 
+-				if (dst_cq->last &&
+-				    dst_cq->last->type == MEM_CHUNK) {
+-					b = dst_cq->last->mem;
+-				} else {
+-					b = chunkqueue_get_append_buffer(dst_cq);
+-					/* prepare buffer size for remaining POST data; is < 64kb */
+-					buffer_prepare_copy(b, con->request.content_length - dst_cq->bytes_in + 1);
+-				}
+-				buffer_append_string_len(b, c->mem->ptr + c->offset, toRead);
+-			}
++                    if (dst_cq->last &&
++                            dst_cq->last->type == MEM_CHUNK) {
++                        b = dst_cq->last->mem;
++                    } else {
++                        b = chunkqueue_get_append_buffer(dst_cq);
++                        /* prepare buffer size for remaining POST data; is < 64kb */
++                        buffer_prepare_copy(b, con->request.content_length - dst_cq->bytes_in + 1);
++                    }
++                    buffer_append_string_len(b, c->mem->ptr + c->offset, toRead);
++                }
++            }
+ 
++//            if(chunked_upload_file && (con->request.content_length > MEM_CHUNK_SIZE_LIMIT)) {
+             if(chunked_upload_file) {
+                 if(dst_c->multipart_chunk_hdr_len > dst_cq->bytes_in) {
+                     dst_cq->bytes_in = dst_c->multipart_chunk_hdr_len;
+@@ -1376,7 +1491,7 @@
+                 dst_cq->bytes_in += toRead;
+             }
+             c->offset += toRead;
+-		}
++        }
+ 
+ 		/* Content is ready */
+ 		if (dst_cq->bytes_in == ((off_t)con->request.content_length - chunk_dat_len)) {

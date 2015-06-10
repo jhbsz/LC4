@@ -1,0 +1,732 @@
+#!/bin/sh
+# $NUM is optional.
+# $ACTION is optional.
+. /etc/network.sh
+. /etc/functions.sh
+
+LOCK_FILE=/tmp/.net.lock
+local err;
+local eth_port_plug_stat="NotDetected"
+
+load_balance_failover_action () {
+    local num=$(nvram get wan_num)
+    local usb_wan=$(($num - 1))
+    # change wan status
+    to_log "####### wandetect loop #############"
+    local cur=0
+    while [ "$cur" -lt "$num" ]
+    do 
+        enable=$(nvram show wan_main_rule $cur enable)
+        action=$(nvram show wan_status_rule $cur action)
+        state=$(nvram show wan_status_rule $cur state)
+        type=$(nvram show wan_lb_rule $cur type)
+        priority_num="$(nvram show wan_status_rule $cur priority_num)"
+#        local turbo_nat_state="$(cat /proc/ezp_nat_ctrl)"
+        local turbo_nat_state=0
+#        local redirect_web_ipaddr="$(nvram show lan_static_rule 0 ipaddr)"
+#        local redirect_web_port="$(nvram show http_rule 0 port)"
+        local platform="$(nvram get platform)"
+#        local iptables_redirect_rule="$(iptables -t nat -L |grep "tcp dpt:80 to:${redirect_web_ipaddr}:${redirect_web_port}")"
+        local link1=0
+        check_link1 "$cur"
+        link1=$?
+        if [ "$link1" = "0" ]; then
+            nvram replace attr plug_rule $cur ethernet "0"
+        else
+            nvram replace attr plug_rule $cur ethernet "1"
+        fi
+
+#        [ "$redirect_web_port" = "80"  ] || {
+#            [ "$platform" = "AXA" -o "$platform" = "AXM" ] && {
+#                [ $state = "4" ] && {
+#                    [ -n "$iptables_redirect_rule" ] && {
+#                        iptables -t nat -D PREROUTING --dst ${redirect_web_ipaddr}  -p tcp --dport 80 -j DNAT --to-destination ${redirect_web_ipaddr}:${redirect_web_port}
+#                    }
+#                    [ $turbo_nat_state != "1" ] && {
+#                        local turbo_enable="$(nvram get turbonat_enable)"
+#                        [ "$turbo_enable" = "1" ] && {
+#                            echo "1" > /proc/ezp_nat_ctrl
+#                            logger "EZP_USR" "turboNAT [start]"
+#                        }
+#                    }
+#                } || {
+#                    [ $state != "4" ] && {
+#                        [ -z "$iptables_redirect_rule" ] && {
+#                            iptables -t nat -D PREROUTING --dst ${redirect_web_ipaddr} -p tcp --dport 80 -j DNAT --to-destination ${redirect_web_ipaddr}:${redirect_web_port}
+#                            iptables -t nat -I PREROUTING --dst ${redirect_web_ipaddr} -p tcp --dport 80 -j DNAT --to-destination ${redirect_web_ipaddr}:${redirect_web_port}
+#                        }
+#                        [ $turbo_nat_state = "1"  ] && {
+#                            echo "0" > /proc/ezp_nat_ctrl
+#                            logger "EZP_USR" "turboNAT [stop]"
+#                        }
+#                    }
+#                }
+#            }
+#        }
+
+        [ "$(nvram get platform)" = "GMA" ] && {
+            local proto=$(nvram get wan${cur}_proto)
+            local ifname=$(nvram get wan${cur}_ifname)
+            case $proto in
+            wwan)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            htc)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            directip)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            beceem)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            iphone)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            wimax)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            barry)
+                nvram set wan${cur}_upnp_proto=$proto 
+                nvram set wan${cur}_upnp_ifname=$ifname
+            ;;
+            esac
+        }
+
+        to_log "[$cur] type:$type action:$action state:$state"
+        local link=0
+        check_link $cur
+        link=$?
+        # execute based on $action
+        # wandetect push state 2 to 3
+        [ "$enable" = "1" ] && {
+            [ "$state" -ge "2" ] && {
+		/sbin/wandetect wan${cur} 
+	   }
+        }
+
+        # ifup state from 0 to 2
+        [ "$action" = "up" -o "$action" = "forceup" -o \
+          "$action" = "standby" ] && {
+            [ "$state" = "0" ] && [ "$link" = "1" -o "$(nvram get platform)" = "GMA" ] && {
+                [ "$priority_num" -ne "0" ] && {
+                    local priority_index="$(nvram show wan_status_rule $cur priority_index)"
+                    local proto="$(nvram show wan_priority_rule $priority_index)"
+                    local pre_proto=$(nvram get wan${cur}_proto)
+		    nvram replace attr wan_detect_rule 0 enable 0
+                    [ "$pre_proto" = "wisp" ] && {
+                        nvram set wl0_apcli_rule="0^^^^"
+                    }                        
+                    case $proto in
+                    dhcp)
+                        nvram set wan${cur}_proto=dhcp
+                        nvram set wan${cur}_ifname=vlan2
+                        nvram set wan${cur}_device=vlan2
+                    ;;
+                    wisp)
+                        nvram set wan${cur}_proto=wisp
+                        nvram set wan${cur}_ifname=apcli0
+                        nvram replace attr wl0_apcli_rule "0" enable "1"
+                        /sbin/ezp-wl-ctrl apcli_swap_scan
+                    ;;
+                    wwan)
+                        local proto="$(nvram get wan${cur}_upnp_proto)"
+                        local ifname="$(nvram get wan${cur}_upnp_ifname)"
+                        nvram set wan${cur}_proto="$proto"
+                        nvram set wan${cur}_ifname="$ifname"
+                    ;;
+                    esac
+                }
+                # reset trycount to 0
+                [ "$(nvram get wan${cur}_proto)" = "wisp" -a "$(nvram get platform)" = "GMA" ] && {
+                	nvram replace attr  WISP_detect_portal_rule  $cur captive_portal "0"
+                	nvram replace attr  WISP_detect_portal_rule  $cur status "0"
+				}
+                nvram replace attr wan_status_rule ${cur} trycount 0
+                    wan_up_down_foreground_background ifup $cur
+            }
+        }
+
+        # vpn status
+        to_log "####### vpn status #############"
+        [ "$(nvram show wan_pptp_l2tp_rule $cur enable)" = "1" ] && {
+
+            [ "$state" -lt "4" ] && {
+                nvram replace attr vpn_status_rule $cur state 0
+                nvram replace attr vpn_status_rule $cur action down
+            }
+
+            vpn_action=$(nvram show vpn_status_rule $cur action)
+            vpn_state=$(nvram show vpn_status_rule $cur state)
+
+            # ifup vpn state from 0 to 2
+            [ "$vpn_action" = "up" -a "$vpn_state" = "0"  ] && wan_up_down_foreground_background ifup $cur
+
+            # ifup vpn state from 2 to 4 based on $action
+            [ "$vpn_state" = "2" -a "$action" = "up" ] && {
+                nvram replace attr vpn_status_rule $cur state 3
+                wan_up_down_foreground_background ifup $cur
+            }
+        }
+	#[ "$state" = "4" -a "$(nvram get wan${cur}_proto)" = "wwan" -a "$(nvram show wan_detect_rule 0 enable)" = "0" ] && {
+	#    nvram replace attr wan_detect_rule 0 enable 1
+	#}
+
+        # ifup state from 3 to 4 based on $action
+        [ "$state" = "3" ] && [ "$action" = "up" -o "$action" = "forceup" ] && wan_up_down_foreground_background ifup $cur
+
+        # down
+        [ "$action" = "down" -o "$action" = "forcedown" ] && {
+            # [ "$state" -ge "1" ] && ifdown wan${cur}
+            ifdown wan${cur}
+        }
+        # if $state is 4 and $action is standby, change $state to 3
+        [ "$state" = "4" -a "$action" = "standby" ] && {
+            ifdown wan${cur}
+        }
+
+        # if $state is 4 and IP address is NULL, change state to 0 
+        [ "$state" = "4" -a -z "$(nvram get wan${cur}_ipaddr)" ] && {
+            ifdown wan${cur}
+        }
+        cur=$(($cur + 1)) 
+    done
+
+    # failover loop for wan num great than 1
+    to_log "####### failover loop #############"
+    to_log "####### Wifi storage skip failover loop ######"
+    [ "$(nvram get platforrm)" = "M2E" ] && {
+        return;
+    }
+    [ "$(nvram get platforrm)" = "ALS" ] && {
+        return;
+    }
+    cur=0
+    while [ "$cur" -lt "$num" ]
+    do
+        enable=$(nvram show wan_main_rule $cur enable)
+        type=$(nvram show wan_lb_rule $cur type)
+        backup=$(nvram show wan_lb_rule $cur backup)
+        state=$(nvram show wan_status_rule $cur state)
+        action=$(nvram show wan_status_rule $cur action)
+        proto=$(nvram get wan${cur}_proto)
+        trycount="$(nvram show wan_status_rule $cur trycount)"
+        maxcount="$(nvram show wan_main_rule $cur maxcount)"
+        flag=0
+        upnp_flag=1
+        local link=0
+        check_link $cur
+        link=$?
+
+        to_log "[$cur] type:$type backup:$backup state:$state link:$link"
+        to_log "[$cur] trycount:$trycount try max:$maxcount"
+        [ "$enable" = "1" ] && {
+            [ "$cur" = "$usb_wan" ] && {
+                upnp_enable=$(nvram show wanupnp_rule 0)
+                upnp_state=$(nvram show wan_upnp_status_rule 0 state)
+                upnp_proto=$(nvram show wan_upnp_status_rule 0 proto)
+                upnp_action=$(nvram show wan_upnp_status_rule 0 action)
+                wwan=$(nvram show appmgr_rule 0 wwan)
+                to_log "[$cur] upnp:$upnp_state upnp proto:$upnp_proto action:$upnp_action"
+                [ "$upnp_state" = "1" -a "$wwan" = "1" -a "$upnp_enable" = "1" ] && {
+                    [ "$(nvram get prod_cat)" = "U" ] && {
+                        if [ "$proto" = "htc" -o "$proto" = "iphone" \
+                          "$proto" = "wimax" -o "$proto" = "barry" ]; then 
+                            upnp_flag=0
+                        else
+                            upnp_flag=1
+                        fi
+                    }
+                    [ "$upnp_flag" = "1" ] && {
+                            if [ "$state" != "0" -a "$(nvram get ac340st)" != "setapn" ]; then
+                            do_if down wan$cur
+                        else
+                            upnp_action=$(nvram show wan_upnp_status_rule 0 action)
+                            case $upnp_action in
+                                up)
+                                    to_log "upnp start [$cur]"
+                                    upnp_start $cur
+                                ;;
+                                down)
+                                    to_log "upnp stop [$cur]"
+                                    usb-remove
+                                    upnp_stop $cur
+                                    nvram replace attr wan_upnp_status_rule 0 action none
+                                ;;
+                            esac
+                        fi
+                    }
+                }
+            }
+
+            # forceup
+            [ "$action" = "forceup" -a "$state" = "4" ] && {
+            # if action is forceup and state is 4, 
+            # it mean gui change wan status and forceup is completed.
+            # note: we cannot use do_if up $cur here
+                nvram replace attr wan_status_rule $cur action "up"
+            }
+           
+            # if $state is 4 and VPN Client is enable 
+            #[ "$state" = "4" -a "$(nvram show wan_pptp_l2tp_rule $cur enable)" = "1" ] && {
+            #    nvram replace attr vpn_status_rule ${cur} action "up"
+            #}
+            
+            local BRAND="$(nvram get brand)"
+            # action up
+            [ "$type" = "alwayson" -a "$state" = "0" ] && {
+                [ "$PLATFORM" = "GMA" -a "$proto" = "wisp" -a "$(nvram show wl0_apcli_rule 0 enable)" = "1" ] && {
+                    to_log "restart wisp to scan channel"
+                    /sbin/ezp-wl-ctrl apcli_swap_scan
+                }
+
+                [ "$cur" = "$usb_wan" ] && {
+                    [ "$(nvram show wan_upnp_status_rule 0 state)" != "1" ] && do_if up wan$cur 
+                } || {
+                    [ "$BRAND" = "APOLLO" -o "$BRAND" = "PROX" ] && {
+                        [ "$(nvram get wan0_proto)" = "wisp" -a "$(nvram show wl0_apcli_rule 0 enable)" = "1" ] && {
+                            to_log "restart wisp to scan channel"
+                            /sbin/ezp-wl-ctrl apcli_swap_scan
+                        }
+                    }
+                    do_if up wan$cur 
+                }
+            }
+            # standby
+            [ "$type" = "backup_standby" -a "$state" = "0" ] && {
+                [ "$cur" = "$usb_wan" ] && {
+                    [ "$(nvram show wan_upnp_status_rule 0 state)" != "1" ] && do_if up wan$cur 
+                } || {
+                    do_if standby wan$cur 
+                }
+            }
+
+            # EZP: XXX [ "$link" = "0"  -a "$state" != "0" ] && {
+            [ "$link" = "0" ] && {
+            # if proto is dhcp/static/pppoe and link is down,
+            # need to failover
+                [ "$(nvram get platform)" != "GMA" ] && {
+                    trycount=9999
+                }
+            }
+
+            # backup 
+            [ "$trycount" -ge "$maxcount" -a "$backup" != "none" ] && {
+            # if trycount equal to try_max or try is timeout,up backup wan
+                do_if up $backup
+            }
+
+            # forcedown
+            [ "$action" = "forcedown" -a "$state" = "0" ] && {
+            # if action is forcedown and state is 0, 
+            # it mean gui change wan status and ifdown is completed.
+                nvram replace attr wan_status_rule $cur action "down"
+            }
+
+            [ "$state" -ge "3" -a "$action" = "up" -a \
+              "$trycount" = "0" ] && {
+            # if current wan state is great equal to 3,
+            # and action is up, down backup wan
+                find_next_backup $cur
+            }
+
+            local BRAND="$(nvram get brand)"
+            [ "$trycount" -ge "$maxcount" ] && {
+            # if trycount equal to try_max,
+            # down current wan
+                [ "$(nvram get platform)" = "GMA" ] && {
+                    local priority_num="$(nvram show wan_status_rule $cur priority_num)"
+                    [ "$priority_num" -ne "0" ] && {
+                        local state=$(nvram show wan_status_rule $cur state)
+                        [ "$state" -eq "1" -o "$state" -eq "2" ] && {
+                            local priority_index="$(nvram show wan_status_rule $cur priority_index)"
+                            priority_index=$(($priority_index + 1))
+                            priority_index=$(($priority_index % $priority_num))
+                            nvram replace attr wan_status_rule ${cur} priority_index $priority_index    
+                        }                       
+                    }
+                }
+                trycount=0
+            # To avoid trycount add 1
+                flag=1
+                [ "$BRAND" = "PROX" -a "$cur" = "$usb_wan" ] && {
+                    USB_TRYCOUNT="$(nvram show wan_status_rule $cur usb_trycount)"
+                    USB_TRYCOUNT=$(($USB_TRYCOUNT + 1))
+                    nvram replace attr wan_status_rule $cur usb_trycount $USB_TRYCOUNT
+                }
+                do_if down wan$cur
+            }
+           
+            [ "$flag" != "1" ] && {
+                [ "$state" = "1" ] && trycount=$(($trycount + 1))
+                [ "$state" -ge "2" ] && {
+                    trycount=0
+                    [ "$BRAND" = "PROX" -a "$cur" = "$usb_wan" ] && nvram replace attr wan_status_rule $cur usb_trycount 0 
+                }
+            }
+            
+            nvram replace attr wan_status_rule $cur trycount $trycount
+        }
+        cur=$(($cur + 1)) 
+    done
+}
+do_if () {
+    local action=$1
+    local num=${2#wan}
+    local action_now=$(nvram show wan_status_rule $num action)
+    [ "$action_now" = "forcedown" -o "$action_now" = "forceup" ] && return
+    to_log "do_if $1 $2"
+    nvram replace attr wan_status_rule $num action "$action"
+}
+
+updown() {
+    local num;
+    local limit;
+
+    case $1 in
+        start)
+            [ -z "$NUM" ] && {
+                num=0
+                limit=$(nvram get wan_num)
+                while [ $num -lt $limit ]; do 
+                    if [ "$(nvram show wan_main_rule $num enable)" = "1" ]; then
+                        type=$(nvram show wan_lb_rule $num type)
+                        [ "$type" = "alwayson" -o "$type" = "standby" ] && {
+                            do_if forceup wan${num}
+                        }
+                    else
+                        do_if forcedown wan${num}
+                    fi
+                    num=$(($num + 1))
+                done
+            } || {
+                # check the wan specific is alive
+                type=$(nvram show wan_lb_rule $NUM type)
+                [ "$type" = "alwayson" -o "$type" = "standby" ] && {
+                    do_if forceup wan${NUM}
+                }
+            }
+        ;;
+        start-normal)
+            [ -z "$NUM" ] && {
+                num=0
+                limit=$(nvram get wan_num)
+                while [ $num -lt $limit ]; do 
+                    if [ "$(nvram show wan_main_rule $num enable)" = "1" ]; then
+                        type=$(nvram show wan_lb_rule $num type)
+                        [ "$type" = "alwayson" -o "$type" = "standby" ] && {
+                            do_if up wan${num}
+                        }
+                    fi
+                    num=$(($num + 1))
+                done
+            } || {
+                # check the wan specific is alive
+                type=$(nvram show wan_lb_rule $NUM type)
+                [ "$type" = "alwayson" -o "$type" = "standby" ] && {
+                    do_if up wan${NUM}
+                }
+            }
+        ;;
+        stop)
+            [ -z "$NUM" ] && {
+                num=0
+                limit=$(nvram get wan_num)
+                while [ $num -lt $limit ]; do 
+                    [ "$(nvram show wan_main_rule $num enable)" = "1" ] && {
+                        do_if forcedown wan${num}
+                    }
+                    num=$(($num + 1))
+                done
+            } || {
+                # check the wan specific is alive
+                do_if forcedown wan${NUM}
+            }
+        ;;
+        active_stop)
+            # OOB stop : we will run ifdown for iface $NUM immediately, to
+            # avoid delay in timing and avoid state massed up
+            [ -z "$NUM" ] && {
+                num=0
+                limit=$(nvram get wan_num)
+                while [ $num -lt $limit ]; do 
+                    [ "$(nvram show wan_main_rule $num enable)" = "1" ] && {
+                        nvram replace attr wan_status_rule ${num} action down
+                        ifdown wan${num}
+                    }
+                    num=$(($num + 1))
+                done
+            } || {
+                nvram replace attr wan_status_rule ${NUM} action down
+                ifdown wan${NUM}
+            }
+        ;;
+    esac
+}
+
+upnp_start () {
+    local num=$1
+    local proto=$(nvram show wan_upnp_status_rule 0 proto)
+    [ $proto = "wwan" -a "$(nvram show wan_wwan_probe_rule $num flag)" != "1" ] && {
+        proto="directip"
+        nvram replace attr wan_upnp_status_rule 0 proto directip
+    }
+    [ $proto != "wwan" -a "$(nvram show wan_wwan_probe_rule $num flag)" = "1" ] && {
+        proto="wwan"
+        nvram replace attr wan_upnp_status_rule 0 proto wwan
+    }
+    to_log "upnp proto is $proto"
+    [ -z "$(nvram get wan${num}_upnp_proto)" ] && \
+        nvram fset wan${num}_upnp_proto=$(nvram get wan${num}_proto)
+    [ -z "$(nvram get wan${num}_upnp_ifname)" ] && \
+        nvram fset wan${num}_upnp_ifname=$(nvram get wan${num}_ifname)
+    # change wan upnp state to 2
+    nvram replace attr wan_upnp_status_rule 0 state "2"
+    # If wan proto now is the same with upnp proto
+    # we do not change wan proto
+    [ "$(nvram get wan${num}_proto)" = "$proto" ] && return
+    nvram fset "wan${num}_upnp_cnnt_rule"="$(nvram get cnnt_rule)"
+    case $proto in
+        wwan)
+            nvram set wan${num}_proto=wwan    
+            nvram set wan${num}_ifname=ppp${num}
+            nvram set cnnt_rule="1^Ethernet^1^0^dhcp|1^WISP^1^0^wisp|1^USB^1^1^wwan"
+        ;;
+        htc)
+            nvram set wan${num}_proto=htc
+            nvram set wan${num}_ifname=usb0
+            nvram set cnnt_rule="1^Ethernet^1^0^dhcp|1^WISP^1^0^wisp|1^USB^1^1^htc"
+        ;;
+        directip)
+            nvram set wan${num}_proto=directip
+            nvram set wan${num}_ifname=usb0
+        ;;
+        beceem)
+            [ "$(nvram show appmgr_rule 0 beceem)" = "1" ] && { 
+                nvram set wan${num}_proto=beceem
+                nvram set wan${num}_ifname=eth0
+            }
+        ;;
+        iphone)
+            [ "$(nvram show appmgr_rule 0 iphone)" = "1" ] && { 
+                nvram set wan${num}_proto=iphone
+                nvram set wan${num}_ifname=eth0
+                nvram set cnnt_rule="1^Ethernet^1^0^dhcp|1^WISP^1^0^wisp|1^USB^1^1^iphone"
+            }
+        ;;
+        wimax)
+            [ "$(nvram show appmgr_rule 0 wimax)" = "1" ] && { 
+                nvram set wan${num}_proto=wimax
+                nvram set wan${num}_ifname=wimax0
+            }
+        ;;
+        barry)
+            [ "$(nvram show appmgr_rule 0 barry)" = "1" ] && { 
+                nvram set wan${num}_proto=barry
+                nvram set wan${num}_ifname=ppp${num}
+            }
+        ;;
+    esac
+    # If product is P1, need to config ethernet port 
+    # to wan or lan by wan proto
+    [ "$(nvram show appmgr_rule 0 portcfg)" = "1" ] &&  \
+        ezp-vlan esw config_p1_port lan
+}
+
+upnp_stop () {
+    local num=$1
+    local proto;
+    local ifname;
+    local cnntrule="$(nvram get wan${num}_upnp_cnnt_rule)"
+    proto=$(nvram get wan${num}_upnp_proto)
+    ifname=$(nvram get wan${num}_upnp_ifname)
+    # change wan upnp state to 0
+    nvram replace attr wan_upnp_status_rule 0 state "0"
+    # If upnp proto is empty, it mean the upnp stop already executed.
+    [ -z "$proto" -a -z "$ifname" ] && return
+    [ -n "$proto" ] && {
+        [ "$proto" = "$(nvram get wan${num}_proto)" ] || \
+            nvram fset wan${num}_proto=$proto
+        nvram unset wan${num}_upnp_proto
+    }
+    [ -n "$ifname" ] && {
+        [ "$ifname" = "$(nvram get wan${num}_ifname)" ] || \
+            nvram fset wan${num}_ifname=$ifname
+        nvram unset wan${num}_upnp_ifname
+    }
+    [ -n "$cnntrule" ] && {
+        nvram fset cnnt_rule="$cnntrule"
+        nvram unset wan${num}_upnp_cnnt_rule
+    }
+}
+
+find_next_backup() {
+    local backup=$(nvram show wan_lb_rule $1 backup)
+    if [ "$backup" != "none" ]; then
+        local backup_idx=${backup#wan}
+        local action=$(nvram show wan_status_rule $backup_idx action)
+        local type=$(nvram show wan_lb_rule $backup_idx type)
+        [ "$action" = "up" ] && {
+            case $type in
+                backup_standby)
+                    to_log "bakcup wan $backup standby"
+                    do_if standby $backup
+                ;;
+                backup)
+                    to_log "bakcup wan $backup down"
+                    do_if down $backup
+                ;;
+            esac
+        }
+        find_next_backup $backup_idx
+    fi
+}
+
+find_portidx() {
+    widx=$1
+    local i=0
+    local vnum=$(nvram get vlan_rule_num)
+    while [ "$i" -lt "$vnum" ]
+    do
+        local name=$(nvram show vlan_rule $i name)
+        local idx=$(($widx + 1))
+        [ "$name" = "WAN${idx}" ] && {
+            vid=$(nvram show vlan_rule $i vid)
+            j=0
+            port_num=$(nvram get vlanport_rule_num)
+            while [ "$j" -lt "$port_num" ]
+            do
+                [ "$vid" = "$(nvram show vlanport_rule $j pvid)" ] && {
+                    port=$(nvram show vlanport_rule $j portid)
+                    return $port
+                }
+                j=$(($j + 1))
+            done
+        }
+        i=$(($i + 1))
+    done
+    return 255 
+}
+
+check_link1() {
+    local proto=$(nvram get wan${1}_proto)
+    local platform=$(nvram get platform)
+    [ "$platform" = "ALS" ] && return 1
+    # if proto is not dhcp/static/pppoe, do not check 
+
+    local ret=0
+    local sw_type=$(nvram get switch_type)
+    local portcfg=$(nvram get port_config)
+    find_portidx $1
+    local port=$?
+    [ "$port" != "255" ] && {
+        case $sw_type in
+            esw)
+                [ "$eth_port_plug_stat" = "NotDetected" ] && {
+                    if [ "$platform" = "M2E" -o "$platform" = "ALS" ]; then
+                        eth_port_plug_stat=$(switch reg r 0x3408 | sed 's/^.*value=//g')
+                        [ "$eth_port_plug_stat" != "0" ] && eth_port_plug_stat=1
+                    else
+                        eth_port_plug_stat=$(switch portst link $port)
+                    fi
+                }
+                ret="$eth_port_plug_stat"
+            ;;
+            ar8316|ar8328)
+                [ "$eth_port_plug_stat" = "NotDetected" ] && {
+                    port=$(($port + 1))
+                    eth_port_plug_stat=$(switch extportst link $port)
+                }
+                ret="$eth_port_plug_stat"
+            ;;
+        esac
+    }
+   
+    return $ret    
+}
+
+check_link() {
+    local proto=$(nvram get wan${1}_proto)
+    local platform=$(nvram get platform)
+    [ "$platform" = "ALS" ] && return 1
+    # if proto is not dhcp/static/pppoe, do not check 
+    [ "$proto" != "dhcp" -a "$proto" != "static" -a "$proto" != "pppoe" ] && return 1
+
+    local ret=0
+    local sw_type=$(nvram get switch_type)
+    local portcfg=$(nvram get port_config)
+    find_portidx $1
+    local port=$?
+    [ "$port" != "255" ] && {
+        case $sw_type in
+            esw)
+                [ "$eth_port_plug_stat" = "NotDetected" ] && {
+                    if [ "$platform" = "M2E" -o "$platform" = "ALS" ]; then
+                        eth_port_plug_stat=$(switch reg r 0x3408 | sed 's/^.*value=//g')
+                        [ "$eth_port_plug_stat" != "0" ] && eth_port_plug_stat=1
+                    else
+                        eth_port_plug_stat=$(switch portst link $port)
+                    fi
+                }
+                ret="$eth_port_plug_stat"
+            ;;
+            ar8316|ar8328)
+                [ "$eth_port_plug_stat" = "NotDetected" ] && {
+                    port=$(($port + 1))
+                    eth_port_plug_stat=$(switch extportst link $port)
+                }
+                ret="$eth_port_plug_stat"
+            ;;
+        esac
+    }
+
+    return $ret
+}
+[ -z "$1" ] && {
+    echo "Usage :"
+    echo "ifcontrol lb : start ifcontrol state machine transition"
+    echo "ifcontrol wan_updown stop: force a wan# to stop"
+    echo "ifcontrol wan_updown start: force a wan# to start until state 4, while not state 4, this wan can't be stoped"
+    echo "ifcontrol wan_updown start-normal: force a wan# to start with normal up, can be stoped before reach sate 4"
+    echo "Environment Variable : NUM : specify the # of wan we like to start with"
+    exit
+}
+wan_up_down_foreground_background() {
+    local wanact="$1"
+    local wannum="$2"
+    [ "$(nvram show wan_wwan_probe_rule ${wannum} stayfg)" = "fg" ] && {
+        $wanact wan${wannum} 
+    } || {
+        $wanact wan${wannum} &
+    }
+}
+
+mode=$1
+shift
+lock $LOCK_FILE
+err=0
+
+local PLATFORM="$(nvram get platform)"
+#Ethernet PHY check
+[ "$PLATFORM" = "AXA" ] && {
+    switch mii w 4 0 0 800
+    [ "$eth_port_plug_stat" = "NotDetected" ] && eth_port_plug_stat="$(switch portst link 4)"
+    [ "$eth_port_plug_stat" != "1" ] && switch mii w 0 4 800 800
+}
+
+case $mode in
+    lb)
+        load_balance_failover_action
+    ;;
+    wan_updown)
+        updown $@
+        load_balance_failover_action
+    ;;
+esac
+lock -u $LOCK_FILE

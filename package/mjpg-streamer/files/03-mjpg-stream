@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. /etc/arch.sh
+
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+# If product is not usb camera exit this function
+[ "$product" != "1871" -a "$product" != "90c" -a "$product" != "58f" \
+  -a "$product" != "ac8" ] && exit
+
+case "$ACTION" in
+        add)
+            case "$product" in
+                1871|58f|ac8)
+                    nvram replace attr camera_rule 0 format yuv
+                ;;
+                90c)
+                    nvram replace attr camera_rule 0 format mjpeg
+                ;;
+            esac
+            /etc/rc.common /etc/init.d/mjpg-streamer start 
+            arch_led_stop storage
+        ;;
+        remove)
+            nvram replace attr camera_rule 0 format ""
+            /etc/rc.common /etc/init.d/mjpg-streamer stop
+            arch_led_stop usbremove 
+        ;;
+esac
+

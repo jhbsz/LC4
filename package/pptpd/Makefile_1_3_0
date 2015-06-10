@@ -1,0 +1,121 @@
+# 
+# Copyright (C) 2006 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=pptpd
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/poptop
+#PKG_MD5SUM:=75d494e881f7027f4e60b114163f6b67
+PKG_MD5SUM:=36f9f45c6ffa92bc3b6e24ae2d053505
+
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/pptpd
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+kmod-ppp +kmod-gre +kmod-mppe +ppp
+  TITLE:=PopTop pptp server
+  URL:=http://www.poptop.org/
+  SUBMENU:=VPN
+endef
+
+# EZP: this should depend on menuconfig
+# TODO: Remove  WAN_NUM, LAN_NUM, WL_NUM
+ifeq ($(CONFIG_TARGET_ralink),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_ralink_7620),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_as500),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_AS500
+endif
+
+ifeq ($(BR2_LINUX_2_4_FV13XX),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_FV13XX
+endif
+
+ifeq ($(BR2_LINUX_2_4_BRCM),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_BRCM
+endif
+EZP_CFLAGS+= -DWAN_NUM=$(CONFIG_WAN_NUM) -DLAN_NUM=$(CONFIG_LAN_NUM) -DWL_NUM=$(CONFIG_WL_NUM) \
+ -DEZP_PROD_BRAND_$(CONFIG_EZP_SECRET) \
+ -DEZP_PROD_VERSION=$(CONFIG_EZP_PRODUCT_VERSION) \
+ -DCUSTOM_PROD_VERSION=$(CONFIG_CUSTOM_PRODUCT_VERSION) \
+ -DPLATFORM=$(CONFIG_TARGET_PLATFORM) \
+ -DPLATFORM_$(CONFIG_TARGET_PLATFORM) \
+ -DSWITCH=$(CONFIG_TARGET_SW_TYPE) \
+ -DHTTPD_DISPLAY=\"$(CONFIG_HTTPD_DISPLAY)\"
+
+ifeq ($(CONFIG_EZP_PRODUCT_SUPERCATEGORY),"")
+# EZP: Pass WAN_NUM, LAN_NUM, WL_NUM while compiling
+EZP_CFLAGS+= -DEZP_PROD_SUPERCAT=$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+			 -DEZP_PROD_SUPERCAT_$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+			 -DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_CATEGORY) \
+			 -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_CATEGORY) \
+			 -DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_SUBCATEGORY) \
+			 -DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+			 -DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY)
+
+else
+EZP_CFLAGS+= -DEZP_PROD_SUPERCAT=$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+		-DEZP_PROD_SUPERCAT_$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+		-DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+		-DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+		-DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+		-DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_SUBCATEGORY) \
+		-DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+		-DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+		-DEZP_PROD_MAJOR_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+		-DWAN_NUM_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY)=$(CONFIG_EZP_PRODUCT_MAJOR_WAN_NUM) \
+		-DEZP_PROD_ALT_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+		-DWAN_NUM_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY)=$(CONFIG_EZP_PRODUCT_ALT_WAN_NUM)
+endif
+
+EZP_CFLAGS+= -I $(TOPDIR)/package/ezp-nvram/src -I $(TOPDIR)/package/ezp-nvram/include
+
+define Build/Configure
+	$(call Build/Configure/Default, \
+		--with-bcrelay \
+	)
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default, \
+		COPTS="$(TARGET_CFLAGS) $(EZP_CFLAGS)" \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		INSTALL="install" \
+		all install \
+	)
+endef
+
+define Package/pptpd/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/pptpd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/pptpctrl $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/lib/pptpd
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pptpd/* $(1)/usr/lib/pptpd
+	$(INSTALL_DIR) $(1)/etc
+	ln -sf /tmp/pptpd.conf $(1)/etc/pptpd.conf
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/pptpd.init $(1)/etc/init.d/pptpd
+	$(INSTALL_DIR) $(1)/etc/ppp
+	ln -sf /tmp/options.pptpd $(1)/etc/ppp/options.pptpd
+	ln -sf /tmp/chap-secrets $(1)/etc/ppp/chap-secrets
+endef
+
+$(eval $(call BuildPackage,pptpd))

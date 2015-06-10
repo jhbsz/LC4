@@ -1,0 +1,439 @@
+#!/bin/sh
+. /etc/arch.sh
+. /etc/functions.sh
+
+local fstype
+
+get_blk_fstype() {
+    local blkdev=$1
+    for evalstr in $(blkid -s TYPE /dev/$blkdev); do
+        [ -n "$(echo $evalstr | grep TYPE)" ] && eval $evalstr
+        [ -n "$TYPE" ] && break
+    done
+    echo $TYPE
+}
+
+gen_def_path() {
+    local defpath=""
+    local defpdev=""
+    local defpcnt="$(nvram get st_defpath_rule_num)"
+    local idx="0"
+    # /tmp/mnt
+    local mntroot="$1"
+    # Qsync
+    local mntdevdir="$2"
+    while [ "$idx" -lt "$defpcnt" ]; do
+        defpath="$(nvram show st_defpath_rule $idx defpath)"
+        defpdev="$(nvram show st_defpath_rule $idx dev)"
+        [ "$defpdev" = "$mntdevdir" -a -n "$defpath" -a -n "$defpdev" ] && {
+            linkp="$(nvram show st_defpath_rule $idx linkp)"
+            [ ! -d "$mntroot/$defpdev/$defpath" ] && mkdir "$mntroot/$defpdev/$defpath"
+            ln -s "$mntroot/$defpdev/$defpath" "$mntroot/$linkp"
+        }
+        idx=$(($idx + 1))
+    done
+    [ ! -d "$mntroot/Qsync/.thumbnails" ] && mkdir "$mntroot/Qsync/.thumbnails"
+}
+
+gen_qid_file() {
+    local qunique_id_path="$1"
+    [ ! -f "$qunique_id_path" -o "$(cat $qunique_id_path)" != "$(nvram show wl0_ssid_rule 0 ssid)" ] && {
+        mkdir -p "$(dirname $qunique_id_path)"
+        nvram show wl0_ssid_rule 0 ssid > $qunique_id_path
+    }
+}
+
+local mount_root=""
+local USB=""
+local platform="$(nvram get platform)"
+local brand="$(nvram get brand)"
+[ "$platform" = "ALS" ] && { 
+    local USB_PATH="1-1.2"
+} || {
+    local USB_PATH="1-1.1"
+}
+local USB1_PATH="1-1.3"
+local USB_STORAGE_RULE_ID="0"
+local SD_STORAGE_RULE_ID="1"
+local Qsync_STORAGE_RULE_ID="2"
+local USB_DIR_NAME="$(nvram show storage_device_mount_rule ${USB_STORAGE_RULE_ID} mnt)"
+local Qsync_DIR_NAME="$(nvram show storage_device_mount_rule ${Qsync_STORAGE_RULE_ID} mnt)"
+[ "$platform" = "ALS" ] && { 
+    local SD_PATH="1-1.1"
+} || {
+    local SD_PATH="1-1.2"
+}
+local SD_DIR_NAME="$(nvram show storage_device_mount_rule ${SD_STORAGE_RULE_ID} mnt)"
+local STORAGE_RULE_ID="0"
+local brand="$(nvram get brand)"
+local HUBCHECK
+
+if [ "$platform" = "M2E" ]; then
+    mount_root="/tmp/mnt/fslite"
+else
+    mount_root="/tmp/mnt"
+fi
+
+###Qsync dir
+local unique_id_path="$mount_root/Qsync/.upload/.QG_ID"
+
+[ "$platform" = "AXA" ] && {
+    USB_PATH="$(nvram show storage_device_mount_rule ${USB_STORAGE_RULE_ID} uport)"
+    SD_PATH="$(nvram show storage_device_mount_rule ${SD_STORAGE_RULE_ID} uport)"
+}
+[ "$platform" = "M2E" ] && {
+    USB_PATH="$(nvram show storage_device_mount_rule ${USB_STORAGE_RULE_ID} uport)"
+    USB1_PATH="$(nvram show storage_device_mount_rule ${Qsync_STORAGE_RULE_ID} uport)"
+    SD_PATH="$(nvram show storage_device_mount_rule ${SD_STORAGE_RULE_ID} uport)"
+}
+[ "$platform" = "ALS" ] && {
+    USB_PATH="$(nvram show storage_device_mount_rule ${USB_STORAGE_RULE_ID} uport)"
+    SD_PATH="$(nvram show storage_device_mount_rule ${SD_STORAGE_RULE_ID} uport)"
+}
+
+[ "$platform" = "AXA" -o "$platform" = "LIS" ] && {
+	USB="$(echo $PHYSDEVPATH | awk 'FS="/" {print $7}')"
+	HUBCHECK="$(echo $PHYSDEVPATH | awk 'FS="/" {print $12}')"
+} 
+[ "$platform" = "M2E" ] && {
+	USB="$(echo $DEVPATH | awk 'FS="/" {print $7}')"
+	HUBCHECK="$(echo $DEVPATH | awk 'FS="/" {print $12}')"
+	USBPORT="$(echo $DEVPATH | awk 'FS="/" {print $8}')"
+}
+
+[ "$platform" = "ALS" ] && {
+   USB="$(echo $DEVPATH | awk 'FS="/" {print $7}' | awk 'FS=":" {print $1}')"
+   USB="$(echo $USB | awk 'FS=":" {print $1}')"
+   HUBCHECK="$(echo $DEVPATH | awk 'FS="/" {print $12}')"
+   USBPORT="$(echo $DEVPATH | awk 'FS="/" {print $8}')"
+}
+
+[ "$platform" = "M2E" ] && {
+    device="$(basename $DEVNAME)"
+} || {	
+	device=$(basename $DEVPATH)
+}
+
+
+if [ "$USB" = "$SD_PATH" ]; then
+    DIR_NAME="$SD_DIR_NAME"
+    STORAGE_RULE_ID="1"
+    
+elif [ "$USB" = "$USB1_PATH" ]; then
+    DIR_NAME="$Qsync_DIR_NAME"
+    STORAGE_RULE_ID="2"
+else
+    if [ -n "$HUBCHECK" -a "$brand" = "SONY" ]; then
+        exit
+    fi
+    
+    DIR_NAME="$USB_DIR_NAME"
+    STORAGE_RULE_ID="0"
+fi
+
+# We wait extra 1 seconds for sda/sdb/sdc ... until partition table extracted.
+local devnod="${device%%[0-9]*}"
+local devnum="${device#$devnod}"
+[ -z "$devnum" ] && sleep 2
+# if we have found a "sdaX" in partition table, we wait further more seconds
+# until device mounted
+[ -z "$devnum" -a -n "$(ls /dev/$devnod[0-9])" ] && sleep 3
+
+fstype="$(get_blk_fstype $device)"
+case "$ACTION" in
+    "add" | "change")
+        [ "$platform" = "AXA" -o "$platform" = "LIS" -o "$platform" = "M2E" ] && [ -n "$fstype" -o "$USB" = "$SD_PATH" ] && {
+            local PHY_PATH="/sys/devices/platform/rt3xxx-ehci/usb1/1-1/"
+            local bmAttr="$(cat $PHY_PATH$USB/bmAttributes)"
+            # With M2E platform we don't put hub into suspend mode due to
+            # randomly resume failure issue
+            [ "$platform" = "M2E" -o "$platform" = "ALS" ] && echo "on" > "$PHY_PATH/power/control"
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} insert_state "1"
+            [ -n "$bmAttr" -a "$((0x$bmAttr & 0x40))" = "0" ] && {
+                echo "auto" > "$PHY_PATH$USB/power/control"
+            }
+            # With AXA, we utilise immediate suspend after packets stop going
+            # through usb
+            [ "$platform" = "AXA" ] && echo "0" > $PHY_PATH/power/autosuspend
+        }
+        # !! FIXME !! For some reason, we only get change instead of add with
+        # sd card reader.
+        # We can recognise this file system and the related device folder is
+        # not mounted
+        [ -z "$fstype" ] && exit
+        local lock_file="/tmp/.drive_mount.lock"
+        lock $lock_file
+        [ -n "$(mount | grep "$mount_root/$DIR_NAME")" ] && {
+            lock -u $lock_file
+            arch_led_stop storage
+            exit
+        }
+
+        [ "$platform" = "AXA" -o "$platform" = "LIS" -o "$platform" = "M2E" ] && {
+            local devtype="${device%%[0-9]*}"
+            local rdrtype=$(nvram show card_reader_hardware_rule 0 dev)
+            [ "$USB" = "$SD_PATH" -a "$devtype" != "$rdrtype" -o "$USB" != "$SD_PATH" -a "$devtype" = "$rdrtype" ] && {
+                [ "$USB" = "$SD_PATH" ] && {
+                    nvram replace attr card_reader_hardware_rule 0 dev $devtype 
+                } || {
+                    nvram replace attr card_reader_hardware_rule 0 dev sda
+                }
+                [ "$platform" = "LIS" ] && {
+                    [ "$USB" = "$SD_PATH" ] && {
+                        nvram replace attr card_reader_hardware_rule 1 dev $devtype 
+                    } || {
+                        nvram replace attr card_reader_hardware_rule 1 dev sda
+                    }
+                }
+            }        
+        }
+        [ "$platform" = "AXA" -o "$platform" = "LIS" -o "$platform" = "M2E" -o "$platform" = "ALS" ] && {
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} insert_state "1"
+        }
+        # mount usb device
+
+        i=0
+        arch_led_start storage
+        mkdir -p $mount_root/$DIR_NAME
+        [ "$platform" = "M2E" ] && {
+            ln -s $mount_root/$DIR_NAME /tmp/mnt/$DIR_NAME
+        }
+        result=1
+        rmmod vfat
+        rmmod fat
+        while [ "$result" != "0" -a "$i" -lt "5" ];
+        do
+            case "$fstype" in
+            vfat)
+                insmod fat
+                insmod vfat
+                mount -t vfat -o iocharset=utf8,utf8=1,umask=0,noatime /dev/$device  $mount_root/$DIR_NAME
+                [ "$?" = "0" ] && {
+                    fs="vfat"
+                    result=0
+                }
+                /bin/sh /etc/init.d/send_mail $DIR_NAME mount
+            ;;
+            fat32)
+                insmod fat
+                insmod vfat
+                mount -t vfat -o iocharset=utf8,utf8=1,umask=0,noatime /dev/$device  $mount_root/$DIR_NAME
+                [ "$?" = "0" ] && {
+                    fs="vfat"
+                    result=0
+                }
+            ;;
+            exfat)
+                local exfat_result="1"
+                if [ "$brand" = "SONY" ]; then
+                    LD_LIBRARY_PATH=/usr/lib exfatfuse exfat /dev/$device $mount_root/$DIR_NAME -o batch_sync,waitonfat,count_free,noatime -- -o hard_remove,allow_other,big_writes -f &
+                    sleep 1
+                else
+                    [ "$platform" = "AXA" ] && {
+                        insmod texfat
+                        mount -t texfat -o umask=0,noatime /dev/$device  $mount_root/$DIR_NAME
+                    } || {
+                        mount.exfat -o iocharset=utf8,utf8=1,umask=0,noatime,nonempty /dev/$device  $mount_root/$DIR_NAME
+                        [ "$?" = "1" ] && umount -l $mount_root/$DIR_NAME
+                        [ -z "$(mount | grep $mount_root/$DIR_NAME)" ] && {
+                            mount.exfat -o iocharset=utf8,utf8=1,umask=0,ro,nonempty /dev/$device  $mount_root/$DIR_NAME
+                            [ "$?" = "1" ] && umount -l $mount_root/$DIR_NAME
+                        }   
+                    }
+                fi
+                [ -n "$(mount | grep $mount_root/$DIR_NAME)" ] && {
+                    exfat_result="0"
+                }
+
+                [ "$exfat_result" = "0" ] && {
+                    fs="exfat"
+                    # chmod 777 /tmp/mnt/$DIR_NAME
+                    result=0
+                }
+            ;;
+            ntfs)
+                local ntfs_result="1"
+                [ "$platform" = "AXA" ] && {
+                    insmod tntfs
+                    mount -o umask=0,noatime -t tntfs /dev/$device $mount_root/$DIR_NAME
+                } || {                                    
+                    insmod jnl
+                    insmod ufsd
+                    #ntfs-3g -o nls=utf8,umask=0,noatime /dev/$device /tmp/mnt/$DIR_NAME
+                    mount -t ufsd -o umask=0,noatime /dev/$device $mount_root/$DIR_NAME
+
+                }
+                [ -n "$(mount | grep $mount_root/$DIR_NAME)" ] && {
+                    ntfs_result="0"
+                }
+                [ "$ntfs_result" = "0" ] && {
+                    fs="ntfs"
+                    # chmod -R 777 /tmp/mnt/$DIR_NAME
+                    result=0
+                }
+            ;;
+            ext3|ext2|ext4)
+                insmod $fstype
+                mount -t $fstype -o noatime /dev/$device $mount_root/$DIR_NAME
+                [ "$?" = "0" ] && {
+                    fs="$fstype"
+                    # chmod -R 777 /tmp/mnt/$DIR_NAME
+                    result=0
+                }
+            ;;
+            hfsplus)
+                local hfs_result="1"
+                [ "$platform" = "AXA" ] && {
+                    insmod thfsplus
+                    mount -t thfsplus -o umask=0,noatime /dev/$device $mount_root/$DIR_NAME
+                } || {
+                   #insmod hfsplus
+                   # mount -t hfsplus -o umask=0,noatime /dev/$device /tmp/mnt/$DIR_NAME
+                    insmod jnl
+                    insmod ufsd
+                    mount -t ufsd -o umask=0,noatime /dev/$device $mount_root/$DIR_NAME
+                }
+                [ -n "$(mount | grep $mount_root/$DIR_NAME)" ] && {
+                    hfs_result="0"
+                }
+                [ "$hfs_result" = "0" ] && {
+                    fs="hfsplus"
+                    # chmod -R 777 /tmp/mnt/$DIR_NAME
+                    result=0
+                }
+            ;;
+            esac 
+            i=$(($i+1))
+            sleep 1
+        done
+        lock -u $lock_file
+        # mount succeed
+        [ "$result" = "0" ] && {
+            mkdir -p $mount_root/$DIR_NAME/.upload
+            logger -t "storage[60]" "USB-DEVICE:mount [OK][$DIR_NAME][$fs]"
+            nvram replace attr smbd_rule 0 enable 1
+            nvram replace attr smbd_rule 0 share_path mnt
+            nvram replace attr smbd_rule 0 codepage cp437
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} dev_name mnt/$DIR_NAME
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} format $fs
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} mount_state "mounted"
+            
+            #Qsync device
+            [ "$platform" = "M2E" ] && {
+                [ "$DIR_NAME" = "$SD_DIR_NAME" ] && {
+                    ezp-i2c wifi sd
+                }
+                [ "$DIR_NAME" = "$USB_DIR_NAME" ] && {
+                    ezp-i2c wifi usb_1
+                }
+                [ "$DIR_NAME" = "$Qsync_DIR_NAME" ] && {
+                    ezp-i2c wifi usb_2
+                }
+                sleep 1
+                ezp-i2c wifi storage
+                [ "$DIR_NAME" = "$Qsync_DIR_NAME" ] && {
+                    gen_def_path "$mount_root" "$DIR_NAME"
+                    gen_qid_file "$unique_id_path"
+                    sync
+                }
+            }
+            [ "$platform" = "ALS" ] && {
+		[ "$USB" = "$SD_PATH" -o "$USB" = "$USB_PATH" ] && {
+                    /bin/touch /tmp/mnt/$DIR_NAME/test
+                    test_rw=$?
+                    while [ $test_rw != 0 ]; do
+                	mount -t vfat -o remount,rw,iocharset=utf8,utf8=1,umask=0,noatime /dev/$device /tmp/mnt/$DIR_NAME
+                	/bin/touch /tmp/mnt/$DIR_NAME/test
+                	test_rw=$?
+                    done
+		}
+            }
+        }
+        # mount fail
+        [ "$result" -gt "0" ] && {
+            logger -t "storage[60]" "USB-DEVICE:mount [Failed][$DIR_NAME]"
+            [ "$ext_enable" = "1" ] && {
+                nvram replace attr storage_state_rule ${STORAGE_RULE_ID} mount_state "con_err"
+                case $result in
+                        "13")
+                        logger "EZP_USR" SMB-Client:Permission denied
+                        ;;
+                        "148")
+                        logger "EZP_USR" SMB-Client:Can not connect to host
+                        ;;
+                        *)
+                        logger "EZP_USR" SMB-Client:connect error
+                        ;;
+                esac
+            } || {
+                nvram replace attr storage_state_rule ${STORAGE_RULE_ID} mount_state "unknown"
+            }
+        }
+        USBSTORAGE_SERVICE
+        arch_led_stop storage
+        ;;
+    "remove")
+        [ "$platform" = "M2E" -o "$platform" = "ALS" ] && {
+            rm -rf /tmp/mnt/$DIR_NAME
+        }
+        # leave if we are not mounted
+        [ ! -d "$mount_root/$DIR_NAME" ] && exit
+        nvram replace attr storage_state_rule ${STORAGE_RULE_ID} insert_state "0"
+        arch_led_start usbremove
+        umount -l $mount_root/$DIR_NAME
+        local counter=0
+        local umount_result=0
+        while [ "$counter" -lt "5" ]; do
+            [ -z "$(mount | grep $mount_root/$DIR_NAME)" ] && {
+                logger -t "storage[28]" "USB-DEVICE:umount [OK][$DIR_NAME]"
+                rm -rf $mount_root/$DIR_NAME
+                nvram replace attr storage_state_rule ${STORAGE_RULE_ID} mount_state ""
+                counter=5
+                umount_result=1
+            } || {
+                sleep 1
+                counter=$(($counter+1))
+            }
+        done
+        [ $umount_result = "0" ] && {
+            umount -l $mount_root/$DIR_NAME
+            sleep 1
+            nvram replace attr storage_state_rule ${STORAGE_RULE_ID} mount_state ""
+            rm -rf $mount_root/$DIR_NAME
+            logger -t "storage[28]" "USB-DEVICE:umount [Failed][$DIR_NAME]"
+        }
+
+        /bin/sh /etc/init.d/send_mail $DIR_NAME umount
+    
+        [ -z "$(mount | grep vfat)" ] && {
+            rmmod vfat
+            rmmod fat
+        }
+        for fst in hfsplus ext2 ext3 ext4; do
+            [ -z "$(mount | grep $fst)" ] && {
+                rmmod $fst
+            }
+        done
+        [ "$platform" = "AXA" ] && {
+            # We remove fs kernel module in case some driver crash
+            rmmod tntfs
+            rmmod texfat
+            rmmod thfsplus
+        }
+        USBSTORAGE_SERVICE
+        [ "$platform" = "M2E" ] && {
+            [ "$DIR_NAME" = "$SD_DIR_NAME" ] && {
+                ezp-i2c wifi sd
+            }
+            [ "$DIR_NAME" = "$USB_DIR_NAME" ] && {
+                ezp-i2c wifi usb_1
+            }
+            [ "$DIR_NAME" = "$Qsync_DIR_NAME" ] && {
+                ezp-i2c wifi usb_2
+            }
+            sleep 1
+            ezp-i2c wifi storage
+        }
+        arch_led_stop usbremove
+    ;;
+esac

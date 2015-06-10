@@ -1,0 +1,31 @@
+--- ntpclient/ntpclient.c	2003-07-14 10:12:30.000000000 +0800
++++ ntpclient.new/ntpclient.c	2007-10-21 17:04:39.000000000 +0800
+@@ -128,7 +128,7 @@
+ #ifdef linux
+ 	struct timex txc;
+ 	txc.modes=0;
+-	if (__adjtimex(&txc) < 0) {
++	if (adjtimex(&txc) < 0) {
+ 		perror("adjtimex"); exit(1);
+ 	}
+ 	return txc.freq;
+@@ -145,7 +145,7 @@
+ 	struct timex txc;
+ 	txc.modes = ADJ_FREQUENCY;
+ 	txc.freq = new_freq;
+-	if (__adjtimex(&txc) < 0) {
++	if (adjtimex(&txc) < 0) {
+ 		perror("adjtimex"); exit(1);
+ 	}
+ 	return txc.freq;
+--- ntpclient/Makefile 2008-08-25 13:32:24.000000000 +0800
++++ ntpclient.new/Makefile  2008-08-25 13:32:34.000000000 +0800
+@@ -12,7 +12,7 @@
+ # CFLAGS += -DPRECISION_SIOCGSTAMP
+ CFLAGS += -DENABLE_DEBUG
+ CFLAGS += -DENABLE_REPLAY
+-# CFLAGS += -DUSE_OBSOLETE_GETTIMEOFDAY
++CFLAGS += -DUSE_OBSOLETE_GETTIMEOFDAY
+ 
+ LDFLAGS += -lrt
+ 

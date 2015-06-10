@@ -1,0 +1,133 @@
+Source-Makefile: target/linux/brcm-2.4/Makefile
+Target: brcm-2.4
+Target-Board: brcm-2.4
+Target-Kernel: 2.4
+Target-Name: Broadcom BCM947xx/953xx [2.4]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: pci pcmcia squashfs usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.4.35.4
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom based routers
+	(e.g. Linksys WRT54G(S), Asus WL-500g, Motorola WR850G)
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall kmod-switch kmod-diag nvram 
+Target-Profile: Broadcom
+Target-Profile-Name: Generic, Broadcom WiFi (default)
+Target-Profile-Packages: kmod-brcm-wl wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Default package set compatible with most BCM947xx hardware
+@@
+
+Target-Profile: BroadcomMimo
+Target-Profile-Name: Generic, Broadcom WiFi (MIMO)
+Target-Profile-Packages: kmod-brcm-wl-mimo wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Default package set compatible with 802.11n (draft) hardware
+@@
+
+Target-Profile: Atheros
+Target-Profile-Name: Generic, Atheros WiFi
+Target-Profile-Packages: kmod-madwifi
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Atheros WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: Generic, No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+Target-Profile: USBGeneric
+Target-Profile-Name: Generic USB
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Package set with for Broadcom routers with USB/USB2 (OHCI/EHCI) support.
+ Includes the WRTSL54GS, WL-520gU, WL-500gP v2, any other BCM5354 routers
+ with USB.
+@@
+
+Target-Profile: WL500G
+Target-Profile-Name: ASUS WL-500g
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-lp wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g with USB and parallel port support
+@@
+
+Target-Profile: WL500GD
+Target-Profile-Name: ASUS WL-500g Deluxe
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-uhci kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Deluxe with USB support
+@@
+
+Target-Profile: WL500GP
+Target-Profile-Name: ASUS WL-500g Premium
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-uhci-iv kmod-usb2 wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-500g Premium with USB support
+@@
+
+Target-Profile: WL700GE
+Target-Profile-Name: WL-700gE
+Target-Profile-Packages: -ppp -ppp-mod-pppoe -kmod-ipt-nathelper -iptables -dnsmasq -bridge kmod-ide-core kmod-ide-aec62xx kmod-fs-ext3 fdisk e2fsprogs
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Minimal package set optimized for booting the WL-700gE from flash with a writable filesystem
+	and the utilities to create a new filesystem on the HDD
+@@
+
+Target-Profile: WLHDD
+Target-Profile-Name: WL-HDD
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-ide-core kmod-ide-pdc202xx wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WL-HDD with USB and IDE support
+@@
+
+Target-Profile: WRT54G3G
+Target-Profile-Name: Linksys WRT54G3G
+Target-Profile-Packages: kmod-brcm-wl kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-pcmcia-core kmod-pcmcia-serial kmod-nozomi comgt wlc nas kmod-wlcompat
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set optimized for the WRT54G3G with UMTS support
+@@
+
+

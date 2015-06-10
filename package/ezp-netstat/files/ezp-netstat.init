@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+TRIGGER=90
+TRIGGER_STOP=90
+
+log_msg="network-monitor"
+
+start() {
+    [ "$(nvram show bw_monitor_rule 0 enable)" = "1" -a \
+      "$(nvram show bw_rule 0 enable)" = "1" ] && {
+        # silent & monitor for bandwidth
+        ezp-netstat -s
+    } || {
+        # silent & monitor for conntrack
+        ezp-netstat -snc
+    }
+} 
+
+stop() {
+    killall ezp-netstat
+}

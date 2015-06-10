@@ -1,0 +1,468 @@
+--- old/drivers/char/ralink_gpio.h	2013-10-09 13:48:37.000000000 +0800
++++ new/drivers/char/ralink_gpio.h	2013-12-19 10:06:18.074030605 +0800
+@@ -509,6 +509,7 @@
+ #define RALINK_GPIO_DIR_ALLOUT		0xFFFFFFFF
+ #else
+ #define RALINK_GPIO_DATA_MASK		0x00FFFFFF
++#define RALINK_GPIO_DATA_LEN		24
+ #define RALINK_GPIO_DIR_IN		0
+ #define RALINK_GPIO_DIR_OUT		1
+ #define RALINK_GPIO_DIR_ALLIN		0
+--- old/drivers/char/ralink_gpio.c	2013-10-09 13:48:37.000000000 +0800
++++ new/drivers/char/ralink_gpio.c	2013-12-19 15:47:55.063749131 +0800
+@@ -44,7 +44,7 @@
+ #endif
+ #include <asm/uaccess.h>
+ #include "ralink_gpio.h"
+-
++#include <linux/ezp-gpio.h>
+ #include <asm/rt2880/surfboardint.h>
+ 
+ #ifdef  CONFIG_DEVFS_FS
+@@ -118,6 +118,7 @@
+ u32 ra_gpio3924_led_clr = 0;
+ u32 ra_gpio7140_led_set = 0;
+ u32 ra_gpio7140_led_clr = 0;
++int ezp_gpio_start=0;
+ #if defined (RALINK_GPIO_HAS_7224)
+ u32 ra_gpio72_led_set = 0;
+ u32 ra_gpio72_led_clr = 0;
+@@ -292,175 +293,278 @@
+ 		unsigned long arg)
+ #endif
+ {
+-	unsigned long tmp;
++	unsigned long idx,tmp;
+ 	ralink_gpio_reg_info info;
+ #ifdef CONFIG_RALINK_GPIO_LED
+ 	ralink_gpio_led_info led;
+ #endif
+ 
++    idx = (req >> RALINK_GPIO_DATA_LEN) & 0xFFL;
+ 	req &= RALINK_GPIO_DATA_MASK;
+ 
+ 	switch(req) {
+-	case RALINK_GPIO_SET_DIR:
+-		*(volatile u32 *)(RALINK_REG_PIODIR) = cpu_to_le32(arg);
+-		break;
+-	case RALINK_GPIO_SET_DIR_IN:
+-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
+-		tmp &= ~cpu_to_le32(arg);
+-		*(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
+-		break;
+-	case RALINK_GPIO_SET_DIR_OUT:
+-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
+-		tmp |= cpu_to_le32(arg);
+-		*(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
+-		break;
+-	case RALINK_GPIO_READ: //RALINK_GPIO_READ_INT
+-		tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
+-		put_user(tmp, (int __user *)arg);
+-		break;
+-	case RALINK_GPIO_WRITE: //RALINK_GPIO_WRITE_INT
+-		*(volatile u32 *)(RALINK_REG_PIODATA) = cpu_to_le32(arg);
+-		break;
+-	case RALINK_GPIO_SET: //RALINK_GPIO_SET_INT
+-		*(volatile u32 *)(RALINK_REG_PIOSET) = cpu_to_le32(arg);
+-		break;
+-	case RALINK_GPIO_CLEAR: //RALINK_GPIO_CLEAR_INT
+-		*(volatile u32 *)(RALINK_REG_PIORESET) = cpu_to_le32(arg);
+-		break;
+-	case RALINK_GPIO_ENABLE_INTP:
+-		*(volatile u32 *)(RALINK_REG_INTENA) = cpu_to_le32(RALINK_INTCTL_PIO);
+-		break;
+-	case RALINK_GPIO_DISABLE_INTP:
+-		*(volatile u32 *)(RALINK_REG_INTDIS) = cpu_to_le32(RALINK_INTCTL_PIO);
+-		break;
+-	case RALINK_GPIO_REG_IRQ:
+-		copy_from_user(&info, (ralink_gpio_reg_info *)arg, sizeof(info));
+-		if (0 <= info.irq && info.irq < RALINK_GPIO_NUMBER) {
+-			ralink_gpio_info[info.irq].pid = info.pid;
+-#if defined (RALINK_GPIO_HAS_2722)
+-			if (info.irq <= 21) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIORENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIORENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIOFENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIOFENA) = cpu_to_le32(tmp);
+-			}
+-			else {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO2722RENA));
+-				tmp |= (0x1 << (info.irq-22));
+-				*(volatile u32 *)(RALINK_REG_PIO2722RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO2722FENA));
+-				tmp |= (0x1 << (info.irq-22));
+-				*(volatile u32 *)(RALINK_REG_PIO2722FENA) = cpu_to_le32(tmp);
+-			}
+-#elif defined (RALINK_GPIO_HAS_9532)
+-			if (info.irq <= 31) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIORENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIORENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIOFENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIOFENA) = cpu_to_le32(tmp);
+-			} else if (info.irq <= 63) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO6332RENA));
+-				tmp |= (0x1 << (info.irq-32));
+-				*(volatile u32 *)(RALINK_REG_PIO6332RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO6332FENA));
+-				tmp |= (0x1 << (info.irq-32));
+-				*(volatile u32 *)(RALINK_REG_PIO6332FENA) = cpu_to_le32(tmp);
+-			} else {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9564RENA));
+-				tmp |= (0x1 << (info.irq-64));
+-				*(volatile u32 *)(RALINK_REG_PIO9564RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9564FENA));
+-				tmp |= (0x1 << (info.irq-64));
+-				*(volatile u32 *)(RALINK_REG_PIO9564FENA) = cpu_to_le32(tmp);
+-			}
++        ezp_gpio_start=1;
++        break;
++#if defined (CONFIG_BOARD_AME) || defined (CONFIG_BOARD_AXA) || defined(CONFIG_BOARD_AXB) || defined(CONFIG_BOARD_AXM) || defined(CONFIG_BOARD_LIS) || defined (CONFIG_BOARD_GMA) || defined (PLATFORM_M2E)
++    case EZP_GPIO_SET_DIR:
++        tmp = cpu_to_le32(arg);
++        *(volatile u32 *)(RALINK_REG_PIODIR) = tmp & 0x3FFFFF;
++#if EZP_LED_DEBUG
++        printk("SET_DIR_00_22 - REG %x write val %x\n",(RALINK_REG_PIODIR), tmp);
++#endif
++        tmp = (tmp >> 22);
++        *(volatile u32 *)(RALINK_REG_PIODIR + 0x50) = tmp;
++#if EZP_LED_DEBUG
++        printk("SET_DIR_22_27 - REG %x write val %x\n",(RALINK_REG_PIODIR + 0x50), tmp);
++#endif
++        break;
++    case EZP_GPIO_SET_DIR_IN:
++        if (arg >= 0x400000) {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR + 0x50));
++            tmp &= ~(cpu_to_le32(arg) >> 22);
++            *(volatile u32 *)(RALINK_REG_PIODIR + 0x50) = tmp;
++#if EZP_LED_DEBUG
++            printk("SET_DIR_IN_22_27 - REG %x write val %x\n",(RALINK_REG_PIODIR + 0x50), tmp);
++#endif
++        } else {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
++            tmp &= ~cpu_to_le32(arg);
++            *(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
++#if EZP_LED_DEBUG
++            printk("SET_DIR_IN_00_22 - REG %x write val %x\n",(RALINK_REG_PIODIR), tmp);
++#endif
++        }
++        break;
++    case EZP_GPIO_SET_DIR_OUT:
++        if (arg >= 0x400000) {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR + 0x50));
++            tmp |= (cpu_to_le32(arg) >> 22);
++            *(volatile u32 *)(RALINK_REG_PIODIR + 0x50) = tmp;
++#if EZP_LED_DEBUG
++            printk("SET_DIR_OUT_22_27 - REG %x write val %x\n",(RALINK_REG_PIODIR + 0x50), tmp);
++#endif
++        } else {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
++            tmp |= cpu_to_le32(arg);
++            *(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
++#if EZP_LED_DEBUG
++            printk("SET_DIR_OUT_00_22 - REG %x write val %x\n",(RALINK_REG_PIODIR), tmp);
++#endif
++        }
++        break;
++    case EZP_GPIO_READ: //EZP_GPIO_READ_INT
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++        tmp = tmp & 0x3FFFFF;
++#if EZP_LED_DEBUG
++        printk("READ_00_22 - REG %x read val %x\n",(RALINK_REG_PIODATA), tmp);
++#endif
++        tmp2 = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA + 0x50));
++#if EZP_LED_DEBUG
++        printk("READ_22_27 - REG %x read val %x\n",(RALINK_REG_PIODATA + 0x50), tmp2);
++#endif
++        tmp = (tmp2 << 22) | tmp;
++        put_user(tmp, (int __user *)arg);
++#if EZP_LED_DEBUG
++        printk("READ_00_27 - read val %x\n", tmp);
++#endif
++        break;
++    case EZP_GPIO_WRITE: //EZP_GPIO_WRITE_INT
++        tmp = cpu_to_le32(arg);
++        tmp2 = tmp & 0x3FFFFF;
++        *(volatile u32 *)(RALINK_REG_PIODATA) = tmp2;
++#if EZP_LED_DEBUG
++        printk("WRITE_00_22 - REG %x write val %x\n",(RALINK_REG_PIODATA), tmp2);
++#endif
++        tmp = (tmp >> 22);
++        *(volatile u32 *)(RALINK_REG_PIODATA + 0x50) = tmp;
++#if EZP_LED_DEBUG
++        printk("WRITE_22_27 - REG %x write val %x\n",(RALINK_REG_PIODATA + 0x50), tmp);
++#endif
++        break;
++    case EZP_GPIO_SET: //EZP_GPIO_SET_INT
++        if (arg >= 0x400000) {
++            tmp = (cpu_to_le32(arg) >> 22);
++            *(volatile u32 *)(RALINK_REG_PIOSET + 0x50) = tmp;
++#if EZP_LED_DEBUG
++            printk("PIO_SET_22_27 - REG %x write val %x\n",(RALINK_REG_PIOSET + 0x50), tmp);
++#endif
++        } else {
++            *(volatile u32 *)(RALINK_REG_PIOSET) = cpu_to_le32(arg);
++#if EZP_LED_DEBUG
++            printk("PIO_SET_00_22 - REG %x write val %x\n",(RALINK_REG_PIOSET), tmp);
++#endif
++        }
++        break;
++    case EZP_GPIO_CLEAR: //EZP_GPIO_CLEAR_INT
++        if (arg >= 0x400000) {
++            tmp = (cpu_to_le32(arg) >> 22);
++            *(volatile u32 *)(RALINK_REG_PIORESET + 0x50) = tmp;
++#if EZP_LED_DEBUG
++            printk("PIO_RESET_22_27 - REG %x write val %x\n",(RALINK_REG_PIORESET + 0x50), tmp);
++#endif
++        } else {
++            *(volatile u32 *)(RALINK_REG_PIORESET) = cpu_to_le32(arg);
++#if EZP_LED_DEBUG
++            printk("PIO_RESET_00_22 - REG %x write val %x\n",(RALINK_REG_PIORESET), tmp);
++#endif
++        }
++        break;
++    case EZP_GPIO_READ_BIT:
++        if (0L <= idx && idx < RALINK_GPIO_DATA_LEN) {
++            if (idx < 22) {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++            tmp = (tmp >> idx) & 1L;
++            put_user(tmp, (int __user *)arg);
++#if EZP_LED_DEBUG
++            printk("READ_BIT_00_22 - read pin %d val %x\n", idx, tmp);
++#endif
++            }else {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA + 0x50));
++            tmp = (tmp >> (idx - 22)) & 1L;
++            put_user(tmp, (int __user *)arg);
++#if EZP_LED_DEBUG
++            printk("READ_BIT_22_27 - read pin %x val %x\n", idx, tmp);
++#endif
++            }
++        }
++        else
++            return -EINVAL;
++        break;
+ #else
+-			if (info.irq <= 23) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIORENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIORENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIOFENA));
+-				tmp |= (0x1 << info.irq);
+-				*(volatile u32 *)(RALINK_REG_PIOFENA) = cpu_to_le32(tmp);
+-			}
+-#if defined (RALINK_GPIO_HAS_4524)
+-			else if (info.irq <= 39) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924RENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924FENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924FENA) = cpu_to_le32(tmp);
+-			}
+-			else {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO4540RENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO4540RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO4540FENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO4540FENA) = cpu_to_le32(tmp);
+-			}
+-#elif defined (RALINK_GPIO_HAS_5124)
+-			else if (info.irq <= 39) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924RENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924FENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924FENA) = cpu_to_le32(tmp);
+-			}
+-			else {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140RENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO5140RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140FENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO5140FENA) = cpu_to_le32(tmp);
+-			}
+-#elif defined (RALINK_GPIO_HAS_9524) || defined (RALINK_GPIO_HAS_7224)
+-			else if (info.irq <= 39) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924RENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924FENA));
+-				tmp |= (0x1 << (info.irq-24));
+-				*(volatile u32 *)(RALINK_REG_PIO3924FENA) = cpu_to_le32(tmp);
+-			}
+-			else if (info.irq <= 71) {
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO7140RENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO7140RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO7140FENA));
+-				tmp |= (0x1 << (info.irq-40));
+-				*(volatile u32 *)(RALINK_REG_PIO7140FENA) = cpu_to_le32(tmp);
+-			}
+-			else {
+-#if defined (RALINK_GPIO_HAS_7224)
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO72RENA));
+-				tmp |= (0x1 << (info.irq-72));
+-				*(volatile u32 *)(RALINK_REG_PIO72RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO72FENA));
+-				tmp |= (0x1 << (info.irq-72));
+-				*(volatile u32 *)(RALINK_REG_PIO72FENA) = cpu_to_le32(tmp);
+-#else
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9572RENA));
+-				tmp |= (0x1 << (info.irq-72));
+-				*(volatile u32 *)(RALINK_REG_PIO9572RENA) = cpu_to_le32(tmp);
+-				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9572FENA));
+-				tmp |= (0x1 << (info.irq-72));
+-				*(volatile u32 *)(RALINK_REG_PIO9572FENA) = cpu_to_le32(tmp);
+-#endif
+-			}
+-#endif
+-#endif
+-		}
+-		else
+-			printk(KERN_ERR NAME ": irq number(%d) out of range\n",
+-					info.irq);
+-		break;
++    case EZP_GPIO_SET_DIR:
++        *(volatile u32 *)(RALINK_REG_PIODIR) = cpu_to_le32(arg);
++        break;
++    case EZP_GPIO_SET_DIR_IN:
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
++        tmp &= ~cpu_to_le32(arg);
++        *(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
++        break;
++    case EZP_GPIO_SET_DIR_OUT:
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
++        tmp |= cpu_to_le32(arg);
++        *(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
++        break;
++    case EZP_GPIO_READ: //EZP_GPIO_READ_INT
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++        put_user(tmp, (int __user *)arg);
++        break;
++    case EZP_GPIO_WRITE: //EZP_GPIO_WRITE_INT
++        *(volatile u32 *)(RALINK_REG_PIODATA) = cpu_to_le32(arg);
++        break;
++    case EZP_GPIO_SET: //EZP_GPIO_SET_INT
++        *(volatile u32 *)(RALINK_REG_PIOSET) = cpu_to_le32(arg);
++        break;
++    case EZP_GPIO_CLEAR: //EZP_GPIO_CLEAR_INT
++        *(volatile u32 *)(RALINK_REG_PIORESET) = cpu_to_le32(arg);
++        break;
++    case EZP_GPIO_READ_BIT:
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++        if (0L <= idx && idx < RALINK_GPIO_DATA_LEN) {
++            tmp = (tmp >> idx) & 1L;
++            put_user(tmp, (int __user *)arg);
++        }
++        else
++            return -EINVAL;
++        break;
++#endif
++    case EZP_GPIO_WRITE_BIT:
++        if (0L <= idx && idx < RALINK_GPIO_DATA_LEN) {
++            tmp =le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++            if (arg & 1L)
++                tmp |= (1L << idx);
++            else
++                tmp &= ~(1L << idx);
++            *(volatile u32 *)(RALINK_REG_PIODATA)= cpu_to_le32(tmp);
++        }
++        else
++            return -EINVAL;
++        break;
++    case EZP_GPIO_READ_BYTE:
++        tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++        if (0L <= idx && idx < RALINK_GPIO_DATA_LEN/8) {
++            tmp = (tmp >> idx*8) & 0xFFL;
++            put_user(tmp, (int __user *)arg);
++        }
++        else
++            return -EINVAL;
++        break;
++    case EZP_GPIO_WRITE_BYTE:
++        if (0L <= idx && idx < RALINK_GPIO_DATA_LEN/8) {
++            tmp =le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODATA));
++            tmp &= ~(0xFFL << idx*8);
++            tmp |= ((arg & 0xFFL) << idx*8);
++            *(volatile u32 *)(RALINK_REG_PIODATA)= cpu_to_le32(tmp);
++        }
++        else
++            return -EINVAL;
++        break;
++    case EZP_GPIO_ENABLE_INTP:
++        *(volatile u32 *)(RALINK_REG_INTENA) = cpu_to_le32(RALINK_INTCTL_PIO);
++        break;
++    case EZP_GPIO_DISABLE_INTP:
++        *(volatile u32 *)(RALINK_REG_INTDIS) = cpu_to_le32(RALINK_INTCTL_PIO);
++        break;
++    case EZP_GPIO_REG_IRQ:
++        copy_from_user(&info, (ralink_gpio_reg_info *)arg, sizeof(info));
++        if (0 <= info.irq && info.irq < RALINK_GPIO_NUMBER) {
++            ralink_gpio_info[info.irq].pid = info.pid;
++            if (info.irq <= 23) {
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIORENA));
++            tmp |= (0x1 << info.irq);
++            *(volatile u32 *)(RALINK_REG_PIORENA) = cpu_to_le32(tmp);
++            tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIOFENA));
++            tmp |= (0x1 << info.irq);
++            *(volatile u32 *)(RALINK_REG_PIOFENA) = cpu_to_le32(tmp);
++        }
++#ifdef RALINK_GPIO_HAS_5124
++            else if (info.irq <= 39) {
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924RENA));
++                tmp |= (0x1 << (info.irq-24));
++                *(volatile u32 *)(RALINK_REG_PIO3924RENA) = cpu_to_le32(tmp);
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924FENA));
++                tmp |= (0x1 << (info.irq-24));
++                *(volatile u32 *)(RALINK_REG_PIO3924FENA) = cpu_to_le32(tmp);
++            }
++            else {
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140RENA));
++                tmp |= (0x1 << (info.irq-40));
++                *(volatile u32 *)(RALINK_REG_PIO5140RENA) = cpu_to_le32(tmp);
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO5140FENA));
++                tmp |= (0x1 << (info.irq-40));
++                *(volatile u32 *)(RALINK_REG_PIO5140FENA) = cpu_to_le32(tmp);
++            }
++#endif
++#ifdef RALINK_GPIO_HAS_9524
++            else if (info.irq <= 39) {
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924RENA));
++                tmp |= (0x1 << (info.irq-24));
++                *(volatile u32 *)(RALINK_REG_PIO3924RENA) = cpu_to_le32(tmp);
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO3924FENA));
++                tmp |= (0x1 << (info.irq-24));
++                *(volatile u32 *)(RALINK_REG_PIO3924FENA) = cpu_to_le32(tmp);
++            }
++            else if (info.irq <= 71) {
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO7140RENA));
++                tmp |= (0x1 << (info.irq-40));
++                *(volatile u32 *)(RALINK_REG_PIO7140RENA) = cpu_to_le32(tmp);
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO7140FENA));
++                tmp |= (0x1 << (info.irq-40));
++                *(volatile u32 *)(RALINK_REG_PIO7140FENA) = cpu_to_le32(tmp);
++            }
++            else {
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9572RENA));
++                tmp |= (0x1 << (info.irq-72));
++                *(volatile u32 *)(RALINK_REG_PIO9572RENA) = cpu_to_le32(tmp);
++                tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9572FENA));
++                tmp |= (0x1 << (info.irq-72));
++                *(volatile u32 *)(RALINK_REG_PIO9572FENA) = cpu_to_le32(tmp);
++            }
++#endif
++        }
++        else
++            printk(KERN_ERR NAME ": irq number(%d) out of range\n",
++                    info.irq);
++        break;
+ 
+ #if defined (RALINK_GPIO_HAS_2722)
+ 	case RALINK_GPIO2722_SET_DIR:

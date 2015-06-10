@@ -1,0 +1,30 @@
+--- lighttpd-1.4.30/src/chunk.c	2014-03-28 10:50:50.849572805 +0800
++++ lighttpd-1.4.30/src/chunk.c	2014-03-28 10:50:09.889573747 +0800
+@@ -338,14 +338,19 @@
+                         if (pch != NULL) {
+                             // Dst file contains cgi-bin characters
+                             char *root_dir = strstr(dst_file, "upload_root_dir");
+-                            char *dest_tmp_file = malloc(sizeof(char) * strlen(root_dir) + 1);
+-                            sprintf(dest_tmp_file, "%s", root_dir);
+-                            dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
+-                            char cgi_tmp[512];
+-                            strcpy(cgi_tmp, "/");
+-                            strcat(cgi_tmp, dest_tmp_file);
+-                            strcat(cgi_tmp, "/.upload");
+-                            buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
++                            if (root_dir) {
++                                char *dest_tmp_file = malloc(sizeof(char) * strlen(root_dir) + 1);
++                                sprintf(dest_tmp_file, "%s", root_dir);
++                                dest_tmp_file = dest_tmp_file + strlen("=%2F") + strlen("upload_root_dir");
++                                char cgi_tmp[512];
++                                strcpy(cgi_tmp, "/");
++                                strcat(cgi_tmp, dest_tmp_file);
++                                strcat(cgi_tmp, "/.upload");
++                                buffer_append_string_len(template, cgi_tmp, strlen(cgi_tmp));
++                            } else {
++                                c->file.fd = -1;
++                                break;
++                            }
+                         } else {
+                             buffer_append_string_len(template, dst_file, strlen(dst_file));
+                         }

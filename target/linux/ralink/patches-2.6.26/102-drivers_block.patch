@@ -1,0 +1,10 @@
+--- old/drivers/block/Kconfig	2008-07-14 05:51:29.000000000 +0800
++++ new/drivers/block/Kconfig	2008-11-25 21:10:06.000000000 +0800
+@@ -313,6 +313,7 @@
+ 
+ config BLK_DEV_RAM
+ 	tristate "RAM block device support"
++	depends on RT2880_ROOTFS_IN_RAM
+ 	---help---
+ 	  Saying Y here will allow you to use a portion of your RAM memory as
+ 	  a block device, so that you can make file systems on it, read and

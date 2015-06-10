@@ -1,0 +1,90 @@
+#!/bin/sh
+. /etc/arch.sh
+
+local prod_cat=$(nvram get prod_cat)
+[ "$prod_cat" = "C" -o "$prod_cat" = "T" -o "$prod_cat" = "D" -o "$prod_cat" = "K" -o "$prod_cat" = "G" ] || exit
+
+local lic_inv=$(nvram get license_invalid)
+local format_type="$1"
+local device=$(nvram show storage_state_rule 0 dev_name)
+local bs=$(nvram show storage_rule 0 block_size)
+local id=83
+local result="1"
+local size=""
+
+[ -z "$format_type" ] && exit
+[ -z "$(ls /dev/sda)" ] && {
+    logger  -t "storage[60]" "USB-DEVICE:format [Failed][Device do not exist]"
+    exit
+}
+[ -z "$(fdisk -l /dev/sda)" ] && {
+    logger  -t "storage[60]" "USB-DEVICE:format [Failed][Device do not support]"
+    exit
+}
+arch_led_start storage
+[ -f "/tmp/format.info" ] && rm /tmp/format.info
+local storage_size=$(fdisk -l /dev/sda | awk '/Disk/{print $5}')
+local cylinders=$(fdisk -l /dev/sda | awk '/track/{print $5}')
+local units=$(fdisk -l /dev/sda | awk '/Units/{print $9}')
+[ "$format_type" = "vfat" ] && {
+    id=b
+}
+# set swap partition size is 256 MB
+local swap_partition=$(($cylinders-$((268435456/$units))))
+
+[ -n "$device" ] && {
+    ACTION="remove" /sbin/hotplug-call block
+}
+arch_led_start storage
+nvram replace attr storage_state_rule 0 mount_state "formatting"
+nvram replace attr storage_state_rule 0 format ""
+# start fdisk
+fdisk /dev/sda << EOF > /dev/null
+o
+n
+p
+4
+$swap_partition
+
+n
+p
+1
+
+$size
+t
+4
+82
+t
+1
+$id
+w
+EOF
+sleep 5
+# mount swap partition
+mkswap /dev/sda4
+swapon /dev/sda4
+# start format sda1
+case "$format_type" in
+        "vfat")
+    # set 1 cluster include 128 sectors. 1 sector is 512 bytes 
+    # if we change sector size, windows can not recognize device file system.
+    # now the minimum store space is 64k bytes.
+                mkfs.vfat -F 32 -s 128 /dev/sda1 > /dev/null
+                [ "$?" == "0" ] && result="0"
+        ;;
+        "ext3")
+                mkfs.ext3 -b $bs /dev/sda1 > /dev/null
+                [ "$?" == "0" ] && result="0"
+        ;;
+esac
+nvram replace rule storage_state_rule 0 "^^"
+swapoff /dev/sda4
+sleep 5
+[ "$result" = "0" ] && {
+        logger  -t "storage[60]" "USB-DEVICE:format [OK][sda1][$format_type]"
+        ACTION="add" DEVPATH="sda1" /sbin/hotplug-call block
+}
+[ "$result" = "1" ] && {
+        logger  -t "storage[60]" "USB-DEVICE:format [Failed][sda1][$format_type]"
+}
+arch_led_stop storage

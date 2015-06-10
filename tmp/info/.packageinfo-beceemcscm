@@ -1,0 +1,16 @@
+Source-Makefile: package/beceemcscm/Makefile
+Package: CSCM
+Version: v1.1.6.0_source-1
+Depends: +libopenssl +beceemwimax
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Beceem CSCM crypto application
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Beceem WiMAX USB dangle  driver
+
+http://pptpclient.sourceforge.net/
+@@
+

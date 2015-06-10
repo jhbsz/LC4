@@ -1,0 +1,119 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+
+. $IPKG_INSTROOT/etc/functions.sh
+err=0
+log_msg="" 
+no_log=0
+start() {
+	return 0
+}
+
+stop() {
+    local pid
+
+    [ -f $PID_FILE ] && {
+        kill -TERM $(cat $PID_FILE) || err=1
+        rm -f $PID_FILE || err=1
+    }
+
+    return $err
+}
+
+reload() {
+	return 1
+}
+
+restart() {
+	trap '' TERM
+	stop "$@"
+	start "$@"
+}
+
+boot() {
+	start "$@"
+}
+
+shutdown() {
+	return 0
+}
+
+disable() {
+	name="$(basename "${initscript}")"
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/S??$name
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/K??$name
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/T??$name
+	rm -f "$IPKG_INSTROOT"/etc/rc.d/U??$name
+}
+
+enable() {
+	name="$(basename "${initscript}")"
+	disable
+	[ "$START" ] && ln -s "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/S${START}${name##S[0-9][0-9]}"
+	[ "$STOP"  ] && ln -s "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/K${STOP}${name##K[0-9][0-9]}"
+	[ "$TRIGGER"  ] && ln -s "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/T${TRIGGER}${name##T[0-9][0-9]}"
+	[ "$TRIGGER_STOP"  ] && ln -s "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/W${TRIGGER}${name##T[0-9][0-9]}"
+	[ "$USBSTORAGE" ] && ln -s "../init.d/$name" "$IPKG_INSTROOT/etc/rc.d/U${USBSTORAGE}${name##U[0-9][0-9]}"
+}
+
+enabled() {
+	name="$(basename "${initscript}")"
+	[ -x "$IPKG_INSTROOT/etc/rc.d/S${START}${name##S[0-9][0-9]}" ]
+}
+
+depends() {
+	return 0
+}
+
+#$1:service name $2:action $3:status
+log_usr () {
+    logger "EZP_USR" ${1}: $2 [${3}] $4
+}
+
+help() {
+	cat <<EOF
+Syntax: $initscript [command]
+
+Available commands:
+	start	Start the service
+	stop	Stop the service
+	restart	Restart the service
+	reload	Reload configuration files (or restart if that fails)
+	enable	Enable service autostart
+	disable	Disable service autostart
+$EXTRA_HELP
+EOF
+}
+
+initscript="$1"
+[ "$#" -ge 1 ] && shift
+action="$1"
+[ "$#" -ge 1 ] && shift
+
+. "$initscript"
+
+cmds=
+for cmd in $EXTRA_COMMANDS; do
+	cmds="${cmds:+$cmds$N}$cmd) $cmd \"\$@\";;"
+done
+eval "case \"\$action\" in
+	start) start \"\$@\";;
+	stop) stop \"\$@\";;
+	reload) reload \"\$@\" || restart \"\$@\";;
+	restart) restart \"\$@\";;
+	boot) boot \"\$@\";;
+	shutdown) shutdown \"\$@\";;
+	enable) enable \"\$@\";;
+	enabled) enabled \"\$@\";;
+	disable) disable \"\$@\";;
+	$cmds
+	*) help;;
+esac"
+[ "$no_log" = "1" ] && exit $err
+if [ "$err" = "0" ] ; then
+    log_usr $log_msg $action OK
+else
+    log_usr $log_msg $action Failed
+fi
+
+exit $err

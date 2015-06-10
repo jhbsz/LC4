@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. $IFNAME is given by hotplug.
+. /etc/network.sh
+TRIGGER=40
+TRIGGER_STOP=40
+log_msg="WANG"
+start () {
+    /etc/rc.d/S60network-acl start wan
+}
+stop () {
+    return $err
+}

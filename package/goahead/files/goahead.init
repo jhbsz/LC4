@@ -1,0 +1,65 @@
+#!/bin/sh /etc/rc.common
+BIN=/usr/sbin/goahead
+PID_FILE=/var/run/goahead.pid
+. /etc/network.sh
+TRIGGER=70
+LANTRIGGER=70
+log_msg="WEB-goahead"
+start () {
+	[ $(nvram show http_rule 0 enable) = 1 ] && {
+        local mgmtport="$(nvram show http_rule 0 port)"
+        #pidof httpd > /dev/null && stop
+        local rmgt_enable=$(nvram show http_rule 0 rmgt_enable)
+        local lanipaddr=" $(nvram get lan0_ipaddr) "
+        local wanipaddr=" $(nvram get wan0_ipaddr) "
+        [ "$rmgt_enable" = "1" -o "$rmgt_enable" = "all" ] && {
+            ipaddr=""
+        }
+        [ "$rmgt_enable" = "0" -o "$rmgt_enable" = "lan" ] && {
+            wdev="$(nvram get lan0_ifname)"
+            [ -n "$lanipaddr" ] && {
+                iptables -t filter -D EZP_FL_STATE -i $wdev \
+                    -d $lanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+                iptables -t filter -I EZP_FL_STATE -i $wdev \
+                    -d $lanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+            }
+            # Allow lan side web connection to wan ip
+            [ -n "$wanipaddr" ] && {
+                iptables -t filter -D EZP_FL_STATE -i $wdev \
+                    -d $wanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+                iptables -t filter -I EZP_FL_STATE -i $wdev \
+                    -d $wanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+            }
+        }
+        [ "$rmgt_enable" = "2" -o "$rmgt_enable" = "wan" ] && {
+            wdev="$(nvram get wan0_ifname)"
+            [ -n "$wanipaddr" ] && {
+                iptables -t filter -D EZP_FL_STATE -i $wdev \
+                    -d $wanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+                iptables -t filter -I EZP_FL_STATE -i $wdev \
+                    -d $wanipaddr -p tcp --dport ${mgmtport} -j ACCEPT
+            }
+        }
+        #add security server setting
+        secipaddr="$(nvram show http_rule 0 secipaddr)"
+        [ -n "$secipaddr" ] && {
+            iptables -t filter -D EZP_FL_STATE -s $secipaddr \
+                -p tcp --dport ${mgmtport} -j ACCEPT
+            iptables -t filter -I EZP_FL_STATE -s $secipaddr \
+                -p tcp --dport ${mgmtport} -j ACCEPT
+        }
+#        [ -n "$secipaddr" -o "$rmgt_enable" = "2" -o "$rmgt_enable" = "wan" -o \
+#          "$rmgt_enable" = "0" -o "$rmgt_enable" = "lan" ] && {
+#            iptables -t filter -D EZP_FL_STATE -d $wanipaddr -p tcp --dport ${mgmtport} \
+#                -j EZP_LOG_DROP
+#            iptables -t filter -A EZP_FL_STATE -d $wanipaddr -p tcp --dport ${mgmtport} \
+#                -j EZP_LOG_DROP
+#            iptables -t filter -D EZP_FL_STATE -d $lanipaddr -p tcp --dport ${mgmtport} \
+#                -j EZP_LOG_DROP
+#            iptables -t filter -A EZP_FL_STATE -d $lanipaddr -p tcp --dport ${mgmtport} \
+#                -j EZP_LOG_DROP
+#        }
+	    killall goahead
+        goahead &
+    }
+}

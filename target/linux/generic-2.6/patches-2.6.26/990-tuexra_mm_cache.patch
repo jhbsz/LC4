@@ -1,0 +1,11 @@
+--- linux-2.6.26/arch/mips/mm/cache.c	2013-07-18 14:01:18.497769534 +0800
++++ linux-2.6.26/arch/mips/mm/cache.c	2013-07-18 14:01:49.197770403 +0800
+@@ -132,7 +132,7 @@
+ }
+ 
+ unsigned long _page_cachable_default;
+-EXPORT_SYMBOL_GPL(_page_cachable_default);
++EXPORT_SYMBOL(_page_cachable_default);
+ 
+ static inline void setup_protection_map(void)
+ {

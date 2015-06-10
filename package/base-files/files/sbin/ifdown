@@ -1,0 +1,233 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh
+. /etc/arch.sh
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+debug "### ifdown $iface ###"
+LOCKFILE=/tmp/.iface.changestate.${iface}.lock
+
+vpn_client_down () {
+#    killall ifup.$(nvram show wan_pptp_l2tp_rule $num vpn_type) >&- 2>&-
+    # This triggers ip-down which unset NVRAM and generates an ifdown event.
+    ifs=$(nvram get vpn${num}_ifname)
+    [ -r /var/run/${ifs}.pid ] && {
+        IFACE_PID=$(cat /var/run/${ifs}.pid 2>&-)
+        lock -w /tmp/.ppp.changestate.${iface}.lock
+        if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+        [ -r /var/run/${ifs}.pid ] && {
+            IFACE_PID=$(cat /var/run/${ifs}.pid 2>&-)
+            kill_and_wait $IFACE_PID
+            rm -rf /var/run/${ifs}.pid
+        }
+    }
+    nvram replace attr vpn_status_rule $num state 0
+    nvram replace attr vpn_status_rule $num action "down"
+    nvram set vpn${num}_ifname=""
+    ipaddr="$(nvram get vpn${num}_ipaddr)"
+    [ -n $ipaddr ] && {
+        nvram set vpn${num}_ipaddr=""
+        nvram set vpn${num}_mask=""
+        nvram set vpn${num}_gateway=""
+    }
+} 
+vpn_enable="$(nvram show wan_pptp_l2tp_rule $num enable)"
+[ "$vpn_enable" = "1" -o "$(nvram show vpn_status_rule $num state)" -ge "1" ] && {
+    vpn_client_down
+}
+if=$(nvram get ${iface}_ifname)
+proto=$(nvram get ${iface}_proto)
+action=$(nvram show wan_status_rule $num action)
+
+to_log "ifdown $1"
+[ "$action" = "standby" ] && {
+    # set state to 3
+    nvram replace attr ${type}_status_rule $num state 3
+    iface_down $proto $iface
+    exit
+}
+# set state to 0
+nvram replace attr ${type}_status_rule $num state 0
+nvram replace attr ${type}_status_rule $num uptime 0
+
+PPP_DEMAND_STATE_FILE="/tmp/ppp-${iface}-demand.tmp"
+[ -f "${PPP_DEMAND_STATE_FILE}" ] && {
+  # ifdown from a connected connection, set to "demand-force-down"
+  [ "$(cat ${PPP_DEMAND_STATE_FILE})" = "demand-connected" ] && {
+    echo -n "demand-force-down" > ${PPP_DEMAND_STATE_FILE}
+  }
+}
+
+# Bring down the iface
+case "$proto" in
+	static) 
+        $DEBUG ip link set dev $if down
+        $DEBUG ip addr flush dev $if
+        if_serialize_lock "$LOCKFILE"
+        arp -d $(nvram get wan${num}_gateway)
+        iface_down $proto $iface
+    ;;
+    pppoe|barry) 
+        killall ifup.$proto >&- 2>&-
+        # This triggers ip-down which unset NVRAM and generates an ifdown event.
+        [ -r /var/run/${if}.pid ] && {
+            IFACE_PID=$(cat /var/run/${if}.pid 2>&-)
+            lock -w /tmp/.ppp.changestate.${iface}.lock
+            if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+            [ -r /var/run/${if}.pid ] && {
+                IFACE_PID=$(cat /var/run/${if}.pid 2>&-)
+                kill_and_wait $IFACE_PID
+                rm -rf /var/run/${if}.pid
+            }
+        }
+        [ "$(nvram get platform)" = "ALS" ] && {
+            gpioctl led 67 0 0 1 0 0
+        }
+    ;;
+    wwan) 
+        killall ifup.$proto >&- 2>&-
+        ifctrl_num=$(nvram show wan_wwan_probe_rule $num ctrltty)
+        [ -z "$ifctrl_num" ] && {
+            ifctrl_num=$(nvram show wan_wwan_rule $num ctrltty)
+        }
+        dev_name=$(nvram show wan_wwan_probe_rule $num devname)
+        [ -z "$dev_name" ] && {
+            dev_name=$(nvram show wan_wwan_rule $num devname)
+        }
+        [ -r /tmp/lock/LCK..${dev_name}${ifctrl_num} ] && {
+            PPPD_PID=$(cat /tmp/lock/LCK..${dev_name}${ifctrl_num})
+            kill -9 $PPPD_PID
+            rm -rf /tmp/lock/LCK..${dev_name}${ifctrl_num}
+        }
+        # This triggers ip-down which unset NVRAM and generates an ifdown event.
+        [ -r /var/run/${if}.pid ] && {
+            IFACE_PID=$(cat /var/run/${if}.pid 2>&-)
+            lock -w /tmp/.ppp.changestate.${iface}.lock
+            if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+            [ -r /var/run/${if}.pid ] && {
+                IFACE_PID=$(cat /var/run/${if}.pid 2>&-)
+                kill_and_wait $IFACE_PID
+                rm -rf /var/run/${if}.pid
+            }
+        }
+        [ "$(nvram get platform)" = "ALS" ] && {
+            gpioctl led 67 0 0 1 0 0
+        }
+        iface_update_default_route_and_dns
+    ;;
+    dhcp|htc|iphone|wimax|beceem)
+        # This triggers deconfig state which unset NVRAM and generates an 
+        # ifdown event.
+        [ -r /var/run/${iface}.pid ] && {
+            IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+            if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+            [ -r /var/run/${iface}.pid ] && {
+                IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+                kill_and_wait $IFACE_PID
+                rm -rf /var/run/${iface}.pid
+            }
+        }
+    ;;
+    wisp)
+        # For wisp, we need to set the apcli off before we really kill udhcpc
+        nvram replace attr wl0_apcli_rule 0 enable 0
+        # This triggers deconfig state which unset NVRAM and generates an 
+        # ifdown event.
+        [ -r /var/run/${iface}.pid ] && {
+            IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+            if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+            [ -r /var/run/${iface}.pid ] && {
+                [ -z "$(ifconfig $if | grep RUNNING)" ] && {
+                    ifconfig $if up
+                }
+                IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+                kill_and_wait $IFACE_PID
+                # killres="$?"
+                # [ "$killres" = "1" ] && kill -9 $IFACE_PID
+                rm -rf /var/run/${iface}.pid
+            }
+        }
+        [ -n "$(ifconfig $if | grep RUNNING)" ] && {
+            ifconfig $if down
+        }
+    ;;
+    vpnc)
+        local vpn_type=$(nvram show wan_pptp_l2tp_rule 0 vpn_type)
+        local iptype=$(nvram show wan_pptp_l2tp_rule 0 iptype)
+        local ifname_orig=$(nvram get ${iface}_ifname)
+        killall ifup.$vpn_type >&- 2>&-
+        killall pppd
+        [ "$vpn_type" = "l2tp" ] && {
+            killall l2tpd
+        }
+        # down wan connect
+        [ "$iptype" = "dhcp" ] && {
+            nvram fset ${iface}_proto=${iptype}
+            nvram fset ${iface}_ifname=vlan2
+            ifdown wan0
+            nvram fset ${iface}_ifname=$ifname_orig
+            nvram fset ${iface}_proto=vpnc
+        }
+        lock -u /tmp/ifupdown.lock
+    ;;
+    directip)
+        [ "$vpn_enable" = "1" ] && vpn_client_down
+        # This triggers deconfig state which unset NVRAM and generates an 
+        # ifdown event.
+        killall ifup.$proto >&- 2>&-
+        [ -r /var/run/${iface}.pid ] && {
+            # Turn down interface usb0, or it would occupy the USB's end
+            # points.
+            IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+            if_serialize_lock "$LOCKFILE" "$IFACE_PID"
+            [ -r /var/run/${iface}.pid ] && {
+                # FIXME: Wait for udhcpc being terminated because of an unknown
+                # reason that the interface $if will be brought up after bringing
+                # down.
+                # sleep 15
+                # ifconfig $if down
+                IFACE_PID=$(cat /var/run/${iface}.pid 2>&-)
+                kill_and_wait $IFACE_PID
+                rm -rf /var/run/${iface}.pid
+            }
+
+        }
+        $DEBUG ip link set dev $if down
+        $DEBUG ip addr flush dev $if
+        [ -n "$(nvram show wan_wwan_probe_rule $num product | grep "AirCard 340U")" ] && {
+            nvram fset ac340st=unplug
+            SCRIPT='at+cfun=0' ezpcom -d /dev/ttyUSB2 -s /etc/chatscripts/script.gcom > /tmp/ltestatus
+            sleep 2
+        }
+    ;;
+esac
+[ "$(nvram show wan_upnp_status_rule 0 state)" = "2" ] && \
+[ "$proto" = "wwan" -o "$proto" = "htc" -o "$proto" = "directip" \
+  -o "$proto" = "barry" -o "$proto" = "wimax" ] && {
+      arch_led_start wwan
+}
+BRAND=$(nvram get brand)
+[ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+    to_log "USB: check reset dongle: trycount=$(nvram show wan_status_rule $num usb_trycount)"
+    [ "$(nvram show wan_status_rule $num usb_trycount)" -ge "2" ] && {
+        [ "$proto" = "wwan" -o "$proto" = "directip" ] && {
+            [ "$(echo "$(cat /proc/bus/usb/devices)" | grep -c "Bus")" -ge "2" ] && {
+                to_log "USB: reset dongle"
+                nvram replace attr wan_status_rule $num usb_trycount 0 
+                gpioctl led 0 0 1 0 0 0
+                sleep 1
+                gpioctl led 0 1 0 0 0 0
+                rmmod sierra option
+                rmmod usbserial
+                insmod usbserial
+                insmod sierra
+                insmod option
+
+                ezpcom-mode
+            }
+        }
+    }
+}

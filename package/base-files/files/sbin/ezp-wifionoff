@@ -1,0 +1,40 @@
+#!/bin/sh 
+PID_DIR="/tmp/ezp-wifionoff"
+. /etc/arch.sh
+gethide_status()
+{
+    local wlvidx=$1
+    # We hide the ssid when ssid is hiddne, ssid is disabled or wifi is off
+     [ "$(nvram show wl_basic_rule 0 enable)" = "0" -o \
+       "$(nvram show wl0_basic_rule $wlvidx enable)" = "0" -o \
+       "$(nvram show wl0_basic_rule $wlvidx hidden)" = "1" ] && {
+           echo "1"
+       } || {
+           echo "0"
+       }
+}
+
+[ -d "$PID_DIR" ] && {
+    exit
+} || {
+    mkdir -p $PID_DIR
+}
+
+local wl_num=$(nvram get wlv_rule_num)
+local idx=0
+newstate=${1}
+[ -z "$newstate" ] && {
+    newstate="1"
+    [ "$(nvram show wl_basic_rule 0 enable)" = "1" ] && newstate="0"
+}
+nvram replace attr wl_basic_rule 0 enable "$newstate"
+iwpriv ra0 set RadioOn="$newstate"
+while [ "$idx" -lt "$wl_num" ]
+do 
+    iwpriv "ra${idx}" set HideSSID=$(gethide_status $idx)
+    idx=$(($idx + 1))
+done
+[ "$newstate" -eq "1" ] && ifconfig ra0 up || ifconfig ra0 down
+nvram commit
+arch_led_start wifi
+rm -rf $PID_DIR

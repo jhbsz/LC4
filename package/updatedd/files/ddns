@@ -1,0 +1,102 @@
+#!/bin/sh /etc/rc.common
+# hotplug event: $NUM and $TYPE are required. $IFNAME is given by hotplug.
+BIN=/usr/bin/updatedd
+RET_MSG_FILE=/var/run/updatedd_ret_msg
+. /etc/network.sh
+. /etc/functions.sh
+TRIGGER=99
+log_msg="DDNS-client"
+wan_str=""
+err=0
+
+host2ip () {
+	host=$1
+	ip=$(ping_get_host $host)
+	[ -z "$ip" ] && echo ""  && return 1
+	[ ! -z "$ip" ] && echo "$ip"  && return 0
+}
+
+chkipdyndns () {
+	checkip_server=$(host2ip checkip.dyndns.com)
+	[ -z "$checkip_server" ] && echo "" && return 1
+	ifname=$(nvram get wan${NUM}_ifname)
+	ip route add $checkip_server dev $ifname
+	echo $(wget -q http://${checkip_server}:8245 -O - | tr -d [a-z A-Z] | tr -d "<>/:\r" | tr -d " ")
+	ip route del $checkip_server dev $ifname
+	return 0
+}
+
+log_ddns_result () {
+    grep "empty" $RET_MSG_FILE && err=1
+    grep "Unknown host" $RET_MSG_FILE && err=1
+    grep "Network is unreachable" $RET_MSG_FILE && err=1
+    [ ! -s $RET_MSG_FILE -o "$err" != "1" ] && logger -t "ddnsassign[19]" "$wan_str" "$(cat $RET_MSG_FILE)"
+    [ "$err" = "1" ] && {
+        logger -t "ddnsassign[19]" "$wan_str" "Fail to update DDNS"
+        nvram replace attr cron_rule 0 ddns_countdown 30
+    }
+}
+
+compare_ip_then_update () {
+    if [ -z "$newip" ] ; then 
+        logger -t "ddnsassign[19]" "$wan_str" "Fail to get current public IP"
+    else	
+        if [ "$oldip" = "$newip" ] ; then
+            logger -t "ddnsassign[19]" "IP address( $newip ) of $ddns_hostname has not changed. No DDNS update required."
+        else
+            $BIN $ddns_type -- -4 $newip $server_arg $ddns_username:$ddns_userpasswd $ddns_hostname  2>&1 | tee $RET_MSG_FILE
+            log_ddns_result
+            rm -rf $RET_MSG_FILE
+        fi
+    fi	
+}
+
+start () {
+    [ "$TYPE" != "wan" -o -z "$NUM" ] && exit 1;
+ 
+    local BRAND="$(nvram get brand)"
+    [ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+	    [ "$NUM" == 0 ] && wan_str="WAN (Ethernet)" ||  wan_str="WAN (USB Modem)"
+    } || {
+    	    wan_str="WAN $(expr $NUM + 1 )"
+    }
+    
+    [ "$(nvram show wan_ddns_rule $NUM enable)" = "1" ] && {
+        ddns_type=$(nvram show wan_ddns_rule $NUM type)
+        ddns_username=$(nvram show wan_ddns_rule $NUM username)
+        ddns_userpasswd=$(nvram show wan_ddns_rule $NUM passwd)
+        ddns_hostname=$(nvram show wan_ddns_rule $NUM hostname)
+        ddns_server=$(nvram show wan_ddns_rule $NUM server)
+        oldip=$(host2ip $ddns_hostname)
+        newip=$(chkipdyndns)
+        server_arg=""
+        [ ! -z "$ddns_server" -a "$ddns_type" = "dyndns" ] && server_arg="-p $ddns_server -P 8245"
+        compare_ip_then_update
+    }
+
+    [ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+        ddns_type="dyndns"
+        ddns_username="781ugZ-Updater"
+        ddns_userpasswd="PRX15116"
+        serial=$(nvram get prox_serial)
+        ddns_hostname=${serial}.proxidns.com
+        ddns_server="members.dyndns.org"
+        oldip=$(host2ip $ddns_hostname)
+        newip=$(chkipdyndns)
+        server_arg="-p $ddns_server -P 8245"
+        compare_ip_then_update
+    }
+}
+
+stop () {
+    return $err
+}
+
+[ "$1" = "all" ] && {
+    WAN_NUM="$(nvram get wan_num)"
+    i=0
+    while [ $i -lt $WAN_NUM ]; do
+        [ "$(nvram show wan_status_rule $i state)" = "4" ] && TYPE=wan NUM=$i start
+        i="$(($i + 1))"
+    done
+}

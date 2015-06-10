@@ -1,0 +1,19 @@
+#!/bin/sh
+. /etc/arch.sh
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+[ "$product" != "fca" ] && exit
+[ "$(nvram show appmgr_rule 0 barry)" != "1" ] && exit
+case "$ACTION" in
+        add)
+        rmmod usb_storage
+        /sbin/wanupnp start barry
+        /sbin/wandetect start
+        arch_led_start wwan
+        ;;
+        remove)
+        /sbin/wanupnp stop
+        /sbin/usb-remove start
+        kill -9 $(pidof pppob)
+        insmod usb_storage
+        ;;
+esac

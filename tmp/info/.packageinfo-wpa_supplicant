@@ -1,0 +1,33 @@
+Source-Makefile: package/wpa_supplicant/Makefile
+Package: wpa-supplicant
+Version: 0.6.3-1
+Depends: 
+Provides: 
+Build-Depends: madwifi
+Section: net
+Category: Network
+Title: WPA Supplicant
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	WPA Supplicant
+
+http://hostap.epitest.fi/wpa_supplicant/
+@@
+Config: 
+	source "package/wpa_supplicant/Config.in"
+@@
+Package: wpa-cli
+Version: 0.6.3-1
+Depends: wpa-supplicant
+Provides: 
+Build-Depends: madwifi
+Section: net
+Category: Network
+Title: WPA Supplicant command line interface
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	WPA Supplicant command line interface
+
+http://hostap.epitest.fi/wpa_supplicant/
+@@
+

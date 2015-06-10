@@ -1,0 +1,32 @@
+--- Uboot-spi-3.6.0.0/common/cmd_bootm.c	2011-11-08 22:35:02.000000000 +0800
++++ Uboot-spi-3.6.0.0/common/cmd_bootm.c	2013-03-21 23:33:31.551492129 +0800
+@@ -286,13 +286,16 @@
+ #elif defined (CFG_ENV_IS_IN_SPI)
+ 	if (addr >= CFG_FLASH_BASE) {
+ 		ulong load_addr = CFG_SPINAND_LOAD_ADDR;
+-		raspi_read(load_addr, data - CFG_FLASH_BASE, len);
++		if(UBOOT_PRODUCT_IGNORE_CHECKSUM) 
++         raspi_read(load_addr, data - CFG_FLASH_BASE, UBOOT_PRODUCT_KERNEL_SIZE); 
++       else 
++         raspi_read(load_addr, data - CFG_FLASH_BASE, len);
+ 		data = load_addr;
+ 	}
+ #else //CFG_ENV_IS_IN_FLASH
+ #endif
+ 
+-	if (verify) {
++	if (!UBOOT_PRODUCT_IGNORE_CHECKSUM) {
+ 		puts ("   Verifying Checksum ... ");
+ 		if (crc32 (0, (char *)data, len) != ntohl(hdr->ih_dcrc)) {
+ 			printf ("Bad Data CRC\n");
+@@ -300,7 +300,9 @@
+ 			return 1;
+ 		}
+ 		puts ("OK\n");
+-	}
++	} else {
++		puts ("No verify checksum\n");
++    }
+ 	SHOW_BOOT_PROGRESS (4);
+ 
+ 	len_ptr = (ulong *)data;

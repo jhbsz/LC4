@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-coldreboot/Makefile
+Package: ezp-coldreboot
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: ezp-coldreboot - put at 99zwakeup to trigger a cold reboot action
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	product authentication tool
+@@
+

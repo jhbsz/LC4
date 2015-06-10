@@ -1,0 +1,119 @@
+--- linux-2.6.26.old/net/sched/sch_prio.c	2009-09-25 17:14:12.490126897 +0800
++++ linux-2.6.26.new/net/sched/sch_prio.c	2009-09-25 17:12:37.176375238 +0800
+@@ -17,7 +17,9 @@
+ #include <linux/string.h>
+ #include <linux/errno.h>
+ #include <linux/skbuff.h>
++#include <linux/tcp.h>
+ #include <net/netlink.h>
++#include <net/ip.h>
+ #include <net/pkt_sched.h>
+ 
+ 
+@@ -29,16 +31,105 @@
+ 	struct Qdisc *queues[TCQ_PRIO_BANDS];
+ };
+ 
++#define TC_PRIO_BESTEFFORT      0
++#define TC_PRIO_FILLER          1
++#define TC_PRIO_BULK            2
++#define TC_PRIO_INTERACTIVE_BULK    4
++#define TC_PRIO_INTERACTIVE     6
++#define TC_PRIO_CONTROL         7
++
++struct _ezp_prio_enable_flag {
++
++    __u8 icmp_enable;
++    __u8 dns_enable;
++    __u8 ssh_enable;
++    __u8 telnet_enable;
++    __u8 check_enable;
++    __u8 ack_enable;
++};
++
++#define TC_PRIO_MAX         15
++#define ECN_OR_COST(class)  TC_PRIO_##class
++#define EZP_PRIO_MINIMUM_DELAY TC_PRIO_INTERACTIVE
++#define EZP_PRIO_MAXIMUM_THROUGHPUT TC_PRIO_BULK
++#define TCPHDR(skbuff) ((struct tcphdr*)((u_int32_t *)(ip_hdr(skbuff)) + ip_hdr(skbuff)->ihl))
++#define CHECK_PORT(enable, skbuff, cport) \
++  (enable && ((ntohs(TCPHDR(skbuff)->source) == cport) || (ntohs(TCPHDR(skbuff)->dest) == cport)))
++#define CHECK_LENGTH(check_needed, skbuff , minlen, maxlen) \
++  ((check_needed && ((skbuff->len > minlen) && \
++                     (skbuff->len < maxlen))) || (!check_needed))
++#define CHECK_FLAG(enable, skbuff, check_flag) \
++  (enable && (tcp_flag_word(TCPHDR(skbuff)) & check_flag))
++#define TCP_CHECK_FLAG (TCP_FLAG_ACK|TCP_FLAG_RST|TCP_FLAG_SYN)
++
++static __inline__ unsigned ezp_prio_classify (struct sk_buff *skb) {
++    struct _ezp_prio_enable_flag enable_flag = {1, 1, 1, 1, 1, 1};
++    struct iphdr *iph;
++    
++    iph = ip_hdr(skb);
++
++    switch(iph->protocol){
++        case IPPROTO_ICMP:
++            if(enable_flag.icmp_enable){
++                return EZP_PRIO_MINIMUM_DELAY;
++            }
++            break;
++        case IPPROTO_TCP:
++            if ((CHECK_PORT(enable_flag.ssh_enable, skb, 22) || 
++                        CHECK_PORT(enable_flag.telnet_enable, skb, 23)) &&
++                    (CHECK_LENGTH(enable_flag.check_enable, skb, 0, 512))){
++                return EZP_PRIO_MINIMUM_DELAY;
++            }
++            /*else if (CHECK_PORT(1, skb, 80) || CHECK_PORT(1, skb, 443)) {
++                if (CHECK_LENGTH(1, skb, 0, 256)){
++                    return EZP_PRIO_MINIMUM_DELAY;
++                }
++                else{
++                    return TC_PRIO_BULK;
++                }
++            }*/
++            else if (CHECK_FLAG(enable_flag.ack_enable, skb, TCP_CHECK_FLAG)){
++                if(CHECK_LENGTH(enable_flag.ack_enable, skb, 0, 256)){
++                    return EZP_PRIO_MINIMUM_DELAY;
++                }
++                else{
++                    return TC_PRIO_BULK;
++                }
++            }
++            break;
++        case IPPROTO_UDP:
++            if (CHECK_PORT(enable_flag.dns_enable, skb, 53) || 
++                    CHECK_LENGTH(enable_flag.check_enable, skb, 0, 512)){
++                return EZP_PRIO_MINIMUM_DELAY;
++            }
++
++            break;
++        default:
++            break;
++    }
++    /* printk("no match, use def prio:%d proto:%d\n", skb->priority, skb->nh.iph->protocol); */
++    return skb->priority;
++}
+ 
+ static struct Qdisc *
+ prio_classify(struct sk_buff *skb, struct Qdisc *sch, int *qerr)
+ {
+ 	struct prio_sched_data *q = qdisc_priv(sch);
+-	u32 band = skb->priority;
++	u32 band;
+ 	struct tcf_result res;
+ 	int err;
++    struct iphdr *iph;
++    
++    iph = ip_hdr(skb);
+ 
+ 	*qerr = NET_XMIT_BYPASS;
++    /* EZP: */
++    if(iph->tos == 0){
++        skb->priority = ezp_prio_classify(skb);
++    }
++    band = skb->priority;
++    /* EZP: */
++
+ 	if (TC_H_MAJ(skb->priority) != sch->handle) {
+ 		err = tc_classify(skb, q->filter_list, &res);
+ #ifdef CONFIG_NET_CLS_ACT

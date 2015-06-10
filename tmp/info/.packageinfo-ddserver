@@ -1,0 +1,15 @@
+Source-Makefile: package/ddserver/Makefile
+Package: ddserver
+Version: 0.2-12
+Depends: +libusb-1.0
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Multimedia
+Title: Server for DSLR camera to use with DslrDashboard
+Maintainer: Zoltan Hubai <hubaiz@gmail.com>
+Type: ipkg
+Description:  Server for DslrDashboard for controling connected DSLR
+ camera with USB
+@@
+

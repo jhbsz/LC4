@@ -1,0 +1,19 @@
+Source-Makefile: target/linux/ox810/Makefile
+Target: ox810
+Target-Board: ox810
+Target-Kernel: 2.6
+Target-Name: Oxford NAS 810 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: arm
+Target-Features: pci usb
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+	Build firmware images for Oxford NAS 810 based boards
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall 
+

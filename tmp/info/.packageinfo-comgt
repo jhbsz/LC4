@@ -1,0 +1,16 @@
+Source-Makefile: package/comgt/Makefile
+Package: ezpcom
+Version: 0.32-1
+Depends: +chat +ezp-nvram
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: EZ Packet HSPA/3G/GPRS control tool
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  ezpcom is a scripting language interpreter useful for establishing 
+ communications on serial lines and through PCMCIA modems as well as GPRS 
+ and 3G datacards.
+@@
+

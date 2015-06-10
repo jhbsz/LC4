@@ -1,0 +1,1304 @@
+#!/bin/sh
+
+# Workaround for localized (i18ned) binaries:
+# LC_ALL=C
+# LANG=C
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:
+export LD_LIBRARY_PATH=/lib:/usr/lib
+
+# System settings:
+BIN_IPT=$(which iptables)
+BIN_TC=$(which tc)
+BIN_GREP=$(which grep)
+BIN_SED=$(which sed)
+BIN_ECHO=$(which echo)
+BIN_ARP=$(which arp)
+BIN_IP=$(which ip)
+
+HTB_OPT=""
+#FIXME! Set the quantum is tricky and it affects bw borrowing. Need more
+# study on this value.
+MTU="1500"
+
+tos_stop ()
+{
+    echo "tos_stop"
+#    $BIN_IPT -t mangle -F EZP_TOS_ACK
+#    $BIN_IPT -t mangle -F EZP_TOS_CHK
+#    $BIN_IPT -t mangle -F EZP_TOS
+}
+
+tos_start ()
+{
+# Set TOS for several stuff.
+# TODO: Anything missing here? Tell me about it.
+    echo "tos_start"
+}
+
+mss_stop ()
+{
+    $BIN_IPT -F EZP_FL_MSS 
+}
+mss_start ()
+{
+    mss_stop
+    $BIN_IPT -A EZP_FL_MSS -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+}
+
+upnp_stop ()
+{
+    $BIN_IPT -F PREROUTING -t nat 
+    $BIN_IPT -F FORWARD -t filter
+    $BIN_IPT -F MINIUPNPD -t filter
+    $BIN_IPT -F MINIUPNPD -t nat
+    [ "$(nvram get platform)" = "GMA" ] && {
+        garmin_vlan.sh
+        garmin_iptables.sh
+    }
+}
+upnp_start ()
+{
+    upnp_stop
+    WAN_NUM=$(nvram get wan_num)
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_STATE
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_MSS
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_HWADDR
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_ACTION
+    local i=0
+    while [ $i -lt $WAN_NUM ];
+    do
+        [ "$(nvram show wan_status_rule $i state)" = "4" ] && {
+            EXTIP=$(nvram get wan${i}_ipaddr)
+            $BIN_IPT -A FORWARD -t filter -j MINIUPNPD -d $EXTIP
+        }
+        i=$(($i+1))
+    done
+    $BIN_IPT -A FORWARD -t filter -j EZP_LOG_ACCEPT
+    $BIN_IPT -A PREROUTING -t nat -j EZP_DNAT
+    i=0
+    while [ $i -lt $WAN_NUM ];
+    do
+        [ "$(nvram show wan_status_rule $i state)" = "4" ] && {
+            EXTIP=$(nvram get wan${i}_ipaddr)
+            $BIN_IPT -A PREROUTING -t nat -j MINIUPNPD -d $EXTIP
+        }
+        i=$(($i+1))
+    done
+    # EZP_XXX: mark these rule, because it block port forwarding from LAN IP.
+    # The purpose of these two rule are fix some bug for xbox360.
+#    $BIN_IPT -I MINIUPNPD -t filter -s $(nvram get lan0_ipaddr)/$(nvram get lan0_mask) -j RETURN
+#    $BIN_IPT -I MINIUPNPD -t nat -s $(nvram get lan0_ipaddr)/$(nvram get lan0_mask) -j RETURN
+}
+
+fl_hwaddr_stop ()
+{
+    $BIN_IPT -t filter -F EZP_FL_HWADDR
+    FM_RULE_NUM=$(nvram get fl_hwaddr_rule_num)
+    i=0
+    while [ $i -lt $FM_RULE_NUM ];
+    do
+        HWADDR=$(nvram show fl_hwaddr_rule $i hwaddr)
+        IPADDR=$(nvram show fl_hwaddr_rule $i ipaddr)
+        [ "$(nvram show fl_hwaddr_rule $i arp_enable)" = "1" ] && {
+            #XXX: br0
+       	    $BIN_ARP -i br0 -d $IPADDR
+        }
+        i=$(($i+1))
+    done
+}
+fl_hwaddr_start ()
+{
+    fl_hwaddr_stop
+    FM_RULE_NUM=$(nvram get fl_hwaddr_rule_num)
+    i=0
+    while [ $i -lt $FM_RULE_NUM ];
+    do
+        HWADDR=$(nvram show fl_hwaddr_rule $i hwaddr)
+        [ "$(nvram show fl_hwaddr_rule $i acl_enable)" = "1" ] && {
+            ACTION=$(nvram show fl_hwaddr_rule $i action)
+
+            [ "$ACTION" = "0" ] && {
+    		#XXX: br0
+                $BIN_IPT -t filter -A EZP_FL_HWADDR -i br0 \
+                    -m mac --mac-source $HWADDR -j EZP_LOG_DROP
+            }
+            [ "$ACTION" = "1" ] && {
+    		#XXX: br0
+                $BIN_IPT -t filter -A EZP_FL_HWADDR -i br0\
+                    -m mac --mac-source $HWADDR -j RETURN
+            }
+        }
+        IPADDR=$(nvram show fl_hwaddr_rule $i ipaddr)
+        [ "$(nvram show fl_hwaddr_rule $i arp_enable)" = "1" ] && {
+    		#XXX: br0
+       	    $BIN_ARP -i br0 -s $IPADDR $HWADDR
+        }
+        i=$(($i+1))
+    done
+    DEFAULT=$(nvram get fl_hwaddr_rule_default)
+    [ "$DEFAULT" = "0" ] && {
+    	#XXX: br0
+        $BIN_IPT -t filter -i br0 -o br0 -A EZP_FL_HWADDR -j ACCEPT
+        $BIN_IPT -t filter -i br0 -A EZP_FL_HWADDR -j EZP_LOG_DROP
+    }
+}
+
+ttl_stop ()
+{
+    $BIN_IPT -t mangle -F EZP_TTL
+}
+ttl_start ()
+{
+    ttl_stop
+    $BIN_IPT -t mangle -A EZP_TTL -j TTL --ttl-set \
+            $(nvram show ttl_rule 0 value)
+}
+
+wf_stop ()
+{
+    iptables -F EZP_WEB_FILTER 
+    iptables -D FORWARD -j EZP_WEB_FILTER 
+    iptables -X EZP_WEB_FILTER 
+    rmmod ipt_webstr
+    # Can't start WebFilter when TurboNAT enable
+    # echo -n "0" > /proc/ezp_nat_ctrl
+}
+
+wf_start ()
+{
+    wf_stop
+    BIN_IPT=$(which iptables)
+
+
+    RULE_NUM=$(nvram get wf_rule_num)
+    ACTIVEX=$(nvram show wf_content_rule 0 activex_enable)
+    JAVA=$(nvram show wf_content_rule 0 java_enable)
+    PROXY=$(nvram show wf_content_rule 0 proxy_enable)
+    CONTENT_PARAM=0
+
+    [ "$ACTIVEX" = "1" ] && {
+      CONTENT_PARAM=$(($CONTENT_PARAM + 2))
+    }
+    
+    [ "$JAVA" = "1" ] && {
+      CONTENT_PARAM=$(($CONTENT_PARAM + 1))
+    }
+    
+    [ "$PROXY" = "1" ] && {
+      CONTENT_PARAM=$(($CONTENT_PARAM + 8))
+    }
+
+    RULE_ACTIVED="0"    
+    [ $RULE_NUM > 0 -o $CONTENT_PARAM -ne 0 ] && {
+      RULE_ACTIVED="1"
+    }
+    i=0
+    
+    [ "$(nvram get wf_enable)" = "1" -a $RULE_ACTIVED = "1" ] && {
+      #install web string module    
+      insmod ipt_webstr
+      #insert chain for filtering
+      $BIN_IPT -N EZP_WEB_FILTER
+      $BIN_IPT -I FORWARD -j EZP_WEB_FILTER
+      [ "$CONTENT_PARAM" -ne "0" ] && {
+        $BIN_IPT -I EZP_WEB_FILTER -m webstr --content ${CONTENT_PARAM} -j DROP
+      }
+      RULE_WORK="0"
+      while [ $i -lt $RULE_NUM ];
+      do
+        [ "$(nvram show wf_rule $i enable)" = "1" ] && {
+            KEYWORD=$(nvram show wf_rule $i keyword)
+
+            #convert filter type to url filtering method
+            FILTERTYPE=$(nvram show wf_rule $i type)
+            if [ "$FILTERTYPE" = "host" ]; then
+                FILTERTYPE="host"
+            elif [ "$FILTERTYPE" = "url" ]; then
+                FILTERTYPE="url"
+            elif [ "$FILTERTYPE" = "content" ]; then
+                FILTERTYPE="content"
+            else
+                FILTERTYPE="host"
+            fi
+
+            #convert access type to iptables target
+            ACCESSTYPE=$(nvram show wf_rule $i access)
+            if [ "$ACCESSTYPE" = "1" ]; then
+                   ACCESSTYPE="ACCEPT"
+            else
+                   ACCESSTYPE="REJECT --reject-with icmp-host-unreachable"
+            fi
+            $BIN_IPT -I EZP_WEB_FILTER -p tcp --dport 80 \
+                -m webstr --${FILTERTYPE} $KEYWORD \
+                -j $ACCESSTYPE
+            RULE_WORK="1"
+        }
+        i=$(($i+1))
+      done
+      # Can't start WebFilter when TurboNAT enable
+      # [ "$CONTENT_PARAM" -ne "0" -o "${RULE_WORK}" = "1" ] && echo -n "1" > /proc/ezp_nat_ctrl
+    }
+}
+
+fr_stop () {
+    $BIN_IPT -t nat -F EZP_DNAT 
+}
+
+vs_stop ()
+{
+    BIN_IFCONFIG=$(which ifconfig)
+    BIN_ROUTE=$(which route)
+    BIN_IPT=$(which iptables)
+
+    RULE_NUM=$(nvram get vs_rule_num)
+    i=0
+    while [ $i -lt $RULE_NUM ];
+    do
+        [ "$(nvram show vs_rule $i enable)" = "1" ] && {
+            EXTIF=$(nvram show vs_rule $i extif)
+            EXTIFIDX=$(nvram show vs_rule $i index)
+            EXTDEV="$(nvram get ${EXTIF}_ifname):${EXTIFIDX}"
+            ALIAS_ADDR=$(nvram show vs_rule $i wan_ipaddr)
+            DEST_ADDR=$(nvram show vs_rule $i mapped_ipaddr)
+
+            $BIN_IPT -t nat -D EZP_DNAT -d $ALIAS_ADDR -j DNAT \
+            --to-destination $DEST_ADDR
+            $BIN_ROUTE del -host $ALIAS_ADDR dev $EXTDEV
+            $BIN_IFCONFIG $EXTDEV down
+        }
+        i=$(($i+1))
+    done
+}
+
+vs_start ()
+{
+    vs_stop
+    BIN_IFCONFIG=$(which ifconfig)
+    BIN_ROUTE=$(which route)
+    BIN_IPT=$(which iptables)
+
+    RULE_NUM=$(nvram get vs_rule_num)
+    i=0
+    while [ $i -lt $RULE_NUM ];
+    do
+        [ "$(nvram show vs_rule $i enable)" = "1" ] && {
+            EXTIF=$(nvram show vs_rule $i extif)
+            EXTIFIDX=$(nvram show vs_rule $i index)
+            EXTDEV="$(nvram get ${EXTIF}_ifname):${EXTIFIDX}"
+            ALIAS_ADDR=$(nvram show vs_rule $i wan_ipaddr)
+            DEST_ADDR=$(nvram show vs_rule $i mapped_ipaddr)
+
+            $BIN_IFCONFIG $EXTDEV $ALIAS_ADDR
+            $BIN_ROUTE add -host $ALIAS_ADDR dev $EXTDEV
+            $BIN_IPT -t nat -A EZP_DNAT -d $ALIAS_ADDR -j DNAT \
+            --to-destination $DEST_ADDR
+        }
+        i=$(($i+1))
+    done
+}
+
+fr_start () {
+    fr_stop
+    [ "$(nvram get fr_enable)" = "1" ] && {
+        RULE_NUM=$(nvram get fr_rule_num)
+        i=0
+        while [ $i -lt $RULE_NUM ];
+        do 
+            [ "$(nvram show fr_rule $i enable)" = "1" ] && {
+                EXTIF=$(nvram show fr_rule $i extif)
+                EXTIPADDR=$(nvram get ${EXTIF}_ipaddr)
+                [ -n "$EXTIPADDR" ] && {
+                    PROTO=$(nvram show fr_rule $i proto)
+                    EXTPORT_START=$(nvram show fr_rule $i extport_start)
+                    EXTPORT_END=$(nvram show fr_rule $i extport_end)
+                    INPORT_START=$(nvram show fr_rule $i inport_start)
+                    INPORT_END=$(nvram show fr_rule $i inport_end)
+                    IPADDR=$(nvram show fr_rule $i ipaddr)
+                    IPADDR="$IPADDR${INPORT_START:+:$INPORT_START-$INPORT_END}"
+
+                    if [ $PROTO = "both" ]; then
+                        $BIN_IPT -t nat -A EZP_DNAT -d $EXTIPADDR -p tcp \
+                    --dport $EXTPORT_START:$EXTPORT_END -j DNAT --to-destination $IPADDR
+                        $BIN_IPT -t nat -A EZP_DNAT -d $EXTIPADDR -p udp \
+                    --dport $EXTPORT_START:$EXTPORT_END -j DNAT --to-destination $IPADDR
+                    elif [ $PROTO = "tcp" ]; then
+                        $BIN_IPT -t nat -A EZP_DNAT -d $EXTIPADDR -p tcp \
+                    --dport $EXTPORT_START:$EXTPORT_END -j DNAT --to-destination $IPADDR
+                    elif [ $PROTO = "udp" ]; then
+                        $BIN_IPT -t nat -A EZP_DNAT -d $EXTIPADDR -p udp \
+                    --dport $EXTPORT_START:$EXTPORT_END -j DNAT --to-destination $IPADDR
+                    fi
+                }
+            }
+            i=$(($i+1))
+        done
+    }
+
+        # DMZ 
+        WAN_NUM=$(nvram get wan_num)
+        i=0
+        while [ $i -lt $WAN_NUM ];
+        do
+            [ "$(nvram show fr_dmz_rule $i enable)" = "1" ] && {
+                EXTIF=$(nvram get wan${i}_ifname)
+                IPADDR=$(nvram show fr_dmz_rule $i ipaddr)
+                $BIN_IPT -t nat -A EZP_DNAT -i $EXTIF -j DNAT --to $IPADDR
+            }
+            i=$(($i+1))
+        done
+
+        # Bypass the local services (e.g. HTTP, SSH, Radius)
+        # Be aware the local services have lower priority than fr_rule
+        [ "$(nvram show http_rule 0 rmgt_enable)" = "1" ] && {
+            RMGT_PORT=$(nvram show http_rule 0 port)
+            $BIN_IPT -t nat -I EZP_DNAT -p tcp --dport $RMGT_PORT -j ACCEPT
+        }
+        [ "$(nvram show ssh_rule 0 enable)" = "1" ] && {
+            PORT=$(nvram show ssh_rule 0 port)
+            $BIN_IPT -t nat -I EZP_DNAT -p tcp --dport $PORT -j ACCEPT
+        }
+        # Port revered for PPTPD
+        [ "$(nvram show pptpd_rule 0 enable)" = "1" ] && {
+            PORT=1723
+            $BIN_IPT -t nat -I EZP_DNAT -p gre -j ACCEPT
+            $BIN_IPT -t nat -I EZP_DNAT -p tcp --dport $PORT -j ACCEPT
+        }
+        
+        # For Guest LAN
+        [ "$(nvram show guest_lan_rule 0 enable)" = "1" ] && {
+            guest_ipaddr="$(nvram show guest_lan_rule 0 ipaddr)"
+            guest_mask="$(nvram show guest_lan_rule 0 mask)"
+            eval $(ipcalc $guest_ipaddr $guest_mask)
+            GUEST_NETWORK=${NETWORK}
+            GUEST_PREFIX=${PREFIX}
+            ipaddr="$(nvram show lan_static_rule 0 ipaddr)"
+            mask="$(nvram show lan_static_rule 0 mask)"
+            eval $(ipcalc $ipaddr $mask)
+            /usr/sbin/iptables -t nat -I EZP_DNAT -s ${GUEST_NETWORK}/${GUEST_PREFIX} -d ${NETWORK}/${PREFIX} -j DROP
+        }
+}
+vpn_stop () {
+    # EZP IPSec SNAT rule to prevent packet entering MASQUERADE
+    i=0
+    limit=$(nvram get ipsec_rule_num)
+    while [ $i -lt $limit ];
+    do
+        [ "$(nvram show ipsec_rule $i enable)" = "1" -a "$(nvram show ipsec_rule $i mode)" = "net2net" ] && {
+            REMOTE=$(nvram show ipsec_rule $i remote_inipaddr)
+            NETMASK=$(nvram show ipsec_rule $i remote_netmask)
+            [ -n "$REMOTE" -a -n "$NETMASK" ] && {
+                LOCAL_SUBNET=$(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) 
+                /usr/sbin/iptables -t nat -D EZP_SNAT -s $LOCAL_SUBNET -d $REMOTE/$NETMASK -j RETURN
+            }
+        }
+        i=$(($i+1))
+    done
+}
+vpn_start () {
+    # EZP IPSec SNAT rule to prevent packet entering MASQUERADE
+    i=0
+    limit=$(nvram get ipsec_rule_num)
+    while [ $i -lt $limit ];
+    do
+        [ "$(nvram show ipsec_rule $i enable)" = "1" -a "$(nvram show ipsec_rule $i mode)" = "net2net" ] && {
+            REMOTE=$(nvram show ipsec_rule $i remote_inipaddr)
+            NETMASK=$(nvram show ipsec_rule $i remote_netmask)
+            [ -n "$REMOTE" -a -n "$NETMASK" ] && {
+                LOCAL_SUBNET=$(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) 
+                /usr/sbin/iptables -t nat -I EZP_SNAT -s $LOCAL_SUBNET -d $REMOTE/$NETMASK -j RETURN
+            }
+        }
+        i=$(($i+1))
+    done
+}
+snat_stop () {
+    $BIN_IPT -t nat -F EZP_SNAT 
+    [ "$(nvram get platform)" = "GMA" ] && {
+        garmin_vlan.sh
+        garmin_iptables.sh
+    }
+}
+snat_start () {
+    vpn_start
+    # FIXME! Only single LAN support now.
+    $BIN_IPT -t nat -A EZP_SNAT -s $(nvram show lan_static_rule 0 ipaddr)/$(nvram show lan_static_rule 0 mask) ! -o vlan3 -j MASQUERADE
+    # $BIN_IPT -t nat -A EZP_SNAT -s 172.16.1.0/16 -j MASQUERADE
+    # [ "$(nvram show guest_lan_rule 0 enable)" = "1" ] && {
+    #     $BIN_IPT -t nat -A EZP_SNAT -s $(nvram show guest_lan_rule 0 ipaddr)/$(nvram show guest_lan_rule 0 mask) -j MASQUERADE
+    # }
+    [ "$(nvram get platform)" = "GMA" ] && {
+        garmin_vlan.sh
+        garmin_iptables.sh
+    }
+}
+
+rt_conn_stop()
+{
+    $BIN_IPT -t mangle -F EZP_RT_CONN_SET_MARK
+    $BIN_IPT -t mangle -F EZP_RT_IN_CONN_SET_MARK
+    $BIN_IPT -t mangle -F EZP_RT_CONN_MARK
+}
+
+# This function is an WAN dependent function.
+rt_conn_start()
+{
+    rt_conn_stop
+    # Set the firewall rules. 
+    RT_MASK=$(nvram get rt_mask)
+    WAN_NUM=$(nvram get wan_num)    
+    
+    lock /tmp/.iface_rt_conn
+    i=0
+    while [ "$i" -lt "$WAN_NUM" ];
+    do
+        MARK=$(nvram get wan${i}_rtmark)
+        EXTIF=$(nvram get wan${i}_ifname)
+        # Set the rule if the WAN interface is available.
+        [ -n "$(nvram get wan${i}_ipaddr)" ] && {
+            $BIN_IPT -A EZP_RT_CONN_SET_MARK -t mangle -o $EXTIF \
+                -j MARK --set-mark $MARK/$RT_MASK
+            # Recall incoming routing mark, for incoming DNAT applications
+            # Such as Port Forward or DMZ
+            $BIN_IPT -I EZP_RT_IN_CONN_SET_MARK -t mangle -i $EXTIF \
+                -j MARK --set-mark $MARK/$RT_MASK
+        }
+        i=$(($i+1))
+    done
+    
+    lock -u /tmp/.iface_rt_conn
+
+    # Save nfmark to connmark.
+    $BIN_IPT -A EZP_RT_CONN_SET_MARK -t mangle -j CONNMARK --save-mark
+    # If mark value is 0, jump to EZP_RT_CONN_SET_MARK.
+    $BIN_IPT -A EZP_RT_CONN_MARK -t mangle -m mark --mark 0x0/$RT_MASK \
+            -j EZP_RT_CONN_SET_MARK
+}
+
+rt_stop()
+{
+    $BIN_IPT -t mangle -F EZP_RT_SET_MARK
+    $BIN_IPT -t mangle -F EZP_RT_MARK
+    RT_MASK=$(nvram get rt_mask)
+    RT_RULE_NUM=$(nvram get rt_rule_num)
+    NEWRTID="1$(nvram get wan_num)"
+    NEWMARK="$(($(nvram get wan_num) + 1))"
+    i=0
+
+    while [ $i -lt $RT_RULE_NUM ];
+    do
+        [ "$(nvram show rt_rule $i enable)" = "1" ] && {
+            EXTIF=$(nvram show rt_rule $i extif)
+            ROUTING_TYPE=$(nvram show rt_rule $i routing_type)
+            GATEWAY=$(nvram show rt_rule $i gateway_ipaddr)
+
+            [ "${ROUTING_TYPE}" = "static" -a -n "${GATEWAY}" -a "${GATEWAY}" != "$(nvram get wan0_gateway)" -a "$NEWMARK" -lt "10" ] && {
+                #new table
+                MARK="0x${NEWMARK}0000000"
+                PHYIF="$(nvram get ${EXTIF}_ifname)"
+                WANIP="$(nvram get ${EXTIF}_ipaddr)"
+                WANMASK="$(nvram get ${EXTIF}_netmask)"
+                eval $(ipcalc ${WANIP} ${WANMASK})
+                $BIN_IP route del table ${NEWRTID} $NETWORK/$PREFIX dev ${PHYIF} src ${NETWORK} proto static
+                $BIN_IP route del table ${NEWRTID} default via ${GATEWAY} dev ${PHYIF} proto static
+                eval $(ipcalc $(nvram get lan0_ipaddr) $(nvram get lan0_mask))
+                $BIN_IP route del table ${NEWRTID} $NETWORK/$PREFIX dev $(nvram get lan0_ifname) proto static
+                $BIN_IP rule del prio ${NEWRTID}
+                #mark
+                NEWMARK=$(($NEWMARK + 1))
+                NEWRTID=$(($NEWRTID + 1))
+            }
+        }
+        i=$(($i+1))
+    done
+    $BIN_IPT -I EZP_RT_SET_MARK -t mangle -j EZP_RT_IN_CONN_SET_MARK
+}
+
+rt_start()
+{
+    rt_stop
+    RT_MASK=$(nvram get rt_mask)
+    RT_RULE_NUM=$(nvram get rt_rule_num)
+    NEWRTID="1$(nvram get wan_num)"
+    NEWMARK="$(($(nvram get wan_num) + 1))"
+    i=0
+
+    while [ $i -lt $RT_RULE_NUM ];
+    do
+        [ "$(nvram show rt_rule $i enable)" = "1" ] && {
+            SRCIP_START=$(nvram show rt_rule $i srcipaddr_start)
+            SRCIP_END=$(nvram show rt_rule $i srcipaddr_end)
+
+            DSTIP_START=$(nvram show rt_rule $i dstipaddr_start)
+            DSTIP_END=$(nvram show rt_rule $i dstipaddr_end)
+
+            RT_ARGS=""
+            [ -n "$SRCIP_START" -o -n "$DSTIP_START" ] && {
+                RT_ARGS="-m iprange"
+            }
+
+            RT_ARGS="$RT_ARGS ${SRCIP_START:+ --src-range $SRCIP_START-$SRCIP_END}"
+            RT_ARGS="$RT_ARGS ${DSTIP_START:+ --dst-range $DSTIP_START-$DSTIP_END}"
+
+            DSTPORT_START=$(nvram show rt_rule $i dstport_start)
+            DSTPORT_END=$(nvram show rt_rule $i dstport_end)
+            EXTIF=$(nvram show rt_rule $i extif)
+            MARK=$(nvram get ${EXTIF}_rtmark)
+
+            ROUTING_TYPE=$(nvram show rt_rule $i routing_type)
+            GATEWAY=$(nvram show rt_rule $i gateway_ipaddr)
+
+            [ "${ROUTING_TYPE}" = "static" -a -n "${GATEWAY}" -a "${GATEWAY}" != "$(nvram get wan0_gateway)" -a "$NEWMARK" -lt "10" ] && {
+                #new table
+                MARK="0x${NEWMARK}0000000"
+                PHYIF="$(nvram get ${EXTIF}_ifname)"
+                WANIP="$(nvram get ${EXTIF}_ipaddr)"
+                WANMASK="$(nvram get ${EXTIF}_netmask)"
+                eval $(ipcalc ${WANIP} ${WANMASK})
+                $BIN_IP route add table ${NEWRTID} $NETWORK/$PREFIX dev ${PHYIF} src ${NETWORK} proto static
+                $BIN_IP route add table ${NEWRTID} default via ${GATEWAY} dev ${PHYIF} proto static
+                #echo "ip rule add prio ${NEWRTID} from ${GATEWAY} lookup ${NEWRTID}"
+                eval $(ipcalc $(nvram get lan0_ipaddr) $(nvram get lan0_mask))
+                $BIN_IP route add table ${NEWRTID} $NETWORK/$PREFIX dev $(nvram get lan0_ifname) proto static
+                $BIN_IP rule add prio ${NEWRTID} from $NETWORK/$PREFIX fwmark $MARK/$(nvram get rt_mask) lookup ${NEWRTID}
+                #mark
+                NEWMARK=$(($NEWMARK + 1))
+                NEWRTID=$(($NEWRTID + 1))
+            }
+
+            if [ -n "$DSTPORT_START" ]; then {
+                PROTO=$(nvram show rt_rule $i proto)
+                if [ $PROTO = "both" ]; then {
+                    $BIN_IPT -A EZP_RT_SET_MARK -t mangle $RT_ARGS -p udp \
+                        --dport $DSTPORT_START:$DSTPORT_END -j MARK --set-mark $MARK/$RT_MASK
+                    $BIN_IPT -A EZP_RT_SET_MARK -t mangle $RT_ARGS -p tcp \
+                        --dport $DSTPORT_START:$DSTPORT_END -j MARK --set-mark $MARK/$RT_MASK
+                } else {
+                    $BIN_IPT -A EZP_RT_SET_MARK -t mangle $RT_ARGS -p $PROTO \
+                        --dport $DSTPORT_START:$DSTPORT_END -j MARK --set-mark $MARK/$RT_MASK
+                } fi
+            } else {
+                $BIN_IPT -A EZP_RT_SET_MARK -t mangle $RT_ARGS -j MARK \
+                    --set-mark $MARK/$RT_MASK
+            } fi
+
+        }
+
+        i=$(($i+1))
+    done
+    # If mark value is 0, jump to EZP_RT_SET_MARK
+    $BIN_IPT -A EZP_RT_MARK -t mangle -m mark --mark 0x0/$RT_MASK \
+    	-j EZP_RT_SET_MARK
+
+    $BIN_IPT -A EZP_RT_MARK -t mangle -m mark --mark 0x0/$RT_MASK \
+        -j RETURN
+    $BIN_IPT -A EZP_RT_MARK -t mangle -j CONNMARK --save-mark
+
+    
+}
+
+fl_stop ()
+{
+    $BIN_IPT -t mangle -F EZP_FL_SET_MARK
+    $BIN_IPT -t mangle -F EZP_FL_MARK
+    $BIN_IPT -t filter -F EZP_FL_ACTION
+}
+
+fl_start ()
+{
+    fl_stop
+    FL_MASK=$(nvram get fl_mask)
+    DBM_MASK=$(nvram get bw_dbm_mask)
+    FL_RULE_NUM=$(nvram get fl_rule_num)    
+    i=0
+    DBM_NTH=1
+    # First, set up the WAN bandwidth.
+    while [ $i -lt $FL_RULE_NUM ];
+    do
+        MARK=$(nvram show fl_rule $i mark)
+        ACTION=$(nvram show fl_rule $i action)
+        FL_ARGS=""
+        [ "$(nvram show fl_rule $i enable)" = "1" ] && {
+            EXTIF=$(nvram show fl_rule $i extif)
+            FL_ARGS="$FL_ARGS ${EXTIF:+-o $(nvram get ${EXTIF}_ifname)}"
+            INIF=$(nvram show fl_rule $i inif)
+            FL_ARGS="$FL_ARGS ${INIF:+-i $(nvram get ${INIF}_ifname)}"
+
+            SRCIP_START=$(nvram show fl_rule $i srcipaddr_start)
+            SRCIP_END=$(nvram show fl_rule $i srcipaddr_end)
+            DSTIP_START=$(nvram show fl_rule $i dstipaddr_start)
+            DSTIP_END=$(nvram show fl_rule $i dstipaddr_end)
+            [ -n "$SRCIP_START" -o -n "$DSTIP_START" ] && {
+                FL_ARGS="$FL_ARGS -m iprange"
+            }
+            FL_ARGS="$FL_ARGS ${SRCIP_START:+ --src-range $SRCIP_START-$SRCIP_END}"
+            FL_ARGS="$FL_ARGS ${DSTIP_START:+ --dst-range $DSTIP_START-$DSTIP_END}"
+            PROTO=$(nvram show fl_rule $i proto)
+            # UDP or TCP
+            [ "$PROTO" = "tcp" -o "$PROTO" = "udp" ] && {
+                DSTPORT_START=$(nvram show fl_rule $i dstport_start)
+                DSTPORT_END=$(nvram show fl_rule $i dstport_end)
+                FL_ARGS="$FL_ARGS -p $PROTO ${DSTPORT_START:+--dport $DSTPORT_START:$DSTPORT_END}"
+                # Set up EZP_FL_SET_MARK rules with FL MARK only.
+                $BIN_IPT -A EZP_FL_SET_MARK -t mangle $FL_ARGS -j MARK --set-mark 0x${MARK}/$FL_MASK
+            }
+            # BOTH
+            [ "$PROTO" = "both" ] && {
+                DSTPORT_START=$(nvram show fl_rule $i dstport_start)
+                DSTPORT_END=$(nvram show fl_rule $i dstport_end)
+                FL_ARGS="$FL_ARGS ${DSTPORT_START:+--dport $DSTPORT_START:$DSTPORT_END}"
+                # Set up EZP_FL_SET_MARK rules with FL MARK only.
+                $BIN_IPT -A EZP_FL_SET_MARK -t mangle -p tcp $FL_ARGS -j MARK --set-mark 0x${MARK}/$FL_MASK
+                $BIN_IPT -A EZP_FL_SET_MARK -t mangle -p udp $FL_ARGS -j MARK --set-mark 0x${MARK}/$FL_MASK
+            }
+            # None of protocol 
+            [ -z "$PROTO" ] && {
+                $BIN_IPT -A EZP_FL_SET_MARK -t mangle $FL_ARGS -j MARK --set-mark 0x${MARK}/$FL_MASK
+            }
+            # Save the mark value.
+            $BIN_IPT -A EZP_FL_SET_MARK -t mangle -m mark --mark 0x${MARK}/$FL_MASK -j CONNMARK --save-mark
+            $BIN_IPT -A EZP_FL_SET_MARK -t mangle -m mark --mark 0x${MARK}/$FL_MASK -j RETURN
+            # Set up EZP_FL_ACTION rules with FL MARK.
+            [ "$ACTION" = "0" ] && {
+                $BIN_IPT -A EZP_FL_ACTION -t filter -m mark --mark 0x${MARK}/$FL_MASK -j EZP_LOG_DROP
+            }
+            [ "$ACTION" = "1" ] && {
+                $BIN_IPT -A EZP_FL_ACTION -t filter -m mark --mark 0x${MARK}/$FL_MASK -j RETURN
+            }
+        }
+        i=$(($i+1))
+    done
+    #XXX: TODO:
+    # Set default FL mark if all missing.
+    FL_MARK_DEFAULT=$(nvram get fl_mark_default)
+    $BIN_IPT -A EZP_FL_SET_MARK -t mangle -j MARK --set-mark $FL_MARK_DEFAULT/$FL_MASK
+    $BIN_IPT -A EZP_FL_SET_MARK -t mangle -j CONNMARK --save-mark
+
+    $BIN_IPT  -A EZP_FL_MARK -t mangle -m mark --mark 0x0/$FL_MASK -j EZP_FL_SET_MARK
+
+    # Default action
+    DEFAULT=$(nvram get fl_rule_default)
+    [ "$DEFAULT" = "0" ] && {
+        $BIN_IPT -t filter -A EZP_FL_ACTION -j EZP_LOG_DROP
+    }
+
+    # For Static Routing
+    RT_MASK=$(nvram get rt_mask)
+    RT_RULE_NUM=$(nvram get rt_rule_num)
+    i=0
+    while [ $i -lt $RT_RULE_NUM ];
+    do
+        EXTIF=$(nvram show rt_rule $i extif)
+        [ "$(nvram show rt_rule $i enable)" = "1" -a "$EXTIF" != "lan0" ] && {
+            PHYIF="$(nvram get ${EXTIF}_ifname)"
+            MARK=$(nvram get ${EXTIF}_rtmark)
+
+            $BIN_IPT -A EZP_FL_SET_MARK -t mangle -o $PHYIF -m mark --mark \
+                $MARK/$RT_MASK -j RETURN
+            $BIN_IPT -A EZP_FL_SET_MARK -t mangle -m mark --mark \
+                $MARK/$RT_MASK -j DROP
+        }
+
+        i=$(($i+1))
+    done
+}
+
+bw_stop ()
+{
+    $BIN_IPT -t mangle -F EZP_INBOUND_IMQ 
+    $BIN_IPT -t mangle -F EZP_OUTBOUND_IMQ 
+    $BIN_IPT -t mangle -F EZP_BW_SET_MARK
+    $BIN_IPT -t mangle -F EZP_BW_MARK
+    $BIN_IPT -t mangle -F EZP_LOCAL_BW_MARK
+
+    ezp-tc stop
+}
+
+bw_start ()
+{
+    bw_stop
+
+    lock /tmp/.iface_bw
+
+    # Root QDisc:
+    $BIN_TC qdisc add dev imq0 root handle 1: htb default 13
+    $BIN_TC qdisc add dev imq1 root handle 1: htb default 13
+
+    FL_MASK=$(nvram get fl_mask)
+    DBM_MASK=$(nvram get bw_dbm_mask)
+    WAN_NUM=$(nvram get wan_num)    
+    i=0
+    while [ $i -lt $WAN_NUM ];
+    do
+        INDEX=$((i+1))
+        LINK_PERCENT=$(nvram show wan_bw_rule $i link_percent)
+        
+        [ "$(nvram get wan${i}_bw_mode)" = "auto" ] && {
+            LINK_DL_RATE=$(nvram show wan_bw_rule $i dl)
+            LINK_UL_RATE=$(nvram show wan_bw_rule $i ul)
+        }
+
+        GLOBAL_PERCENT=$(nvram show wan_bw_rule 0 global_percent)
+        LOCAL_PERCENT=$LINK_PERCENT
+
+        # imq0 for inbound
+        $BIN_TC class add dev imq0 parent 1: classid 1:$INDEX \
+            htb rate ${LINK_DL_RATE}kbit ceil ${LINK_DL_RATE}kbit \
+            quantum $MTU $HTB_OPT
+
+        # imq1 for outbound
+        $BIN_TC class add dev imq1 parent 1: classid 1:$INDEX \
+            htb rate ${LINK_UL_RATE}kbit ceil ${LINK_UL_RATE}kbit \
+            quantum $MTU $HTB_OPT
+
+        RULE_NTH=1
+
+        # SBM 
+        j=0
+        SBM_RULE_NUM=$(nvram get bw_sbm_rule_num)
+        SBM_DL_RATE="0"
+        SBM_UL_RATE="0"
+        while [ $j -lt $SBM_RULE_NUM ];
+        do
+            [ "$(nvram show bw_sbm_rule $j enable)" = "0" ] && {
+                j=$((j+1))
+                continue
+            }
+
+            EXTIF=$(nvram show bw_sbm_rule $j extif)
+            TYPE=${EXTIF%%[0-9]*}
+            NUM=${EXTIF#$TYPE}
+            # Count the bandwidth in the current WAN
+            [ "$NUM" = "$i" ] || {
+                j=$(($j+1))
+                continue
+            }
+
+            # tc
+            [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "ratio" ] && {
+                RATIO=$(nvram show bw_sbm_rule $j bw_ratio)
+                DL_RATE=$(expr $LINK_DL_RATE \* $RATIO / 100)
+                UL_RATE=$(expr $LINK_UL_RATE \* $RATIO / 100)
+            }
+            [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "bw" ] && {
+                DL_RATE=$(nvram show bw_sbm_rule $j bw_download)
+                UL_RATE=$(nvram show bw_sbm_rule $j bw_upload)
+            }
+            [ -z "$DL_RATE" ] && DL_RATE="0"
+            SBM_DL_RATE=$(($SBM_DL_RATE + $DL_RATE))
+            SBM_UL_RATE=$(($SBM_UL_RATE + $UL_RATE))
+
+            j=$(($j+1))
+        done
+
+        [ "${SBM_DL_RATE}" = 0 -o "${SBM_UL_RATE}" = 0 ] || {
+            $BIN_TC class add dev imq0 parent 1:${INDEX} classid 1:${INDEX}6 \
+                htb rate ${SBM_DL_RATE}kbit ceil ${LINK_DL_RATE}kbit quantum $MTU $HTB_OPT
+
+            $BIN_TC class add dev imq1 parent 1:${INDEX} classid 1:${INDEX}6 \
+                htb rate ${SBM_UL_RATE}kbit ceil ${LINK_UL_RATE}kbit quantum $MTU $HTB_OPT
+        }
+
+        j=0
+        BW_NTH=1
+        SBM_DL_RATE="0"
+        SBM_UL_RATE="0"
+        while [ $j -lt $SBM_RULE_NUM ];
+        do
+            [ "$(nvram show bw_sbm_rule $j enable)" = "0" ] && {
+                j=$((j+1))
+                RULE_NTH=$(($RULE_NTH+1))
+                continue
+            }
+
+            EXTIF=$(nvram show bw_sbm_rule $j extif)
+            TYPE=${EXTIF%%[0-9]*}
+            NUM=${EXTIF#$TYPE}
+            # Count the bandwidth in the current WAN
+            [ "$NUM" = "$i" ] || {
+                j=$(($j+1))
+                RULE_NTH=$(($RULE_NTH+1))
+                continue
+            }
+
+            # iptables
+            SBM_ARGS=""
+            SBM_MARK=$(awk "BEGIN{x=sprintf(\"%02X\", $BW_NTH);print x}")
+            MARK="${SBM_MARK}0000"
+
+            # tc
+            [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "ratio" ] && {
+                RATIO=$(nvram show bw_sbm_rule $j bw_ratio)
+                DL_RATE=$(expr $LINK_DL_RATE \* $RATIO / 100)
+                UL_RATE=$(expr $LINK_UL_RATE \* $RATIO / 100)
+            }
+            [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "bw" ] && {
+                DL_RATE=$(nvram show bw_sbm_rule $j bw_download)
+                UL_RATE=$(nvram show bw_sbm_rule $j bw_upload)
+            }
+            [ -z "$DL_RATE" ] && DL_RATE="0"
+            SBM_DL_RATE=$(($SBM_DL_RATE + $DL_RATE))
+            SBM_UL_RATE=$(($SBM_UL_RATE + $UL_RATE))
+
+            [ "$(nvram show bw_sbm_rule $j excess)" = "0" ] && {
+                DL_CEIL=$DL_RATE
+                UL_CEIL=$UL_RATE
+            }
+            [ "$(nvram show bw_sbm_rule $j excess)" = "1" ] && {
+                [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "ratio" ] && {
+                    RATIO=$(nvram show bw_sbm_rule $j excess_ratio)
+                    DL_CEIL=$(expr $LINK_DL_RATE \* $RATIO / 100)
+                    UL_CEIL=$(expr $LINK_UL_RATE \* $RATIO / 100)
+                }
+                [ "$(nvram show bw_sbm_rule $j bw_alloc)" = "bw" ] && {
+                    DL_CEIL=$(nvram show bw_sbm_rule $j excess_download)
+                    UL_CEIL=$(nvram show bw_sbm_rule $j excess_upload)
+                }
+            }
+
+            ezp-tc single_sbm start $i $BW_NTH $MARK $DL_RATE $DL_CEIL $UL_RATE $UL_CEIL
+
+            j=$(($j+1))
+            BW_NTH=$(($BW_NTH+1))
+            RULE_NTH=$(($RULE_NTH+1))
+        done
+
+        
+        DBM_DLMAX=$(expr $LINK_DL_RATE - $SBM_DL_RATE)
+        DBM_ULMAX=$(expr $LINK_UL_RATE - $SBM_UL_RATE)
+
+#        DBM_DLMAX=$(expr $LINK_DL_RATE \* $GLOBAL_PERCENT / 100)
+#        DBM_ULMAX=$(expr $LINK_UL_RATE \* $GLOBAL_PERCENT / 100)
+
+        [ "$LINK_PERCENT" = "100" ] && {
+            LINK_PERCENT=99
+        }
+        LOCAL_PERCENT=$(expr  100 - $LINK_PERCENT)
+        LOCAL_DLMIN=$(expr $LINK_DL_RATE / 100 \* $LOCAL_PERCENT)
+        LOCAL_ULMIN=$(expr $LINK_UL_RATE / 100 \* $LOCAL_PERCENT)
+
+        DBM_MAX=$(nvram get dbm_max)
+        DBM_MAX=$(expr $DBM_MAX + 2)
+        DBM_DLMIN_SUM=$(expr $DBM_DLMAX - $LOCAL_DLMIN)
+        DBM_ULMIN_SUM=$(expr $DBM_ULMAX - $LOCAL_ULMIN)
+        DBM_DLMIN=$(expr $DBM_DLMIN_SUM / $DBM_MAX)
+        DBM_ULMIN=$(expr $DBM_ULMIN_SUM / $DBM_MAX)
+
+        DBM_OTHER_DLMIN=$(expr $DBM_DLMIN \* 2)
+        DBM_OTHER_ULMIN=$(expr $DBM_ULMIN \* 2)
+
+        # Local
+        LOCAL_MARK=FF0000
+        $BIN_TC class add dev imq0 parent 1:$INDEX classid 1:${INDEX}3 \
+            htb rate ${LOCAL_DLMIN}kbit ceil ${LINK_DL_RATE}kbit quantum $MTU $HTB_OPT
+        $BIN_TC qdisc add dev imq0 parent 1:${INDEX}3 handle ${INDEX}3: prio
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}3:1 handle ${INDEX}31: sfq perturb 9
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}3:2 handle ${INDEX}32: sfq perturb 10
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}3:3 handle ${INDEX}33: sfq perturb 11
+        $BIN_TC filter add dev imq0 parent 1: protocol ip prio $i\
+                u32 match mark 0x${INDEX}0${LOCAL_MARK} 0xFFFF0000 flowid 1:${INDEX}3
+
+        $BIN_TC class add dev imq1 parent 1:$INDEX classid 1:${INDEX}3 \
+            htb rate ${LOCAL_ULMIN}kbit ceil ${LINK_UL_RATE}kbit quantum $MTU $HTB_OPT
+        $BIN_TC qdisc add dev imq1 parent 1:${INDEX}3 handle ${INDEX}3: prio
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}3:1 handle ${INDEX}31: sfq perturb 9
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}3:2 handle ${INDEX}32: sfq perturb 10
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}3:3 handle ${INDEX}33: sfq perturb 11
+        $BIN_TC filter add dev imq1 parent 1: protocol ip prio $i \
+                u32 match mark 0x${INDEX}0${LOCAL_MARK} 0xFFFF0000 flowid 1:${INDEX}3
+
+        # DBM
+        $BIN_TC class add dev imq0 parent 1:${INDEX} classid 1:${INDEX}9 \
+            htb rate ${DBM_DLMIN_SUM}kbit ceil ${DBM_DLMAX}kbit quantum $MTU $HTB_OPT
+
+        $BIN_TC class add dev imq1 parent 1:${INDEX} classid 1:${INDEX}9 \
+            htb rate ${DBM_ULMIN_SUM}kbit ceil ${DBM_ULMAX}kbit quantum $MTU $HTB_OPT
+        
+        j=0
+        DBM_RULE_NUM=$(nvram get bw_dbm_rule_num)
+        # BW_NTH=1
+        while [ $j -lt $DBM_RULE_NUM ];
+        do
+            [ "$(nvram show bw_dbm_rule $j enable)" = 1 ] || {
+                j=$((j+=1))
+                RULE_NTH=$(($RULE_NTH+1))
+                continue;
+            }
+            k=1
+            l=0
+            DBM_IP_NUM=$(nvram show bw_dbm_rule $j inipaddr_num)
+            while [ $k -le $DBM_IP_NUM ];
+            do
+                DBM_MARK=$(awk "BEGIN{x=sprintf(\"%02X\", $BW_NTH);print x}")
+                MARK="${DBM_MARK}0000"
+                SRCIP_START=$(nvram show bw_dbm_rule $k inipaddr_start)
+                eval $(ipadd $SRCIP_START $l)
+                # Set up tc for each BM_MARK
+                ezp-tc single_dbm start $i $BW_NTH $MARK $DBM_DLMIN $DBM_DLMAX $DBM_ULMIN $DBM_ULMAX
+
+                k=$(($k + 1))
+                l=$(($l + 1))
+                BW_NTH=$(($BW_NTH + 1))
+            done
+            j=$(($j + 1))
+            RULE_NTH=$(($RULE_NTH+1))
+        done
+
+        # The other class out of DBM IP
+        # The ID of 1:${INDEX}9's child classes have been denied for the ID
+        # lenght issue.
+        RT_MARK=$(nvram get wan${i}_rtmark)
+        $BIN_TC class add dev imq0 parent 1:${INDEX}9 classid 1:${INDEX}00 \
+                    htb rate ${DBM_OTHER_DLMIN}kbit ceil ${DBM_DLMAX}kbit quantum $MTU $HTB_OPT prio 1
+        $BIN_TC qdisc add dev imq0 parent 1:${INDEX}00 handle ${INDEX}00: prio 
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}00:1 handle ${INDEX}001: sfq perturb 9
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}00:2 handle ${INDEX}002: sfq perturb 10
+        $BIN_TC qdisc add dev imq0 parent ${INDEX}00:3 handle ${INDEX}003: sfq perturb 11
+        $BIN_TC filter add dev imq0 parent 1: protocol ip prio 8888\
+                u32 match mark ${RT_MARK} 0xFFFF0000 flowid 1:${INDEX}00
+        
+        $BIN_TC class add dev imq1 parent 1:${INDEX}9 classid 1:${INDEX}00 \
+                    htb rate ${DBM_OTHER_ULMIN}kbit ceil ${DBM_ULMAX}kbit quantum $MTU $HTB_OPT prio 1
+        $BIN_TC qdisc add dev imq1 parent 1:${INDEX}00 handle ${INDEX}00: prio
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}00:1 handle ${INDEX}001: sfq perturb 9
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}00:2 handle ${INDEX}002: sfq perturb 10
+        $BIN_TC qdisc add dev imq1 parent ${INDEX}00:3 handle ${INDEX}003: sfq perturb 11
+        $BIN_TC filter add dev imq1 parent 1: protocol ip prio 8888\
+                u32 match mark ${RT_MARK} 0xFFFF0000 flowid 1:${INDEX}00
+
+        i=$(($i+1))
+    done
+
+    # iptables
+
+    # IMQ
+    WAN_NUM=$(nvram get wan_num)    
+    i=0
+    while [ $i -lt $WAN_NUM ]; 
+    do
+        [ -n $(nvram get wan${i}_ipaddr) ] && {
+        $BIN_IPT -A EZP_INBOUND_IMQ -t mangle -i $(nvram get wan${i}_ifname) \
+            -j IMQ --todev 0
+        $BIN_IPT -A EZP_OUTBOUND_IMQ -t mangle -o $(nvram get wan${i}_ifname) \
+            -j IMQ --todev 1
+        }
+        i=$((i+1))
+    done
+
+    $BIN_IPT  -A EZP_BW_MARK -t mangle -m mark --mark 0x0/$DBM_MASK -j EZP_BW_SET_MARK
+
+    # LOCAL 
+#    LOCAL_PORT=$(nvram show http_rule 0 port)
+    $BIN_IPT -A EZP_LOCAL_BW_MARK -t mangle -p tcp \
+            -j MARK --set-mark 0x$LOCAL_MARK/$DBM_MASK
+
+#    $BIN_IPT -A EZP_LOCAL_BW_SET_MARK -t mangle -p tcp --dport $LOCAL_PORT \
+#            -j MARK --set-mark 0x$LOCAL_MARK/$DBM_MASK
+
+    $BIN_IPT -A EZP_LOCAL_BW_MARK -t mangle -m mark --mark 0x$LOCAL_MARK/$DBM_MASK -j CONNMARK --save-mark
+    $BIN_IPT -A EZP_LOCAL_BW_MARK -t mangle -m mark --mark 0x$LOCAL_MARK/$DBM_MASK -j RETURN
+    
+
+    RULE_NTH=1
+
+    # SBM
+    BW_NTH=1
+    SBM_RULE_NUM=$(nvram get bw_sbm_rule_num)
+    i=0
+    while [ $i -lt $SBM_RULE_NUM ];
+    do
+        [ "$(nvram show bw_sbm_rule $i enable)" = "0" ] && {
+            i=$((i+1))
+            RULE_NTH=$(($RULE_NTH+1))
+            continue
+        }
+
+        SBM_ARGS=""
+        IPADDR_START=$(nvram show bw_sbm_rule $i inipaddr_start)
+        IPADDR_END=$(nvram show bw_sbm_rule $i inipaddr_end)
+        [ -n "$IPADDR_START" ] && {
+            SBM_ARGS="$SBM_ARGS -s $IPADDR_START"
+        }
+        PROTO=$(nvram show bw_sbm_rule $i proto)
+        # TCP or UDP
+        [ "$PROTO" = "tcp" -o "$PROTO" = "udp" ] && {
+            PORT_START=$(nvram show bw_sbm_rule $i port_start)
+            PORT_END=$(nvram show bw_sbm_rule $i port_end)
+            SBM_ARGS="$SBM_ARGS -p $PROTO --dport $PORT_START:$PORT_END"
+        }
+
+        DBM_MARK=$(awk "BEGIN{x=sprintf(\"%02X\", $BW_NTH);print x}")
+        MARK="${DBM_MARK}0000"
+        $BIN_IPT -A EZP_BW_SET_MARK -t mangle $SBM_ARGS -j MARK --set-mark 0x$MARK/$DBM_MASK
+        $BIN_IPT -A EZP_BW_SET_MARK -t mangle -m mark --mark 0x$MARK/$DBM_MASK -j CONNMARK --save-mark
+        $BIN_IPT -A EZP_BW_SET_MARK -t mangle -m mark --mark 0x$MARK/$DBM_MASK -j RETURN
+        i=$((i+1))
+        BW_NTH=$(($BW_NTH+1))
+        RULE_NTH=$(($RULE_NTH+1))
+    done
+
+    # DBM
+    i=0
+    # BW_NTH=1
+    DBM_RULE_NUM=$(nvram get bw_dbm_rule_num)
+    while [ $i -lt $DBM_RULE_NUM ];
+    do
+        [ "$(nvram show bw_dbm_rule $i enable)" = 1 ] || {
+            i=$((i+=1))
+            RULE_NTH=$(($RULE_NTH+1))
+            continue;
+        }
+        k=1
+        l=0
+        DBM_IP_NUM=$(nvram show bw_dbm_rule $i inipaddr_num)
+        while [ $k -le $DBM_IP_NUM ];
+        do
+            DBM_MARK=$(awk "BEGIN{x=sprintf(\"%02X\", $BW_NTH);print x}")
+            MARK="${DBM_MARK}0000"
+            SRCIP_START=$(nvram show bw_dbm_rule $i inipaddr_start)
+            eval $(ipadd $SRCIP_START $l)
+            $BIN_IPT -A EZP_BW_SET_MARK -t mangle -s $NEXT -j MARK --set-mark 0x$MARK/$DBM_MASK
+            $BIN_IPT -A EZP_BW_SET_MARK -t mangle -m mark --mark 0x${MARK}/$DBM_MASK -j CONNMARK --save-mark
+            $BIN_IPT -A EZP_BW_SET_MARK -t mangle -m mark --mark 0x${MARK}/$DBM_MASK -j RETURN
+
+            k=$(($k + 1))
+            l=$(($l + 1))
+            BW_NTH=$(($BW_NTH + 1))
+        done
+
+        i=$(($i + 1))
+        RULE_NTH=$(($RULE_NTH+1))
+    done
+
+    lock -u /tmp/.iface_bw
+}
+
+log_stop ()
+{
+    $BIN_IPT -t filter -F EZP_LOG_DROP
+    $BIN_IPT -t filter -F EZP_LOG_ACCEPT 
+    # Even logging is stop, ACCEPT/DROP are still needed!
+    $BIN_IPT -A EZP_LOG_ACCEPT -t filter -j ACCEPT
+    $BIN_IPT -A EZP_LOG_DROP -t filter -j DROP
+}
+
+log_start ()
+{
+    log_stop
+
+    $BIN_IPT -I EZP_LOG_DROP -t filter -j LOG --log-prefix "EZP_IPT [DENY] "
+    $BIN_IPT -I EZP_LOG_ACCEPT -t filter -j LOG --log-prefix "EZP_IPT [ALLOW] " 
+}
+
+nat_pass_stop ()
+{
+    [ "$(nvram show nat_pass_rule 0 pptp_enable)" = "1" ] && {
+        rmmod nf_nat_pptp
+        rmmod nf_conntrack_pptp
+        rmmod nf_nat_proto_gre
+        rmmod nf_conntrack_proto_gre
+    }
+    [ "$(nvram show nat_pass_rule 0 sip_enable)" = "1" ] && {
+        rmmod nf_conntrack_sip
+        rmmod nf_nat_sip
+    }
+    [ "$(nvram show nat_pass_rule 0 h323_enable)" = "1" ] && {
+        rmmod nf_nat_h323
+        rmmod nf_conntrack_h323
+    }
+    [ "$(nvram show nat_pass_rule 0 rtsp_enable)" = "1" ] && {
+        rmmod nf_nat_rtsp
+        rmmod nf_conntrack_rtsp
+    }
+    [ "$(nvram show nat_pass_rule 0 mms_enable)" = "1" ] && {
+        rmmod nf_nat_mms
+        rmmod nf_conntrack_mms
+    }
+    [ "$(nvram show nat_pass_rule 0 irc_enable)" = "1" ] && {
+        rmmod nf_nat_irc
+        rmmod nf_conntrack_irc
+    }
+}
+
+nat_pass_start ()
+{
+    nat_pass_stop
+    [ "$(nvram show nat_pass_rule 0 pptp_enable)" = "1" ] && {
+        insmod nf_conntrack_proto_gre
+        insmod nf_nat_proto_gre
+        insmod nf_conntrack_pptp
+        insmod nf_nat_pptp
+    }
+    [ "$(nvram show nat_pass_rule 0 sip_enable)" = "1" ] && {
+        insmod nf_conntrack_sip
+        insmod nf_nat_sip
+    }
+    [ "$(nvram show nat_pass_rule 0 h323_enable)" = "1" ] && {
+        insmod nf_conntrack_h323
+        insmod nf_nat_h323
+    }
+    [ "$(nvram show nat_pass_rule 0 rtsp_enable)" = "1" ] && {
+        insmod nf_conntrack_rtsp
+        insmod nf_nat_rtsp
+    }
+    [ "$(nvram show nat_pass_rule 0 mms_enable)" = "1" ] && {
+        insmod nf_conntrack_mms
+        insmod nf_nat_mms
+    }
+    [ "$(nvram show nat_pass_rule 0 irc_enable)" = "1" ] && {
+        insmod nf_conntrack_irc
+        insmod nf_nat_irc
+    }
+}
+fw_stop ()
+{
+    $BIN_IPT -F EZP_FL_STATE 
+    # echo "0" > /proc/sys/net/ipv4/tcp_syncookies
+    echo "0" > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+    echo "0" > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses
+    echo "1" > /proc/sys/net/ipv4/conf/all/send_redirects
+    echo "1" > /proc/sys/net/ipv4/conf/all/accept_redirects
+}
+
+fw_start ()
+{
+    local fw
+    fw_stop
+    [ "$(nvram show fw_rule 0 state_enable)" = "1" ] && {
+        $BIN_IPT -A EZP_FL_STATE -m state --state INVALID -j EZP_LOG_DROP
+    }
+    fw="$(nvram show fw_rule 0 syn_enable)" 
+    [ -n "$fw" ] && {
+        echo "$fw" > /proc/sys/net/ipv4/tcp_syncookies
+    }
+    fw="$(nvram show fw_rule 0 icmp_enable)" 
+    [ -n "$fw" ] && {
+        echo "$fw" > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+        echo "$fw" > /proc/sys/net/ipv4/icmp_ignore_bogus_error_responses
+    }
+    fw="$(nvram show fw_rule 0 icmp_redir_enable)"
+    [ -n "$fw" ] && {
+        [ $fw = "0" ] && fw=1
+        [ $fw = "1" ] && fw=0
+        echo "$fw" > /proc/sys/net/ipv4/conf/all/send_redirects
+        echo "$fw" > /proc/sys/net/ipv4/conf/all/accept_redirects
+    }
+
+    # Broadcast storming
+    fw="$(nvram show fw_rule 0 bc_storm_enable)"
+    [ -n "$fw" ] && {
+        if [ "$fw" = "1" ]; then
+            switch reg w 9c 8a331
+        else
+            switch reg w 9c 8a301
+        fi
+    }
+
+}
+
+ezp_stop()
+{
+    
+# reset iptables:
+# reset the default policies in the filter table.
+    $BIN_IPT -P INPUT ACCEPT
+    $BIN_IPT -P FORWARD ACCEPT
+    $BIN_IPT -P OUTPUT ACCEPT
+
+# reset the default policies in the nat table.
+    $BIN_IPT -t nat -P PREROUTING ACCEPT
+    $BIN_IPT -t nat -P POSTROUTING ACCEPT
+    $BIN_IPT -t nat -P OUTPUT ACCEPT
+
+# reset the default policies in the mangle table.
+    $BIN_IPT -t mangle -P PREROUTING ACCEPT
+    $BIN_IPT -t mangle -P OUTPUT ACCEPT
+
+# flush all the rules in the filter and nat tables.
+    $BIN_IPT -F
+    $BIN_IPT -t nat -F
+    $BIN_IPT -t mangle -F
+
+# erase all chains that's not default in filter and nat table.
+    $BIN_IPT -X
+    $BIN_IPT -t nat -X
+    $BIN_IPT -t mangle -X
+
+    LIST="EZP_RT_MARK EZP_FL_MARK EZP_BW_MARK EZP_LOCAL_BW_MARK EZP_RT_CONN_MARK EZP_RT_SET_MARK EZP_BW_SET_MARK EZP_FL_SET_MARK EZP_RT_CONN_SET_MARK EZP_RT_IN_CONN_SET_MARK EZP_INBOUND_IMQ EZP_OUTBOUND_IMQ"
+    for chain in $LIST
+    do 
+    $BIN_IPT -t mangle -N $chain 2> /dev/null > /dev/null
+    $BIN_IPT -t mangle  -F $chain 2> /dev/null > /dev/null
+    done
+
+    LIST="EZP_DNAT EZP_SNAT MINIUPNPD"
+    for chain in $LIST
+    do 
+    $BIN_IPT -t nat -N $chain 2> /dev/null > /dev/null
+    $BIN_IPT -t nat  -F $chain 2> /dev/null > /dev/null
+    done
+
+    LIST="EZP_FL_STATE EZP_FL_MSS EZP_FL_HWADDR EZP_FL_ACTION EZP_LOG_DROP EZP_LOG_ACCEPT MINIUPNPD"
+    for chain in $LIST
+    do 
+    $BIN_IPT -t filter -N $chain 2> /dev/null > /dev/null
+    $BIN_IPT -t filter  -F $chain 2> /dev/null > /dev/null
+    done
+}
+
+
+ezp_start ()
+{
+    # Flush everything! 
+    ezp_stop
+
+    # Skeleton
+    # PREROUTE
+    #$BIN_IPT -A PREROUTING -t mangle -j EZP_TOS
+    #$BIN_IPT -A PREROUTING -t mangle -j EZP_TTL
+    $BIN_IPT -A PREROUTING -t mangle -j CONNMARK --restore-mark
+    $BIN_IPT -A PREROUTING -t mangle -j EZP_RT_MARK
+    $BIN_IPT -A PREROUTING -t mangle -j EZP_INBOUND_IMQ
+    $BIN_IPT -A PREROUTING -t nat -j EZP_DNAT
+    $BIN_IPT -A PREROUTING -t nat -j MINIUPNPD
+    # INPUT
+    $BIN_IPT -A INPUT -t filter -j EZP_FL_STATE
+    $BIN_IPT -A INPUT -t mangle -m mark --mark 0x0/0xff0000 -j EZP_LOCAL_BW_MARK
+    # FORWARD
+    /usr/sbin/iptables -A FORWARD -t mangle -m iprange --src-range 10.199.221.128-10.199.221.253 --dst-range 172.16.1.1-172.16.255.255 -j MARK --set-mark 0x00ee/0x0000FFFF
+    /usr/sbin/iptables -A FORWARD -t mangle -m mark --mark 0x00ee/0x0000FFFF -j CONNMARK --save-mark
+    /usr/sbin/iptables -A FORWARD -t mangle -m mark --mark 0x00ee/0x0000FFFF -j RETURN
+    /usr/sbin/iptables -I FORWARD -t filter -m mark --mark 0x00ee/0x0000FFFF -j DROP
+    $BIN_IPT -A FORWARD -t mangle -j EZP_FL_MARK
+    $BIN_IPT -A FORWARD -t mangle -j EZP_BW_MARK
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_STATE
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_MSS
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_HWADDR
+    $BIN_IPT -A FORWARD -t filter -j EZP_FL_ACTION
+    $BIN_IPT -A FORWARD -t filter -j MINIUPNPD
+    $BIN_IPT -A FORWARD -t filter -j EZP_LOG_ACCEPT
+    # OUTPUT
+    $BIN_IPT -A OUTPUT -t mangle -j EZP_RT_SET_MARK
+    $BIN_IPT -A OUTPUT -t mangle -m mark --mark 0x0/0xff0000 -j EZP_LOCAL_BW_MARK
+    # POSTROUTE
+    $BIN_IPT -A POSTROUTING -t mangle -j EZP_RT_CONN_MARK
+    $BIN_IPT -A POSTROUTING -t mangle -j EZP_OUTBOUND_IMQ
+    $BIN_IPT -A POSTROUTING -t nat -j EZP_SNAT
+
+    # ACCEPT/DROP
+    $BIN_IPT -A EZP_LOG_ACCEPT -t filter -j ACCEPT
+    $BIN_IPT -A EZP_LOG_DROP -t filter -j DROP
+}
+
+lock /tmp/.ezp-iptables
+case "$1" in
+    start|restart)
+        ezp_start
+    ;;
+    stop)
+        ezp_stop
+    ;;
+    *)
+        $1_$2 
+    ;;
+esac
+lock -u /tmp/.ezp-iptables

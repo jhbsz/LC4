@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+# Make sure the formatting of JFFS2 comes before any read/write on it!
+# Automagically run firstboot!
+ 
+START=15
+log_msg="FS-service"
+start () {
+    [ "$(nvram get no_root_swap)" != "1" ] && {
+        [ -d /tmp/root ] && {
+            lock /tmp/.switch2jffs
+                firstboot switch2jffs || err=1
+                lock -u /tmp/.switch2jffs
+        }
+    }
+}

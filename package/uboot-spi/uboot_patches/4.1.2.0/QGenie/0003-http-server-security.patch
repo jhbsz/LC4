@@ -1,0 +1,47 @@
+--- Uboot-spi-4.1.2.0/net/net.c	2014-07-22 17:17:10.170892365 +0800
++++ Uboot-spi-4.1.2.0/net/net.c	2014-07-22 17:16:23.610561609 +0800
+@@ -189,7 +189,7 @@
+ ulong		NetArpWaitTimerStart;
+ int		NetArpWaitTry;
+ 
+-
++proto_t tcp_protocol = -1;
+ 
+ //===================================================
+ /*=======================================*/
+@@ -409,6 +409,7 @@
+ 	NetSetTimeout (10 * CFG_HZ, startAgainTimeout);
+ 	switch (protocol) {
+         case HTTP:
++	    tcp_protocol = protocol;
+             NetCopyIP(&NetOurIP, &bd->bi_ip_addr);
+             NetOurGatewayIP = getenv_IPaddr ("gatewayip");
+             NetOurSubnetMask= getenv_IPaddr ("netmask");
+@@ -1567,7 +1568,7 @@
+                 default:
+                     return;
+             }
+-        } else if (ip->ip_p != IPPROTO_UDP) {	/* Only UDP packets */
++        } else if (ip->ip_p != IPPROTO_UDP && tcp_protocol == HTTP) {	/* Only UDP packets */
+ #if 0
+             TCP_t *tcph = (TCP_t *)&(ip->udp_src);
+ 
+@@ -1618,6 +1619,9 @@
+ #endif
+             tcp_seg_len = ntohs(tcpPkt->ip_len) - ((tcpPkt->ip_hl_v & 0x0f)*4) ;
+             tcp_data_len = tcp_seg_len - ((tcpPkt->tcp_off >>4)*4);
++	
++	    if(ntohs(tcpPkt->tcp_dst) != 80 && ntohl(tcpPkt->ip_dst) != "C0A83C01")
++		return;
+ #if 0
+             ushort src_sum;
+             ushort chk_sum;
+@@ -1869,7 +1873,7 @@
+             break;
+ #endif
+         }
+-        else if (ip->ip_p == IPPROTO_UDP && EMERGENCY_MODE!=1)
++        else if (ip->ip_p == IPPROTO_UDP && EMERGENCY_MODE!=1 && tcp_protocol != HTTP)
+         {   /* Only UDP packets */
+ 
+ #endif

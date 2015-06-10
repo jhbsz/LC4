@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-mii_mgr/Makefile
+Package: ezp-mii_mgr
+Version: 1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: test - EZ Packet test Process
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

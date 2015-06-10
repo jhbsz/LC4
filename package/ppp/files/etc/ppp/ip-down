@@ -1,0 +1,47 @@
+#!/bin/sh
+# Please refer to ip-up for argument description. 
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+. /etc/network.sh
+
+[ -z "$6" ] || {
+    type="${6%%[0-9]}"
+    num="${6#$type}"
+    iface="$6";
+    PPP_DEMAND_STATE_FILE="/tmp/ppp-${type}${num}-demand.tmp"
+    
+    [ "$type" = "pptp" ] && {
+        nvram replace attr wan_detect_rule 0 enable 1
+     	type="wan"
+     	iface="wan0"
+        nvram set wan_pptp_l2tp_status="Disconnected"
+    }
+
+    [ "$type" = "wan" ] && {
+    # When ip-down in demand mode, it doesn't change gateway and routing
+    # 1. The connection is internally disconnected in pppd
+    # 2. The interface pppX remains, as well as it's ipaddr and gateway
+    # 3. The gateway and routing are remained no change
+    # 4. We only change the display on user interface to 0.0.0.0
+    if [ -f "${PPP_DEMAND_STATE_FILE}" -a \
+         "$(cat ${PPP_DEMAND_STATE_FILE})" = "demand-connected" ]; then
+        nvram fset "${type}${num}_ipaddr=0.0.0.0"
+        echo -n "demand-start" > ${PPP_DEMAND_STATE_FILE}
+    else
+        lock /tmp/.ppp.changestate.$iface.lock
+    	iface_down "ppp" "$iface"
+        lock -u /tmp/.ppp.changestate.$iface.lock
+    fi
+    }
+
+    [ "$type" != "wan" ] && {
+    	log_usr "PPTP Server" "client [$iface] local [$5] disconnected" OK
+    }
+}
+[ -d /etc/ppp/ip-down.d ] && {
+	for SCRIPT in /etc/ppp/ip-down.d/*
+	do
+		[ -x "$SCRIPT" ] && "$SCRIPT" $1 $2 $3 $4 $5 $iface
+	done
+}
+

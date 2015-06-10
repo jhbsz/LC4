@@ -1,0 +1,14 @@
+Source-Makefile: package/updatedd/Makefile
+Package: updatedd
+Version: 2.6-6
+Depends: 
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: A tool to update dynamic DNS serv  ices.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Updatedd is a small tool that will update one of many dynamic dns services on boot.
+@@
+

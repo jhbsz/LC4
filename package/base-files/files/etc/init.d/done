@@ -1,0 +1,185 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+. /etc/arch.sh
+
+START=99
+log_msg="MON-server"
+reboot_cycle() {
+    /bin/sh /etc/init.d/mem_clear.sh &
+    local waitsecs=$1
+    sleep $waitsecs
+    local count="$(cat /tmp/jffs2/reboot_count.log)"
+    if [ -z "$count" ]; then
+        count=1
+    fi
+    echo "************************" >> /tmp/jffs2/reboot_test.log
+    echo "$count" >> /tmp/jffs2/reboot_test.log
+    echo "************************" >> /tmp/jffs2/reboot_test.log
+    ls /dev/sd* >> /tmp/jffs2/reboot_test.log
+    echo "************************" >> /tmp/jffs2/reboot_test.log
+    if [ -z "$(mount | grep Qsync)" ]; then
+        echo "mount fail" >> /tmp/jffs2/reboot_test.log
+        echo "************************" >> /tmp/jffs2/reboot_test.log
+    else
+        echo "mount success" >> /tmp/jffs2/reboot_test.log 
+        echo "************************" >> /tmp/jffs2/reboot_test.log
+        ls /tmp/mnt/Qsync >> /tmp/jffs2/reboot_test.log
+    fi
+    count=$(($count+1))
+    echo "$count" > /tmp/jffs2/reboot_count.log
+    [ "$(($count % 2))" = "0" ] && {
+        ezp-i2c gauge host reboot
+    } || {
+        /sbin/reboot
+    }
+}
+
+read_write_test() {
+    read_write_fail=0
+    [ -f "/tmp/jffs2/done_write" ] && {
+        diff -Nur /tmp/mnt/Qsync/rt2860v2_ap.ko /lib/modules/2.6.36/rt2860v2_ap.ko
+        [ "$?" != "0" ] && read_write_fail=1
+        diff -Nur /tmp/mnt/Qsync/libxml2.so.2.9.0 /usr/lib/libxml2.so.2.9.0
+        [ "$?" != "0" ] && read_write_fail=1
+        diff -Nur /tmp/mnt/Qsync/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.0.9.8
+        [ "$?" != "0" ] && read_write_fail=1
+        diff -Nur /tmp/mnt/Qsync/smbd /bin/smbd
+        sync
+        [ "$?" != "0" ] && read_write_fail=1
+        [ "$ead_write_fail" = "1" ] && {
+            while [ true ]; do
+                echo "Fail pre read"
+                wifi_ssid=$(nvram get wl0_ssid_rule)
+                bootnum=$(cat /tmp/jffs2/reboot_count.log)
+                /sbin/mt7620-config-lan.sh
+                nvram set wl0_ssid_rule="pr $bootnum"
+                ezp-i2c wifi ssid
+                nvram set wl0_ssid_rule="$wifi_ssid"
+                sleep 5
+            done
+        }
+    }
+    # 2M
+    cp /lib/modules/2.6.36/rt2860v2_ap.ko /tmp/mnt/Qsync/
+    # 1M
+    cp /usr/lib/libxml2.so.2.9.0 /tmp/mnt/Qsync/
+    # 1M
+    cp /usr/lib/libcrypto.so.0.9.8 /tmp/mnt/Qsync/
+    # 1M
+    cp /bin/smbd /tmp/mnt/Qsync/
+    sync
+    diff -Nur /tmp/mnt/Qsync/rt2860v2_ap.ko /lib/modules/2.6.36/rt2860v2_ap.ko
+    [ "$?" != "0" ] && read_write_fail=1
+    diff -Nur /tmp/mnt/Qsync/libxml2.so.2.9.0 /usr/lib/libxml2.so.2.9.0
+    [ "$?" != "0" ] && read_write_fail=1
+    diff -Nur /tmp/mnt/Qsync/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.0.9.8
+    [ "$?" != "0" ] && read_write_fail=1
+    diff -Nur /tmp/mnt/Qsync/smbd /bin/smbd
+    sync
+    [ "$?" != "0" ] && read_write_fail=1
+    [ "$ead_write_fail" = "1" ] && {
+            while [ true ]; do
+                echo "Fail read write"
+                wifi_ssid=$(nvram get wl0_ssid_rule)
+                bootnum=$(cat /tmp/jffs2/reboot_count.log)
+                /sbin/mt7620-config-lan.sh
+                nvram set wl0_ssid_rule="rw $bootnum"
+                ezp-i2c wifi ssid
+                nvram set wl0_ssid_rule="$wifi_ssid"
+                sleep 5
+            done
+    }
+    [ ! -f "/tmp/jffs2/done_write" ] && touch /tmp/jffs2/done_write
+}
+
+boot() {
+
+    arch_initd_done_start
+
+    [ "$(nvram get license_invalid)" != "0" ] && COMMIT=1
+
+    if [ "$(nvram get prod_cat)" = "K" ]; then
+        sed 's/net\.ipv4\.ip_forward=1/net.ipv4.ip_forward=0/g' \
+            /etc/sysctl.conf.template > /tmp/sysctl.conf
+    else
+        cp /etc/sysctl.conf.template /tmp/sysctl.conf
+    fi
+    # check EEPROM region value
+    region_err=$(nvram get region_err)
+    [ "$region_err" -gt "0" -a "$region_err" -lt "5" ] && {
+       logger "EZP_USR" EEPROM "$(nvram get wan_hwaddr_rule_default)" [$region_err]
+       region_err=$(($region_err + 1))
+       nvram fset region_err=$region_err
+    }
+    # Save value (bootcount and NVRAM variables for upgrade/downgrade)
+    ${COMMIT:+nvram commit}
+    # Watchdog
+    [ -c /dev/watchdog ] && /usr/sbin/watchdog -c /etc/watchdog.conf
+    # Sysctl
+	[ -f /etc/sysctl.conf ] && sysctl -p >&-
+    # min_free_kbytes
+    mem_size=$(free | sed -n '2p' | awk '{FS=" ";print $2}' | tr -d " ")
+    if [ "$mem_size" -ge "32768" ]; then
+        sysctl -w vm.min_free_kbytes=4096
+    else
+        sysctl -w vm.min_free_kbytes=2048
+    fi 
+    # How many sessions we should specified.
+    echo $(nvram get ct_max) > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
+    arch_led_stop boot
+    platform="$(nvram get platform)"
+    [ "$platform" = "M2E" ] && {
+        ezp-i2c gauge host ready
+    }
+    arch_led_start wifi
+
+    # check USB hub
+    local brand="$(nvram get brand)"
+    [ "$brand" = "SONY"  ] && {
+        [ "$(echo "$(cat /proc/bus/usb/devices)" | grep -c "Driver=hub")" -gt "3" ] && {
+            arch_led_start usbhubplug
+        }
+    }
+    [ "$(nvram get platform)" = "LIS" -a "$(nvram get lan_static_rule_default)" != "192.168.40.1^24^^192.168.40.1^" ] && {
+        nvram fset lan_static_rule_default="192.168.40.1^24^^192.168.40.1^"
+        nvram commit
+    }
+    nvram default appmgr_rule
+    nvram fset sysstat=ready
+    gpioctl start
+
+    # mount datafs partition
+    [ "$platform" = "M2E" -a "$(nvram get boot_test)" = "1" -a "$(nvram get license_invalid)" != "0" ] && {
+        wifi_ssid=$(nvram get wl0_ssid_rule)
+        bootnum=$(cat /tmp/jffs2/reboot_count.log)
+        nvram set wl0_ssid_rule="cyc $bootnum"
+        ezp-i2c wifi ssid
+        nvram set wl0_ssid_rule="$wifi_ssid"
+        [ -z "$(mount | grep Qsync)" ] && {
+            while [ -z "$(mount | grep Qsync)" ]; do
+                echo "Fail mount"
+                bootnum=$(cat /tmp/jffs2/reboot_count.log)
+                nvram set wl0_ssid_rule="mf $bootnum"
+                ezp-i2c wifi ssid
+                nvram set wl0_ssid_rule="$wifi_ssid"
+                sleep 5
+            done
+        }
+        read_write_test
+        reboot_cycle 15 &
+    }
+
+    [ "$platform" = "M2E" ] && {
+        mkdir -p /tmp/mnt
+        mv /www/* /tmp/mnt
+    }
+
+    # restart udevd
+    #[ -x /sbin/udevd ] && {
+    #    killall udevd
+    #    /sbin/udevd --verbose --daemon
+    #    /sbin/udevtrigger
+    #}
+
+    return $err
+}

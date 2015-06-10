@@ -1,0 +1,90 @@
+--- linux-2.6.36/drivers/scsi/scsi_lib.c	2013-10-09 13:48:30.000000000 +0800
++++ linux-2.6.36/drivers/scsi/scsi_lib.c	2014-03-19 09:46:34.078038427 +0800
+@@ -715,6 +715,7 @@
+ 	enum {ACTION_FAIL, ACTION_REPREP, ACTION_RETRY,
+ 	      ACTION_DELAYED_RETRY} action;
+ 	char *description = NULL;
++    struct scsi_device *sdev = cmd->device;
+ 
+ 	if (result) {
+ 		sense_valid = scsi_command_normalize_sense(cmd, &sshdr);
+@@ -753,6 +754,7 @@
+ 			blk_end_request_all(req, 0);
+ 
+ 			scsi_next_command(cmd);
++            sdev->not_ready_retry_count = 0;
+ 			return;
+ 		}
+ 	}
+@@ -793,8 +795,10 @@
+ 	 * are leftovers and there is some kind of error
+ 	 * (result != 0), retry the rest.
+ 	 */
+-	if (scsi_end_request(cmd, error, good_bytes, result == 0) == NULL)
++	if (scsi_end_request(cmd, error, good_bytes, result == 0) == NULL) {
++        sdev->not_ready_retry_count = 0;
+ 		return;
++    }
+ 
+ 	error = -EIO;
+ 
+@@ -811,9 +815,16 @@
+ 				/* Detected disc change.  Set a bit
+ 				 * and quietly refuse further access.
+ 				 */
+-				cmd->device->changed = 1;
+-				description = "Media Changed";
+-				action = ACTION_FAIL;
++                if ((sshdr.asc == 0x28) && (sdev->not_ready_retry_count < 10)) {
++                    /* EZP: Let's retry after USB resume. */
++                    action = ACTION_RETRY;
++                }
++                else
++                {
++                    cmd->device->changed = 1;
++                    description = "Media Changed";
++                    action = ACTION_FAIL;
++                }
+ 			} else {
+ 				/* Must have been a power glitch, or a
+ 				 * bus reset.  Could not have been a
+@@ -874,6 +885,8 @@
+ 					action = ACTION_FAIL;
+ 					break;
+ 				}
++            } else if ((sshdr.asc == 0x3a) && (sshdr.ascq == 0x00) && (sdev->not_ready_retry_count < 10)) {
++                action = ACTION_RETRY;
+ 			} else {
+ 				description = "Device not ready";
+ 				action = ACTION_FAIL;
+@@ -895,6 +908,7 @@
+ 
+ 	switch (action) {
+ 	case ACTION_FAIL:
++        sdev->not_ready_retry_count = 0;
+ 		/* Give up and fail the remainder of the request */
+ 		scsi_release_buffers(cmd);
+ 		if (!(req->cmd_flags & REQ_QUIET)) {
+@@ -912,6 +926,7 @@
+ 			scsi_next_command(cmd);
+ 		break;
+ 	case ACTION_REPREP:
++        sdev->not_ready_retry_count = 0;
+ 		/* Unprep the request and put it back at the head of the queue.
+ 		 * A new command will be prepared and issued.
+ 		 */
+@@ -919,10 +934,14 @@
+ 		scsi_requeue_command(q, cmd);
+ 		break;
+ 	case ACTION_RETRY:
++        /* Measure the retry times */
++        sdev->not_ready_retry_count ++;
+ 		/* Retry the same command immediately */
+ 		__scsi_queue_insert(cmd, SCSI_MLQUEUE_EH_RETRY, 0);
+ 		break;
+ 	case ACTION_DELAYED_RETRY:
++        /* Measure the retry times */
++        sdev->not_ready_retry_count = 0;
+ 		/* Retry the same command after a delay */
+ 		__scsi_queue_insert(cmd, SCSI_MLQUEUE_DEVICE_BUSY, 0);
+ 		break;

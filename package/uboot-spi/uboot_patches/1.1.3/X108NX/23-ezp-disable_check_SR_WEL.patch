@@ -1,0 +1,12 @@
+--- Uboot-spi-1.1.3/drivers/spi_flash.c	2011-03-03 17:48:00.293242838 +0800
++++ Uboot-spi-1.1.3/drivers/spi_flash.c	2011-03-03 17:47:03.221761031 +0800
+@@ -318,7 +318,8 @@
+ 	for (count = 0;  count < ((sleep_ms+1) *1000); count++) {
+ 		if ((raspi_read_sr((u8 *)&sr)) < 0)
+ 			break;
+-		else if (!(sr & (SR_WIP | SR_EPE | SR_WEL))) {
++	/*	else if (!(sr & (SR_WIP | SR_EPE | SR_WEL))) { */
++		else if (!(sr & (SR_WIP | SR_EPE))) {
+ 			return 0;
+ 		}
+ 

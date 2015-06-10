@@ -1,0 +1,133 @@
+--- lighttpd-1.4.30/src/mod_auth.c	2011-09-05 17:26:36.000000000 +0800
++++ lighttpd-1.4.30/src/mod_auth.c	2014-11-26 14:33:28.362335167 +0800
+@@ -12,6 +12,99 @@
+ #include <fcntl.h>
+ #include <unistd.h>
+ 
++#include "bcmnvram.h"
++
++#define TMP_LEN 256
++
++char login_user_name[64] = "";
++
++void set_login_user_name(char *uname) {
++    strncpy(login_user_name, uname, sizeof(login_user_name));
++} 
++
++void get_admin_user_pass(char *user, char *pass) {
++    ezplib_get_attr_val("http_rule", 0, "username", user, TMP_LEN, 0);
++    ezplib_get_attr_val("http_rule", 0, "passwd", pass, TMP_LEN, 0);
++}
++
++static void getCookie(char * cookie, char * name, char * value)
++{
++    char tar[128], field[128];
++    char *pos_S;
++    strcpy(tar, name);
++    strcat(tar, "=");
++    if ((pos_S = strstr(cookie, tar)) != NULL) {
++        sscanf(pos_S, "%[^;]", field);
++        strcpy(value, field + strlen(tar));
++    }
++}
++
++int check_user_permission(char *user, char *pass, char *authinfo) {
++    int u_len = strlen(user);
++    int p_len = strlen(pass);
++    int user_ok = 0, pass_ok = 0;
++    char b64_user[TMP_LEN] = {0};
++    char b64_pass[TMP_LEN] = {0};
++    int user_rule_num = 2;
++    int ret_class = 0;
++    unsigned long l = 128;
++    if(!strncmp(user, authinfo, u_len) && (authinfo[u_len] == ':')) {
++        user_ok = 1;
++    } else {
++        base64_decode((unsigned char *)user, u_len,
++                (unsigned char *)b64_user, &l);
++        if(!strncmp(b64_user, authinfo, l) && (authinfo[l] == ':')) {
++            user_ok = 2;
++            u_len = l;
++        }
++    }
++    if(user_ok) {
++        if(!strcmp(pass, authinfo + u_len + 1)) {
++            pass_ok = 1;
++        } else {
++            base64_decode((unsigned char *)pass, p_len,
++                    (unsigned char *)b64_pass, &l);
++            if(!strcmp(b64_pass, authinfo + u_len + 1))
++                pass_ok = 2;
++        }
++    }
++    if(user_ok && pass_ok) {
++        ret_class = 3;
++        for(;user_rule_num > 0;user_rule_num--) {
++            ezplib_get_attr_val("user_rule", user_rule_num - 1, "user", b64_pass, sizeof(b64_pass), 0);
++            if((user_ok == 1 && !strcmp(user, b64_pass)) || (user_ok == 2 && !strcmp(b64_user, b64_pass))) {
++                ezplib_get_attr_val("user_rule", user_rule_num - 1, "permission_class", b64_pass, sizeof(b64_pass), 0);
++                ret_class = atoi(b64_pass);
++                break;
++            }
++
++        }
++    }
++    return ret_class;
++}
++
++/*      
++   inplace handling of + and % escapes in http variables 
++*/  
++int unescape(char *p)
++{   
++    unsigned v;
++    int is_url_enc = 0;
++    while (*p) {
++/*      if (*p == '+') {
++            *p = ' ';
++            is_url_enc = 1;
++        }*/
++        if (*p == '%' && sscanf(p+1, "%02x", &v) == 1) {
++            *p = (char)v;
++            memcpy(p+1, p+3, strlen(p+3)+1);
++            is_url_enc = 1;
++        }
++        p++;
++    }   
++    return is_url_enc;
++} 
++
+ handler_t auth_ldap_init(server *srv, mod_auth_plugin_config *s);
+ 
+ 
+@@ -268,8 +361,29 @@
+ 			}
+ 		}
+ 	}
++/* check http cookie */
++    int max_perm_class = 0;
++    unsigned long l = 128;
++    char buf_user[TMP_LEN] = {0};
++    char buf_pass[TMP_LEN] = {0};
++    char authinfo[TMP_LEN] = {0};
++
++    if (NULL != (ds = (data_string *)array_get_element(con->request.headers, "Cookie"))) {
++        getCookie(ds->value->ptr, "auth", buf_user);
++        unescape(buf_user);
++        base64_decode((unsigned char *)buf_user, strlen(buf_user),
++            (unsigned char *)authinfo, &l);
++        set_login_user_name(authinfo);
++        get_admin_user_pass(buf_user, buf_pass);
++
++        max_perm_class = check_user_permission(buf_user, buf_pass, authinfo);
++    }
++
++    if (max_perm_class >=3) {
++		/* the REMOTE_USER header */
+ 
+-	if (!auth_satisfied) {
++		buffer_copy_string_buffer(con->authed_user, p->auth_user);
++	} else if (!auth_satisfied) {
+ 		data_string *method, *realm;
+ 		method = (data_string *)array_get_element(req, "method");
+ 		realm = (data_string *)array_get_element(req, "realm");

@@ -1,0 +1,843 @@
+diff -ruN lldt-1.0.0/src.old/ctmain.c lldt-1.0.0/src/ctmain.c
+--- lldt-1.0.0/src.old/ctmain.c	2010-05-31 17:38:39.959535759 +0800
++++ lldt-1.0.0/src/ctmain.c	2010-05-31 17:37:45.372528626 +0800
+@@ -30,6 +30,66 @@
+ #include "statemachines.h"
+ #include "packetio.h"
+ 
++//Steve add
++#include <linux/if.h>
++#include <linux/wireless.h>
++
++//Steve add
++int D_LLTD_NUM=0;
++int D_LLTD_LAN_NUM=0;
++int D_LLTD_WLAN_NUM=0;
++int D_FLAG=0;
++
++//=================================================================================
++//Steve add
++#if 0
++#ifndef SIOCDEVPRIVATE
++#define SIOCDEVPRIVATE				0x8BE0
++#endif
++#define SIOCIWFIRSTPRIV				SIOCDEVPRIVATE
++#define RTPRIV_IOCTL_GET_MAC_TABLE		(SIOCIWFIRSTPRIV + 0x0F)
++
++typedef union _MACHTTRANSMIT_SETTING {
++	struct  {
++		unsigned short  MCS:7;  // MCS
++		unsigned short  BW:1;   //channel bandwidth 20MHz or 40 MHz
++		unsigned short  ShortGI:1;
++		unsigned short  STBC:2; //SPACE
++		unsigned short  rsv:3;
++		unsigned short  MODE:2; // Use definition MODE_xxx.
++	} field;
++	unsigned short      word;
++} MACHTTRANSMIT_SETTING;
++
++typedef struct _RT_802_11_MAC_ENTRY {
++	unsigned char            Addr[6];
++	unsigned char            Aid;
++	unsigned char            Psm;     // 0:PWR_ACTIVE, 1:PWR_SAVE
++	unsigned char            MimoPs;  // 0:MMPS_STATIC, 1:MMPS_DYNAMIC, 3:MMPS_Enabled
++	char                     AvgRssi0;
++	char                     AvgRssi1;
++	char                     AvgRssi2;
++	unsigned int             ConnectedTime;
++// Tommy , add association Time ,2009/1/20 11:38
++	unsigned long		 AssociationTime;	
++	MACHTTRANSMIT_SETTING    TxRate;
++} RT_802_11_MAC_ENTRY;
++
++typedef struct _RT_802_11_MAC_TABLE {
++	unsigned long            Num;
++	RT_802_11_MAC_ENTRY      Entry[32]; //MAX_LEN_OF_MAC_TABLE = 32
++} RT_802_11_MAC_TABLE;
++
++typedef struct _RT_MAC_ENTRY {
++	unsigned char            Addr[6];
++} RT_MAC_ENTRY;
++
++RT_MAC_ENTRY  D_TABLE[32]={0};
++int D_TABLE_NUM=0;
++int D_OP_MODE=0;
++#endif
++//==============================================================================
++
+ 
+ /************************* C - T  &  P E R F - T E S T *************************/
+ 
+@@ -38,6 +98,9 @@
+ extern void  packetio_send_emit(uint16_t thisSeqNum, etheraddr_t* pDst, uint16_t emiteeCnt);
+ extern void  packetio_send_charge(uint16_t thisSeqNum, etheraddr_t* pDst);
+ extern void  packetio_send_reset(etheraddr_t* pDst);
++extern void  steve_packetio_send_discover(uint16_t seqnum, bool_t sendAck);
++
++int D_NUM=1;
+ 
+ void (*testFcn)(void* state);
+ 
+@@ -168,7 +231,21 @@
+     printf("=======================\nSending Discover-packet...%s\n",isAcking?"(acking)":"");
+     printf("  uutMAC is " ETHERADDR_FMT "\n", ETHERADDR_PRINT(&uutMAC));
+ 
++if(D_FLAG ==1){
++	printf("Discover Reset...\n");
++	if (D_NUM == 1)
++		steve_packetio_send_discover(0,isAcking);
++	D_NUM++;	
++		
++}else{
++	if (D_NUM == 1)
++		steve_packetio_send_discover(0,isAcking);
++	else
+     packetio_send_discover(0,isAcking);
++    	
++    D_NUM++;
++}
++    
+     puts("=======================\n");
+ 
+     CANCEL(g_block_timer);
+@@ -227,7 +304,8 @@
+     responseTime = 200;		// msec
+ 
+     /* Examine configuration file, if it exists */
+-    conf_file = fopen("/etc/lld2d.conf", "r");
++    //conf_file = fopen("/etc/lld2d.conf", "r");
++    conf_file = fopen("/etc/lld2dtest.conf", "r");
+     if (conf_file == NULL) return;
+     while ((numread = getline(&line, &len, conf_file)) != -1)
+     {
+@@ -273,7 +351,14 @@
+                 responseTime = atoi(val);
+                 if (responseTime > 1000) responseTime = 200;
+                 printf("pause for query-responses set to %d ms\n",responseTime);
+-            } else {
++            }else if (!strcmp(var,"reset")) {
++                if (!strcmp(val,"on"))
++                {
++                	D_FLAG=1;
++                	printf("	Only reset ===>\n");
++                }
++            }
++             else {
+                 warn("line ignored - var does not match a known string\n");
+             }
+         } else {
+@@ -285,6 +370,70 @@
+     fclose(conf_file);
+ }
+ 
++//=======================================================
++//Steve
++#if 0
++static void
++get_wlan_list(void)
++{
++	char tmp[2]={0};
++	FILE *fp;
++	int i;
++
++    //printf("	Enter %s\n",__FUNCTION__);
++
++	system("nvram_get OP_Mode > /var/tmp_ab");
++	fp = fopen("/var/tmp_ab","r");
++	if(fp!= NULL) {
++		fscanf(fp, "%s", tmp);
++		fclose(fp);
++	}
++	else
++		printf("Can't open /var/tmp_ab\n");
++	
++	//printf("	/var/tmp_ab=%s\n",tmp);
++	system("rm /var/tmp_ab");
++
++    if(strcmp(tmp,"0")==0 || strcmp(tmp,"1")==0 ||  strcmp(tmp,"4")==0 || strcmp(tmp,"5")==0)
++    {
++        int i, s;
++		struct iwreq iwr;
++	   	RT_802_11_MAC_TABLE table = {0};
++
++		s = socket(AF_INET, SOCK_DGRAM, 0);
++		strncpy(iwr.ifr_name, "ra0", IFNAMSIZ);
++		iwr.u.data.pointer = (caddr_t) &table;
++
++
++		if (s < 0) {
++			printf("ioctl sock failed!\n");
++		}
++		
++
++		if (ioctl(s, RTPRIV_IOCTL_GET_MAC_TABLE, &iwr) < 0) {
++			printf("ioctl -> RTPRIV_IOCTL_GET_MAC_TABLE failed!\n");
++			close(s);
++		}	
++
++		D_TABLE_NUM = table.Num;
++		
++		for (i = 0; i < table.Num; i++) {
++		//printf("	%d ==>%02X:%02X:%02X:%02X:%02X:%02X\n",
++		//		table.Entry[i].Addr[0], table.Entry[i].Addr[1],
++		//		table.Entry[i].Addr[2], table.Entry[i].Addr[3],
++		//		table.Entry[i].Addr[4], table.Entry[i].Addr[5]);
++			memcpy(D_TABLE[i].Addr,table.Entry[i].Addr,6);
++			
++		}
++		close(s);
++		D_OP_MODE=atoi(tmp);
++		printf("D_OP_MODE=%d\n",D_OP_MODE);
++    }
++    else
++    	D_OP_MODE=atoi(tmp);
++}
++#endif
++//==================================================================================
+ 
+ int
+ main(int argc, char **argv)
+@@ -293,6 +442,7 @@
+     int    c;
+     bool_t opt_debug = FALSE;
+     int    opt_trace = 0;
++    char cmd[30]={0}; //steve
+ 
+     /* set program name to last component of filename */
+     p = strrchr(argv[0], '/');
+@@ -400,6 +550,20 @@
+ 
+     osl_drop_privs(g_osl);
+ 
++    //Steve add 2009/05/11
++    //printf("get_wlan_list\n");
++    //get_wlan_list();
++    //printf("888888888888888888888\n");
++
++    
++if(D_FLAG == 0){
++    printf("D_LLTD_NUM => %d\n",D_LLTD_NUM);
++    sprintf(cmd, "echo %d > /var/lltd_num", D_LLTD_NUM);
++    system(cmd); 
++    system("echo 00=0 > /var/lltd_num_lan");
++    system("echo 00=0 > /var/lltd_num_wlan");
++    system("echo "" > /var/lltd_mac"); 
++}
+     /* add IO handlers & run main event loop forever */
+ 
+     {
+diff -ruN lldt-1.0.0/src.old/ctpacketio.c lldt-1.0.0/src/ctpacketio.c
+--- lldt-1.0.0/src.old/ctpacketio.c	2010-05-31 17:38:39.959535759 +0800
++++ lldt-1.0.0/src/ctpacketio.c	2010-05-31 17:37:45.376531961 +0800
+@@ -456,6 +456,35 @@
+ }
+ 
+ void
++steve_packetio_send_discover(uint16_t thisSeqNum, bool_t sendAck)
++{
++    size_t			nbytes;
++    topo_discover_header_t*	dhdr;
++
++//                   buf,     src-addr,      dst-addr,            service-type,        g_opcode,         seq,       B'cast
++    dhdr = fmt_base(g_txbuf, &g_hwaddr, &Etheraddr_broadcast, ToS_TopologyDiscovery, Opcode_Reset, thisSeqNum, TRUE);
++    nbytes = sizeof(topo_ether_header_t) + sizeof(topo_base_header_t);
++
++    dhdr->mh_gen = 0;
++    if (sendAck)
++    {
++        dhdr->mh_numstations = htons(1);
++        memcpy((void*)(dhdr+1),&uutMAC,sizeof(etheraddr_t));
++        nbytes += sizeof(etheraddr_t);
++    } else {
++        dhdr->mh_numstations = 0;
++    }
++
++    nbytes += sizeof(topo_discover_header_t);
++
++    tx_sendpacket(nbytes, thisSeqNum);
++
++    IF_TRACED(TRC_PACKET)
++        dbgprintf("tx_discover: seqnum = %d\n", thisSeqNum);
++    END_TRACE
++}
++
++void
+ packetio_send_query(uint16_t thisSeqNum, etheraddr_t* pDst)
+ {
+     size_t			nbytes;
+diff -ruN lldt-1.0.0/src.old/ctstate.c lldt-1.0.0/src/ctstate.c
+--- lldt-1.0.0/src.old/ctstate.c	2010-05-31 17:38:39.959535759 +0800
++++ lldt-1.0.0/src/ctstate.c	2010-05-31 17:37:45.376531961 +0800
+@@ -27,6 +27,27 @@
+ #include "bandfuncs.h"
+ #include "packetio.h"
+ 
++//Steve add
++extern int D_LLTD_NUM;
++extern int D_LLTD_LAN_NUM;
++extern int D_LLTD_WLAN_NUM;
++
++//Steve add 2009/05/11
++#if 0
++typedef struct _RT_MAC_ENTRY {
++	unsigned char            Addr[6];
++} RT_MAC_ENTRY;
++extern RT_MAC_ENTRY  D_TABLE[32];
++extern int D_TABLE_NUM;
++extern int D_OP_MODE;
++#endif
++
++#if 0
++#define DBGPRINT(fmt, args...)		printf(fmt, ## args)
++#else
++#define DBGPRINT(fmt, args...)
++#endif
++
+ /****************************
+  * Timeout handlers - 
+  * these are the time-based entry points, which also clock the state machine.
+@@ -129,6 +150,31 @@
+ }
+ 
+ 
++//Steve add
++#if 0
++static int check_mac_if_wireless(char *mactmp)
++{
++	int i;
++	int fflage=0;
++	char mac_str[20]={0};
++    DBGPRINT("	Enter %s ==> D_OP_MODE=%d\n",__FUNCTION__, D_OP_MODE);
++
++    if(D_OP_MODE==0 || D_OP_MODE==1 ||  D_OP_MODE==4 || D_OP_MODE==5)
++    {
++		for (i = 0; i < D_TABLE_NUM; i++) {
++		sprintf(mac_str, "%02x%02x%02x%02x%02x%02x", D_TABLE[i].Addr[0],D_TABLE[i].Addr[1],D_TABLE[i].Addr[2],D_TABLE[i].Addr[3],D_TABLE[i].Addr[4],D_TABLE[i].Addr[5]);    		     		   
++		if(strncmp(mac_str, mactmp, 12 )==0){
++		  fflage=1;break;
++		  }
++    	}	
++    }
++    if(fflage)
++    	return 1;
++    else
++    	return 0;
++}
++#endif
++
+ void
+ dump_packet(uint8_t *buf)
+ {
+@@ -140,6 +186,8 @@
+     topo_queryresp_header_t*	qrhdr;
+     topo_flat_header_t*         fhdr;
+ 
++    topo_tlv_header_t*	tlvhdr; //steve
++
+     uint16_t	seqNum;
+     uint16_t	genNum;
+     uint16_t	numSta;
+@@ -155,10 +203,363 @@
+     qrhdr = (topo_queryresp_header_t*)(bhdr + 1);
+     fhdr  = (topo_flat_header_t*)(bhdr + 1);
+ 
++    //Steve
++    tlvhdr = (topo_tlv_header_t*)(hhdr + 1);
++    uint8_t *tlv_ptr;
++    tlv_ptr= (uint8_t*)(hhdr + 1);
++    char cmd[100]={0};
++    uint8_t mac1[7]={0};
++    uint8_t str_tmp[66]={0};
++    uint8_t str_tmp2[33]={0};
++    char s_buf[20]={0};
++    char mac_str[20]={0};
++	FILE *fp;
++	int rc;
++	//Steve add 2009/05/11
++	uint8_t real_mac[7]={0};
++	char real_mac_str[20]={0};
++	int flag_client_table=0;
++	int flag_real_src=0;
++    //Steve
++    
++
+     /* Print Ether-hdr */
+     printf("==================\nEthernet-header:\n  src=" ETHERADDR_FMT " dst=" ETHERADDR_FMT " E-type=0x%0X\n\n",
+ 		ETHERADDR_PRINT(&ehdr->eh_src), ETHERADDR_PRINT(&ehdr->eh_dst), ehdr->eh_ethertype);
+ 
++#if 1    
++    //printf("\nSteve Test:Dump Packet Content\n");
++    int k=1,i=0,phy_type=0;
++   
++   #if 0
++    for (k=1; k< g_rcvd_pkt_len ;k++){ 
++       printf("%02X ",g_rxbuf[k-1]);
++       	if ((k % 16) == 0)printf("\n"); 
++    }
++    
++    printf("\nSteve Test:Dump Packet Content\n");
++    printf("TLV Type=%d ,TLV Len=%d\n", tlvhdr->tlv_type, tlvhdr->tlv_len);
++    printf("TLV Type=%d ,TLV Len=%d\n", *(tlv_ptr), *(tlv_ptr+1));
++   #endif
++   
++    uint8_t t_type=0;
++    uint8_t t_len=0; 
++    uint16_t t_count=0;
++    uint8_t show_fg=1;
++    
++    k=0;
++    int find_flag=0;
++    int lan_wlan=0;
++    int type_index=0;
++    //printf("Steve Parser packet\n");
++    while (k < g_rcvd_pkt_len)
++    {
++    	t_type = *(tlv_ptr+ t_count);
++    	t_len = *(tlv_ptr+ t_count + 1); 	 
++    	if(!find_flag){  
++    		//printf("t_type = %02x \t t_len=%d \t",t_type,t_len);    	  	
++    		if(t_type == 0x01){
++    			DBGPRINT("1.Host ID \t");
++    		}else if(t_type == 0x02)
++    			DBGPRINT("2.Characteristics \t");
++        	else if(t_type == 0x03)
++    			DBGPRINT("3.Physical medium \t");
++    		else if(t_type == 0x04)
++    			DBGPRINT("4.Wireless mode \t");
++    		else if(t_type == 0x05)
++    			DBGPRINT("5.BSSID \t");
++    		else if(t_type == 0x06)
++    			DBGPRINT("6.SSID \t");
++    		else if(t_type == 0x07)
++    			DBGPRINT("7.IPv4 address \t");
++    		else if(t_type == 0x08)
++    			DBGPRINT("8.IPv6 address \t");
++    		else if(t_type == 0x09)
++    			DBGPRINT("9.Operational rate \t");
++    		else if(t_type == 0x0a)
++    			DBGPRINT("10.Performance counter frequency \t");
++    		else if(t_type == 0x0c)
++    			DBGPRINT("12.Link speed \t");
++    		else if(t_type == 0x0d)
++    			DBGPRINT("13.802.11 RSSI \t");
++    		else if(t_type == 0x0e)
++    			DBGPRINT("15.Icon image \t");
++    		else if(t_type == 0x0f)
++    			DBGPRINT("15.Machine name \t");
++    		else if(t_type == 0x10)
++    			DBGPRINT("16.Support information \t");
++    		else if(t_type == 0x11)
++    			DBGPRINT("17.Friendly name \t");
++    		else if(t_type == 0x12)
++    			DBGPRINT("18.UUID \t");
++    		else if(t_type == 0x13)
++    			DBGPRINT("19.Hardware ID \t");
++    		else if(t_type == 0x14)
++    			DBGPRINT("20.QoS characteristics \t");
++    		else if(t_type == 0x15)
++    			DBGPRINT("21.802.11 physical medium \t");
++    		else if(t_type == 0x16)
++    			DBGPRINT("22.AP association table \t");	
++    		else if(t_type == 0x18)
++    			DBGPRINT("24.Detailed icon image \t");
++    		else if(t_type == 0x19)
++    			DBGPRINT("25.Sees-list working set \t");
++    		else if(t_type == 0x1a)
++    			DBGPRINT("26.Component table \t");	
++    		else if(t_type == 0x1b)
++    			DBGPRINT("27.Repeater AP lineage \t");
++    		else if(t_type == 0x1c)
++    			DBGPRINT("28.Repeater AP table \t");
++    		else{
++    		    DBGPRINT("Other\t");
++    		    show_fg=0;
++    		}     
++    	}
++    	if(show_fg == 1 ){    
++    		
++    		if(!find_flag){  
++        		for(i=0;i < t_len ;i++)
++    	     	 DBGPRINT("%02x ",*(tlv_ptr+ t_count + 2+i)); 	
++    	    }
++    	      
++    	   //MAC   
++    	   if(t_type == 0x01){
++    		   memcpy(real_mac,&bhdr->tbh_realsrc,6);  
++    		   sprintf(real_mac_str, "%02x%02x%02x%02x%02x%02x", real_mac[0],real_mac[1],real_mac[2],real_mac[3],real_mac[4],real_mac[5]);    		   
++    		   DBGPRINT("\nreal_mac_str=%s\n",real_mac_str);
++    		   
++    		   #if 1              
++                memcpy(mac1,&ehdr->eh_src,6);
++    		   	memset(cmd,0,strlen(cmd));
++               #else   		  
++     		   	memcpy(mac1,tlv_ptr+t_count+2,6);
++    		   	memset(cmd,0,strlen(cmd));
++    		   #endif
++    		   sprintf(mac_str, "%02x%02x%02x%02x%02x%02x", mac1[0],mac1[1],mac1[2],mac1[3],mac1[4],mac1[5]);    		     		   
++    		   DBGPRINT("mac_str=%s len=%d\n",mac_str, strlen(mac_str));
++    		   
++    		   //Steve add for device is client mode
++    		   flag_client_table=0;
++    		   #if 0
++    		   if(check_mac_if_wireless(mac_str)==1){
++    		    	DBGPRINT("MAC is at Client table\n");
++    		    	flag_client_table=1;
++    		    }
++    		   else{
++    		   		DBGPRINT("MAC is not at Client table\n");
++    		   		flag_client_table=0;
++    		   	}
++    		   	#endif
++    		   
++    		   //enhance check for client mode
++    		   if(strncmp(real_mac_str, mac_str, strlen(mac_str))==0){
++    		   	  flag_real_src=0;
++    		   		if(! (fp = fopen("/var/lltd_mac", "r")))
++						printf("error\n");
++	            
++					while(fgets(s_buf, sizeof(s_buf), fp)){		
++						//printf("s_buf: %s\n",s_buf);
++						if(memcmp(s_buf,mac_str,12)==0){
++		 		 		//printf("Yes\n");	
++		 		 		find_flag=1;
++		  				break;
++						}		
++					}
++					pclose(fp);
++					sprintf(cmd, "echo %s >> /var/lltd_mac",mac_str);
++				}
++				else{
++				    flag_real_src=1;
++					if(! (fp = fopen("/var/lltd_mac", "r")))
++						printf("error\n");
++	            
++					while(fgets(s_buf, sizeof(s_buf), fp)){		
++						//printf("s_buf: %s\n",s_buf);
++						if(memcmp(s_buf,real_mac_str,12)==0){
++		 		 		//printf("Yes\n");	
++		 		 		find_flag=1;
++		  				break;
++						}		
++					}
++					pclose(fp);   	
++					sprintf(cmd, "echo %s >> /var/lltd_mac",real_mac_str);
++				}
++				
++				if(!find_flag){
++					system(cmd);	
++					D_LLTD_NUM++;
++					memset(cmd,0,strlen(cmd));
++					if(flag_real_src)
++						sprintf(cmd, "echo %02d=%s > /var/lltd_info%d", t_type, real_mac_str, D_LLTD_NUM);
++					else
++						sprintf(cmd, "echo %02d=%s > /var/lltd_info%d", t_type, mac_str, D_LLTD_NUM);
++					system(cmd);
++				}   	
++    		}
++    		
++    		if(t_type == 0x02){   
++    		   if(!find_flag){	
++    		   		memcpy(str_tmp,tlv_ptr+t_count+2,4);   	
++    		   		phy_type=str_tmp[0];	     	
++    		   		DBGPRINT("\nphy_type=%d\n",phy_type);
++    		   		if(phy_type & (0x01 << 4)){
++    		   		   DBGPRINT("Web\n");
++    		   		   type_index=1;
++    		   		}else{
++    		   			DBGPRINT("\nNo Web\n");
++    		   			type_index=0;
++    		   		}
++				}
++    		}
++    		
++    		if(t_type == 0x03){   
++    		   if(!find_flag){	
++    		   		memcpy(str_tmp,tlv_ptr+t_count+2,4);   	
++    		   		phy_type=str_tmp[3];	     	
++    		   		DBGPRINT("\nphy_type=%d\n",phy_type);
++    		   		if(phy_type==71){
++    		   			D_LLTD_WLAN_NUM++;
++    		   		    lan_wlan=1;
++    		   		}else{
++    		   		   if(flag_client_table){ //for client
++    		   		    D_LLTD_WLAN_NUM++;
++    		   		    lan_wlan=1;}
++    		   		   else{
++    		   			D_LLTD_LAN_NUM++;
++    		   		    lan_wlan=0;
++    		   		   }
++    		   		}
++    		   		memset(cmd,0,strlen(cmd));
++			   		sprintf(cmd, "echo %02d=%d >> /var/lltd_info%d",t_type,str_tmp[3],D_LLTD_NUM);
++			   		system(cmd);
++				}
++    		}
++    		
++    		//SSID
++    		if(t_type == 0x06){   
++    		   if(!find_flag){	
++    		   	    DBGPRINT("\n");
++    		   	    memcpy(str_tmp,tlv_ptr+t_count+2,t_len);
++    		   	    memset(cmd,0,strlen(cmd));
++			   		sprintf(cmd, "echo %02d=%s >> /var/lltd_info%d",t_type,str_tmp,D_LLTD_NUM);
++			   		system(cmd);
++    		   		for(i=0;i < t_len ;i++)
++    	      			DBGPRINT("%c",*(tlv_ptr+ t_count + 2+i));  	      			
++    	      			DBGPRINT("\n");
++				}
++    		}
++    		
++    		//IPv4
++    		if(t_type == 0x07){   
++    		   if(!find_flag){	
++    		   		memcpy(str_tmp,tlv_ptr+t_count+2,4);   		     	
++    		   		DBGPRINT("\nIPv4 = %d.%d.%d.%d\n",str_tmp[0],str_tmp[1],str_tmp[2],str_tmp[3]);
++    		   		memset(cmd,0,strlen(cmd));
++			   		sprintf(cmd, "echo %02d=%d.%d.%d.%d >> /var/lltd_info%d",t_type,str_tmp[0],str_tmp[1],str_tmp[2],str_tmp[3],D_LLTD_NUM);
++			   		system(cmd);
++				}
++    		}
++    		
++    		//Machine name
++    		if(t_type == 0x0f){   
++    		   if(!find_flag){	
++    		   	    DBGPRINT("\n");
++    		   	    memcpy(str_tmp,tlv_ptr+t_count+2,t_len);
++    		   	    int j=0;
++    		   	    for(i=0;i < t_len ;i++){
++    		   	    	if((i % 2) ==0){
++    		   	    	      str_tmp2[j]=str_tmp[i];
++    		   	    	      j++;
++    		   	    	    }
++    		   	    }
++    		   	    
++    		   	    memset(cmd,0,strlen(cmd));
++			   		sprintf(cmd, "echo %02d=\"%s\" >> /var/lltd_info%d",t_type,str_tmp2,D_LLTD_NUM);
++			   		system(cmd);
++			   		
++			   		if(!strcmp(str_tmp2,"Xbox 360"))
++			   			type_index+=2;
++			   		
++			   		
++    		   		for(i=0;i < t_len ;i++)
++    	      			DBGPRINT("%c",*(tlv_ptr+ t_count + 2+i));   	      			
++    	      			DBGPRINT("\n");
++				}
++    		}
++    		
++    		//Friendly name
++    		if(t_type == 0x11){   
++    		   if(!find_flag){	
++    		   	    DBGPRINT("\n");
++    		   		for(i=0;i < t_len ;i++)
++    	      			DBGPRINT("%c",*(tlv_ptr+ t_count + 2+i));  	      			
++    	      			DBGPRINT("\n");
++				}
++    		}
++    		
++    		//AP assocation
++    		if(t_type == 0x16){
++    	      if(!find_flag){	
++    	      	     type_index+=3;
++    	    	}
++    	    }
++    	    
++    	    //Repeater assocation
++    		if(t_type == 0x1c){
++    	      if(!find_flag){	
++    	      	     type_index+=5;
++    	    	}
++    	    }
++    	}
++    	
++    	k=t_count=t_count + 2 + t_len;  
++    	if(!find_flag)
++    		DBGPRINT("\n");
++    	if(t_type== 0x00)
++    	   break;
++    }//end while
++    
++    DBGPRINT("D_LLTD_NUM => %d\n",D_LLTD_NUM);  
++    memset(cmd,0,strlen(cmd));
++    sprintf(cmd, "echo %d > /var/lltd_num", D_LLTD_NUM);
++    system(cmd); 
++    DBGPRINT("D_LLTD_LAN_NUM => %d\n",D_LLTD_LAN_NUM);  
++    memset(cmd,0,strlen(cmd));
++    sprintf(cmd, "echo 00=%d > /var/lltd_num_lan", D_LLTD_LAN_NUM);
++    system(cmd); 
++    DBGPRINT("D_LLTD_WLAN_NUM => %d\n",D_LLTD_WLAN_NUM);  
++    memset(cmd,0,strlen(cmd));
++    sprintf(cmd, "echo 00=%d > /var/lltd_num_wlan", D_LLTD_WLAN_NUM);
++    system(cmd); 
++    if(!find_flag){
++    	
++    	memset(cmd,0,strlen(cmd));
++    	sprintf(cmd, "echo 99=%d >> /var/lltd_info%d",type_index,D_LLTD_NUM);
++    	system(cmd);
++    	
++    	if(lan_wlan==0){
++    		if(D_LLTD_LAN_NUM >0){
++    		DBGPRINT("CP D_LLTD_LAN_NUM\n");  
++    		memset(cmd,0,strlen(cmd));
++    		sprintf(cmd, "cp /var/lltd_info%d /var/lltd_inf_lan%d",D_LLTD_NUM,D_LLTD_LAN_NUM);
++    		system(cmd);
++    		}
++    	}else{    	
++    		if(D_LLTD_WLAN_NUM >0){
++    		DBGPRINT("CP D_LLTD_WLAN_NUM\n");  
++    		memset(cmd,0,strlen(cmd));
++    		sprintf(cmd, "cp /var/lltd_info%d /var/lltd_inf_wlan%d",D_LLTD_NUM,D_LLTD_WLAN_NUM);
++    		system(cmd);
++    		}  
++    	}
++    }
++    
++    system("rm -rf /var/lltd_info*");
++	//printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n");    
++    printf("\n");
++    
++#endif
++    
+     /* Print the Base hdr */
+     seqNum = ntohs(bhdr->tbh_seqnum);
+     printf("Base-header:\n  version=%d  ToS=%s  Opcode=%s  SeqNum=%d\n", bhdr->tbh_version, Lld2_tos_names[bhdr->tbh_tos],
+diff -ruN lldt-1.0.0/src.old/osl-linux.c lldt-1.0.0/src/osl-linux.c
+--- lldt-1.0.0/src.old/osl-linux.c	2010-05-31 17:38:39.967530836 +0800
++++ lldt-1.0.0/src/osl-linux.c	2010-05-31 17:37:45.384530031 +0800
+@@ -525,6 +525,64 @@
+     return TLV_GET_SUCCEEDED;
+ }
+ 
++//Steve add
++static int getValue(int type)
++{
++	char tmp[2]={0};
++	FILE *fp;
++	
++if(type == 0){
++	system("nvram_get OP_Mode > /var/tmp_ab");
++	fp = fopen("/var/tmp_ab","r");
++	if(fp!= NULL) {
++		fscanf(fp, "%s", tmp);
++		fclose(fp);
++	}
++	else
++		printf("Can't open /var/tmp_ab\n");
++	
++	printf("/var/tmp_ab=%s\n",tmp);
++	system("rm /var/tmp_ab");
++
++    if(strcmp(tmp,"0")==0)
++    	return 0;
++    else if(strcmp(tmp,"1")==0)
++       return 1;
++    else if(strcmp(tmp,"2")==0)
++       return 2;
++    else if(strcmp(tmp,"6")==0)
++       return 6;
++    else
++       return 0;	
++}else{
++	system("nvram_get WdsEnable > /var/tmp_ab");
++	fp = fopen("/var/tmp_ab","r");
++	if(fp!= NULL) {
++		fscanf(fp, "%s", tmp);
++		fclose(fp);
++	}
++	else
++		printf("Can't open /var/tmp_ab\n");
++	
++	printf("/var/tmp_ab=%s\n",tmp);
++	system("rm /var/tmp_ab");
++
++    if(strcmp(tmp,"0")==0)
++    	return 0;
++    else if(strcmp(tmp,"1")==0)
++       return 1;
++    else if(strcmp(tmp,"2")==0)
++       return 2;
++    else if(strcmp(tmp,"3")==0)
++       return 3;
++    else if(strcmp(tmp,"4")==0)
++       return 4;
++    else
++       return 0;	
++}
++
++}
++
+ 
+ int
+ get_physical_medium(void *data)
+@@ -533,6 +591,14 @@
+ 
+     uint32_t   pm;
+ 
++    if(getValue(0)!=6){//OP_Mode
++    	if(getValue(1)==0)
++    	pm = htonl(6);	// "ethernet"
++    	else{
++        	system("echo 71 > /var/1111");
++    		pm = htonl(71);	// "ethernet"
++		}
++	}else
+     pm = htonl(6);	// "ethernet"
+ 
+     memcpy(data,&pm,4);
+@@ -776,7 +842,8 @@
+ int
+ get_ipv6addr(void *data)
+ {
+-#ifdef RT2860_WIRELESS
++	//Steve modify
++#if 0 //def RT2860_WIRELESS
+ /*    TLVDEF( ipv6addr_t,       ipv6addr,            ,   8,  Access_unset ) */
+     FILE *fp;
+     unsigned char byte[2];
+@@ -982,7 +1049,8 @@
+ 
+     int ret;
+     struct utsname unamebuf;
+-    char* machine_name = "localhost";
++    //char* machine_name = "localhost";
++    char* machine_name = "WirelessRouter"; //Steve modify
+ 
+     /* use uname() to get the system's hostname */
+     ret = uname(&unamebuf);
+diff -ruN lldt-1.0.0/src.old/protocol.h lldt-1.0.0/src/protocol.h
+--- lldt-1.0.0/src.old/protocol.h	2010-05-31 17:38:39.967530836 +0800
++++ lldt-1.0.0/src/protocol.h	2010-05-31 17:37:45.384530031 +0800
+@@ -144,6 +144,14 @@
+     /* ... TLV list ... */
+ } __attribute__ ((packed)) topo_hello_header_t;
+ 
++//Steve add 2008/11/03
++typedef struct {
++    uint8_t	tlv_type __attribute__ ((packed));	/* type */
++    uint8_t	tlv_len     __attribute__ ((packed));	/* Len */
++} __attribute__ ((packed)) topo_tlv_header_t;
++//Steve add 2008/11/03
++
++
+ typedef struct {
+     uint16_t		eh_numdescs __attribute__ ((packed));	/* how many emitee_descs follow directly */
+     /* ... emitee_desc_t list ... */
+--- lldt-1.0.0/src.old/main.c	2010-05-31 17:40:53.000000000 +0800
++++ lldt-1.0.0/src/main.c	2010-06-03 14:14:19.352528675 +0800
+@@ -74,7 +74,7 @@
+     strcpy(g_icon_path,default_icon_path);
+ 
+     /* Examine configuration file, if it exists */
+-    conf_file = fopen("/etc_ro/lld2d.conf", "r");
++    conf_file = fopen("/etc/lld2d.conf", "r");
+     if (conf_file == NULL)  return;
+     while ((numread = getline(&line, &len, conf_file)) != -1)
+     {
+--- lldt-1.0.0/lld2d.conf	2009-04-22 22:13:39.000000000 +0800
++++ lldt-1.0.0/lld2d.conf	2010-06-03 14:15:24.363528671 +0800
+@@ -1,3 +1,3 @@
+-icon = /etc_ro/icon.ico
+-jumbo-icon = /etc_ro/icon.large.ico
++icon = /etc/icon.ico
++jumbo-icon = /etc/icon.large.ico
+ wl-interface = ra0

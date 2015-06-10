@@ -1,0 +1,80 @@
+--- Uboot-1.1.3/include/configs/rt2880.h	2010-05-04 17:21:50.569597977 +0800
++++ Uboot-1.1.3.new/include/configs/rt2880.h	2010-05-04 14:27:12.502813593 +0800
+@@ -67,9 +67,17 @@
+ 
+ #define CONFIG_BAUDRATE		57600
+ 
++#ifndef XMK_STR
++#define XMK_STR(x)  #x
++#endif
++#ifndef MK_STR
++#define MK_STR(x)   XMK_STR(x)
++#endif
++
+ #define CONFIG_SERVERIP 10.10.10.3
+ #define CONFIG_IPADDR 10.10.10.123
+ #define CONFIG_ETHADDR "00:AA:BB:CC:DD:10"
++#define CONFIG_DEFAULT_LINUX_IMAGE "aximcom-kernel-fw.bin"
+ /* valid baudrates */
+ #define CFG_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+ 
+--- Uboot-1.1.3/net/tftp.c	2009-12-17 16:48:57.000000000 +0800
++++ Uboot-1.1.3.new/net/tftp.c	2010-05-04 11:39:54.462087762 +0800
+@@ -307,7 +307,16 @@
+ static void
+ TftpTimeout (void)
+ {
+-	if (++TftpTimeoutCount > TIMEOUT_COUNT) {
++    /* EZP: add timeout environment variable. */
++    int timeout_count = TIMEOUT_COUNT;
++    char *timeout_count_env = NULL;
++    if (timeout_count_env = getenv("tftptimeoutcount")){
++        timeout_count = (*timeout_count_env) - '0';
++        if((!timeout_count) || (timeout_count > TIMEOUT_COUNT)) {
++            timeout_count = TIMEOUT_COUNT;
++        }
++    }
++	if (++TftpTimeoutCount > timeout_count) {
+ 		puts ("\nRetry count exceeded; starting again\n");
+ 		NetStartAgain ();
+ 	} else {
+@@ -330,6 +330,11 @@
+ void
+ TftpStart (void)
+ {
++    /* EZP: add timeout environment variable. */
++    int timeout = TIMEOUT;
++    int timeout_count = TIMEOUT_COUNT;
++    char *timeout_env = NULL;
++    char *timeout_count_env = NULL;
+ 	TftpStarted=1;
+ 
+ 	if (BootFile[0] == '\0') {
+@@ -373,11 +387,24 @@
+ 
+ 	putc ('\n');
+ 
+-	printf ("\n TIMEOUT_COUNT=%d,Load address: 0x%lx\n",TIMEOUT_COUNT,load_addr);
++    /* EZP: add timeout environment variable. */
++    if (timeout_env = getenv("tftptimeout")){
++        timeout = (*timeout_env) - '0';
++        if((!timeout) || (timeout > TIMEOUT)) {
++            timeout = TIMEOUT;
++        }
++    }
++    if (timeout_count_env = getenv("tftptimeoutcount")){
++        timeout_count = (*timeout_count_env) - '0';
++        if((!timeout_count) || (timeout_count > TIMEOUT_COUNT)) {
++            timeout_count = TIMEOUT_COUNT;
++        }
++    }
++	printf ("\n TIMEOUT=%d secs TIMEOUT_COUNT=%d,Load address: 0x%lx\n", 
++            timeout, timeout_count,load_addr);
+ 
+ 	puts ("Loading: *\b");
+-
+-	NetSetTimeout (TIMEOUT * CFG_HZ * 2, TftpTimeout);
++	NetSetTimeout (timeout * CFG_HZ * 2, TftpTimeout);
+ 	NetSetHandler (TftpHandler);
+ 
+ 	TftpServerPort = WELL_KNOWN_PORT;

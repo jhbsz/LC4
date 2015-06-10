@@ -1,0 +1,105 @@
+#!/bin/sh
+
+SED_SCRIPT=/tmp/kid_script
+SYSLOG_TPL=/etc/syslog-ng/syslog-ng.tpl
+SYSLOG_CONF=/tmp/syslog-ng.conf
+
+
+
+start_syslog_ng()
+{
+    local KID_IPTLOG="$(nvram get keyid_iptlog)"
+    local KID_USR="$(nvram get keyid_usr)"
+    local KID_DEFAULT="$(nvram get keyid_default)"
+    local REMOTE_IP="$(nvram show log_rule 0 remote_ip)"
+    local REMOTE_PROTO="$(nvram show log_rule 0 proto)"
+    local REMOTE_PORT="$(nvram show log_rule 0 remote_port)"
+
+    # Default key IDs
+    [ -n "$KID_IPTLOG" ] || KID_IPTLOG="IPT"
+    [ -n "$KID_USR" ] || KID_USR="USR"
+    [ -n "$KID_DEFAULT" ] || KID_DEFAULT="DBG"
+
+    echo -n > $SED_SCRIPT
+    echo "s/\\\$kid_iptlog\\\$/${KID_IPTLOG}/g;"   >> $SED_SCRIPT
+    echo "s/\\\$kid_usr\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    echo "s/\\\$kid_default\\\$/${KID_DEFAULT}/g;" >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 enable)" == "1" ] && {
+    [ "$(nvram show log_rule 0 web_mgmt)" == "1" ] && \
+               echo "s/\\\$kid_web_mgmt\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 dns)" == "1" ] && \
+               echo "s/\\\$kid_dns\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 ppp)" == "1" ] && \
+               echo "s/\\\$kid_ppp\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 upnp)" == "1" ] && \
+               echo "s/\\\$kid_upnp\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 wireless)" == "1" ] && \
+               echo "s/\\\$kid_wireless\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 ntp)" == "1" ] && \
+               echo "s/\\\$kid_ntp\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 sys_warning)" == "1" ] && \
+               echo "s/\\\$kid_sys_warning\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 dhcp_serv)" == "1" ] && \
+               echo "s/\\\$kid_dhcp_serv\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 dhcp_cli)" == "1" ] && \
+               echo "s/\\\$kid_dhcp_cli\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 ddns)" == "1" ] && \
+               echo "s/\\\$kid_ddns\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    [ "$(nvram show log_rule 0 firewall)" == "1" ] && \
+               echo "s/\\\$kid_firewall\\\$/${KID_USR}/g;"	   >> $SED_SCRIPT
+    }
+
+    [ "$(nvram show log_rule 0 remote_enable)" == "1" ] && {
+               echo "s/\\\$remote_ip\\\$/${REMOTE_IP}/g;"	   >> $SED_SCRIPT
+               echo "s/\\\$remote_port\\\$/${REMOTE_PORT}/g;"	   >> $SED_SCRIPT
+               echo "s/\\\$remote_enable\\\$//g;"	   >> $SED_SCRIPT
+               case "$REMOTE_PROTO" in
+               both)
+                   echo "s/\\\$tcp_proto\\\$//g;"     >> $SED_SCRIPT
+                   echo "s/\\\$udp_proto\\\$//g;"     >> $SED_SCRIPT
+               ;;
+               tcp)
+                   echo "s/\\\$tcp_proto\\\$//g;"     >> $SED_SCRIPT
+                   echo "s/\\\$udp_proto\\\$/#/g;"     >> $SED_SCRIPT
+               ;;
+               udp)
+                   echo "s/\\\$tcp_proto\\\$/#/g;"     >> $SED_SCRIPT
+                   echo "s/\\\$udp_proto\\\$//g;"     >> $SED_SCRIPT
+               ;;
+               esac
+    } || echo "s/\\\$remote_enable\\\$/#/g;"     >> $SED_SCRIPT
+    echo "p;" >> $SED_SCRIPT
+
+    sed -n -f "$SED_SCRIPT" < "$SYSLOG_TPL" > "$SYSLOG_CONF"
+    syslog-ng -f "$SYSLOG_CONF"
+}
+
+stop_syslog_ng()
+{
+    killall syslog-ng
+}
+
+syslog_ng_usage()
+{
+    echo "syslog-ng-init { start | stop | restart }"
+}
+
+cmd=$1
+
+case "$cmd" in 
+    start)
+	start_syslog_ng 
+	;;
+    stop)
+	stop_syslog_ng
+	;;
+    restart)
+	stop_syslog_ng
+	sleep 1
+	start_syslog_ng
+	;;
+    *)
+	syslog_ng_usage
+	;;
+esac
+

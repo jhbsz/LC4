@@ -1,0 +1,39 @@
+Source-Makefile: target/linux/ar7/Makefile
+Target: ar7
+Target-Board: ar7
+Target-Kernel: 2.6
+Target-Name: TI AR7 [2.6]
+Target-Path: /home/shane/aximcom/ALLIS
+Target-Arch: mipsel
+Target-Features: atm gpio jffs2 squashfs
+Target-Depends: 
+Target-EZP-Platform: 
+Target-EZP-SWType: 
+Linux-Version: 2.6.26.5
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for TI AR7 based routers
+@@
+Default-Packages: base-files libgcc uclibc busybox dropbear  udevtrigger hotplug2 dnsmasq iptables ppp ppp-mod-pppoe kmod-ipt-nathelper bridge firewall
+Target-Profile: Texas
+Target-Profile-Name: Texas Instruments WiFi (default)
+Target-Profile-Packages: kmod-acx-mac80211
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set compatible with hardware using Texas Instruments WiFi cards
+@@
+
+Target-Profile: None
+Target-Profile-Name: No WiFi
+Target-Profile-Packages: 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set without WiFi support
+@@
+
+

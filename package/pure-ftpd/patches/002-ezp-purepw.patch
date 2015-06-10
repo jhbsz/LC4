@@ -1,0 +1,39 @@
+--- pure-ftpd-1.0.21.orig/src/pure-pw.c	2005-04-19 03:48:32.000000000 +0800
++++ pure-ftpd-1.0.21/src/pure-pw.c 	2009-06-23 19:08:39.422522878 +0800
+@@ -813,10 +813,12 @@
+             no_mem();
+         }
+     }           
++    /* EZP: we do not need password interface to enter password */
++    /*
+     if ((pwinfo.pwd = do_get_passwd()) == NULL) {
+         fprintf(stderr, "Error with entering password - aborting\n");        
+         return PW_ERROR_ENTER_PASSWD_PW_ERROR;
+-    }
++    }*/ 
+     {
+         char *cleartext = pwinfo.pwd;
+ 
+@@ -1325,7 +1327,7 @@
+     filter_pw_line_sep(pwinfo.login);
+     while ((fodder =
+ 	    getopt(argc, argv, 
+-		   "c:d:D:f:F:g:hi:I:mn:N:q:Q:r:R:t:T:u:y:z:")) != -1) {
++		   "c:d:D:f:F:g:hi:I:mn:N:q:Q:r:R:t:T:u:y:z:p:")) != -1) {
+         switch(fodder) {
+         case 'c' : {
+             if ((pwinfo.gecos = strdup(optarg)) == NULL) {
+@@ -1429,6 +1431,13 @@
+             }
+             break;
+         }
++        /* EZP : add a "p" option to set user password */           
++        case 'p' : {
++            if ((pwinfo.pwd = strdup(optarg)) == NULL) {
++                no_mem();
++            }
++            break;
++        }
+         case 'q' : {
+             if (*optarg == 0) {
+                 pwinfo.has_ul_ratio = -1;

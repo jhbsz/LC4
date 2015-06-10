@@ -1,0 +1,13 @@
+--- iscsitarget-0.4.17/Makefile.orig	2009-05-11 22:51:35.596506066 +0800
++++ iscsitarget-0.4.17/Makefile	2009-05-11 22:52:02.093650715 +0800
+@@ -177,8 +177,8 @@
+ 		$(DISTDIR)$(INSTALL_MOD_PATH)$(KMOD)/iscsi/iscsi_trgt.ko
+ 
+ install-usr: usr/ietd usr/ietadm
+-	@install -vD usr/ietd $(DISTDIR)/usr/sbin/ietd
+-	@install -vD usr/ietadm $(DISTDIR)/usr/sbin/ietadm
++	@install -vD usr/ietd $(XDISTDIR)/usr/sbin/ietd
++	@install -vD usr/ietadm $(XDISTDIR)/usr/sbin/ietadm
+ 
+ install-etc: install-initd
+ 	@if [ ! -e $(DISTDIR)/etc/ietd.conf ]; then \

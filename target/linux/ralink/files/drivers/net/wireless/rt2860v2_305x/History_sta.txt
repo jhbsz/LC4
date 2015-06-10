@@ -1,0 +1,47 @@
+[V1.4.0.0]]
+1. Fixed Legacy Wi-Fi WMM S06 fail.
+2. Fixed WPAPSK failed when 2860 STA Aggregation is enabled and connects with 2860 N/Aggregation AP. 
+3. Fixed "iwconfig ra0 essid"
+4. Send DIS-ASSOC request to AP when ra0 down.
+5. Support 5-GHz band ATE.
+6. Fixed fixed rate issue in N mode and fixed rate ioctl.
+7. Add Legacy Power Saving Mode.
+8. Fixed W52 with Activity scan issue in ABG_MIXED and ABGN_MIXED mode.
+
+[V1.3.0.0]
+1. Support Monitor Mode with WireShark.(Usage: iwconfig ra0 mode monitor)
+2. Update Rate Adaptation Algorithm.
+3. Add ATE function(also QA supported).
+4. Support IPv6 Ethernet Convert Mechanism.
+5. Support NetworkManager, wpa_supplicant by using wext.
+6. Fixed Auto Rate Select issue.(When RT2860 Linux STA links up with N-AP then chaged to link up with legacy-AP)
+7. Fixed Fast-Roaming Fail Issue.
+
+[V1.2.1.0]
+1. Fixed segmentation fault when size of iwpriv ra0 get_site_survey result exceeded 4096.
+2. Add MAT related iwpriv commands.
+3. Add AP's wireless mode info to iwpriv ra0 get_site_survey.
+4. Modify bitrate info in iwlist ra0 scan.
+
+[V1.2.0.0]
+1. Update NicConfig2 default value.
+2. Modify STA to retrieve the MCS of AP(from Beacon) and save to StaActive structure.
+3. Add WPS re-generate PIN command: iwpriv ra0 wsc_gen_pincode.
+4. Do NOT re-build M-messages in WPS state machine timeout timer function.
+5. Fixed compile error in non-DBG mode.
+
+[V1.1.0.0]
+1. Fixed WI-FI test item 5.2.2.9 #S7, STA will fail to authenticate when AP set fragmentation to 500.
+2. Fxied iwpriv security setting issue.
+3. Re-organize the Rx data path.
+4. Update Tx Power mechanism.
+5. Support WPS In-band(EAP) & Out-Of-band(UPnP) Enrollee mode and In-band(EAP) Registrar mode.
+6. Add WPS related iwpriv commands
+7. Support Dongle/Clone/Dongle+Clone mechanism
+8. Support Big-Endian.
+
+[V1.0.0.0]
+1. Chariot Throughput ok
+2. Driver security support: Open/Shared WEP, WPA-PSK, WPA2-PSK, WPA-NONE.
+3. Support 32/64-bit OS
+4. Support A-MPDU and A-MSDU

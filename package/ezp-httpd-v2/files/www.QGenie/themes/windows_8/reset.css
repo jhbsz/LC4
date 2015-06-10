@@ -1,0 +1,57 @@
+.ih_style div, .ih_style span, .ih_style applet, .ih_style object, .ih_style iframe, .ih_style h1, .ih_style h2,
+.ih_style h3, .ih_style h4, .ih_style h5, .ih_style h6, .ih_style p, .ih_style blockquote, .ih_style pre,
+.ih_style a, .ih_style abbr, .ih_style acronym, .ih_style address, .ih_style big, .ih_style cite, .ih_style code,
+.ih_style del, .ih_style dfn, .ih_style em, .ih_style img, .ih_style ins, .ih_style kbd, .ih_style q, .ih_style s,
+.ih_style samp, .ih_style small, .ih_style strike, .ih_style strong, .ih_style sub, .ih_style sup, .ih_style tt,
+.ih_style var, .ih_style b, .ih_style u, .ih_style i, .ih_style center, .ih_style dl, .ih_style dt, .ih_style dd,
+.ih_style ol, .ih_style ul, .ih_style li, .ih_style fieldset, .ih_style form, .ih_style label, .ih_style legend,
+.ih_style table, .ih_style caption, .ih_style tbody, .ih_style tfoot, .ih_style thead, .ih_style tr, .ih_style th,
+.ih_style td, .ih_style article, .ih_style aside, .ih_style canvas, .ih_style details, .ih_style embed,
+.ih_style figure, .ih_style figcaption, .ih_style footer, .ih_style header, .ih_style hgroup, .ih_style menu,
+.ih_style nav, .ih_style output, .ih_style ruby, .ih_style section, .ih_style summary, .ih_style time, .ih_style mark,
+.ih_style audio, .ih_style video, .ih_style *, .ih_style *:before, .ih_style *:after {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 11px;
+    font-family: Myriad,Arial,Helvetica,clean,sans-serif;
+    line-height: normal;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: none;
+    max-height: none;
+    min-width: none;
+    min-height: none;
+}
+.ih_style th, .ih_style td, .ih_style .table th, .ih_style .table td {
+    vertical-align: middle;
+}
+.ih_style article, .ih_style aside, .ih_style details, .ih_style figcaption, .ih_style figure, .ih_style footer,
+.ih_style header, .ih_style hgroup, .ih_style menu, .ih_style nav, .ih_style section {
+    display: block;
+}
+.ih_style body {
+    line-height: 1;
+}
+.ih_style ol,
+.ih_style ul {
+    list-style: none;
+}
+.ih_style blockquote,
+.ih_style q {
+    quotes: none;
+}
+.ih_style blockquote:before,
+.ih_style blockquote:after,
+.ih_style q:before,
+.ih_style q:after {
+    content: '';
+    content: none;
+}
+.ih_style table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}

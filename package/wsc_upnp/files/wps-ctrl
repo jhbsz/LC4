@@ -1,0 +1,47 @@
+#!/bin/sh
+
+log_msg="WPS service"
+
+CMD="iwpriv ra0 set"
+. /etc/arch.sh
+
+[ "$(nvram show wl_basic_rule 0 enable)" = "0" ] && exit
+
+local action=$1
+local pin_code=$2
+case $action in
+    pbc)
+        $CMD WscMode=2
+        $CMD WscGetConf=1
+        arch_led_start wps
+        result=$(ezp-wps -p 1200)
+        arch_led_stop wps
+        logger "EZP_USR" $result
+        echo $result
+        ;;
+    pin)
+        $CMD WscPinCode=$pin_code
+        [ "$?" -gt "1" ] && {
+            result="WPS Pin Code is not correct"
+        } || {
+            $CMD WscMode=1
+            $CMD WscGetConf=1
+            arch_led_start wps
+            result=$(ezp-wps -p 1200)
+            arch_led_stop wps
+        }
+        logger "EZP_USR" $result
+        echo $result
+        ;;
+    gen_pin)
+        $CMD WscGenPinCode
+        local pin=$(ezp-wps -g ra0)
+        $(nvram replace attr wl_wps_rule 0 pin $pin)
+        echo $pin
+        nvram commit
+        ;;
+    gpio)
+        [ -n "$(pidof ezp-wps)" ] && exit
+        wps-ctrl pbc &
+        ;;
+esac

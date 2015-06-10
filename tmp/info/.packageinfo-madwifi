@@ -1,0 +1,20 @@
+Source-Makefile: package/madwifi/Makefile
+Package: kmod-madwifi
+Submenu: Wireless Drivers
+Version: <LINUX_VERSION>+r3314--1
+Depends: +wireless-tools @PCI_SUPPORT||TARGET_atheros @!TARGET_ar7 @!TARGET_avr32 @!TARGET_etrax @!TARGET_uml
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Driver for Atheros wireless chipsets
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains a driver for Atheros 802.11a/b/g chipsets.
+
+http://madwifi.org/
+@@
+Config: 
+	source "package/madwifi/Config.in"
+@@
+

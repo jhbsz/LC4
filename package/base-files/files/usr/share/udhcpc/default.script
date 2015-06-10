@@ -1,0 +1,100 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export LD_LIBRARY_PATH=/lib:/usr/lib
+. /etc/network.sh
+. /etc/arch.sh
+
+local lic_inv=$(nvram get license_invalid)
+
+[ -z "$1" ] && {
+echo "Error: should be run by udhcpc" 
+exit 1
+}
+
+# Get iface first.
+# We also need to consider _proto_currprodcat
+currprodcat="$(nvram get prod_cat)"
+nvram show 2>&- | egrep -e "_proto=dhcp|_proto=directip|_proto=beceem|_proto=htc|_proto=iphone|_proto=wimax|_proto=wisp|_proto_$currprodcat=dhcp|_proto_$currprodcat=directip|_proto_$currprodcat=beceem|_proto_$currprodcat=htc|_proto_$currprodcat=iphone|_proto_$currprodcat=wimax|_proto_$currprodcat=wisp" | {
+while :; do
+           read FOO
+           [ -z "$FOO" ] && break
+           FOO="${FOO%%_*}"
+           [ "$(nvram get ${FOO}_ifname)" = "${interface}" ] && break
+done
+
+type="${FOO%%[0-9]*}"
+ifnum="${FOO#$type}"
+case "$1" in
+	term)
+        # EZPacket
+        # Add a term case for udhcpc leaving without correct IP.
+        # This part we do nothing but unlock serialize lock.
+        . /etc/functions.sh
+
+        # Set the flag for preventing ezpcom from running on directipon
+        # has been run.
+        [ "$(nvram get ${FOO}_proto)" = "directip" ] &&  /usr/sbin/ezpcom -b
+
+        iface_name=${FOO}
+        lock_file="/tmp/.iface.changestate.${iface_name}.lock"
+        if_serialize_ulock ${lock_file}
+
+	;;
+	deconfig)
+        logger -t "udhcpc[48]" "Releasing ip address"
+        # Set up NVRAM.
+        iface_down "dhcp" $FOO
+
+        # Set up interface.
+        [ "$(nvram get ${FOO}_proto)" != "wisp" -o "$(nvram show wl0_apcli_rule 0 enable)" = "0" ] && ip link set dev $interface down
+        ip addr flush dev $interface
+        if [ "$(nvram get ${FOO}_proto)" = "wisp" ]; then
+            [ "$(nvram show wl0_apcli_rule 0 enable)" = "1" -a "$(nvram get ${FOO}_ifname)" = "apcli0" ] && ip link set dev $interface up
+        else
+            # For some timing issue, doring switching from wisp to other
+            # protocol, sometimes we stop the dhcp, changing proto, then the
+            # deconfig callback started .... then the interface is mistakenly
+            # started up, so we try to avoid it
+            [ "$interface" != "apcli0" ] && ip link set dev $interface up
+        fi
+	;;
+	renew|bound)
+        [ "$(nvram get ${FOO}_proto)" = "directip" ] &&  /usr/sbin/ezpcom -b
+
+        # Check whether ipaddr is changed.
+        [ "$ip" != "$(nvram get ${FOO}_ipaddr)" ] && {
+            # Set up interface.
+            ip link set dev $interface down
+	        ip addr flush dev $interface
+	        ip addr add $ip/${mask:-24} broadcast ${broadcast:-+} dev $interface
+            ip link set dev $interface up
+
+            # Set up NVRAM
+            proto=$(nvram get ${FOO}_proto)
+            case $proto in
+                dhcp|htc|iphone|wimax|wisp|beceem)
+                    iface_up "dhcp" "$FOO" "$ip" "$mask" "$router" "$dns" "$domain"
+                ;;
+                directip)
+                    iface_up "dhcp" "$FOO" "$ip" "$mask" "$serverid" "$dns" "$domain"
+                ;;
+            esac
+
+            logger -t "udhcpc[48]" "Obtain ip address $ip/$mask gateway $router dns $dns"
+
+	    # user rules
+	    [ -f /etc/udhcpc.user ] && . /etc/udhcpc.user
+        }
+
+        local proto=$(nvram get wan${ifnum}_proto)
+        [ "$proto" = "wwan" -o "$proto" = "htc" -o "$proto" = "directip" \
+          -o "$proto" = "iphone" -o "$proto" = "barry" -o "$proto" = "wimax" \
+          -o "$proto" = "beceem" ] && {
+            arch_led_stop wwan
+        }
+	;;
+esac
+
+}
+
+exit 0

@@ -1,0 +1,14 @@
+Source-Makefile: package/udps/Makefile
+Package: udps
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Network
+Title: udps - Abocom network test daemon.
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A network test program for Abocom factory test.
+@@
+

@@ -1,0 +1,193 @@
+#!/bin/sh
+
+dnatchain="EZP_DNAT"
+
+trigger_stop ()
+{
+    [ "$(nvram get pt_enable)" = "1" ] || return
+    trnum="$(nvram get pt_rule_num)"
+    i="0"
+    while [ "$i" -lt "$trnum" ];
+    do
+        [ "$(nvram show pt_rule $i enable)" = "1" ] || {
+            i="$(($i + 1))"
+            continue
+        }
+
+        portstart="$(nvram show pt_rule $i port_start)"
+        portend="$(nvram show pt_rule $i port_end)"
+        trportstart="$(nvram show pt_rule $i trig_port_start)"
+        trportend="$(nvram show pt_rule $i trig_port_end)"
+
+        # if we don't have proper "start port" setting
+        # ignore it
+        [ -z "$portstart" -o -z "$trportstart" ] && continue
+
+        # decide protocol string 
+        proto="$(nvram show pt_rule $i proto)"
+        prototcp="0"
+        protoudp="0"
+        case "$proto" in
+        tcp|udp)
+            [ "$proto" = "tcp" ] && prototcp="1"
+            [ "$proto" = "udp" ] && protoudp="1"
+            trprotostr=" $proto "
+            # decide forward port
+            fwdport="--dport $portstart"
+            [ -n "${portend}" -a "${portend}" != "0" ] && fwdport="--dport ${portstart}:${portend}"
+            # decide trigger port
+            trport="--dport $trportstart"
+            [ -n "${trportend}" -a "${trportend}" != "0" ] && trport="--dport ${trportstart}:${trportend}"
+        ;;
+        all)
+            prototcp="1"
+            protoudp="1"
+            trprotostr=" all "
+            # decide forward port
+            fwdport="--dport $portstart"
+            [ -n "${portend}" -a "${portend}" != "0" ] && fwdport="--dport ${portstart}:${portend}"
+            # decide trigger port
+            trport="--dport $trportstart"
+            [ -n "${trportend}" -a "${trportend}" != "0" ] && trport="--dport ${trportstart}:${trportend}"
+        ;;
+        *)
+            protostr="  "
+            trprotostr=" all "
+            fwdport=""
+            trport=""
+        ;;
+        esac
+
+        # decide wan/lan interface
+        wan0_if="$(nvram get wan0_ifname)"
+        [ -n "${wan0_if}" ] && wan0_if=" -i ${wan0_if} "
+        lan0_if="$(nvram get lan0_ifname)"
+        [ -n "${lan0_if}" ] && lan0_if=" -i ${lan0_if} "
+
+        # decide trigger match-relate port
+        trmrport="$portstart"
+        [ -n "${portend}" -a "${portend}" != "0" ] && trmrport="${portstart}-${portend}"
+        [ "$prototcp" = "1" ] && {
+            iptables -t nat -D ${dnatchain} ${wan0_if} -p tcp ${fwdport} \
+                -j TRIGGER --trigger-type dnat
+            iptables -t filter -D EZP_TR_STATE ${wan0_if} -p tcp ${fwdport} \
+                -j TRIGGER --trigger-type in
+            iptables -t nat -D ${dnatchain} ${lan0_if} -p tcp ${trport} \
+                -j TRIGGER --trigger-type out --trigger-proto ${trprotostr} \
+                --trigger-match ${trmrport} --trigger-relate ${trmrport}
+        }
+        [ "$protoudp" = "1" ] && {
+            iptables -t nat -D ${dnatchain} ${wan0_if} -p udp ${fwdport} \
+                -j TRIGGER --trigger-type dnat
+            iptables -t filter -D EZP_TR_STATE ${wan0_if} -p udp ${fwdport} \
+                -j TRIGGER --trigger-type in
+            iptables -t nat -D ${dnatchain} ${lan0_if} -p udp ${trport} \
+                -j TRIGGER --trigger-type out --trigger-proto ${trprotostr} \
+                --trigger-match ${trmrport} --trigger-relate ${trmrport}
+        }
+        i="$(($i + 1))"
+    done
+}
+
+trigger_init ()
+{
+    iptables -t filter -N EZP_TR_STATE
+    iptables -t filter -I FORWARD -j EZP_TR_STATE 
+}
+
+trigger_fini ()
+{
+    iptables -t filter -D FORWARD -j EZP_TR_STATE 
+    iptables -t filter -X EZP_TR_STATE
+}
+
+trigger_start ()
+{
+    trigger_stop
+    [ "$(nvram get pt_enable)" = "1" ] || return
+    trnum="$(nvram get pt_rule_num)"
+    i="0"
+    while [ "$i" -lt "$trnum" ];
+    do
+        [ "$(nvram show pt_rule $i enable)" = "1" ] || {
+            i="$(($i + 1))"
+            continue
+        }
+
+        portstart="$(nvram show pt_rule $i port_start)"
+        portend="$(nvram show pt_rule $i port_end)"
+        trportstart="$(nvram show pt_rule $i trig_port_start)"
+        trportend="$(nvram show pt_rule $i trig_port_end)"
+
+        # if we don't have proper "start port" setting
+        # ignore it
+        [ -z "$portstart" -o -z "$trportstart" ] && continue
+
+        # decide protocol string 
+        proto="$(nvram show pt_rule $i proto)"
+        prototcp="0"
+        protoudp="0"
+        case "$proto" in
+        tcp|udp)
+            [ "$proto" = "tcp" ] && prototcp="1"
+            [ "$proto" = "udp" ] && protoudp="1"
+            trprotostr=" $proto "
+            # decide forward port
+            fwdport="--dport $portstart"
+            [ -n "${portend}" -a "${portend}" != "0" ] && fwdport="--dport ${portstart}:${portend}"
+            # decide trigger port
+            trport="--dport $trportstart"
+            [ -n "${trportend}" -a "${trportend}" != "0" ] && trport="--dport ${trportstart}:${trportend}"
+        ;;
+        all)
+            prototcp="1"
+            protoudp="1"
+            trprotostr=" all "
+            # decide forward port
+            fwdport="--dport $portstart"
+            [ -n "${portend}" -a "${portend}" != "0" ] && fwdport="--dport ${portstart}:${portend}"
+            # decide trigger port
+            trport="--dport $trportstart"
+            [ -n "${trportend}" -a "${trportend}" != "0" ] && trport="--dport ${trportstart}:${trportend}"
+        ;;
+        *)
+            protostr="  "
+            trprotostr=" all "
+            fwdport=""
+            trport=""
+        ;;
+        esac
+
+        # decide wan/lan interface
+        wan0_if="$(nvram get wan0_ifname)"
+        [ -n "${wan0_if}" ] && wan0_if=" -i ${wan0_if} "
+        lan0_if="$(nvram get lan0_ifname)"
+        [ -n "${lan0_if}" ] && lan0_if=" -i ${lan0_if} "
+
+        # decide trigger match-relate port
+        trmrport="$portstart"
+        [ -n "${portend}" -a "${portend}" != "0" ] && trmrport="${portstart}-${portend}"
+        [ "$prototcp" = "1" ] && {
+            iptables -t nat -I ${dnatchain} ${wan0_if} -p tcp ${fwdport} \
+                -j TRIGGER --trigger-type dnat
+            iptables -t filter -A EZP_TR_STATE ${wan0_if} -p tcp ${fwdport} \
+                -j TRIGGER --trigger-type in
+            iptables -t nat -I ${dnatchain} ${lan0_if} -p tcp ${trport} \
+                -j TRIGGER --trigger-type out --trigger-proto ${trprotostr} \
+                --trigger-match ${trmrport} --trigger-relate ${trmrport}
+        }
+        [ "$protoudp" = "1" ] && {
+            iptables -t nat -I ${dnatchain} ${wan0_if} -p udp ${fwdport} \
+                -j TRIGGER --trigger-type dnat
+            iptables -t filter -A EZP_TR_STATE ${wan0_if} -p udp ${fwdport} \
+                -j TRIGGER --trigger-type in
+            iptables -t nat -I ${dnatchain} ${lan0_if} -p udp ${trport} \
+                -j TRIGGER --trigger-type out --trigger-proto ${trprotostr} \
+                --trigger-match ${trmrport} --trigger-relate ${trmrport}
+        }
+        i="$(($i + 1))"
+    done
+}
+
+# do exactly same checking as start but only remove related iptables rule
+[ -n "${1}" ] && trigger_${1}

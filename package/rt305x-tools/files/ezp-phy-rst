@@ -1,0 +1,35 @@
+#!/bin/sh
+local SWITCH_TYPE="$(nvram show switch_type 0)"
+[ "$SWITCH_TYPE" = "ar8316" -o "$SWITCH_TYPE" = "ar8328" ] || exit
+
+waitseconds=$1
+[ -z "$1" ] && waitseconds=5
+py0="$(switch gmii r 0 0)"
+py1="$(switch gmii r 1 0)"
+py2="$(switch gmii r 2 0)"
+py3="$(switch gmii r 3 0)"
+py4="$(switch gmii r 4 0)"
+
+# Turn off lan ports
+switch gmii w 0 0 0800
+switch gmii w 1 0 0800
+switch gmii w 2 0 0800
+switch gmii w 3 0 0800
+switch gmii w 4 0 0800
+# Turn off wifi
+iwpriv ra0 set RadioOn=0
+ifconfig ra0 down
+
+echo "$(sleep $waitseconds)"
+
+# Bring back lan ports
+switch gmii w 0 0 $py0
+switch gmii w 1 0 $py1
+switch gmii w 2 0 $py2
+switch gmii w 3 0 $py3
+switch gmii w 4 0 $py3
+# Bring back wifi
+[ "$(nvram show wl_basic_rule 0 enable)" = "1" ] && {
+    ifconfig ra0 up
+    iwpriv ra0 set RadioOn="1"
+}

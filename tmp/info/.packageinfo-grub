@@ -1,0 +1,16 @@
+Source-Makefile: package/grub/Makefile
+Package: grub
+Version: 0.97-1
+Depends: @TARGET_x86
+Provides: 
+Build-Depends: 
+Section: boot
+Category: Boot Loaders
+Title: GRand Unified Bootloader
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: bin
+Description: 	GRand Unified Bootloader
+
+http://www.gnu.org/software/grub/
+@@
+

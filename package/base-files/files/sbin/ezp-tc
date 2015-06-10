@@ -1,0 +1,185 @@
+#!/bin/sh
+#   The default function creates this structure:
+#   
+#   HTB qdisc (root 1:1)
+#    \--- 1:9 Main HTB class ($dev_rate $dev_rate), default (?)
+#          \--- 1:19 fl_rule class (0xFFFFFFFF) for wan0
+#          \--- 1:13 Local class (0xF0000000) for wan0
+#          \--- 1:29 fl_rule class (0xFFFFFFFF) for wan1
+#          \--- 1:23 Local class (0xF0000000) for wan1
+#    \--- 1:3  Local class 
+# - fl_rule with the enabled BW function falls into fl_rule class.
+# - fl_rule with the disabled BW function falls into local class.
+#
+#
+
+export PATH=/bin:/usr/bin:/sbin/:/usr/sbin
+export LD_LIBRARY_PATH=/lib:/usr/lib
+
+BIN_TC=$(which tc)
+HTB_OPT=""
+#FIXME! Set the quantum is tricky and it affects bw borrowing. Need more
+# study on this value.
+MTU="1500"
+
+tc_stop ()
+{
+    insmod sch_htb
+    insmod sch_prio
+    insmod sch_sfq
+    insmod cls_u32
+
+    DEV=$1
+    $BIN_TC qdisc del dev $DEV root 2> /dev/null > /dev/null
+    $BIN_TC qdisc del dev $DEV ingress 2> /dev/null > /dev/null
+}
+
+tc_wan_stop ()
+{
+    tc_stop imq0
+    tc_stop imq1
+}
+
+# $1:if idx (0-based) $2:nth (1-based) $3:BW_MARK $4:dl_rate $5$dl_ceil $6:ul_rate $7: ul_ceil
+tc_single_sbm_start ()
+{
+    NTH=$(awk "BEGIN{x=sprintf(\"%02d\", $2);print x}")
+    IFIDX=$(expr $1 + 1)
+
+    BW_MASK=$(nvram get bw_mask)
+
+    # Download bandwidth
+    # Add HTB class.
+    $BIN_TC class add dev imq0 parent 1:${IFIDX}6 classid 1:${IFIDX}6${NTH} \
+                    htb rate ${4}kbit ceil ${5}kbit quantum $MTU $HTB_OPT
+    # Add FIFO Qdisc.
+    $BIN_TC qdisc add dev imq0 parent 1:${IFIDX}6${NTH} handle ${IFIDX}6${NTH}: prio
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}6${NTH}:1 handle ${IFIDX}6${NTH}1: sfq perturb 9 
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}6${NTH}:2 handle ${IFIDX}6${NTH}2: sfq perturb 10 
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}6${NTH}:3 handle ${IFIDX}6${NTH}3: sfq perturb 11
+    
+    # Add filter for this user.
+    $BIN_TC filter add dev imq0 parent 1: protocol ip prio $2 \
+                    u32 match mark 0x${IFIDX}0${3} $BW_MASK flowid 1:${IFIDX}6${NTH}
+
+    # Upload bandwidth
+    # Add HTB class.
+    $BIN_TC class add dev imq1 parent 1:${IFIDX}6 classid 1:${IFIDX}6${NTH} \
+                    htb rate ${6}kbit ceil ${7}kbit quantum $MTU $HTB_OPT
+    $BIN_TC qdisc add dev imq1 parent 1:${IFIDX}6${NTH} handle ${IFIDX}6${NTH}: prio
+    $BIN_TC qdisc add dev imq1 parent 1:${IFIDX}6${NTH} handle ${IFIDX}6${NTH}: prio
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}6${NTH}:1 handle ${IFIDX}6${NTH}1: sfq perturb 9 
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}6${NTH}:2 handle ${IFIDX}6${NTH}2: sfq perturb 10
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}6${NTH}:3 handle ${IFIDX}6${NTH}3: sfq perturb 11
+    
+    # Add filter for this user.
+    $BIN_TC filter add dev imq1 parent 1: protocol ip prio $2 \
+                    u32 match mark 0x${IFIDX}0${3} $BW_MASK flowid 1:${IFIDX}6${NTH}
+}
+
+# $1:if idx (0-based) $2:nth (1-based) $3:BW_MARK $4:bw_dlmax $5:bw_ulmax
+tc_single_dbm_start () 
+{
+    NTH=$(awk "BEGIN{x=sprintf(\"%02d\", $2);print x}")
+    IFIDX=$(expr $1 + 1)
+
+    # Download bandwidth
+    DOWNMIN=$4
+    DOWNMAX=$5
+
+    BW_MASK=$(nvram get bw_mask)
+
+    # Add HTB class.
+    $BIN_TC class add dev imq0 parent 1:${IFIDX}9 classid 1:${IFIDX}${NTH} \
+        htb rate ${DOWNMIN}kbit ceil ${DOWNMAX}kbit quantum $MTU $HTB_OPT prio 0
+    # Add FIFO Qdisc.
+    $BIN_TC qdisc add dev imq0 parent 1:${IFIDX}${NTH} handle ${IFIDX}${NTH}: prio
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}${NTH}:1 handle ${IFIDX}${NTH}1: sfq perturb 9
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}${NTH}:2 handle ${IFIDX}${NTH}2: sfq perturb 10 
+    $BIN_TC qdisc add dev imq0 parent ${IFIDX}${NTH}:3 handle ${IFIDX}${NTH}3: sfq perturb 11 
+    # Add filter for this user.
+    $BIN_TC filter add dev imq0 parent 1: protocol ip prio $1 \
+       u32 match mark 0x${IFIDX}0${3} $BW_MASK flowid 1:${IFIDX}${NTH}
+
+    # Upload bandwidth
+    UPMIN=$6
+    UPMAX=$7
+    # Add HTB class.
+    $BIN_TC class add dev imq1 parent 1:${IFIDX}9 classid 1:${IFIDX}${NTH} \
+        htb rate ${UPMIN}kbit ceil ${UPMAX}kbit quantum $MTU $HTB_OPT prio 0
+    # Add FIFO Qdisc.
+    $BIN_TC qdisc add dev imq1 parent 1:${IFIDX}${NTH} handle ${IFIDX}${NTH}: prio
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}${NTH}:1 handle ${IFIDX}${NTH}1: sfq perturb 9
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}${NTH}:2 handle ${IFIDX}${NTH}2: sfq perturb 10 
+    $BIN_TC qdisc add dev imq1 parent ${IFIDX}${NTH}:3 handle ${IFIDX}${NTH}3: sfq perturb 11 
+    # Add filter for this user.
+    $BIN_TC filter add dev imq1 parent 1: protocol ip prio $1 \
+        u32 match mark 0x${IFIDX}0${3} $BW_MASK flowid 1:${IFIDX}${NTH}
+}
+
+#XXX
+tc_bw_rule_start ()
+{
+    BW_MASK=$(nvram get bw_mask)
+    MAX_RULE=`nvram get fr_rule_num`                                             
+    i=0
+    while [ $i -lt $MAX_RULE ];
+    do
+        [ $(nvram show fl_rule $i enable) = "1" -a \
+            $(nvram show fl_rule $i action) = "1" ] && {
+            BW_IDX=$(nvram show fl_rule $i bw_idx)
+            [ $BW_IDX != "" ] && \
+                    [ $(nvram show bw_rule $BW_IDX enable) = "1" ] && {
+                FL_MARK=$(nvram show fl_rule $i mark)
+                OIF=$(nvram show fl_rule $i oif)
+                OIF=${1#wan}
+                j=$(($OIF+1))
+                
+                # Download bandwidth
+                DOWNMIN=$(nvram show bw_rule $BW_IDX downmin)
+                [ $DOWNMIN -gt "8" ] && {
+                DOWNMAX=$(nvram show bw_rule $BW_IDX downmax)
+                # Add HTB class.
+                $BIN_TC class add dev imq0 parent 1:${j}1 classid 1:${j}1${i} \
+                    htb rate ${DOWNMIN}kbit ceil ${DOWNMAX}kbit \
+                    quantum $MTU $HTB_OPT
+                # Add FIFO Qdisc.
+                $BIN_TC qdisc add dev imq0 parent 1:${j}1${i} handle \
+                    ${j}1${i}: pfifo
+                # Add filter for this user.
+                $BIN_TC filter add dev imq0 parent 1: protocol ip \
+                    u32 match mark $FL_MARK $BW_MASK flowid 1:${j}1${i}
+                }
+
+                # Upload bandwidth
+                UPMIN=$(nvram show bw_rule $BW_IDX upmin)
+                [ $DOWNMIN -gt "8" ] && {
+                UPMAX=$(nvram show bw_rule $BW_IDX upmax)
+                # Add HTB class.
+                $BIN_TC class add dev imq1 parent 1:${j}1 classid 1:${j}1${i} \
+                    htb rate ${UPMIN}kbit ceil ${UPMAX}kbit \
+                    quantum $MTU $HTB_OPT
+                # Add FIFO Qdisc.
+                $BIN_TC qdisc add dev imq1 parent 1:${j}1${i} handle \
+                    ${j}1${i}: pfifo
+                # Add filter for this user.
+                $BIN_TC filter add dev imq1 parent 1: protocol ip \
+                    u32 match mark $FL_MARK $BW_MASK flowid 1:${j}1${i}
+                }
+            }
+        }
+        i=$(($i+1))
+    done
+}
+
+case "$1" in
+    stop)
+        tc_wan_stop
+    ;;
+    start|restart)
+        tc_wan_start
+    ;;
+    *)
+        tc_$1_$2 $3 $4 $5 $6 $7 $8 $9
+    ;;
+esac

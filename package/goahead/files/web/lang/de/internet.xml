@@ -1,0 +1,437 @@
+<po>
+<!-- sr.asp -->
+<message msgid="routing title" msgstr="Statische Routing-Einstellungen" />
+<message msgid="routing add rule" msgstr="Routing-Regel hinzufugen" />
+<message msgid="routing routing dest" msgstr="Ziel-IP-Adresse" />
+<message msgid="routing range" msgstr="Bereich" />
+<message msgid="routing netmask" msgstr="IP-Subnetzmaske" />
+<message msgid="routing gateway" msgstr="Gateway IP-Adresse" />
+<message msgid="routing interface" msgstr="Schnittstelle" />
+<message msgid="routing custom" msgstr="Benutzerdefiniert" />
+<message msgid="routing comment" msgstr="Routen-Name" />
+<message msgid="routing submit" msgstr="Ubernehmen" />
+<message msgid="routing reset" msgstr="Zurucksetzen" />
+<message msgid="routing Number" msgstr="Nr." />
+<message msgid="routing del title" msgstr="Aktuelle Routing-Tabelle im System:" />
+<message msgid="routing del dest" msgstr="Ziel" />
+<message msgid="routing del netmask" msgstr="Netzmaske" />
+<message msgid="routing del gateway" msgstr="Gateway" />
+<message msgid="routing del flags" msgstr="Flags" />
+<message msgid="routing del metric" msgstr="Metrik" />
+<message msgid="routing del Delete" msgstr="Loschen" />
+<message msgid="routing del ref" msgstr="Referenz" />
+<message msgid="routing del use" msgstr="Verwenden" />
+<message msgid="routing del interface" msgstr="Schnittstelle" />
+<message msgid="routing del comment" msgstr="Name" />
+<message msgid="routing del" msgstr="Loschen" />
+<message msgid="routing del reset" msgstr="Zurucksetzen" />
+<message msgid="routing host" msgstr="Host" />
+<message msgid="routing net" msgstr="Netz" />
+<message msgid="routing LAN" msgstr="LAN" />
+<message msgid="routing WAN" msgstr="WAN" />
+<message msgid="routing Metric" msgstr="Metrik" />
+<message msgid="routing AddRule" msgstr="Regel hinzufugen" />
+<message msgid="routing table" msgstr="Zusammengefasste Anwendungsregeln" />
+<message msgid="routing Active" msgstr="Aktiv" />
+<!-- rip.asp -->
+<message msgid="rip title" msgstr="RIP einrichten" />
+<message msgid="rip rip" msgstr="RIP:  " />
+<message msgid="rip None" msgstr="Kein" />
+<message msgid="rip RIPv1" msgstr="RIPv1" />
+<message msgid="rip RIPv2" msgstr="RIPv2" />
+<message msgid="rip Apply" msgstr="Ubernehmen" />
+<message msgid="rip Reset" msgstr="Zurucksetzen" />
+<!-- upnp.asp -->
+<message msgid="upnp title" msgstr="UPnP einrichten" />
+<message msgid="upnp DeviceName" msgstr="Geratename:   ZyXEL NBG4615 Internet Sharing Gateway " />
+<message msgid="upnp Enb" msgstr="UPnP-Funktion (Universal Plug and Play) aktivieren" />
+<message msgid="upnp Apply" msgstr="Ubernehmen" />
+<message msgid="upnp Reset" msgstr="Zurucksetzen" />
+<!-- lan_dhcp.asp --> 
+<message msgid="LanDhcp title" msgstr="LAN DHCP einrichten" />
+<message msgid="LanDhcp Enable" msgstr="DHCP-Server aktivieren    " />
+<message msgid="LanDhcp IP" msgstr="IP Pool-Startadresse" />
+<message msgid="LanDhcp PoolSize" msgstr="Pool-Grose" />
+<message msgid="lanDhcp Apply" msgstr="Ubernehmen" />
+<message msgid="lanDhcp Reset" msgstr="Zurucksetzen" />
+<!-- lan_dhcp_advance.asp --> 
+<message msgid="lanAdv title" msgstr="Statische DHCP-LAN-Tabelle" />
+<message msgid="lanAdv MAC" msgstr="MAC-Adresse" />
+<message msgid="lanAdv IP" msgstr="IP Address " />
+<message msgid="lanAdv DNS" msgstr="DNS Server" />
+<message msgid="lanAdvDNS title" msgstr="Von DHCP-Server zugewiesene DNS-Server  " />
+<message msgid="lanAdvDNS Server1" msgstr="Erster DNS-Server:  " />
+<message msgid="lanAdv DNSServer1ISP" msgstr="Von Internetdienstanbieter" />
+<message msgid="lanAdv DNSServer1Defined" msgstr="Benutzerdefiniert" />
+<message msgid="lanAdv DNSServer1Relay" msgstr="DNS-Relais" />
+<message msgid="lanAdv DNSServer1None" msgstr="Kein" />
+<message msgid="lanAdv DNSServer2" msgstr="Zweiter DNS-Server:  " />
+<message msgid="lanAdv DNSServer2ISP" msgstr="Von Internetdienstanbieter" />
+<message msgid="lanAdv DNSServer2Defined" msgstr="Benutzerdefiniert" />
+<message msgid="lanAdv DNSServer2Relay" msgstr="DNS-Relais" />
+<message msgid="lanAdv DNSServer2None" msgstr="Kein" />
+<message msgid="lanAdv Apply" msgstr="Ubernehmen" />
+<message msgid="lanAdv Reset" msgstr="Zurucksetzen" />
+<!-- ip_alias.asp --> 
+<message msgid="ipAlias title" msgstr="IP Alias 1 " />
+<message msgid="ipAlias enable" msgstr="IP Alias" />
+<message msgid="ipAlias Address" msgstr="IP Adresse : " />
+<message msgid="ipAlias Subnet" msgstr="IP-Subnetzmaske:" />
+<message msgid="ipAlias Apply" msgstr="Ubernehmen" />
+<message msgid="ipAlias Reset" msgstr="Zurucksetzen" />
+<!-- lan_dhcp_clientInfo.asp -->
+<message msgid="Dhcpinfo title" msgstr="DHCP-Client-Tabelle" />
+<message msgid="Dhcpinfo Table" msgstr="Tabellenliste  " />
+<message msgid="Dhcpinfo TableMAC" msgstr="MAC-Adresse" />
+<message msgid="Dhcpinfo TableIP" msgstr="IP-Adresse  " />
+<message msgid="Dhcpinfo TableExp" msgstr="Lauft ab in" />
+<message msgid="dhcpClient Refresh" msgstr="Aktualisieren" />
+<!-- wan.asp --> 
+<message msgid="wan title" msgstr="ISP-Parameter fur den Internetzugang " />
+<message msgid="wan Encapsulation" msgstr="Verkapselung:  " />
+<message msgid="wan Ethernet" msgstr="Ethernet" />
+<message msgid="wan PPPOE" msgstr="PPP over Ethernet" />
+<message msgid="wan PPTP" msgstr="PPTP" />
+<message msgid="wan L2TP" msgstr="L2TP" />
+<message msgid="wPppoe User" msgstr="Benutzername:" />
+<message msgid="wPppoe Password" msgstr="Kennwort:" />
+<message msgid="wPppoe Pass2" msgstr="Kennwort wiederholen:" />
+<message msgid="wPppoe Mtu" msgstr="MTU-Grose" />
+<message msgid="wPppoe Nailedup" msgstr="Dauerverbindung" />
+<message msgid="wPppoe IdleTime" msgstr="Leerlauf-Timeout (Sek.)" />
+<message msgid="wan title2" msgstr="Zuweisen der WAN IP-Adresse" />
+<message msgid="wPppoe WanIPMode" msgstr="Automatisch vom Internetdienstanbieter beziehen " />
+<message msgid="wPppoe WanIPMode1" msgstr="Feste IP-Adresse verwenden " />
+<message msgid="wPppoe WanIp" msgstr="Eigene WAN IP-Adresse: " />
+<message msgid="wPptp User" msgstr="Benutzername:" />
+<message msgid="wPptp Password" msgstr="Kennwort:" />
+<message msgid="wPptp Pass2" msgstr="Kennwort wiederholen:" />
+<message msgid="wPptp Nailup" msgstr="Dauerverbindung" />
+<message msgid="wPptp IdleTime" msgstr="Leerlauf-Timeout (Sek.)" />
+<message msgid="wPptp title" msgstr="PPTP-Konfiguration" />
+<message msgid="wPptp Server" msgstr="Server IP-Adresse: " />
+<message msgid="wPptp AddrMode" msgstr="Automatisch vom Internetdienstanbieter beziehen " />
+<message msgid="wPptp AddrMode1" msgstr="Feste IP-Adresse verwenden " />
+<message msgid="wPptp Ip" msgstr="IP-Adresse:  " />
+<message msgid="wPptp Netmask" msgstr="IP-Subnetzmaske:  " />
+<message msgid="wPptp Gateway" msgstr="Gateway-IP-Adresse: " />
+<message msgid="wPptp title1" msgstr="Zuweisen der WAN IP-Adresse" />
+<message msgid="wPptp WanIPMode1" msgstr="Automatisch vom Internetdienstanbieter beziehen " />
+<message msgid="wPptp WanIPMode2" msgstr="Feste IP-Adresse verwenden  " />
+<message msgid="wPptp WanIp" msgstr="Eigene WAN IP-Adresse:  " />
+<message msgid="wPptp IdleTimesec" msgstr="(in Sekunden)" />
+<message msgid="wPppoe IdleTimesec" msgstr="(in Sekunden)" />
+<message msgid="wL2tp User" msgstr="Benutzername:" />
+<message msgid="wL2tp Password" msgstr="Kennwort:" />
+<message msgid="wL2tp Pass2" msgstr="Kennwort wiederholen:" />
+<message msgid="L2TP title" msgstr="L2TP-Konfiguration" />
+<message msgid="wL2tp Server" msgstr="Server IP-Adresse:  " />
+<message msgid="wL2tp AddrMode1" msgstr="Automatisch vom Internetdienstanbieter beziehen  " />
+<message msgid="wL2tp AddrMode2" msgstr="Feste IP-Adresse verwenden  " />
+<message msgid="wL2tp Ip" msgstr="IP-Adresse:  " />
+<message msgid="wL2tp Netmask" msgstr="IP-Subnetzmaske:  " />
+<message msgid="wL2tp Gateway" msgstr="Gateway-IP-Adresse:  " />
+<message msgid="ethernet title" msgstr="Zuweisen der WAN IP-Adresse " />
+<message msgid="ethernet d1" msgstr="Automatisch vom Internetdienstanbieter beziehen (Standard) " />
+<message msgid="ethernet d2" msgstr="Feste IP-Adresse verwenden " />
+<message msgid="wStatic Ip" msgstr="IP-Adresse:  " />
+<message msgid="wStatic Netmask" msgstr="IP-Subnetzmaske:  " />
+<message msgid="wStatic Gateway" msgstr="Gateway-IP-Adresse: " />
+<message msgid="wan title3" msgstr="WAN DNS-Zuweisung " />
+<message msgid="wan DNS" msgstr="Erster DNS-Server:  " />
+<message msgid="wan DNSISP" msgstr="Von Internetdienstanbieter" />
+<message msgid="wan DNSUSER" msgstr="Benutzerdefiniert" />
+<message msgid="wan DNSNONE" msgstr="Kein" />
+<message msgid="wan DNS2" msgstr="Zweiter DNS-Server: " />
+<message msgid="wan DNS2ISP" msgstr="Von Internetdienstanbieter" />
+<message msgid="wan DNS2USER" msgstr="Benutzerdefiniert" />
+<message msgid="wan DNS2NONE" msgstr="Kein" />
+<message msgid="wan title4" msgstr="WAN MAC-Adresse" />
+<message msgid="wan macop1" msgstr="Standardeinstellungen  " />
+<message msgid="wan macop2" msgstr="MAC-Adresse - IP-Adresse des Computers klonen" />
+<message msgid="wan macop3" msgstr="WAN MAC-Adresse einrichten" />
+<message msgid="wan Apply" msgstr="Ubernehmen" />
+<message msgid="wan Reset" msgstr="Zurucksetzen" />
+<!-- igmp_snooping.asp --> 
+<message msgid="snooping title" msgstr="IGMP-Snooping einrichten" />
+<message msgid="snooping Enable" msgstr="IGMP Snooping aktivieren" />
+<message msgid="snooping LAN1" msgstr="LAN1" />
+<message msgid="snooping LAN2" msgstr="LAN2" />
+<message msgid="snooping LAN3" msgstr="LAN3" />
+<message msgid="snooping LAN4" msgstr="LAN4" />
+<message msgid="snooping Apply" msgstr="Ubernehmen" />
+<message msgid="snooping Reset" msgstr="Zurucksetzen" />
+<!-- igmp_snooping.asp --> 
+<message msgid="routing dynamic Title" msgstr="Dynamische Routing-Einstellungen" />
+<message msgid="routing dynamic Title2" msgstr="Dynamisches Routing-Protokoll" />
+<message msgid="routing dynamic rip disable" msgstr="Deaktivieren" />
+<message msgid="routing dynamic rip enable" msgstr="Aktivieren" />
+<message msgid="routing dynamic rip apply" msgstr="Ubernehmen" />
+<message msgid="routing dynamic rip reset" msgstr="Zurucksetzen" />
+<message msgid="qos title" msgstr="QoS-Einstellungen (Quality of Service)" />
+<message msgid="qos intro" msgstr="Um fur spezifische Anwendungen QoS zu garantieren, konnen Sie die entsprechenden Regeln einrichten." />
+<message msgid="qos setup" msgstr="QoS einrichten" />
+<message msgid="qos str" msgstr="Quality of Service (QoS)" />
+<message msgid="qos disable" msgstr="Deaktivieren" />
+<message msgid="qos enable" msgstr="Aktivieren" />
+<message msgid="qos dscpmarkeronly" msgstr="nur DSCP markieren" />
+<message msgid="qos upload bandwidth" msgstr="Upload-Bandbreite:" />
+<message msgid="qos bandwidth custom" msgstr="Benutzerdefiniert" />
+<message msgid="qos download bandwidth" msgstr="Download-Bandbreite:" />
+<message msgid="qos setup submit" msgstr="Senden" />
+<message msgid="qos setup reset" msgstr="Zurucksetzen" />
+<message msgid="qos group" msgstr="Gruppe" />
+<message msgid="qos group attr" msgstr="Attribut" />
+<message msgid="qos group modify" msgstr="Andern" />
+<message msgid="qos rule no" msgstr="Nr" />
+<message msgid="qos rule name" msgstr="Name" />
+<message msgid="qos rule prio" msgstr="Gruppe" />
+<message msgid="qos rule info" msgstr="Info." />
+<message msgid="qos rule add" msgstr="Hinzufugen" />
+<message msgid="qos rule del" msgstr="Loschen" />
+<message msgid="qos loaddefault" msgstr="Standard laden" />
+<message msgid="qos Rate" msgstr="Rate:" />
+<message msgid="qos Ceil" msgstr="Ceil:" />
+<message msgid="qos AF Name" msgstr="Gruppenname" />
+<message msgid="qos AF Upload Bandwidth" msgstr="% der Upload-Bandbreite" />
+<message msgid="qos classifier title" msgstr="Klassifikationseinstellungen" />
+<message msgid="qos classifier name" msgstr="Name" />
+<message msgid="qos classifier group" msgstr="Gruppe" />
+<message msgid="qos classifier mac" msgstr="MAC-Adresse" />
+<message msgid="qos classifier dip" msgstr="Ziel IP-Adresse" />
+<message msgid="qos classifier sip" msgstr="Quelle IP-Adresse" />
+<message msgid="qos classifier pktlen" msgstr="Paketlange" />
+<message msgid="qos classifier dscp" msgstr="DSCP" />
+<message msgid="qos classifier proto" msgstr="Protokoll" />
+<message msgid="qos classifier dport" msgstr="Ziel-Port" />
+<message msgid="qos classifier sport" msgstr="Quell-Port" />
+<message msgid="qos classifier l7" msgstr="Anwendung" />
+<message msgid="qos classifier remark" msgstr="DSCP als kennzeichnen:" />
+<message msgid="qos classifier auto" msgstr="Auto" />
+<!-- RL define NBG4615 QoS strings -->
+<message msgid="bm title" msgstr="Dienstverwaltung" />
+<message msgid="bm enable qos" msgstr="Bandbreitenmanagement aktivieren" />
+<message msgid="bm enable auto" msgstr="Automatische Verkehrsklassifizierung aktivieren" />
+<message msgid="bm apply" msgstr="Ubernehmen" />
+<message msgid="bm reset" msgstr="Zurucksetzen" />
+<message msgid="adv title1" msgstr="Managementbandbreite" />
+<message msgid="adv title2" msgstr="Anwendungsliste " />
+<message msgid="adv title3" msgstr="Benutzerdefinierter Dienst" />
+<message msgid="adv up bw" msgstr="Upstream-Bandbreite" />
+<message msgid="adv up reserved" msgstr="(10 kbps reserviert)" />
+<message msgid="adv down bw" msgstr="Downstream-Bandbreite" />
+<message msgid="adv down reserved" msgstr="(10 kbps reserviert)" />
+<message msgid="adv app service" msgstr="Dienst" />
+<message msgid="adv app category" msgstr="Kategorie" />
+<message msgid="adv app prio" msgstr="Prioritat" />
+<message msgid="adv app setting" msgstr="Erweiterte Einstellungen" />
+<message msgid="adv user enable" msgstr="Aktivieren" />
+<message msgid="adv user dir" msgstr="Richtung" />
+<message msgid="adv user name" msgstr="Dienstname" />
+<message msgid="adv user category" msgstr="Kategorie" />
+<message msgid="adv user modify" msgstr="Andern" />
+<message msgid="adv user to lan" msgstr="Zum LAN" />
+<message msgid="adv user to wan" msgstr="Zum WAN" />
+<message msgid="adv user to wlan" msgstr="Zum WLAN" />
+<message msgid="adv select high" msgstr="Hoch" />
+<message msgid="adv select mid" msgstr="Mittel" />
+<message msgid="adv select low" msgstr="Niedrig" />
+<message msgid="adv apply" msgstr="Ubernehmen" />
+<message msgid="adv reset" msgstr="Zurucksetzen" />
+<message msgid="app edit title" msgstr="Regelkonfiguration" />
+<message msgid="app edit enable" msgstr="Aktivieren" />
+<message msgid="app edit dir" msgstr="Richtung" />
+<message msgid="app edit bandwidth" msgstr="Bandbreite" />
+<message msgid="app edit dst port" msgstr="Ziel-Port" />
+<message msgid="app edit src port" msgstr="Quell-Port" />
+<message msgid="app edit proto" msgstr="Protokoll" />
+<message msgid="app edit max bw" msgstr="Maximale Bandbreite" />
+<message msgid="app edit min bw" msgstr="Minimale Bandbreite" />
+<message msgid="app edit cancel" msgstr="Abbrechen" />
+<message msgid="user edit title" msgstr="Regelkonfiguration" />
+<message msgid="user edit bw" msgstr="BW-Budget" />
+<message msgid="user edit max bw" msgstr="Maximale Bandbreite" />
+<message msgid="user edit min bw" msgstr="Minimale Bandbreite" />
+<message msgid="user edit dst addr" msgstr="Zieladresse" />
+<message msgid="user edit dst mask" msgstr="Ziel-Subnetzmaske" />
+<message msgid="user edit dst port" msgstr="Ziel-Port" />
+<message msgid="user edit src addr" msgstr="Quell-Adresse" />
+<message msgid="user edit src mask" msgstr="Quell-Subnetzmaske" />
+<message msgid="user edit src port" msgstr="Quell-Port" />
+<message msgid="user edit proto" msgstr="Protokoll" />
+<message msgid="user edit proto define" msgstr="Benutzerdefiniert" />
+<message msgid="user edit cancel" msgstr="Abbrechen" />
+<message msgid="moni title" msgstr="Kontrolle" />
+<!-- wan_advance.asp --> 
+<message msgid="Multicast_Setup" msgstr="Mehrpunktverbindung einrichten" />
+<message msgid="Multicast" msgstr="Mehrpunktverbindung" />
+<message msgid="Auto_bridge" msgstr="Auto-Bridge" />
+<message msgid="Enable_Auto_bridge_mode" msgstr="Auto-Bridge-Modus aktivieren " />
+<!-- ddns.asp --> 
+<message msgid="Dynamic_DNS_Setup" msgstr="Dynamische DNS einrichten" />
+<message msgid="Enable_Dynamic_DNS" msgstr="Dynamische DNS aktivieren" />
+<message msgid="Service_Provider" msgstr="Dienstanbieter:" />
+<message msgid="Host_Name" msgstr="Hostname:" />
+<message msgid="Host Name can not be empty!" msgstr="Hostname darf nicht frei bleiben!"/>
+<message msgid="User Name can not be empty!" msgstr="Benutzername darf nicht frei bleiben!"/>
+<message msgid="Password can not be empty!" msgstr="Kennwort darf nicht frei bleiben!"/>
+<message msgid="Please select at least one port when snooping enabled!" msgstr="Wahlen Sie bei aktiviertem Snooping mindestens einen Port!"/>
+<message msgid="Error. IP address is empty." msgstr="Fehler. IP-Adresse ist leer."/>
+<message msgid="It should be a [0-9] number." msgstr="Es muss eine Zahl [0-9] sein."/>
+<message msgid="IP adress format error." msgstr="IP-Adressformatfehler."/>
+<message msgid="IP Alias address should not be identical to LAN IP Address" msgstr="IP-Alias-Adresse darf nicht mit LAN-IP-Adresse ubereinstimmen"/>
+<message msgid="Error. IP address is empty." msgstr="Fehler. IP-Adresse ist leer."/>
+<message msgid="It should be a [0-9] number." msgstr="Es muss eine Zahl [0-9] sein."/>
+<message msgid="IP adress format error." msgstr="IP-Adressformatfehler."/>
+<message msgid="LAN is Fixed IP, please set DNS Assignment to User-Defined or None." msgstr="LAN IP ist eine feste IP,  bitte wahlen Sie bei DNS-Zuweisung die Option Benutzerdefiniert oder Keine."/>
+<message msgid="First DNS Server should not be empty with User-Defined." msgstr="Erster DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="First DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Erster DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="Second DNS Server should not be empty with User-Defined." msgstr="Zweiter DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="Second DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Zweiter DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="Error. IP address is empty." msgstr="Fehler. IP-Adresse ist leer."/>
+<message msgid="It should be a [0-9] number." msgstr="Es muss eine Zahl [0-9] sein."/>
+<message msgid="IP adress format error." msgstr="IP-Adressformatfehler."/>
+<message msgid="Please enable DHCP Server firstly before using LAN Static DHCP Table or DNS Server." msgstr="Aktivieren Sie erst den DHCP-Server, bevor Sie die statische LAN-DHCP-Tabelle oder den DNS-Server verwenden."/>
+<message msgid="Please enable DHCP Server before using LAN Static DHCP Table." msgstr="Aktivieren Sie erst den DHCP-Server, bevor Sie die statische LAN-DHCP-Tabelle ^verwenden."/>
+<message msgid="Please fill the MAC Address in correct format (XX:XX:XX:XX:XX:XX) with hex value !" msgstr="Geben Sie die MAC-Adresse im richtigen Format (XX:XX:XX:XX:XX:XX) mit dem Hexadezimalwert ein!"/>
+<message msgid="First DNS Server should not be empty with User-Defined." msgstr="Erster DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="First DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Erster DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="Second DNS Server should not be empty with User-Defined." msgstr="Zweiter DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="Second DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Zweiter DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="The value of bandwitdth can not accept empty." msgstr="Das Feld fur die Bandbreite darf nicht frei bleiben."/>
+<message msgid="The value of bandwitdth is not valid value." msgstr="Die eingegebene Bandbreite ist ungultig."/>
+<message msgid="The value of service name can not accept empty." msgstr="Das Feld fur den Dienstnamen darf nicht frei bleiben."/>
+<message msgid="The value of service name can not accept , and ;  ." msgstr="Das Feld fur den Dienstnamen darf nicht , und ;?sein."/>
+<message msgid="The value of bandwidth can not accept empty." msgstr="Das Feld fur die Bandbreite darf nicht frei bleiben."/>
+<message msgid="The value of bandwidth is not valid value." msgstr="Die eingegebene Bandbreite ist ungultig."/>
+<message msgid="The value of IP can not accept empty." msgstr="Das Feld fur die IP-Adresse darf nicht frei bleiben."/>
+<message msgid="The value of IP is not valid value." msgstr="Die eingegebene IP-Adresse ist ungultig."/>
+<message msgid="The value of bandwidth can not accept empty." msgstr="Das Feld fur die Bandbreite darf nicht frei bleiben."/>
+<message msgid="The value of bandwidth is not valid value." msgstr="Die eingegebene Bandbreite ist ungultig."/>
+<message msgid="The value of port can not accept empty." msgstr="Das Feld fur den Port darf nicht frei bleiben."/>
+<message msgid="The value of port is not valid value." msgstr="Der eingegebene Port ist ungultig."/>
+<message msgid="The value of netmask can not accept empty." msgstr="Das Feld fur die Netzmaske darf nicht frei bleiben."/>
+<message msgid="Subnet Mask error" msgstr="Subnetzmaskenfehler"/>
+<message msgid="The value of protocol can not accept empty." msgstr="Das Feld fur das Protokoll darf nicht frei bleiben."/>
+<message msgid="The value of protocol is not valid value." msgstr="Das eingegebene Protokoll ist ungultig."/>
+<message msgid="The destination has wrong format." msgstr="Das Ziel hat ein falsches Format."/>
+<message msgid="The netmask has wrong format." msgstr="Die Netzmaske hat ein falsches Format."/>
+<message msgid="please input the destination." msgstr="Geben Sie das Ziel ein."/>
+<message msgid="please input the netmask." msgstr="Geben Sie die Netzmaske ein."/>
+<message msgid="please input custom interface name." msgstr="Geben Sie den Namen der benutzerdefinierten Schnittstelle ein."/>
+<message msgid="Static Route table is full (8 entries)!" msgstr="Statischen Routing-Tabelle ist voll (8 Eintrage)!"/>
+<message msgid="Error. IP address is empty." msgstr="Fehler. IP-Adresse ist leer."/>
+<message msgid="It should be a [0-9] number." msgstr="Es muss eine Zahl [0-9] sein."/>
+<message msgid="IP adress format error." msgstr="IP-Adressformatfehler."/>
+<message msgid="WAN is Fixed IP, please set DNS Assignment to User-Defined or None." msgstr="WAN IP ist eine feste IP, wahlen Sie bei DNS-Zuweisung die Option Benutzerdefiniert oder Keine."/>
+<message msgid="PPPoE user name should not be empty!" msgstr="PPPoE-Benutzername darf nicht frei bleiben!"/>
+<message msgid="PPPoE password should not be empty!" msgstr="PPPoE-Kennwort darf nicht frei bleiben!"/>
+<message msgid="Please retype password to confirm!" msgstr="Kennwort zum Bestatigen wiederholen!"/>
+<message msgid="Password mismatched!" msgstr="Kennwort stimmt nicht uberein!"/>
+<message msgid="Please set MTU Size between 1400 ~ 1492 !" msgstr="Wahlen Sie eine MTU-Grose zwischen 1400 und 1492 !"/>
+<message msgid="It should be a [0-9] number with MTU Size." msgstr="Geben Sie eine Zahl zwischen 1 und 9 fur die MTU Grose ein."/>
+<message msgid="Please specify Idle Time" msgstr="Legen Sie die automatische Auslogzeit fest"/>
+<message msgid="L2TP user name should not be empty!" msgstr="L2TP-Benutzername darf nicht frei bleiben!"/>
+<message msgid="L2TP password should not be empty!" msgstr="L2TP-Kennwort darf nicht frei bleiben!"/>
+<message msgid="First DNS Server should not be empty with User-Defined." msgstr="Erster DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="First DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Erster DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="Second DNS Server should not be empty with User-Defined." msgstr="Zweiter DNS-Server darf bei der Einstellung Benutzerdefiniert nicht frei bleiben."/>
+<message msgid="Second DNS Server should not be 0.0.0.0, please give DNS IP Address." msgstr="Zweiter DNS-Server darf nicht 0.0.0.0 sein, bitte geben Sie die DNS-IP-Adresse ein."/>
+<message msgid="MAC Address should not be empty!" msgstr="MAC-Adresse darf nicht frei bleiben!"/>
+<message msgid="Please fill the MAC Address in correct format (XX:XX:XX:XX:XX:XX) with hex value !" msgstr="Geben Sie die MAC-Adresse im richtigen Format (XX:XX:XX:XX:XX:XX) mit dem Hexadezimalwert ein!"/>
+<!-- alert message -->
+<!-- alert message from c file-->
+<message msgid="Cannot get the WAN MAC Address" msgstr="WAN MAC-Adresse kann nicht bezogen werden" />
+<message msgid="IP address is identical to WAN" msgstr="IP-Adresse ist identisch mit WAN" />
+<message msgid="LAN2 IP address is identical to WAN" msgstr="LAN2 IP-Adresse ist identisch mit WAN" />
+<message msgid="Static Route rule setting fail." msgstr="Einstellen von statischer Route fehlgeschlagen." />
+<!-- alert message from c file-->
+<message msgid="main Ready" msgstr="Bereit"/>
+<message msgid="main ConfigurationSuccess" msgstr="Konfigurationsaktualisierung wurde erfolgreich durchgefuhrt"/>
+<message msgid="main ConfigurationProceeding" msgstr="Es findet gerade eine Konfigurationsaktualisierung statt.  Bitte warten Sie einen Moment..."/>
+<message msgid="main firmware download in progress" msgstr="Firmware wird gerade heruntergeladen. Bitte warten..."/>
+<message msgid="main firmware upgrade is proceeding" msgstr="Firmware-Aktualisierung wird durchgefuhrt. Warten Sie, und schalten Sie das Gerat NICHT aus."/>
+
+<!-- ipv6 -->
+<message msgid="ipv6 time minutes" msgstr="(Minuten)" />
+
+<!-- NBG4615 QoS-->
+<message msgid="user edit dst addr1" msgstr="Zieladresse Anfang"/>
+<message msgid="user edit dst addr2" msgstr="Zieladresse Ende"/>
+<message msgid="user edit src addr1" msgstr="Quelladresse Anfang"/>
+<message msgid="user edit src addr2" msgstr="Quelladresse Ende"/>
+<message msgid="wan 3G title" msgstr="3G-Konfiguration"/>
+<message msgid="wan 3G" msgstr="Mobile 3G"/>
+<message msgid="wan 3G access point name" msgstr="APN-Code:"/>
+<message msgid="wan 3G pin" msgstr="PIN-Code:"/>
+<message msgid="wan 3G username" msgstr="Benutzername:"/>
+<message msgid="wan 3G password" msgstr="Kennwort:"/>
+<message msgid="wan 3G dial number" msgstr="Anwahlnummer:"/>
+<message msgid="wan 3G nailup" msgstr="Nailed-Up-Verbindung"/>
+<message msgid="wan 3G IdleTime" msgstr="Leerlauf-Timeout (Sek.)"/>
+<message msgid="wan 3G IdleTimesec" msgstr="(in Sekunden)"/>
+<message msgid="PIN Code length should be between 4~8!" msgstr="Der PIN-Code muss zwischen 4 und 8 Zeichen lang sein!"/>
+<message msgid="Please specify APN Code" msgstr="Legen Sie den APN-Code fest"/>
+<message msgid="Please specify Dial Number" msgstr="Legen Sie die Anwahlnummer fest"/>
+<message msgid="Please set PPP Echo Interval between 3 ~ 50 !" msgstr="Setzen Sie das PPP Echo-Intervall auf einen Wert zwischen 3 und 50 !"/>
+<message msgid="It should be a [0-9] number with PPP Echo Interval." msgstr="Es muss eine Ziffer [0-9] mit PPP Echo-Intervall sein."/>
+<message msgid="Please set PPP Retry Threshold between 3 ~ 50 !" msgstr="Setzen Sie den PPP Wiederholungs-Schwellenwert auf einen Wert zwischen 3 und 50 !"/>
+<message msgid="It should be a [0-9] number with PPP Retry Threshold." msgstr="Es muss eine Ziffer [0-9] mit PPP Wiederholungs-Schwellenwert sein."/>
+<message msgid="Please set Max Idle Time between 60 ~ 3600 !" msgstr="Setzen Sie die maximale Leerlaufdauer auf einen Wert zwischen 60 und 3600 !"/>
+<message msgid="It should be a [0-9] number with Max Idle Time." msgstr="Es muss eine Ziffer [0-9] mit maximaler Leerlaufdauer sein."/>
+<message msgid="Please set Mobile WAN MTU between 592 ~ 1492 !" msgstr="Setzen Sie den WAN MTU auf einen Wert zwischen 592 und 1492 !"/>
+<message msgid="It should be a [0-9] number with Mobile WAN MTU." msgstr="Es muss eine Zahl [0-9] mit Mobile WAN MTU sein."/>
+<message msgid="wPppoe service name" msgstr="Dienstname:"/>
+<message msgid="lan static dhcp table" msgstr="Statische DHCP-LAN-Tabelle"/>
+<message msgid="wan BigPond" msgstr="Bigpond:"/>
+<message msgid="wan BigPond enable" msgstr="Aktivieren"/>
+<message msgid="wan BigPond disable" msgstr="Deaktivieren"/>
+<message msgid="wan BigPond server" msgstr="Server:"/>
+<message msgid="wan BigPond server queenland" msgstr="Queensland (61.9.208.13)"/>
+<message msgid="wan BigPond server newSouthWales" msgstr="New South Wales (61.9.192.13)"/>
+<message msgid="wan BigPond server victoria" msgstr="Victoria (61.9.128.13)"/>
+<message msgid="wan BigPond server southAus" msgstr="Sudaustralien (61.9.224.13)"/>
+<message msgid="wan BigPond server westernAus" msgstr="Westaustralien (61.9.240.13)"/>
+<message msgid="wan BigPond username" msgstr="Benutzername:"/>
+<message msgid="wan BigPond password" msgstr="Kennwort:"/>
+<message msgid="wan BigPond password2" msgstr="Kennwort wiederholen:"/>
+<message msgid="Bigpond user name should not be empty!" msgstr="Bigpond-Benutzername darf nicht frei bleiben!"/>
+<message msgid="Bigpond password should not be empty!" msgstr="Bigpond-Kennwort darf nicht frei bleiben!"/>
+<message msgid="wan auto bridge none" msgstr="Ohne"/>
+<message msgid="enable auto ip change mode" msgstr="Auto-IP-Wechselmodus aktivieren"/>
+<message msgid="auto ip note_0" msgstr="Hinweis:"/>
+<message msgid="auto ip note_1" msgstr="Hinweis: Wenn Sie den Auto-IP-Wechselmodus wahlen, wird die LAN-IP automatisch auf 10.0.0.1 geandert, wenn ein Konflikt zwischen der WAN-IP und der LAN-IP besteht."/>
+<message msgid="auto subnet configuration" msgstr="Auto-Subnetzkonfiguration"/>
+<message msgid="ipv6 connection type setup" msgstr="IPv6-Verbindungstyp einrichten"/>
+<message msgid="ipv6 connection type" msgstr="IPv6-Verbindungstyp:"/>
+<message msgid="ethernet" msgstr="Ethernet"/>
+<message msgid="link local only" msgstr="Nur Link-Local"/>
+<message msgid="lan addr setup" msgstr="LAN IPv6-Adresse einrichten"/>
+<message msgid="lan local link addr" msgstr="LAN IPv6 Link-Local-Adresse:"/>
+<message msgid="wan addr setup" msgstr="WAN IPv6-Adresse einrichten"/>
+<message msgid="ipv6 wan address" msgstr="IPv6-Adresse:"/>
+<message msgid="ipv6 wan net size" msgstr="Subnetz-Prafixlange:"/>
+<message msgid="ipv6 wan gateway" msgstr="Gateway-IP-Adresse:"/>
+<message msgid="ipv6 wan primary dns" msgstr="Erster DNS-Server:"/>
+<message msgid="ipv6 wan secondary dns" msgstr="Zweiter DNS-Server:"/>
+<message msgid="ipv6 lan address" msgstr="LAN IPv6-Adresse:"/>
+<message msgid="autoconfiguration addr setup" msgstr="Adress-Autokonfiguration einrichten"/>
+<message msgid="ipv6 dhcp enable" msgstr="Stateless-Adress-Autokonfiguration"/>
+<message msgid="ipv6 dhcp life time" msgstr="Router Advertisement-Lebensdauer:"/>
+<message msgid="general apply" msgstr="Ubernehmen"/>
+<message msgid="general reset" msgstr="Abbrechen"/>
+<message msgid="Error. Invalid Subnet Mask." msgstr="Fehler. Subnetzmaske ungultig."/>
+<message msgid="Invalid IP Alias address! It should not be located in the same subnet of current WAN IP address." msgstr="IP Alias-Adresse ungultig! Es muss in einem anderen Subnetz der aktuellen WAN IP-Adresse liegen."/>
+<message msgid="Invalid DHCP start address! It should be located in the same subnet of current LAN IP address." msgstr="DHCP-Startadresse ungultig! Es muss im selben Subnetz der aktuellen LAN IP-Adresse liegen."/>
+<message msgid="Invalid DHCP end address with pool size allocated! It should be located in the same subnet of current LAN IP address." msgstr="DHCP-Endadresse mit zugewiesener Pool-Grose ungultig! Es muss im selben Subnetz der aktuellen LAN IP-Adresse liegen."/>
+<message msgid="Invalid DHCP address range!" msgstr="DHCP-Adressbereich ung?ltig!"/>
+<message msgid="The gateway has wrong format." msgstr="Das Gateway hat das falsche Format."/>
+<message msgid="please input the gateway." msgstr="Geben Sie das Gateway ein."/>
+<message msgid="routing del interface" msgstr="Schnittstelle"/>
+<message msgid="Input maximum rate is greater than uplink rate." msgstr="Die maximale Eingaberate ist groser als die Uplink-Rate."/>
+<message msgid="Input maximum rate is greater than total downlink rate." msgstr="Die maximale Eingaberate ist groser als die gesamte Downlink-Rate."/>
+<message msgid="Input minimum rate is greater than downlink rate." msgstr="Die minimale Eingaberate ist groser als die Downlink-Rate."/>
+<message msgid="Input minimum rate is greater than uplink rate." msgstr="Die minimale Eingaberate ist groser als die Uplink-Rate."/>
+<!--new add-->
+<message msgid="Please set value between 64~32768" msgstr="Please set value between 64~32768" />
+</po>

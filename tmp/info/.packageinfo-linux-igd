@@ -1,0 +1,14 @@
+Source-Makefile: package/linux-igd/Makefile
+Package: linux-igd
+Version: 1.0.0
+Depends: +libupnp
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: IGD UPNP support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	IGD UPNP support
+@@
+

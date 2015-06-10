@@ -1,0 +1,31 @@
+--- old/drivers/watchdog/Kconfig	2011-10-17 22:30:53.094162274 +0800
++++ new/drivers/watchdog/Kconfig	2011-10-17 22:31:17.241784971 +0800
+@@ -683,6 +683,17 @@
+ 	help
+ 	  Hardware driver for the built-in watchdog timer on TXx9 MIPS SoCs.
+ 
++config RALINK_WATCHDOG
++    tristate "Ralink APSoC Hardware Watchdog"
++    depends on WATCHDOG
++    help
++      timer expired and no process has written to /dev/watchdog during
++      that time.
++
++config  RALINK_TIMER_WDG_RESET_OUTPUT
++        bool "Ralink WatchDog Reset Output"
++        depends on RALINK_WATCHDOG
++
+ # PARISC Architecture
+ 
+ # POWERPC Architecture
+--- old/drivers/watchdog/Makefile	2011-10-17 22:30:17.070362901 +0800
++++ new/drivers/watchdog/Makefile	2011-10-17 22:30:22.803835419 +0800
+@@ -123,5 +123,8 @@
+ 
+ # XTENSA Architecture
+ 
++# Ralink
++obj-$(CONFIG_RALINK_WATCHDOG) += ralink_wdt.o
++
+ # Architecture Independant
+ obj-$(CONFIG_SOFT_WATCHDOG) += softdog.o

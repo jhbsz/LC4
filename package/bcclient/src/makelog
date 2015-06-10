@@ -1,0 +1,26 @@
+arm-none-linux-gnueabi-gcc -std=gnu99 -Wall -O2 -c -DMARVELL_6281 -DUSE_SHORT_ADMIN_NAME  -DTS_101 -DNIC_BONDING_SUPPORT  -I/home/waynechang/NasX86/NasUtil/bcclient/../../NasLib/include -I/home/waynechang/NasX86/NasUtil/bcclient/../../NasLib/uLinux  nas.c -o nas.o
+In file included from finder.h:18,
+                 from nas.c:61:
+protocols.h:452: warning: ignoring #pragma warning 
+protocols.h:458: warning: ignoring #pragma warning 
+nas.c: In function 'get_hdd_model_size':
+nas.c:243: warning: format '%lld' expects type 'long long int', but argument 4 has type 'double'
+nas.c:243: warning: format '%lld' expects type 'long long int', but argument 4 has type 'double'
+nas.c: In function 'query_config_file':
+nas.c:638: warning: format '%d' expects type 'int *', but argument 3 has type 'unsigned char *'
+nas.c: In function 'OnCmdAcquireConfig':
+nas.c:2088: warning: unused variable 'link_status'
+nas.c: In function 'OnCmdModifyConfig':
+nas.c:2395: warning: unused variable 'log_str'
+nas.c: In function 'OnCmdStartWizardConfiguring':
+nas.c:3100: error: 'EVENTLOG_INFORMATION_TYPE' undeclared (first use in this function)
+nas.c:3100: error: (Each undeclared identifier is reported only once
+nas.c:3100: error: for each function it appears in.)
+nas.c: In function 'OnCmdGetISCSITargetInfo':
+nas.c:3448: warning: missing braces around initializer
+nas.c:3448: warning: (near initialization for 'target_connection_info[0]')
+nas.c: In function 'set_nic_info_2_ulinux':
+nas.c:3748: warning: value computed is not used
+nas.c:3799: warning: value computed is not used
+nas.c:3857: warning: value computed is not used
+make: *** [nas.o] Error 1

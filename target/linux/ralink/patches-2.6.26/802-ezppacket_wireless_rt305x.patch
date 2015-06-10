@@ -1,0 +1,370 @@
+--- linux/drivers/net/wireless/rt2860v2_ap_305x/Kconfig	2013-04-03 19:49:08.112412521 +0800
++++ linux/drivers/net/wireless/rt2860v2_ap_305x/Kconfig	2013-04-03 19:49:12.176412587 +0800
+@@ -1,6 +1,5 @@
+ config RT2860V2_AP
+ 	tristate "Ralink RT2860 802.11n AP support"
+-	depends on NET_RADIO 
+ 	
+ config RT2860V2_AP_V24_DATA_STRUCTURE
+ 	bool
+diff -Nur linux/drivers/net/wireless/rt2860v2_305x/common/wsc.c linux-2.6.26/drivers/net/wireless/rt2860v2_305x/common/wsc.c
+--- linux/drivers/net/wireless/rt2860v2_305x/common/wsc.c	2013-04-03 21:52:43.128532730 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2_305x/common/wsc.c	2013-04-03 21:24:40.088505446 +0800
+@@ -8093,9 +8093,18 @@
+ 		*/
+ 		for(idx = 0; idx < keylen; idx++) 
+ 		{
++#if 0   /* Ralink Patch: patch SDK33 WPS for ZyXEL request */ 
+ 			tempRandomByte = RandomByte(pAd)%94+33;
+ 			*(pKey+idx) = tempRandomByte;
+-		}
++#else 
++                        tempRandomByte = RandomByte(pAd)%58+65; 
++                        if ((tempRandomByte > 90) && (tempRandomByte < 97)) 
++                            tempRandomByte = (RandomByte(pAd)%26 + 97); 
++                        if (tempRandomByte < 65) 
++                            tempRandomByte = (RandomByte(pAd)%26 + 65); 
++                        *(pKey+idx) = tempRandomByte; 
++#endif   /* Ralink Patch: patch SDK33 WPS for ZyXEL request */   
++                }
+ 		*pKeyLen = keylen;
+ 	}
+ }
+@@ -9121,6 +9130,8 @@
+ 	}
+ }
+ 
++#define pTempStr_LEN 2000
++
+ void    WscWriteConfToDatFile(
+     IN  PRTMP_ADAPTER 	pAd,
+     IN  UCHAR			CurOpMode)
+@@ -9226,10 +9237,10 @@
+ 		offset += strlen("Default\n");
+ 		RtmpOSFileWrite(file_w, (PSTRING)cfgData, (int)(offset-cfgData));
+ /*		pTempStr = kmalloc(512, MEM_ALLOC_FLAG); */
+-		os_alloc_mem(NULL, (UCHAR **)&pTempStr, 512);
++		os_alloc_mem(NULL, (UCHAR **)&pTempStr, pTempStr_LEN);
+ 		if (!pTempStr)
+ 		{
+-			DBGPRINT(RT_DEBUG_TRACE, ("pTempStr kmalloc fail. (512)\n"));
++			DBGPRINT(RT_DEBUG_TRACE, ("pTempStr kmalloc fail. (%d)\n",pTempStr_LEN));
+ 			RtmpOSFileClose(file_w);
+ 			goto WriteErr;
+ 		}
+@@ -9240,7 +9251,7 @@
+ 			PSTRING ptr;
+ 			BOOLEAN	bNewFormat = TRUE;
+ 
+-			NdisZeroMemory(pTempStr, 512);
++			NdisZeroMemory(pTempStr, pTempStr_LEN);
+ 			ptr = (PSTRING) offset;
+ 			while(*ptr && *ptr != '\n')
+ 			{
+@@ -9265,17 +9276,17 @@
+ #ifdef CONFIG_STA_SUPPORT
+ 				else if (strncmp(pTempStr, "NetworkType=", strlen("NetworkType=")) == 0)
+ 				{
+-					NdisZeroMemory(pTempStr, 512);					
++					NdisZeroMemory(pTempStr, pTempStr_LEN);					
+ 					if (pAd->StaCfg.BssType == BSS_ADHOC)
+-						snprintf(pTempStr, 512, "NetworkType=Adhoc");
++						snprintf(pTempStr, pTempStr_LEN, "NetworkType=Adhoc");
+ 					else
+-						snprintf(pTempStr, 512, "NetworkType=Infra");
++						snprintf(pTempStr, pTempStr_LEN, "NetworkType=Infra");
+ 				}
+ #endif /* CONFIG_STA_SUPPORT */
+ 				else if (strncmp(pTempStr, "AuthMode=", strlen("AuthMode=")) == 0)
+ 				{
+-					NdisZeroMemory(pTempStr, 512);
+-					snprintf(pTempStr, 512, "AuthMode=");
++					NdisZeroMemory(pTempStr, pTempStr_LEN);
++					snprintf(pTempStr, pTempStr_LEN, "AuthMode=");
+ #ifdef CONFIG_AP_SUPPORT
+ 					if (CurOpMode == AP_MODE)
+ 					{
+@@ -9284,9 +9295,9 @@
+ 							if (pAd->ApCfg.MBSSID[index].SsidLen)
+ 							{
+ 								if (index == 0)
+-									snprintf(pTempStr, 512, "%s%s", pTempStr, RTMPGetRalinkAuthModeStr(pAd->ApCfg.MBSSID[index].AuthMode));
++									snprintf(pTempStr, pTempStr_LEN, "%s%s", pTempStr, RTMPGetRalinkAuthModeStr(pAd->ApCfg.MBSSID[index].AuthMode));
+ 								else
+-									snprintf(pTempStr, 512, "%s;%s", pTempStr, RTMPGetRalinkAuthModeStr(pAd->ApCfg.MBSSID[index].AuthMode));
++									snprintf(pTempStr, pTempStr_LEN, "%s;%s", pTempStr, RTMPGetRalinkAuthModeStr(pAd->ApCfg.MBSSID[index].AuthMode));
+ 							}
+ 						}
+ 					}
+@@ -9295,23 +9306,23 @@
+ 					if (CurOpMode == STA_MODE)
+ 					{
+ 						USHORT auth_flag = WscGetAuthType(pAd->StaCfg.AuthMode);
+-						snprintf(pTempStr, 512, "%s%s", pTempStr, WscGetAuthTypeStr(auth_flag));
++						snprintf(pTempStr, pTempStr_LEN, "%s%s", pTempStr, WscGetAuthTypeStr(auth_flag));
+ 					}
+ #endif /* CONFIG_STA_SUPPORT */
+ 				}
+ 			else if (strncmp(pTempStr, "EncrypType=", strlen("EncrypType=")) == 0)
+ 				{
+-					NdisZeroMemory(pTempStr, 512);
+-					snprintf(pTempStr, 512, "EncrypType=");
++					NdisZeroMemory(pTempStr, pTempStr_LEN);
++					snprintf(pTempStr, pTempStr_LEN, "EncrypType=");
+ #ifdef CONFIG_AP_SUPPORT
+ 					if (CurOpMode == AP_MODE)
+ 					{
+ 						for (index = 0; index < pAd->ApCfg.BssidNum; index++)
+ 						{
+ 							if (index == 0)
+-								snprintf(pTempStr, 512, "%s%s", pTempStr, RTMPGetRalinkEncryModeStr(pAd->ApCfg.MBSSID[index].WepStatus));
++								snprintf(pTempStr, pTempStr_LEN, "%s%s", pTempStr, RTMPGetRalinkEncryModeStr(pAd->ApCfg.MBSSID[index].WepStatus));
+ 							else
+-								snprintf(pTempStr, 512, "%s;%s", pTempStr, RTMPGetRalinkEncryModeStr(pAd->ApCfg.MBSSID[index].WepStatus));
++								snprintf(pTempStr, pTempStr_LEN, "%s;%s", pTempStr, RTMPGetRalinkEncryModeStr(pAd->ApCfg.MBSSID[index].WepStatus));
+ 						}
+ 					}
+ #endif /* CONFIG_AP_SUPPORT */
+@@ -9319,7 +9330,7 @@
+ 					if (CurOpMode == STA_MODE)
+ 					{
+ 						USHORT encrypt_flag = WscGetEncryType(pAd->StaCfg.WepStatus);
+-						snprintf(pTempStr, 512, "%s%s", pTempStr, WscGetEncryTypeStr(encrypt_flag));
++						snprintf(pTempStr, pTempStr_LEN, "%s%s", pTempStr, WscGetEncryTypeStr(encrypt_flag));
+ 					}
+ #endif /* CONFIG_STA_SUPPORT */
+ 				}    
+@@ -9336,57 +9347,57 @@
+ 				}
+ 				else if (strncmp(pTempStr, "WscConfMode=", strlen("WscConfMode=")) == 0)
+ 				{
+-						snprintf(pTempStr, 512, "WscConfMode=");
++						snprintf(pTempStr, pTempStr_LEN, "WscConfMode=");
+ #ifdef CONFIG_AP_SUPPORT
+ 						for (index = 0; index < pAd->ApCfg.BssidNum; index++)
+ 						{
+ 							pWscControl = &pAd->ApCfg.MBSSID[index].WscControl;
+ 							if (index == 0)
+-								snprintf(pTempStr, 512, "%s%d", pTempStr, pWscControl->WscConfMode);
++								snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pWscControl->WscConfMode);
+ 							else
+-								snprintf(pTempStr, 512, "%s;%d", pTempStr, pWscControl->WscConfMode);
++								snprintf(pTempStr, pTempStr_LEN, "%s;%d", pTempStr, pWscControl->WscConfMode);
+ 						}
+ #endif /* CONFIG_AP_SUPPORT */
+ #ifdef CONFIG_STA_SUPPORT
+-						snprintf(pTempStr, 512, "%s%d", pTempStr, pWscControl->WscConfMode);
++						snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pWscControl->WscConfMode);
+ #endif /* CONFIG_STA_SUPPORT */
+ 				}
+ 				else if (strncmp(pTempStr, "WscConfStatus=", strlen("WscConfStatus=")) == 0)
+ 				{
+-						snprintf(pTempStr, 512, "WscConfStatus=");
++						snprintf(pTempStr, pTempStr_LEN, "WscConfStatus=");
+ #ifdef CONFIG_AP_SUPPORT
+ 						for (index = 0; index < pAd->ApCfg.BssidNum; index++)
+ 						{
+ 							pWscControl = &pAd->ApCfg.MBSSID[index].WscControl;
+ 							if (index == 0)
+-								snprintf(pTempStr, 512, "%s%d", pTempStr, pWscControl->WscConfStatus);
++								snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pWscControl->WscConfStatus);
+ 							else
+-								snprintf(pTempStr, 512, "%s;%d", pTempStr, pWscControl->WscConfStatus);
++								snprintf(pTempStr, pTempStr_LEN, "%s;%d", pTempStr, pWscControl->WscConfStatus);
+ 						}
+ #endif /* CONFIG_AP_SUPPORT */
+ #ifdef CONFIG_STA_SUPPORT
+-						snprintf(pTempStr, 512, "%s%d", pTempStr, pWscControl->WscConfStatus);
++						snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pWscControl->WscConfStatus);
+ #endif /* CONFIG_STA_SUPPORT */
+ 				}
+ 				else if (strncmp(pTempStr, "DefaultKeyID=", strlen("DefaultKeyID=")) == 0)
+ 				{
+-					NdisZeroMemory(pTempStr, 512);
+-					snprintf(pTempStr, 512, "DefaultKeyID=");
++					NdisZeroMemory(pTempStr, pTempStr_LEN);
++					snprintf(pTempStr, pTempStr_LEN, "DefaultKeyID=");
+ #ifdef CONFIG_AP_SUPPORT
+ 					if (CurOpMode == AP_MODE)
+ 					{
+ 						for (index = 0; index < pAd->ApCfg.BssidNum; index++)
+ 						{
+ 							if (index == 0)
+-								snprintf(pTempStr, 512, "%s%d", pTempStr, pAd->ApCfg.MBSSID[index].DefaultKeyId+1);
++								snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pAd->ApCfg.MBSSID[index].DefaultKeyId+1);
+ 							else
+-								snprintf(pTempStr, 512, "%s;%d", pTempStr, pAd->ApCfg.MBSSID[index].DefaultKeyId+1);
++								snprintf(pTempStr, pTempStr_LEN, "%s;%d", pTempStr, pAd->ApCfg.MBSSID[index].DefaultKeyId+1);
+ 						}
+ 					}
+ #endif /* CONFIG_AP_SUPPORT */
+ #ifdef CONFIG_STA_SUPPORT
+ 					if (CurOpMode == STA_MODE)
+-						snprintf(pTempStr, 512, "%s%d", pTempStr, pAd->StaCfg.DefaultKeyId+1);
++						snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, pAd->StaCfg.DefaultKeyId+1);
+ #endif /* CONFIG_STA_SUPPORT */
+ 				}
+ #ifdef CONFIG_AP_SUPPORT
+@@ -9415,17 +9426,17 @@
+ 								KeyType[idx] = (UCHAR)(*pTempStr - 0x30);
+ 						}
+ 						pTempStr = temp_ptr;			
+-						NdisZeroMemory(pTempStr, 512);
++						NdisZeroMemory(pTempStr, pTempStr_LEN);
+ 						NdisMoveMemory(pTempStr, WepKeyFormatName, strlen(WepKeyFormatName));
+ 						for (idx = 0; idx < pAd->ApCfg.BssidNum; idx++)
+ 						{
+ 							if (idx == apidx)  
+-								snprintf(pTempStr, 512, "%s0", pTempStr);
++								snprintf(pTempStr, pTempStr_LEN, "%s0", pTempStr);
+ 							else
+-								snprintf(pTempStr, 512, "%s%d", pTempStr, KeyType[idx]);
++								snprintf(pTempStr, pTempStr_LEN, "%s%d", pTempStr, KeyType[idx]);
+ 							
+ 							if (apidx < (pAd->ApCfg.BssidNum - 1))
+-								snprintf(pTempStr, 512, "%s;", pTempStr);
++								snprintf(pTempStr, pTempStr_LEN, "%s;", pTempStr);
+ 						}
+ 					}
+ 				}
+@@ -9435,7 +9446,7 @@
+ 					pCredentail = &pAd->ApCfg.MBSSID[apidx].WscControl.WscProfile.Profile[0];
+ 					if (pAd->ApCfg.MBSSID[apidx].WepStatus == Ndis802_11WEPEnabled)
+ 					{
+-						NdisZeroMemory(pTempStr, 512);
++						NdisZeroMemory(pTempStr, pTempStr_LEN);
+ 						NdisMoveMemory(pTempStr, WepKeyName, strlen(WepKeyName));
+ 						tempStrLen = strlen(pTempStr);
+ 						if (pCredentail->KeyLength)
+@@ -9445,7 +9456,7 @@
+ 							{
+ 								int jjj=0;
+ 								for (jjj=0; jjj<pCredentail->KeyLength; jjj++)
+-									snprintf(pTempStr, 512, "%s%02x", pTempStr, pCredentail->Key[jjj]);
++									snprintf(pTempStr, pTempStr_LEN, "%s%02x", pTempStr, pCredentail->Key[jjj]);
+ 							}
+ 							else if ((pCredentail->KeyLength == 10) ||
+ 								(pCredentail->KeyLength == 26))
+@@ -9463,8 +9474,8 @@
+ 					pCredentail = &pWscControl->WscProfile.Profile[pWscControl->WscProfile.ApplyProfileIdx];
+ 					if (pAd->StaCfg.WepStatus == Ndis802_11WEPEnabled)                           
+ 					{
+-						NdisZeroMemory(pTempStr, 512);
+-						snprintf(pTempStr, 512, "%s0", WepKeyFormatName); /* Hex */
++						NdisZeroMemory(pTempStr, pTempStr_LEN);
++						snprintf(pTempStr, pTempStr_LEN, "%s0", WepKeyFormatName); /* Hex */
+ 					}
+ 				}
+ 				else if (rtstrstr(pTempStr, (PSTRING) WepKeyName) &&  (CurOpMode == STA_MODE))
+@@ -9472,7 +9483,7 @@
+ 						pCredentail = &pWscControl->WscProfile.Profile[pWscControl->WscProfile.ApplyProfileIdx];
+ 					if (pAd->StaCfg.WepStatus == Ndis802_11WEPEnabled)                           
+ 					{
+-						NdisZeroMemory(pTempStr, 512);
++						NdisZeroMemory(pTempStr, pTempStr_LEN);
+ 						NdisMoveMemory(pTempStr, WepKeyName, strlen(WepKeyName));
+ 						tempStrLen = strlen(pTempStr);
+ 						if (pCredentail->KeyLength)
+@@ -9482,7 +9493,7 @@
+ 							{
+ 								int jjj=0;
+ 								for (jjj=0; jjj<pCredentail->KeyLength; jjj++)
+-									snprintf(pTempStr, 512, "%s%02x", pTempStr, pCredentail->Key[jjj]);
++									snprintf(pTempStr, pTempStr_LEN, "%s%02x", pTempStr, pCredentail->Key[jjj]);
+ 							}
+ 							else if ((pCredentail->KeyLength == 10) ||
+ 								(pCredentail->KeyLength == 26))
+diff -Nur linux/drivers/net/wireless/rt2860v2_305x/include/iface/rtmp_rbs.h linux-2.6.26/drivers/net/wireless/rt2860v2_305x/include/iface/rtmp_rbs.h
+--- linux/drivers/net/wireless/rt2860v2_305x/include/iface/rtmp_rbs.h	2013-04-03 21:52:43.132532731 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2_305x/include/iface/rtmp_rbs.h	2013-04-03 21:24:40.044505446 +0800
+@@ -48,43 +48,43 @@
+   ************************************************************************/
+ #if defined(CONFIG_RALINK_RT3050_1T1R)
+ #if defined(CONFIG_RALINK_RT3350)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3350_AP_1T1R_V1_0.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3350_AP_1T1R_V1_0.bin"
+ #else
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3050_AP_1T1R_V1_0.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3050_AP_1T1R_V1_0.bin"
+ #endif /* CONFIG_RALINK_RT3350 */
+ #endif /* CONFIG_RALINK_RT3050_1T1R */
+ 
+ #if defined(CONFIG_RALINK_RT3051_1T2R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3051_AP_1T2R_V1_0.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3051_AP_1T2R_V1_0.bin"
+ #endif /* CONFIG_RALINK_RT3051_1T2R */
+ 
+ #if defined(CONFIG_RALINK_RT3052_2T2R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3052_AP_2T2R_V1_1.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3052_AP_2T2R_V1_1.bin"
+ #endif /* CONFIG_RALINK_RT3052_2T2R */
+ 
+ #if defined(CONFIG_RALINK_RT3883_3T3R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3883_AP_3T3R_V0_1.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3883_AP_3T3R_V0_1.bin"
+ #endif /* CONFIG_RALINK_RT3883_3T3R */
+ 
+ #if defined(CONFIG_RALINK_RT3662_2T2R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3662_AP_2T2R_V0_0.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3662_AP_2T2R_V0_0.bin"
+ #endif /* CONFIG_RALINK_RT3662_2T2R */
+ 
+ #if defined(CONFIG_RALINK_RT3352_2T2R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT3352_AP_2T2R_V11.BIN"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT3352_AP_2T2R_V11.BIN"
+ #endif /* CONFIG_RALINK_RT3352_2T2R */
+ 
+ #if defined(CONFIG_RALINK_RT5350_1T1R)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT5350_AP_1T1R_V1_0.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT5350_AP_1T1R_V1_0.bin"
+ #endif // CONFIG_RALINK_RT5350_1T1R //
+ 
+ #if defined(CONFIG_RT2860V2_2850)
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT2880_RT2850_AP_2T3R_V1_6.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT2880_RT2850_AP_2T3R_V1_6.bin"
+ #endif /* CONFIG_RT2860V2_2850 */
+ 
+ #ifndef EEPROM_DEFAULT_FILE_PATH
+ /* RFIC 2820 */
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/RT2880_RT2820_AP_2T3R_V1_6.bin"
++#define EEPROM_DEFAULT_FILE_PATH                     "/etc/wl/RT2880_RT2820_AP_2T3R_V1_6.bin"
+ #endif /* EEPROM_DEFAULT_FILE_PATH */
+ 
+ #if defined (CONFIG_RT2880_FLASH_32M)
+diff -Nur linux/drivers/net/wireless/rt2860v2_305x/include/wsc.h linux-2.6.26/drivers/net/wireless/rt2860v2_305x/include/wsc.h
+--- linux/drivers/net/wireless/rt2860v2_305x/include/wsc.h	2013-04-03 21:52:43.132532731 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2_305x/include/wsc.h	2013-04-03 21:24:40.088505446 +0800
+@@ -325,17 +325,17 @@
+ #define WSC_SCSTATE_CONFIGURED		0x02
+ 
+ /* Common definition */
+-#define	WSC_MANUFACTURE		"Ralink Technology, Corp."
++#define	WSC_MANUFACTURE		"AXIMCom"
+ #ifdef CONFIG_AP_SUPPORT
+-#define	AP_WSC_MODEL_NAME		"Ralink Wireless Access Point"
+-#define	AP_WSC_DEVICE_NAME		"RalinkAPS"
++#define	AP_WSC_MODEL_NAME		"AXIMCom Product"
++#define	AP_WSC_DEVICE_NAME		"AXIMComAPS"
+ #endif /* CONFIG_AP_SUPPORT */
+ #ifdef CONFIG_STA_SUPPORT
+-#define	STA_WSC_MODEL_NAME		"Ralink Wireless Linux Client"
+-#define	STA_WSC_DEVICE_NAME		"RalinkLinuxClient"
+-#define	WSC_DEVICE_NAME_R	"Ralink EX-Registrar"
++#define	STA_WSC_MODEL_NAME		"AXIMCom Wireless Client"
++#define	STA_WSC_DEVICE_NAME		"AXIMCom Wireless Client"
++#define	WSC_DEVICE_NAME_R	"AXIMCom EX-Registrar"
+ #endif /* CONFIG_STA_SUPPORT */
+-#define	WSC_MODEL_NUMBER	"RT2860"
++#define	WSC_MODEL_NUMBER	"AXIMCom"
+ #define	WSC_MODEL_SERIAL	"12345678"
+ 
+ /* Time-Out, param for timer func, count by micro-sec, not ticks */
+--- linux/drivers/net/wireless/rt2860v2_sta_305x/Kconfig	2013-04-03 21:53:01.652533031 +0800
++++ linux-2.6.26/drivers/net/wireless/rt2860v2_sta_305x/Kconfig	2013-04-03 21:24:40.044505446 +0800
+@@ -1,6 +1,5 @@
+ config RT2860V2_STA
+ 	tristate "Ralink RT2860 802.11n STA support"
+-	depends on NET_RADIO 
+ 
+ config  RT2860V2_STA_WPA_SUPPLICANT
+ 	bool "WPA Supplicant"

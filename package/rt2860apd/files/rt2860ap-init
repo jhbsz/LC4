@@ -1,0 +1,968 @@
+#!/bin/sh
+# Global variables
+RT2860CFG=/etc/wl/RT2860AP.dat
+# RT2860CFG=RT2860AP.dat
+[ -x nvram_wl0.sh ] && source nvram_wl0.sh && RT2860CFG=RT2860AP.dat
+
+rt2860vars="CountryRegion CountryRegionABand CountryCode BssidNum \
+    SSID1 SSID2 SSID3 SSID4 SSID5 SSID6 SSID7 SSID8 \
+    WirelessMode TxRate Channel BasicRate BeaconPeriod DtimPeriod TxPower \
+    DisableOLBC BGProtection TxAntenna RxAntenna TxPreamble RTSThreshold \
+    FragThreshold MaxClient TxBurst PktAggregate WmmCapable APAifsn \
+    APCwmin APCwmax APTxop APACM BSSAifsn BSSCwmin BSSCwmax \
+    BSSTxop BSSACM AckPolicy NoForwarding NoForwardingBTNBSSID \
+    HideSSID ShortSlot AutoChannelSelect IEEE8021X IEEE80211H CSPeriod \
+    WirelessEvent PreAuth AuthMode EncrypType RekeyInterval \
+    RekeyMethod PMKCachePeriod \
+    FCCParamCh0 FCCParamCh1 FCCParamCh2 FCCParamCh3 CEParamCh0 \
+    CEParamCh1 CEParamCh2 CEParamCh3 JAPParamCh0 JAPParamCh1 JAPParamCh2 \
+    JAPParamCh3 JAPW53ParamCh0 JAPW53ParamCh1 JAPW53ParamCh2 JAPW53ParamCh3 \
+    WapiPsk1 WapiPsk2 WapiPsk3 WapiPsk4 WapiPsk5 WapiPsk6 WapiPsk7 WapiPsk8 \
+    WapiPskType Wapiifname WapiAsCertPath WapiUserCertPath WapiAsIpAddr \
+    WapiAsPort WPAPSK1 WPAPSK2 WPAPSK3 WPAPSK4 WPAPSK5 WPAPSK6 WPAPSK7 \
+    WPAPSK8 DefaultKeyID \
+    Key1Type Key1Str1 Key1Str2 Key1Str3 Key1Str4 \
+    Key1Str5 Key1Str6 Key1Str7 Key1Str8 \
+    Key2Type Key2Str1 Key2Str2 Key2Str3 Key2Str4 \
+    Key2Str5 Key2Str6 Key2Str7 Key2Str8 \
+    Key3Type Key3Str1 Key3Str2 Key3Str3 Key3Str4 \
+    Key3Str5 Key3Str6 Key3Str7 Key3Str8 \
+    Key4Type Key4Str1 Key4Str2 Key4Str3 Key4Str4 \
+    Key4Str5 Key4Str6 Key4Str7 Key4Str8 \
+    HSCounter AccessPolicy0 AccessControlList0 AccessPolicy1 \
+    AccessControlList1 AccessPolicy2 AccessControlList2 AccessPolicy3 \
+    AccessControlList3 AccessPolicy4 AccessControlList4 AccessPolicy5 \
+    AccessControlList5 AccessPolicy6 AccessControlList6 AccessPolicy7 \
+    AccessControlList7 WdsEnable WdsPhyMode WdsEncrypType WdsList \
+    WdsKey Wds0Key Wds1Key Wds2Key Wds3Key WscConfMode WscConfStatus \
+    RADIUS_Server RADIUS_Port RADIUS_Key1 RADIUS_Key2 RADIUS_Key3 \
+    RADIUS_Key4 RADIUS_Key5 RADIUS_Key6 RADIUS_Key7 RADIUS_Key8 \
+    RADIUS_Acct_Server RADIUS_Acct_Port RADIUS_Acct_Key own_ip_addr \
+    EAPifname PreAuthifname HT_HTC HT_RDG HT_EXTCHA HT_LinkAdapt \
+    HT_OpMode HT_MpduDensity HT_BW HT_BSSCoexistence HT_AutoBA HT_AMSDU HT_BAWinSize \
+    HT_GI HT_STBC HT_MCS HT_TxStream HT_RxStream HT_PROTECT \
+    RadioOn HT_BADecline FixedTxMode AutoProvisionEn FreqDelta TurboRate \
+    DLSCapable CarrierDetect ITxBfEn PreAntSwitch PhyRateLimit DebugFlags \
+    ETxBfEnCond ITxBfTimeout ETxBfTimeout FineAGC StreamMode RDRegion \
+    StationKeepAlive DfsLowerLimit DfsUpperLimit DfsIndoor \
+    DFSParamFromConfig FixDfsLimit LongPulseRadarTh AvgRssiReq DFS_R66 \
+    BlockCh GreenAP MeshAutoLink MeshAuthMode MeshEncrypType MeshDefaultkey \
+    MeshWEPKEY MeshWPAKEY MeshId WCNTest Ethifname \
+    session_timeout_interval idle_timeout_interval WiFiTest TGnWifiTest \
+    APSDCapable StreamModeMac0 StreamModeMac1 StreamModeMac2 StreamModeMac3 \
+    ApCliEnable ApCliSsid ApCliBssid ApCliAuthMode ApCliEncrypType ApCliWPAPSK
+\
+    ApCliDefaultKeyID ApCliKey1Type ApCliKey1Str ApCliKey2Type ApCliKey2Str \
+    ApCliKey3Type ApCliKey3Str ApCliKey4Type ApCliKey4Str SSID WPAPSK \
+    Key1Str Key2Str Key3Str Key4Str"
+
+##################################
+# Functions
+##################################
+
+# [ -f nvram.sh ] && source nvram.sh
+
+
+add_cfgitem()
+{
+    echo "$1" >> "$RT2860CFG"
+}
+
+get_ownip()
+{
+    #wanip="$(/sbin/ifconfig eth0 | grep "inet addr" | sed -ne 's/^ *inet addr:\([[:digit:]\.]*\) .*$/\1/p')"
+    # EZP: XXX: This needs to be fixed. 
+    wanip="$(nvram get wan0_ipaddr)"
+    lanip="$(nvram get lan0_ipaddr)"
+
+    # Use wanip if available
+    if [ -n "$wanip" ];then
+	echo $wanip
+    elif [ -n "$lanip" ];then
+	echo "$lanip"
+    else
+	echo 192.168.1.1
+    fi
+}
+
+get_rule_value()
+{
+    local rule_name=$1
+    local rule_index=$2
+    local rule_entry=$3
+    local rule_content="$(nvram show $rule_name $rule_index $rule_entry)"
+    echo $rule_content 
+}
+
+# Give a default value to each RT2860AP variable
+get_convert_authmode()
+{
+    local authmode=OPEN
+    local secmode=$1
+    local wepencmode=$2
+    local wpacompatible=$3
+ 
+    if [ "$secmode" = "wpa" ]; then
+	    authmode="WPA"
+    elif [ "$secmode" = "wpa2" ]; then
+	    authmode="WPA2"
+        [ "$wpacompatible" = "1" ] && authmode="WPA1WPA2"
+    elif [ "$secmode" = "psk" ]; then
+	    authmode="WPAPSK"
+    elif [ "$secmode" = "psk2" ]; then
+	    authmode="WPA2PSK"
+        [ "$wpacompatible" = "1" ] && authmode="WPAPSKWPA2PSK"
+    elif [ "$secmode" = "wep" ]; then
+        authmode=WEPAUTO
+        [ "$wepencmode" = "open" ] && authmode="OPEN"
+        [ "$wepencmode" = "shared" ] && authmode="SHARED"
+    fi
+
+    echo $authmode
+}
+
+get_wep_key_type()
+{
+local wep_key="$1"
+local key_type=0
+local wep_key_type="$2"
+[ -n "$(echo $wep_key | sed -n '/\$/p')" ] && {
+    eval "wep_key=$1"
+}
+if [ "${wep_key_type}" = "hex" -o "${wep_key_type}" = "0" ]; then
+    echo "0"
+elif [ "${wep_key_type}" = "ascii" -o "${wep_key_type}" = "1" ]; then
+    echo "1"
+else
+    if [ ${#wep_key} -eq 5 ]; then
+        key_type=1
+    elif [ ${#wep_key} -eq 13 ]; then
+        key_type=1
+    fi
+    echo $key_type
+fi
+}
+        
+
+get_convert_crypto()
+{
+local crypto="NONE"
+local secmode=$1
+local crypto=$2
+
+if [ "$secmode" = "disabled" ]; then
+    crypto="NONE"
+elif [ "$secmode" = "wep" ]; then
+    crypto="WEP"
+else
+    if [ "$crypto" = "tkip" ]; then
+        crypto="TKIP"
+    elif [ "$crypto" = "aes" ]; then
+        crypto="AES"
+    elif [ "$crypto" = "mixed" ]; then
+        crypto="TKIPAES"
+    fi
+fi
+echo $crypto
+}
+                                                                                                            
+get_convert_wds_crypto()
+{
+    local secmode=$1
+    local crypto=$2
+    local enc="OPEN"
+    if [ $secmode = "disabled" ]; then
+        env="OPEN"
+    elif [ $secmode = "wep" ]; then
+        enc="WEP"
+    elif [ $secmode = "psk" ]; then
+        if [ $crypto = "tkip" ]; then
+            enc="TKIP"
+        elif [ $crypto = "aes" ]; then
+            enc="AES"
+        elif [ $crypto = "mixed" ]; then
+            enc="TKIP"
+        fi
+    fi
+    echo $enc
+}
+
+get_rekey_interval()
+{
+local rekey_method=$1
+local rekey_time=$2
+local rekey_pkt=$3
+if [ $rekey_method = "time" ]; then
+    echo $rekey_time
+else
+    echo $rekey_pkt
+fi
+}
+
+get_acl_policy()
+{
+    local idx=$1
+    local vidx=$2
+    if [ -z "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 enable)" -o \
+            "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 enable)" = "0" -o \
+            "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 enable)" = "disabled" ]; then
+        # Disabled
+        echo "0"
+        return 0
+    else
+        if [ "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 defpolicy)" = "allow" -o \
+             "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 defpolicy)" = "1" ]; then
+            #allow all
+            echo "1"
+            return 1
+        elif [ "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 defpolicy)" = "deny" -o \
+               "$(nvram show wl${idx}${vidx}_acl_basic_rule 0 defpolicy)" = "2" ]; then
+            #deny all
+            echo "2"
+            return 2
+        else
+            # Disabled
+            echo "0"
+            return 0
+        fi
+    fi
+}
+
+get_acl_list()
+{
+    local idx=$1
+    local vidx=$2
+    local defpol="$(nvram show wl${idx}${vidx}_acl_basic_rule 0 defpolicy)"
+    local aclnum="$(nvram get wl${idx}${vidx}_acl_num)"
+    local aclidx="0"
+    local acllist=""
+    while [ "$aclidx" -lt "$aclnum" ];
+    do
+        #check rule is enabled and policy is "not" default policy
+        [ "$(nvram show wl${idx}${vidx}_acl_rule $aclidx enable)" = "1" -a \
+          "$(nvram show wl${idx}${vidx}_acl_rule $aclidx policy)" = "$defpol" -a \
+          -n "$(nvram show wl${idx}${vidx}_acl_rule $aclidx mac)" ] && {
+            if [ -n "${acllist}" ]; then
+                acllist="${acllist};$(nvram show wl${idx}${vidx}_acl_rule $aclidx mac)"
+            else
+                acllist="$(nvram show wl${idx}${vidx}_acl_rule $aclidx mac)"
+            fi
+        }
+        aclidx=$(($aclidx + 1))
+    done
+    echo "${acllist}"
+}
+
+#wl_rule_name="wl_basic_rule wl_advanced_rule wl_wds_rule wl_wps_rule wl_wps_sta_rule"
+wl_rule_name="wl_basic_rule wl_advanced_rule wl_wds_rule"
+wl_basic_rule_item="enable net_mode txpower channel bisolation"
+wl_advanced_rule_item="frag rts dtim bcn plcphdr antdiv txburst pktaggr \
+                       txmode rdg linkadapt htc htbw gi opmode mcs \
+                       mpdu amsdu autoba bawinsize badecline extcha wdstxmode"
+wl_wds_rule_item="mode timeout"
+#wl_wps_rule_item="mode pin configured"
+#wl_wps_sta_rule_item="mode pin reg_ssid reg_auth reg_enc reg_keyindex reg_key"
+
+wlv_rule_name="wlv_basic_rule wlv_ssid_rule \
+               wlv_sec_rule wlv_sec_wep_rule \
+               wlv_sec_wpa_rule wlv_sec_wpa2_rule"
+wlv_basic_rule_item="enable hidden rate wme isolation"
+wlv_ssid_rule_item="ssid"
+wlv_sec_rule_item="secmode"
+wlv_sec_wep_rule_item="key_index key1 key2 key3 key4 keytype encmode"
+wlv_sec_wpa_rule_item="key crypto radius_key radius_ipaddr radius_port \
+                       rekey_mode rekey_time_interval rekey_pkt_interval"
+wlv_sec_wpa2_rule_item="key crypto radius_key radius_ipaddr radius_port \
+                        rekey_mode rekey_time_interval rekey_pkt_interval preauth \
+                        pmkperiod wpacap"
+
+wds_rule_name="wlv_wds_sec_wep_rule wlv_wds_sec_wpa_rule wlv_wds_basic_rule"
+apcli_rule_name="wlv_apcli_sec_wep_rule wlv_apcli_sec_wpa_rule wlv_apcli_rule wlv_apcli_sec_wpa2_rule"
+
+wlv_wds_sec_wep_rule_item="key"
+wlv_wds_sec_wpa_rule_item="key crypto"
+wlv_wds_basic_rule_item="hwaddr secmode"
+
+wlv_apcli_sec_wep_rule_item="key_index key1 key2 key3 key4 keytype encmode"
+wlv_apcli_sec_wpa_rule_item="key crypto"
+wlv_apcli_sec_wpa2_rule_item="key crypto"
+wlv_apcli_rule_item="enable ssid bssid secmode"
+
+set_wl_var()
+{
+     ra0_RadioOn=$ra0_wl_enable
+     [ $ra0_BssidNum -eq 0 ] && {
+         ra0_RadioOn=0
+         ra0_BssidNum=1
+     }
+     ra0_WirelessMode=$ra0_wl_net_mode
+     ra0_TxPower=$ra0_wl_txpower
+     ra0_Channel=$ra0_wl_channel
+     [ "$ra0_wl_channel" = "0" ] && ra0_AutoChannelSelect=2
+     ra0_FragThreshold=$ra0_wl_frag
+     ra0_RTSThreshold=$ra0_wl_rts
+     ra0_DtimPeriod=$ra0_wl_dtim
+     ra0_BeaconPeriod=$ra0_wl_bcn
+     if [ $ra0_wl_plcphdr = "long" ]; then
+         ra0_TxPreamble=0
+     elif [ $ra0_wl_plcphdr = "short" ]; then
+         ra0_TxPreamble=1
+     else
+         ra0_TxPreamble=$ra0_wl_plcphdr
+     fi
+     if [ $ra0_wl_mode = "disabled" ]; then
+         ra0_WdsEnable=0
+     elif [ $ra0_wl_mode = "bridge" ]; then
+         ra0_WdsEnable=2
+     elif [ $ra0_wl_mode = "repeater" ]; then
+         ra0_WdsEnable=1
+     elif [ $ra0_wl_mode = "lazy" ]; then
+         ra0_WdsEnable=4
+     else
+         ra0_WdsEnable=$ra0_wl_mode
+     fi
+     ra0_TxBurst=$ra0_wl_txburst
+     ra0_PktAggregate=$ra0_wl_pktaggr
+     ra0_FixedTxMode=$ra0_wl_txmode
+     if [ $ra0_wl_htbw = "0" -o $ra0_wl_htbw = "1" ]; then
+         ra0_HT_BW=$ra0_wl_htbw
+         ra0_HT_BSSCoexistence=1
+     else
+         ra0_HT_BW=1
+         ra0_HT_BSSCoexistence=0
+     fi
+     ra0_HT_GI=$ra0_wl_gi
+     ra0_HT_HTC=$ra0_wl_htc
+     ra0_HT_LinkAdapt=$ra0_wl_linkadapt
+     ra0_HT_MCS=$ra0_wl_mcs
+     ra0_HT_MpduDensity=$ra0_wl_mpdu
+     ra0_HT_AMSDU=$ra0_wl_amsdu
+     ra0_HT_OpMode=$ra0_wl_opmode
+     ra0_HT_RDG=$ra0_wl_rdg
+     ra0_HT_AutoBA=$ra0_wl_autoba
+     ra0_HT_BAWinSize=$ra0_wl_bawinsize
+     ra0_HT_BADecline=$ra0_wl_badecline
+     if [ "$ra0_HT_BW" = "1" -a "$ra0_wl_channel" -le "4" ]; then
+         ra0_HT_EXTCHA=1
+         [ "$ra0_HT_EXTCHA" != "$ra0_wl_extcha" ] && {
+            nvram replace attr wl_advanced_rule 0 extcha 1
+            nvram commit
+         }
+     elif [ "$ra0_HT_BW" = "1" -a "$ra0_wl_channel" -ge "8" ]; then
+         ra0_HT_EXTCHA=0
+         [ "$ra0_HT_EXTCHA" != "$ra0_wl_extcha"] && {
+            nvram replace attr wl_advanced_rule 0 extcha 0
+            nvram commit
+         }
+     else
+         ra0_HT_EXTCHA=$ra0_wl_extcha
+     fi
+     [ -n "$ra0_wl_wdstxmode" ] && ra0_WdsPhyMode=$ra0_wl_wdstxmode
+}
+
+gethide_status()
+{
+    local wlvidx=$1
+    # We hide the ssid when ssid is hiddne, ssid is disabled or wifi is off
+    [ "$(nvram show wl_basic_rule 0 enable)" = "0" -o \
+      "$(nvram show wl0_basic_rule $wlvidx enable)" = "0" -o \
+      "$(nvram show wl0_basic_rule $wlvidx hidden)" = "1" ] && {
+        echo "1"
+    } || {
+        echo "0"
+    }
+}
+
+rt2860ap_get_wl_rule_var()
+{
+local wl_num=$(get_rule_value "wl_rule_num" "0" "")
+[ "$(nvram get license_invalid)" != "0" -a $wl_num = "0" ] && wl_num=1
+
+local index_if=0
+local index_vif=0
+local index_ssid=1
+local index_rule=0
+local index_item=0
+local index_wds=0
+local index_wdsid=0
+local index_apcli=0
+local index_apcliid=0
+
+local wlv_num=0
+local auth_str=""
+local crypto_str=""
+local key1_type_str=""
+local key2_type_str=""
+local key3_type_str=""
+local key4_type_str=""
+local key_index_str=""
+local hide_ssid_str=""
+local wme_str=""
+local noforwarding_str=""
+
+local wds_hwaddr_str=""
+local wds_crypto_str=""
+local wds_key_str=""
+
+local RADIUS_Server_str=""
+local RADIUS_Port_str=""
+local RekeyMethod_str=""
+local RekeyInterval_str=""
+local preauth_str=""
+local sepchar=""
+
+while [ $index_if -lt $wl_num ]
+do
+    # evalute physical interface parameters
+    for rule in $wl_rule_name; do {
+        eval "rule_item=\$${rule}_item"
+        for item in $rule_item; do {
+            eval "ra0_wl_${item}=$(get_rule_value ${rule} ${index_if} ${item})"
+        } done
+    } done
+    ra0_NoForwardingBTNBSSID=$ra0_wl_bisolation
+    
+    # evalute virtual interface parameters
+    wlv_num=$(get_rule_value "wlv_rule_num" "0" "")
+    while [ $index_vif -lt $wlv_num ]
+    do
+        rule="wl${index_if}_basic_rule"
+        for item in $wlv_basic_rule_item; do {
+            eval "ra0_${item}=$(get_rule_value ${rule} ${index_vif} ${item})"
+        } done
+
+        rule="wl${index_if}_ssid_rule"
+        for item in $wlv_ssid_rule_item; do {
+            eval "ra0_${item}=\"$(get_rule_value ${rule} ${index_vif} ${item})\""
+        } done
+
+    # Check wireless security mode 
+        rule="wl${index_if}_sec_rule"
+        for item in $wlv_sec_rule_item; do {
+            eval "ra0_${item}=$(get_rule_value ${rule} ${index_vif} ${item})"
+        } done
+    # If any security mode of ssid use radius, set ra0_own_ip_addr
+    # ra0_EAPifname and ra0_PreAuthifname.
+       [ "$ra0_secmode" = "wpa" -o "$ra0_secmode" = "wpa2" ] && {
+           ra0_own_ip_addr="$(get_ownip)"
+           ra0_EAPifname=br0 
+           ra0_PreAuthifname=br0
+       }
+
+        rule="wl${index_if}_sec_wep_rule"
+        for item in $wlv_sec_wep_rule_item; do {
+            eval "ra0_${item}='$(get_rule_value ${rule} ${index_vif} ${item})'"
+        } done
+
+        if [ "$ra0_secmode" = "wpa2" ] || [ "$ra0_secmode" = "psk2" ]; then
+            rule="wl${index_if}_sec_wpa2_rule"
+            for item in $wlv_sec_wpa2_rule_item; do {
+                eval "ra0_${item}='$(get_rule_value ${rule} ${index_vif} ${item})'"
+            } done
+        else
+            rule="wl${index_if}_sec_wpa_rule"
+            for item in $wlv_sec_wpa_rule_item; do {
+                eval "ra0_${item}='$(get_rule_value ${rule} ${index_vif} ${item})'"
+            } done
+        fi
+        #the setting items are available only when ssid is enabled
+        # =======================================================
+        # For multiple SSID settings, the setting entries are combined
+        # with ";" so we process it separately.
+        [ "$index_vif" -gt "0" ] && sepchar=";"
+        
+        #assign authentication mode and encryption method
+        auth_str=\
+"${auth_str}${sepchar}$(get_convert_authmode $ra0_secmode $ra0_encmode $ra0_wpacap)"
+        crypto_str=\
+"${crypto_str}${sepchar}$(get_convert_crypto $ra0_secmode $ra0_crypto)"
+        #assign wep key type and index
+        key1_type_str="${key1_type_str}${sepchar}$(get_wep_key_type '$ra0_key1' ${ra0_keytype})"
+        key2_type_str="${key2_type_str}${sepchar}$(get_wep_key_type '$ra0_key2' ${ra0_keytype})"
+        key3_type_str="${key3_type_str}${sepchar}$(get_wep_key_type '$ra0_key3' ${ra0_keytype})"
+        key4_type_str="${key4_type_str}${sepchar}$(get_wep_key_type '$ra0_key4' ${ra0_keytype})"
+        key_index_str="${key_index_str}${sepchar}$ra0_key_index"
+        # hide_ssid_str="${hide_ssid_str}${sepchar}$ra0_hidden"
+        hide_ssid_str="${hide_ssid_str}${sepchar}$(gethide_status ${index_vif})"
+        wme_str="${wme_str}${sepchar}$ra0_wme"
+        RADIUS_Server_str="${RADIUS_Server_str}${sepchar}$ra0_radius_ipaddr"
+        RADIUS_Port_str="${RADIUS_Port_str}${sepchar}$ra0_radius_port"
+        RekeyMethod_str="${RekeyMethod_str}${sepchar}$ra0_rekey_mode"
+        RekeyInterval_str=\
+"${RekeyInterval_str}${sepchar}$(get_rekey_interval ${ra0_rekey_mode} ${ra0_rekey_time_interval} ${ra0_rekey_pkt_interval})"
+        preauth_str="${preauth_str}${sepchar}$ra0_preauth"
+        pmkperiod_str="${pmkperiod_str}${sepchar}$ra0_pmkperiod"
+        noforwarding_str="${noforwarding_str}${sepchar}$ra0_isolation"
+        WscConfMode_str=\
+"${WscConfMode_str}${sepchar}$(get_rule_value wl_wps_rule ${index_vif} mode)"
+        # Check wsc is configured or not
+        if [ "$(get_rule_value wl_wps_rule ${index_vif} configured)" = "1" ]; then
+            WscConfStatus_str="${WscConfStatus_str}${sepchar}2"
+        else
+            WscConfStatus_str="${WscConfStatus_str}${sepchar}1"
+        fi
+        eval "ra0_CountryRegion=\"$(nvram get wl_region)\""
+        #assign ssid
+        eval "ra0_SSID$((${index_vif} + 1))=\"$ra0_ssid\""
+        #assign wep key
+        eval "ra0_Key1Str$((${index_vif} + 1))='$ra0_key1'"
+        eval "ra0_Key2Str$((${index_vif} + 1))='$ra0_key2'"
+        eval "ra0_Key3Str$((${index_vif} + 1))='$ra0_key3'"
+        eval "ra0_Key4Str$((${index_vif} + 1))='$ra0_key4'"
+        #assign radius information
+        eval "ra0_RADIUS_Key$((${index_vif} + 1))='$ra0_radius_key'"
+        #assign wpa key
+        eval "ra0_WPAPSK$((${index_vif} + 1))='$ra0_key'"
+        # generate access list
+        eval "ra0_AccessPolicy${index_vif}=$(get_acl_policy $index_if $index_vif)"
+        eval "ra0_AccessControlList${index_vif}=\"$(get_acl_list $index_if $index_vif)\""
+        index_vif=$(($index_vif + 1))
+    done
+
+    wds_num=$(get_rule_value "wl${index_if}_wds_rule_num" "0" "") 
+    while [ $index_wds -lt $wds_num ]
+    do
+        rule="wl${index_if}_wds_basic_rule"
+        for item in $wlv_wds_basic_rule_item; do {
+            eval "ra0_wds_basic_${item}=$(get_rule_value ${rule} ${index_wds} ${item})"
+        } done
+
+        rule="wl${index_if}_wds_sec_wep_rule"
+        for item in $wlv_wds_sec_wep_rule_item; do {
+            eval "ra0_wds_sec_wep_${item}='$(get_rule_value ${rule} ${index_wds} ${item})'"
+        } done
+
+        rule="wl${index_if}_wds_sec_wpa_rule"
+        for item in $wlv_wds_sec_wpa_rule_item; do {
+            eval "ra0_wds_sec_wpa_${item}='$(get_rule_value ${rule} ${index_wds} ${item})'"
+        } done
+        
+        if [ $ra0_wds_basic_secmode = "wep" ]; then
+            eval "ra0_Wds${index_wds}Key='$ra0_wds_sec_wep_key'"
+        elif [ $ra0_wds_basic_secmode = "psk" ]; then
+            eval "ra0_Wds${index_wds}Key='$ra0_wds_sec_wpa_key'"
+        fi
+
+        if [ $index_wds -eq 0 ] && [ $index_if -eq 0 ]; then
+            wds_hwaddr_str="${ra0_wds_basic_hwaddr}"
+            wds_crypto_str=$(get_convert_wds_crypto $ra0_wds_basic_secmode $ra0_wds_sec_wpa_crypto)
+        else
+            wds_hwaddr_str="${wds_hwaddr_str};${ra0_wds_basic_hwaddr}"
+            wds_crypto_str="${wds_crypto_str};$(get_convert_wds_crypto $ra0_wds_basic_secmode $ra0_wds_sec_wpa_crypto)"
+        fi
+        
+        index_wdsid=$(($index_wdsid + 1))
+        index_wds=$(($index_wds + 1))
+    done
+    index_wds=0
+
+    apcli_num=$(get_rule_value "wl${index_if}_apcli_rule_num" "0" "") 
+    while [ $index_apcli -lt $apcli_num ]
+    do
+        rule="wl${index_if}_apcli_rule"
+        for item in $wlv_apcli_rule_item; do {
+            eval "ra0_apcli_${item}=\"$(get_rule_value ${rule} ${index_apcli} ${item})\""
+        } done
+
+        rule="wl${index_if}_apcli_sec_wep_rule"
+        for item in $wlv_apcli_sec_wep_rule_item; do {
+            eval "ra0_apcli_sec_wep_${item}='$(get_rule_value ${rule} ${index_apcli} ${item})'"
+        } done
+
+        rule="wl${index_if}_apcli_sec_wpa_rule"
+        for item in $wlv_apcli_sec_wpa_rule_item; do {
+            eval "ra0_apcli_sec_wpa_${item}='$(get_rule_value ${rule} ${index_apcli} ${item})'"
+        } done
+        
+        rule="wl${index_if}_apcli_sec_wpa2_rule"
+        for item in $wlv_apcli_sec_wpa2_rule_item; do {
+            eval "ra0_apcli_sec_wpa2_${item}='$(get_rule_value ${rule} ${index_apcli} ${item})'"
+        } done
+        
+        #assign authentication mode
+        ra0_ApCliEnable=$ra0_apcli_enable
+        ra0_ApCliSsid=$(echo $ra0_apcli_ssid | /etc/wl/b64 -d)
+#        ra0_ApCliBssid=$ra0_apcli_bssid
+        if [ $ra0_apcli_secmode = "psk2" ]; then
+           ra0_ApCliAuthMode="$(get_convert_authmode ${ra0_apcli_secmode} ${ra0_apcli_sec_wep_encmode})"
+           ra0_ApCliEncrypType="$(get_convert_crypto ${ra0_apcli_secmode} ${ra0_apcli_sec_wpa2_crypto})"
+           eval "ra0_ApCliWPAPSK='$ra0_apcli_sec_wpa2_key'"
+        elif [ $ra0_apcli_secmode = "psk" ]; then
+           ra0_ApCliAuthMode="$(get_convert_authmode ${ra0_apcli_secmode} ${ra0_apcli_sec_wep_encmode})"
+           ra0_ApCliEncrypType="$(get_convert_crypto ${ra0_apcli_secmode} ${ra0_apcli_sec_wpa_crypto})"
+           eval "ra0_ApCliWPAPSK='$ra0_apcli_sec_wpa_key'"
+        else
+           ra0_ApCliAuthMode=$(get_convert_authmode ${ra0_apcli_secmode} ${ra0_apcli_sec_wep_encmode})
+           ra0_ApCliEncrypType="$(get_convert_crypto ${ra0_apcli_secmode} ${ra0_apcli_sec_wep_crypto})"
+           eval "ra0_ApCliWPAPSK='$ra0_apcli_sec_wpa_key'"
+        fi
+
+        ra0_ApCliDefaultKeyID=$ra0_apcli_sec_wep_key_index
+        nv_key_type_str="$(nvram show wl${index_if}_apcli_sec_wep_rule 0 keytype)"
+        if [ -z "${nv_key_type_str}" ]; then
+            ra0_ApCliKey1Type=$(get_wep_key_type '${ra0_apcli_sec_wep_key1}')
+            ra0_ApCliKey2Type=$(get_wep_key_type '${ra0_apcli_sec_wep_key2}')
+            ra0_ApCliKey3Type=$(get_wep_key_type '${ra0_apcli_sec_wep_key3}')
+            ra0_ApCliKey4Type=$(get_wep_key_type '${ra0_apcli_sec_wep_key4}')
+        else
+            ra0_ApCliKey1Type=${nv_key_type_str}
+            ra0_ApCliKey2Type=${nv_key_type_str}
+            ra0_ApCliKey3Type=${nv_key_type_str}
+            ra0_ApCliKey4Type=${nv_key_type_str}
+        fi
+        eval "ra0_ApCliKey1Str='$ra0_apcli_sec_wep_key1'"
+        eval "ra0_ApCliKey2Str='$ra0_apcli_sec_wep_key2'"
+        eval "ra0_ApCliKey3Str='$ra0_apcli_sec_wep_key3'"
+        eval "ra0_ApCliKey4Str='$ra0_apcli_sec_wep_key4'"
+
+        index_apcliid=$(($index_apcliid + 1))
+        index_apcli=$(($index_apcli + 1))
+    done
+    index_apcli=0
+
+    index_vif=0
+    index_if=$(($index_if + 1))
+done
+ra0_BssidNum=$wlv_num
+set_wl_var
+#assign authentication mode
+ra0_AuthMode=$auth_str
+ra0_EncrypType=$crypto_str
+eval "ra0_Key1Type='$key1_type_str'"
+eval "ra0_Key2Type='$key2_type_str'"
+eval "ra0_Key3Type='$key3_type_str'"
+eval "ra0_Key4Type='$key4_type_str'"
+ra0_DefaultKeyID=$key_index_str
+ra0_HideSSID=$hide_ssid_str
+ra0_WmmCapable=$wme_str
+ra0_NoForwarding=$noforwarding_str
+ra0_RADIUS_Server=$RADIUS_Server_str
+ra0_RADIUS_Port=$RADIUS_Port_str
+ra0_RekeyInterval=$RekeyInterval_str
+ra0_RekeyMethod=$RekeyMethod_str
+ra0_PreAuth=$preauth_str
+ra0_PMKCachePeriod=$pmkperiod_str
+ra0_WdsEncrypType=$wds_crypto_str
+ra0_WdsList=$wds_hwaddr_str
+ra0_WscConfMode=$WscConfMode_str
+ra0_WscConfStatus=$WscConfStatus_str
+
+# for wireless RF Type
+platform=$(nvram get platform)
+case $platform in
+    ABA|AMA|AMB|AME|BAB|LIS|AXA|AXB|AXM|M2E)
+        ra0_HT_TxStream=1
+        ra0_HT_RxStream=1
+    ;;
+    *)
+        ra0_HT_TxStream=2
+        ra0_HT_RxStream=2
+    ;;
+esac
+}
+
+
+rt2860ap_defval()
+{
+
+    ra0_CountryRegion=5
+    ra0_CountryRegionABand=7
+    ra0_CountryCode=TW
+    ra0_BssidNum=1
+    ra0_SSID1=EZPacket
+    ra0_SSID2=
+    ra0_SSID3=
+    ra0_SSID4=
+    ra0_SSID5=
+    ra0_SSID6=
+    ra0_SSID7=
+    ra0_SSID8=
+    ra0_WirelessMode=9
+    ra0_TxRate=0
+    ra0_Channel=11
+    ra0_BasicRate=15
+    ra0_BeaconPeriod=100
+    ra0_DtimPeriod=1
+    ra0_TxPower=100
+    ra0_DisableOLBC=0
+    ra0_BGProtection=0
+    ra0_TxAntenna=
+    ra0_RxAntenna=
+    ra0_TxPreamble=0
+    ra0_RTSThreshold=2347
+    ra0_FragThreshold=2346
+    ra0_MaxClient=32
+    ra0_TxBurst=1
+    ra0_PktAggregate=0
+    ra0_WmmCapable=0
+    ra0_APAifsn="3;7;1;1"
+    ra0_APCwmin="4;4;3;2"
+    ra0_APCwmax="6;10;4;3"
+    ra0_APTxop="0;0;94;47"
+    ra0_APACM="0;0;0;0"
+    ra0_BSSAifsn="3;7;2;2"
+    ra0_BSSCwmin="4;4;3;2"
+    ra0_BSSCwmax="10;10;4;3"
+    ra0_BSSTxop="0;0;94;47"
+    ra0_BSSACM="0;0;0;0"
+    ra0_AckPolicy="0;0;0;0"
+    ra0_NoForwarding=0
+    ra0_NoForwardingBTNBSSID=0
+    ra0_HideSSID=0
+    ra0_ShortSlot=1
+    ra0_AutoChannelSelect=0
+    ra0_IEEE8021X=0
+    ra0_IEEE80211H=0
+    ra0_CSPeriod=6
+    ra0_WirelessEvent=0
+    ra0_PreAuth=0
+    ra0_AuthMode=OPEN
+    ra0_EncrypType=NONE
+    ra0_RekeyInterval=3600
+    ra0_RekeyMethod=DISABLE
+    ra0_PMKCachePeriod=10
+    ra0_FCCParamCh0=
+    ra0_FCCParamCh1=
+    ra0_FCCParamCh2=
+    ra0_FCCParamCh3=
+    ra0_CEParamCh0=
+    ra0_CEParamCh1=
+    ra0_CEParamCh2=
+    ra0_CEParamCh3=
+    ra0_JAPParamCh0=
+    ra0_JAPParamCh1=
+    ra0_JAPParamCh2=
+    ra0_JAPParamCh3=
+    ra0_JAPW53ParamCh0=
+    ra0_JAPW53ParamCh1=
+    ra0_JAPW53ParamCh2=
+    ra0_JAPW53ParamCh3=
+    ra0_WapiPsk1=
+    ra0_WapiPsk2=
+    ra0_WapiPsk3=
+    ra0_WapiPsk4=
+    ra0_WapiPsk5=
+    ra0_WapiPsk6=
+    ra0_WapiPsk7=
+    ra0_WapiPsk8=
+    ra0_WapiPskType=0
+    ra0_Wapiifname=
+    ra0_WapiAsCertPath=
+    ra0_WapiUserCertPath=
+    ra0_WapiAsIpAddr=
+    ra0_WapiAsPort=
+    ra0_WPAPSK1=
+    ra0_WPAPSK2=
+    ra0_WPAPSK3=
+    ra0_WPAPSK4=
+    ra0_WPAPSK5=
+    ra0_WPAPSK6=
+    ra0_WPAPSK7=
+    ra0_WPAPSK8=
+    ra0_DefaultKeyID=1
+    ra0_Key1Type=0
+    ra0_Key1Str1=
+    ra0_Key1Str2=
+    ra0_Key1Str3=
+    ra0_Key1Str4=
+    ra0_Key1Str5=
+    ra0_Key1Str6=
+    ra0_Key1Str7=
+    ra0_Key1Str8=
+    ra0_Key2Type=0
+    ra0_Key2Str1=
+    ra0_Key2Str2=
+    ra0_Key2Str3=
+    ra0_Key2Str4=
+    ra0_Key2Str5=
+    ra0_Key2Str6=
+    ra0_Key2Str7=
+    ra0_Key2Str8=
+    ra0_Key3Type=0
+    ra0_Key3Str1=
+    ra0_Key3Str2=
+    ra0_Key3Str3=
+    ra0_Key3Str4=
+    ra0_Key3Str5=
+    ra0_Key3Str6=
+    ra0_Key3Str7=
+    ra0_Key3Str8=
+    ra0_Key4Type=0
+    ra0_Key4Str1=
+    ra0_Key4Str2=
+    ra0_Key4Str3=
+    ra0_Key4Str4=
+    ra0_Key4Str5=
+    ra0_Key4Str6=
+    ra0_Key4Str7=
+    ra0_Key4Str8=
+    ra0_HSCounter=0
+    ra0_AccessPolicy0=0
+    ra0_AccessControlList0=
+    ra0_AccessPolicy1=0
+    ra0_AccessControlList1=
+    ra0_AccessPolicy2=0
+    ra0_AccessControlList2=
+    ra0_AccessPolicy3=0
+    ra0_AccessControlList3=
+    ra0_AccessPolicy4=0
+    ra0_AccessControlList4=
+    ra0_AccessPolicy5=0
+    ra0_AccessControlList5=
+    ra0_AccessPolicy6=0
+    ra0_AccessControlList6=
+    ra0_AccessPolicy7=0
+    ra0_AccessControlList7=
+    ra0_WdsEnable=0
+    ra0_WdsPhyMode=
+    ra0_WdsEncrypType=NONE
+    ra0_WdsList=
+    ra0_WdsKey=
+    ra0_Wds0Key=
+    ra0_Wds1Key=
+    ra0_Wds2Key=
+    ra0_Wds3Key=
+    ra0_WscConfMode=0
+    ra0_WscConfStatus=2
+    ra0_RADIUS_Server=192.168.2.3
+    ra0_RADIUS_Port=1812
+    ra0_RADIUS_Key1=ralink
+    ra0_RADIUS_Key2=ralink
+    ra0_RADIUS_Key3=ralink
+    ra0_RADIUS_Key4=ralink
+    ra0_RADIUS_Key5=
+    ra0_RADIUS_Key6=
+    ra0_RADIUS_Key7=
+    ra0_RADIUS_Key8=
+    ra0_RADIUS_Acct_Server=
+    ra0_RADIUS_Acct_Port=1813
+    ra0_RADIUS_Acct_Key=
+    ra0_own_ip_addr=
+    ra0_PreAuthifname=
+    ra0_HT_HTC=1
+    ra0_HT_RDG=1
+    ra0_HT_EXTCHA=6
+    ra0_HT_LinkAdapt=0
+    ra0_HT_OpMode=0
+    ra0_HT_MpduDensity=5
+    ra0_HT_BW=1
+    ra0_HT_BSSCoexistence=1
+    ra0_HT_AutoBA=1
+    ra0_HT_AMSDU=0
+    ra0_HT_BAWinSize=8
+    ra0_HT_GI=1
+    ra0_HT_STBC=1
+    ra0_HT_MCS=33
+    ra0_HT_TxStream=2
+    ra0_HT_RxStream=2
+    ra0_HT_PROTECT=1
+    ra0_RadioOn=1
+    ra0_HT_BADecline=0
+    ra0_FixedTxMode=HT
+    ra0_AutoProvisionEn=0
+    ra0_FreqDelta=0
+    ra0_TurboRate=0
+    ra0_DLSCapable=0
+    ra0_CarrierDetect=0
+    ra0_ITxBfEn=0
+    ra0_PreAntSwitch=
+    ra0_PhyRateLimit=0
+    ra0_DebugFlags=0
+    ra0_ETxBfEnCond=0
+    ra0_ITxBfTimeout=0
+    ra0_ETxBfTimeout=0
+    ra0_FineAGC=0
+    ra0_StreamMode=0
+    ra0_RDRegion=
+    ra0_StationKeepAlive=0
+    ra0_DfsLowerLimit=0
+    ra0_DfsUpperLimit=0
+    ra0_DfsIndoor=0
+    ra0_DFSParamFromConfig=0
+    ra0_FixDfsLimit=0
+    ra0_LongPulseRadarTh=0
+    ra0_AvgRssiReq=0
+    ra0_DFS_R66=0
+    ra0_BlockCh=
+    ra0_GreenAP=0
+    ra0_MeshAutoLink=0
+    ra0_MeshAuthMode=
+    ra0_MeshEncrypType=
+    ra0_MeshDefaultkey=0
+    ra0_MeshWEPKEY=
+    ra0_MeshWPAKEY=
+    ra0_MeshId=
+    ra0_WCNTest=0
+    ra0_Ethifname=
+    ra0_EAPifname=
+    ra0_session_timeout_interval=0
+    ra0_idle_timeout_interval=0
+    ra0_WiFiTest=0
+    ra0_TGnWifiTest=0
+    ra0_APSDCapable=0
+    ra0_StreamModeMac0=
+    ra0_StreamModeMac1=
+    ra0_StreamModeMac2=
+    ra0_StreamModeMac3=
+    ra0_ApCliEnable=0
+    ra0_ApCliSsid=
+    ra0_ApCliBssid=
+    ra0_ApCliAuthMode=
+    ra0_ApCliEncrypType=
+    ra0_ApCliWPAPSK=
+    ra0_ApCliDefaultKeyID=0
+    ra0_ApCliKey1Type=0
+    ra0_ApCliKey1Str=
+    ra0_ApCliKey2Type=0
+    ra0_ApCliKey2Str=
+    ra0_ApCliKey3Type=0
+    ra0_ApCliKey3Str=
+    ra0_ApCliKey4Type=0
+    ra0_ApCliKey4Str=
+    ra0_SSID=
+    ra0_WPAPSK=
+    ra0_Key1Str=
+    ra0_Key2Str=
+    ra0_Key3Str=
+    ra0_Key4Str=
+}
+
+# Generate config file for RT61AP driver and rt2860apd
+rt2860ap_readvars()
+{
+    ra0_own_ip_addr="$(get_ownip)"
+}
+
+rt2860ap_gencfg()
+{
+    echo "#$RT2860CFG: The word of 'Default' must not be removed" > "$RT2860CFG"
+    echo 'Default' >> "$RT2860CFG"
+
+    for n in $rt2860vars; do {
+	eval v=\"\$ra0_$n\"
+	add_cfgitem "$n=$v"
+    } done
+}
+
+########################################################################
+# Main program
+########################################################################
+
+# First of all, retrieve all wireless settings from nvram
+# All nvram variables about wireless will be prefixed with "_ra0_"
+eval $(nvram show | sed -n -e 's/\(^wl0_\)\(.[^=]*\).=\(.*$\)/_ra0_\2="\3"/p')
+
+rt2860ap_defval
+#rt2860ap_readvars
+#rt2860ap_read_rule
+
+#When generating configuration file, we will replace item XXX within
+#"rt2860vars" list with $ra0_XXX, for example, after calling
+#"rt2860ap_get_wl_rule_var()", we will have variable named "ra0_WirelessMode"
+#which's value represents the current AP supported wireless mode B,G or N.
+#Then after calling "rt2860ap_gencfg()", we will generate a setting entry
+#looks like WirelessMode=(value of $ra0_WirelessMode)
+
+rt2860ap_get_wl_rule_var
+rt2860ap_gencfg # Generate the config file
+

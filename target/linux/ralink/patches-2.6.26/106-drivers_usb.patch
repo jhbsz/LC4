@@ -1,0 +1,175 @@
+diff -Nurbp linux-2.6.26-orig/drivers/usb/core/usb.c linux-2.6.26-new/drivers/usb/core/usb.c
+--- linux-2.6.26-orig/drivers/usb/core/usb.c	2011-10-05 15:17:19.147915585 +0800
++++ linux-2.6.26-new/drivers/usb/core/usb.c	2011-08-04 23:42:31.000000000 +0800
+@@ -354,6 +354,7 @@ struct usb_device *usb_alloc_dev(struct 
+ 	}
+ 	return dev;
+ }
++EXPORT_SYMBOL_GPL(usb_alloc_dev);
+ 
+ /**
+  * usb_get_dev - increments the reference count of the usb device structure
+diff -Nurbp linux-2.6.26-orig/drivers/usb/gadget/Makefile linux-2.6.26-new/drivers/usb/gadget/Makefile
+--- linux-2.6.26-orig/drivers/usb/gadget/Makefile	2011-10-05 15:17:19.167916416 +0800
++++ linux-2.6.26-new/drivers/usb/gadget/Makefile	2011-10-11 09:16:32.404839338 +0800
+@@ -18,6 +18,7 @@ obj-$(CONFIG_USB_AT91)		+= at91_udc.o
+ obj-$(CONFIG_USB_ATMEL_USBA)	+= atmel_usba_udc.o
+ obj-$(CONFIG_USB_FSL_USB2)	+= fsl_usb2_udc.o
+ obj-$(CONFIG_USB_M66592)	+= m66592-udc.o
++obj-$(CONFIG_USB_RT)		+= rt_udc.o
+ 
+ #
+ # USB gadget drivers
+@@ -31,6 +32,7 @@ g_file_storage-objs		:= file_storage.o u
+ 					epautoconf.o
+ g_printer-objs			:= printer.o usbstring.o config.o \
+ 					epautoconf.o
++g_ram_storage-objs		:= ram_storage.o usbstring.o config.o epautoconf.o
+ 
+ ifeq ($(CONFIG_USB_ETH_RNDIS),y)
+ 	g_ether-objs		+= rndis.o
+diff -Nurbp linux-2.6.26-orig/drivers/usb/host/ehci-hcd.c linux-2.6.26-new/drivers/usb/host/ehci-hcd.c
+--- linux-2.6.26-orig/drivers/usb/host/ehci-hcd.c	2011-10-05 15:17:19.127915924 +0800
++++ linux-2.6.26-new/drivers/usb/host/ehci-hcd.c	2011-10-11 08:08:06.574161851 +0800
+@@ -1009,6 +1009,11 @@ MODULE_LICENSE ("GPL");
+ #define	PLATFORM_DRIVER		ehci_hcd_au1xxx_driver
+ #endif
+ 
++#if defined (CONFIG_RT3XXX_EHCI) || defined (CONFIG_RT3XXX_EHCI_MODULE)
++#include "ehci-rt3xxx.c"
++#define PLATFORM_DRIVER     rt3xxx_ehci_driver
++#endif
++
+ #ifdef CONFIG_PPC_PS3
+ #include "ehci-ps3.c"
+ #define	PS3_SYSTEM_BUS_DRIVER	ps3_ehci_driver
+diff -Nurbp linux-2.6.26-orig/drivers/usb/host/ehci-q.c linux-2.6.26-new/drivers/usb/host/ehci-q.c
+--- linux-2.6.26-orig/drivers/usb/host/ehci-q.c	2011-10-05 15:17:19.137915507 +0800
++++ linux-2.6.26-new/drivers/usb/host/ehci-q.c	2011-10-11 08:08:06.584161860 +0800
+@@ -1116,8 +1116,14 @@ static void scan_async (struct ehci_hcd 
+ 	struct ehci_qh		*qh;
+ 	enum ehci_timer_action	action = TIMER_IO_WATCHDOG;
+ 
++#if 1
++    ehci->stamp = ehci_readl(ehci, &ehci->regs->frame_index);
++#else
+ 	if (!++(ehci->stamp))
+ 		ehci->stamp++;
++#endif
++
++
+ 	timer_action_done (ehci, TIMER_ASYNC_SHRINK);
+ rescan:
+ 	qh = ehci->async->qh_next.qh;
+@@ -1149,11 +1155,19 @@ rescan:
+ 			 * (plus, avoids some kind of re-activation race.)
+ 			 */
+ 			if (list_empty (&qh->qtd_list)) {
++#if 1
++         if (!ehci->reclaim && ((ehci->stamp - qh->stamp) & 0x1fff)>= ( 10 /* EHCI_SHRINK_FRAMES == 5 */ * 8)
++         	 && (qh->qh_state == QH_STATE_LINKED || qh->qh_state == QH_STATE_UNLINK_WAIT) )
++             start_unlink_async(ehci, qh);
++         else
++             action = TIMER_ASYNC_SHRINK;
++#else
+ 				if (qh->stamp == ehci->stamp)
+ 					action = TIMER_ASYNC_SHRINK;
+ 				else if (!ehci->reclaim
+ 					    && qh->qh_state == QH_STATE_LINKED)
+ 					start_unlink_async (ehci, qh);
++#endif
+ 			}
+ 
+ 			qh = qh->qh_next.qh;
+diff -Nurbp linux-2.6.26-orig/drivers/usb/host/Kconfig linux-2.6.26-new/drivers/usb/host/Kconfig
+--- linux-2.6.26-orig/drivers/usb/host/Kconfig	2011-10-05 15:17:19.127915924 +0800
++++ linux-2.6.26-new/drivers/usb/host/Kconfig	2011-10-11 09:22:16.789995667 +0800
+@@ -96,6 +96,11 @@ config USB_EHCI_HCD_PPC_OF
+ 	  Enables support for the USB controller present on the PowerPC
+ 	  OpenFirmware platform bus.
+ 
++config RT3XXX_EHCI
++	bool "Ralink EHCI HCD support"
++	depends on USB_EHCI_HCD
++	default y
++
+ config USB_ISP116X_HCD
+ 	tristate "ISP116X HCD support"
+ 	depends on USB
+@@ -152,6 +157,11 @@ config USB_OHCI_HCD
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called ohci-hcd.
+ 
++config RT3XXX_OHCI
++	bool "Ralink OHCI HCD support"
++	depends on USB_OHCI_HCD
++	default y
++
+ config USB_OHCI_HCD_PPC_SOC
+ 	bool "OHCI support for on-chip PPC USB controller"
+ 	depends on USB_OHCI_HCD && (STB03xxx || PPC_MPC52xx)
+diff -Nurbp linux-2.6.26-orig/drivers/usb/host/ohci-hcd.c linux-2.6.26-new/drivers/usb/host/ohci-hcd.c
+--- linux-2.6.26-orig/drivers/usb/host/ohci-hcd.c	2011-10-05 15:17:19.137915507 +0800
++++ linux-2.6.26-new/drivers/usb/host/ohci-hcd.c	2011-10-11 08:08:06.607912371 +0800
+@@ -1036,6 +1036,10 @@ MODULE_LICENSE ("GPL");
+ #define PLATFORM_DRIVER		ohci_hcd_sh_driver
+ #endif
+ 
++#if defined (CONFIG_RT3XXX_OHCI) || defined (CONFIG_RT3XXX_OHCI_MODULE)
++#include "ohci-rt3xxx.c"
++#define PLATFORM_DRIVER     ohci_hcd_rt3xxx_driver
++#endif
+ 
+ #ifdef CONFIG_USB_OHCI_HCD_PPC_OF
+ #include "ohci-ppc-of.c"
+diff -Nurbp linux-2.6.26-orig/drivers/usb/Kconfig linux-2.6.26-new/drivers/usb/Kconfig
+--- linux-2.6.26-orig/drivers/usb/Kconfig	2011-10-05 15:17:19.127915924 +0800
++++ linux-2.6.26-new/drivers/usb/Kconfig	2011-10-11 09:23:43.104163488 +0800
+@@ -22,7 +22,7 @@ config USB_ARCH_HAS_HCD
+ 	default y if PCMCIA && !M32R			# sl811_cs
+ 	default y if ARM				# SL-811
+ 	default y if SUPERH				# r8a66597-hcd
+-	default PCI
++	#default PCI
+ 
+ # many non-PCI SOC chips embed OHCI
+ config USB_ARCH_HAS_OHCI
+@@ -42,6 +42,7 @@ config USB_ARCH_HAS_OHCI
+ 	default y if PPC_MPC52xx
+ 	# MIPS:
+ 	default y if SOC_AU1X00
++	default y if RT3XXX_EHCI_OHCI
+ 	# SH:
+ 	default y if CPU_SUBTYPE_SH7720
+ 	default y if CPU_SUBTYPE_SH7721
+@@ -54,13 +55,14 @@ config USB_ARCH_HAS_EHCI
+ 	boolean
+ 	default y if PPC_83xx
+ 	default y if SOC_AU1200
++	default y if RT3XXX_EHCI_OHCI
+ 	default y if ARCH_IXP4XX
+ 	default PCI
+ 
+ # ARM SA1111 chips have a non-PCI based "OHCI-compatible" USB host interface.
+ config USB
+ 	tristate "Support for Host-side USB"
+-	depends on USB_ARCH_HAS_HCD
++	#depends on USB_ARCH_HAS_HCD
+ 	---help---
+ 	  Universal Serial Bus (USB) is a specification for a serial bus
+ 	  subsystem which offers higher speeds and more features than the
+@@ -147,4 +149,6 @@ source "drivers/usb/gadget/Kconfig"
+ 
+ source "drivers/usb/drxvi314/Kconfig"
+ 
++source "drivers/usb/dwc_otg/Kconfig"
++
+ endif # USB_SUPPORT
+diff -Nurbp linux-2.6.26-orig/drivers/usb/Makefile linux-2.6.26-new/drivers/usb/Makefile
+--- linux-2.6.26-orig/drivers/usb/Makefile	2011-10-05 15:17:19.157915897 +0800
++++ linux-2.6.26-new/drivers/usb/Makefile	2011-08-04 23:42:31.000000000 +0800
+@@ -35,3 +35,4 @@ obj-$(CONFIG_USB)		+= misc/
+ 
+ obj-$(CONFIG_USB_ATM)		+= atm/
+ obj-$(CONFIG_USB_SPEEDTOUCH)	+= atm/
++obj-$(CONFIG_DWC_OTG) 		+= dwc_otg/

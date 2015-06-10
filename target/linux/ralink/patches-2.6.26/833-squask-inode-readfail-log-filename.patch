@@ -1,0 +1,55 @@
+--- linux/fs/squashfs/inode.c	2013-07-17 09:32:12.960302788 +0800
++++ linux/fs/squashfs/inode.c	2013-07-19 21:58:36.253498403 +0800
+@@ -1541,8 +1541,9 @@
+ 
+ 		if (!(bytes = squashfs_read_data(inode->i_sb, msblk->read_page,
+ 					block, bsize, NULL))) {
+-			ERROR("Unable to read page, block %llx, size %x\n", block,
+-					bsize);
++			ERROR("Unable to read page, block %llx, size %x path:%s\n", block,
++					bsize
++                    , file->f_path.dentry->d_name.name);
+ 			up(&msblk->read_page_mutex);
+ 			goto skip_read;
+ 		}
+@@ -1552,11 +1553,12 @@
+ 					u.s1.fragment_start_block,
+ 					SQUASHFS_I(inode)->u.s1.fragment_size))
+ 					== NULL) {
+-			ERROR("Unable to read page, block %llx, size %x\n",
++			ERROR("3 Unable to read page, block %llx, size %x path:%s\n",
+ 					SQUASHFS_I(inode)->
+ 					u.s1.fragment_start_block,
+ 					(int) SQUASHFS_I(inode)->
+-					u.s1.fragment_size);
++					u.s1.fragment_size
++                    , file->f_path.dentry->d_name.name);
+ 			goto skip_read;
+ 		}
+ 		bytes = SQUASHFS_I(inode)->u.s1.fragment_offset +
+@@ -1655,8 +1657,9 @@
+ 		if (bytes)
+ 			memcpy(pageaddr, msblk->read_page, bytes);
+ 		else
+-			ERROR("Unable to read page, block %llx, size %x\n",
+-					block, bsize);
++			ERROR("2 Unable to read page, block %llx, size %x path:%s\n",
++					block, bsize
++                    , file->f_path.dentry->d_name.name);
+ 		up(&msblk->read_page_mutex);
+ 	} else {
+ 		struct squashfs_fragment_cache *fragment =
+@@ -1671,10 +1674,11 @@
+ 					u.s1.fragment_offset, bytes);
+ 			release_cached_fragment(msblk, fragment);
+ 		} else
+-			ERROR("Unable to read page, block %llx, size %x\n",
++			ERROR("1 Unable to read page, block %llx, size %x path:%s\n",
+ 					SQUASHFS_I(inode)->
+ 					u.s1.fragment_start_block, (int)
+-					SQUASHFS_I(inode)-> u.s1.fragment_size);
++					SQUASHFS_I(inode)-> u.s1.fragment_size,
++                    file->f_path.dentry->d_name.name);
+ 	}
+ 
+ skip_read:

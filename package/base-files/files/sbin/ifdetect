@@ -1,0 +1,21 @@
+#!/bin/ash
+
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+. /etc/network.sh
+
+iface=$1
+type="${1%%[0-9]*}"
+num="${1#$type}"
+debug "### ifdetect $iface $type $num###"
+
+# Exit if an detection is disabled.
+[ "$(nvram show ${type}_detect_rule $num enable)" != "1" -o \
+  -z "$(nvram get ${iface}_ipaddr)" ] && exit
+
+# Get the interface.
+ifname=$(nvram get ${iface}_ifname)
+
+iface_detect $iface $type $num $ifname
+
+exit $? 

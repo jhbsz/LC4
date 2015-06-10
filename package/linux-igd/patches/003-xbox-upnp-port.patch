@@ -1,0 +1,184 @@
+--- linux-igd-1.0.0/main.c	2010-09-07 20:02:07.000000000 +0800
++++ linux-igd-1.0.0/main.c	2011-02-17 11:38:08.883641964 +0800
+@@ -116,8 +116,9 @@
+ 	openlog("upnpd", LOG_CONS | LOG_NDELAY | LOG_PID | (foreground ? LOG_PERROR : 0), LOG_LOCAL6);
+ 
+ 	// Initialize UPnP SDK on the internal Interface
+-	trace(3, "Initializing UPnP SDK ... ");
+-	if ( (ret = UpnpInit(intIpAddress,0) ) != UPNP_E_SUCCESS)
++	trace(3, "Initializing UPnP SDK ... using port 49156 ");
++    /* EZP : Using port 49156 for win7 xbox testing */
++	if ( (ret = UpnpInit(intIpAddress,49156) ) != UPNP_E_SUCCESS)
+ 	{
+ 		syslog (LOG_ERR, "Error Initializing UPnP SDK on IP %s ",intIpAddress);
+ 		syslog (LOG_ERR, "  UpnpInit returned %d", ret);
+--- linux-igd-1.0.0/pmlist.c	2010-09-07 20:02:08.000000000 +0800
++++ linux-igd-1.0.0/pmlist.c	2011-02-17 16:14:01.339669370 +0800
+@@ -62,6 +62,27 @@
+ 	return NULL;
+ }
+ 
++struct portMap* pmlist_Find_Duped_Port(char *externalPort, char *proto)
++{
++	struct portMap* temp;
++	
++	temp = pmlist_Head;
++	if (temp == NULL)
++		return NULL;
++	
++	do 
++	{
++		if ( (strcmp(temp->m_ExternalPort, externalPort) == 0) &&
++				(strcmp(temp->m_PortMappingProtocol, proto) == 0))
++			return temp; // We found a match, return pointer to it
++		else
++			temp = temp->next;
++	} while (temp != NULL);
++	
++	// If we made it here, we didn't find it, so return NULL
++	return NULL;
++}
++
+ struct portMap* pmlist_FindByIndex(int index)
+ {
+ 	int i=0;
+--- linux-igd-1.0.0/pmlist.h	2010-09-07 20:02:08.000000000 +0800
++++ linux-igd-1.0.0/pmlist.h	2011-02-17 16:15:45.971992217 +0800
+@@ -35,6 +35,7 @@
+ 			       char *protocol, char *internalClient, char *desc);
+ 
+ struct portMap* pmlist_Find(char *externalPort, char *proto, char *internalClient);
++struct portMap* pmlist_Find_Duped_Port(char *externalPort, char *proto);
+ struct portMap* pmlist_FindByIndex(int index);
+ struct portMap* pmlist_FindSpecific(char *externalPort, char *protocol);
+ int pmlist_IsEmtpy(void);
+--- linux-igd-1.0.0/gatedevice.c	2011-02-17 16:43:25.931993589 +0800
++++ linux-igd-1.0.0/gatedevice.c	2011-02-17 16:12:02.790821534 +0800
+@@ -840,64 +840,75 @@
+ 				trace(3, "Found port map to already exist.  Replacing");
+ 				pmlist_Delete(ret);
+ 		}
+-			
+-		new = pmlist_NewNode(atoi(bool_enabled), atol(int_duration), "", ext_port, int_port, proto, int_ip, desc); 
+-		result = pmlist_PushBack(new);
+-		if (result==1)
++		if ((ret = pmlist_Find_Duped_Port(ext_port, proto)) != NULL)
+ 		{
+-		        ScheduleMappingExpiration(new,ca_event->DevUDN,ca_event->ServiceID);
+-			sprintf(num, "%d", pmlist_Size());
+-			trace(3, "PortMappingNumberOfEntries: %d", pmlist_Size());
+-			UpnpAddToPropertySet(&propSet, "PortMappingNumberOfEntries", num);				
+-			UpnpNotifyExt(deviceHandle, ca_event->DevUDN, ca_event->ServiceID, propSet);
+-			ixmlDocument_free(propSet);
+-			//(Aaron patch 2009/8/19)->			
+-			//=================================================================================
+-			#if 1 //Steve add 2009/07/09
+-			printf("\n\n");
+-			trace(2, "AddPortMap: DevUDN: %s ServiceID: %s Prot: %s ExtPort: %s Int: %s.%s",
+-					    ca_event->DevUDN,ca_event->ServiceID, proto, ext_port, int_ip, int_port);
+-			syslog (LOG_INFO, "AddPortMap: IP: %s Prot: %s Port: %s App: %s", int_ip, proto, ext_port, desc);		    
+-			#else
+-			//(Aaron patch 2009/8/19)<-
+-			trace(2, "AddPortMap: DevUDN: %s ServiceID: %s RemoteHost: %s Prot: %s ExtPort: %s Int: %s.%s",
+-					    ca_event->DevUDN,ca_event->ServiceID,remote_host, proto, ext_port, int_ip, int_port);
+-    		//(Aaron patch 2009/8/19)->			
+-			#endif		
+-			//Steve add 2009/07/09
+-			#ifdef CONFIG_UPNP_QoS	
+-			printf("supnp: <<  %s  >>\n", desc);
+-			if(!strcmp(proto,"TCP"))
+-				strcpy(proto,"tcp");
+-			else if(!strcmp(proto,"UDP"))
+-				strcpy(proto,"udp");
+-				
+-			if(!strncmp(desc, "eMule", 5)){
+-				UpnpAddRunRLQoS(EMULE_ID, proto, int_ip, int_port);
+-			}else if(!strncmp(desc, "uTorrent", 8) || !strncmp(desc, "BitComet", 8) || !strncmp(desc, "Foxy", 4) 
+-					|| !strncmp(desc, "BitTorrent", 10) || !strncmp(desc, "DNA", 3) || !strncmp(desc, "Azureus", 7)  ){
+-			    UpnpAddRunRLQoS(BT_ID, proto, int_ip, int_port);
+-			//}else if(!strncmp(desc, "Skype", 5) || !strncmp(desc, "MSNMSGR", 7) || !strncmp(desc, "msnmsgr", 7) ){
+-			}else if(!strncmp(desc, "Skype", 5)){
+-			    UpnpAddRunRLQoS(IM_ID, proto, int_ip, int_port);
+-			}
+-			//system("ps | grep upnp");
+-			#endif
+-			//=================================================================================
+-			//(Aaron patch 2009/8/19)<-
+-			action_succeeded = 1;
+-		}
+-		else
+-		{
+-			if (result==718)
+-			{
++				trace(1, "Found port map to a previously mapped port, exit\n");
+ 				trace(1,"Failure in GateDeviceAddPortMapping: RemoteHost: %s Prot:%s ExtPort: %s Int: %s.%s\n",
+ 						    remote_host, proto, ext_port, int_ip, int_port);
+ 				ca_event->ErrCode = 718;
+ 				strcpy(ca_event->ErrStr, "ConflictInMappingEntry");
+ 				ca_event->ActionResult = NULL;
+-			}
+- 		}
++		}
++        else
++        {    
++            new = pmlist_NewNode(atoi(bool_enabled), atol(int_duration), "", ext_port, int_port, proto, int_ip, desc); 
++            result = pmlist_PushBack(new);
++            if (result==1)
++            {
++                ScheduleMappingExpiration(new,ca_event->DevUDN,ca_event->ServiceID);
++                sprintf(num, "%d", pmlist_Size());
++                trace(3, "PortMappingNumberOfEntries: %d", pmlist_Size());
++                UpnpAddToPropertySet(&propSet, "PortMappingNumberOfEntries", num);				
++                UpnpNotifyExt(deviceHandle, ca_event->DevUDN, ca_event->ServiceID, propSet);
++                ixmlDocument_free(propSet);
++                //(Aaron patch 2009/8/19)->			
++                //=================================================================================
++#if 1 //Steve add 2009/07/09
++                printf("\n\n");
++                trace(2, "AddPortMap: DevUDN: %s ServiceID: %s Prot: %s ExtPort: %s Int: %s.%s",
++                        ca_event->DevUDN,ca_event->ServiceID, proto, ext_port, int_ip, int_port);
++                syslog (LOG_INFO, "AddPortMap: IP: %s Prot: %s Port: %s App: %s", int_ip, proto, ext_port, desc);		    
++#else
++                //(Aaron patch 2009/8/19)<-
++                trace(2, "AddPortMap: DevUDN: %s ServiceID: %s RemoteHost: %s Prot: %s ExtPort: %s Int: %s.%s",
++                        ca_event->DevUDN,ca_event->ServiceID,remote_host, proto, ext_port, int_ip, int_port);
++                //(Aaron patch 2009/8/19)->			
++#endif		
++                //Steve add 2009/07/09
++#ifdef CONFIG_UPNP_QoS	
++                printf("supnp: <<  %s  >>\n", desc);
++                if(!strcmp(proto,"TCP"))
++                    strcpy(proto,"tcp");
++                else if(!strcmp(proto,"UDP"))
++                    strcpy(proto,"udp");
++
++                if(!strncmp(desc, "eMule", 5)){
++                    UpnpAddRunRLQoS(EMULE_ID, proto, int_ip, int_port);
++                }else if(!strncmp(desc, "uTorrent", 8) || !strncmp(desc, "BitComet", 8) || !strncmp(desc, "Foxy", 4) 
++                        || !strncmp(desc, "BitTorrent", 10) || !strncmp(desc, "DNA", 3) || !strncmp(desc, "Azureus", 7)  ){
++                    UpnpAddRunRLQoS(BT_ID, proto, int_ip, int_port);
++                    //}else if(!strncmp(desc, "Skype", 5) || !strncmp(desc, "MSNMSGR", 7) || !strncmp(desc, "msnmsgr", 7) ){
++            }else if(!strncmp(desc, "Skype", 5)){
++                UpnpAddRunRLQoS(IM_ID, proto, int_ip, int_port);
++            }
++            //system("ps | grep upnp");
++#endif
++            //=================================================================================
++            //(Aaron patch 2009/8/19)<-
++            action_succeeded = 1;
++            }
++            else
++            {
++                if (result==718)
++                {
++                    trace(1,"Failure in GateDeviceAddPortMapping: RemoteHost: %s Prot:%s ExtPort: %s Int: %s.%s\n",
++                            remote_host, proto, ext_port, int_ip, int_port);
++                    ca_event->ErrCode = 718;
++                    strcpy(ca_event->ErrStr, "ConflictInMappingEntry");
++                    ca_event->ActionResult = NULL;
++                }
++            }
++        }
+ 	}
+ 	else
+ 	{

@@ -1,0 +1,116 @@
+#!/bin/sh -x
+[ $# = 0 ] && { echo "  $0 <group>"; exit; }
+. /etc/functions.sh
+type=$1
+
+#[ "$(nvram get ${type}_proto)" = "wwan" ] || {
+#	echo "$0: ${type}_proto isn't wwan"
+#	exit
+#}
+
+
+ifdata_num=$(nvram show wan_wwan_probe_rule 0 datatty)
+[ -z "$ifdata_num" ] && {
+    ifdata_num=$(nvram show wan_wwan_rule 0 datatty)
+}
+
+ifctrl_num=$(nvram show wan_wwan_probe_rule 0 ctrltty)
+[ -z "$ifctrl_num" ] && {
+    ifctrl_num=$(nvram show wan_wwan_rule 0 ctrltty)
+}
+
+dev_name=$(nvram show wan_wwan_probe_rule 0 devname)
+[ -z "$dev_name" ] && {
+    dev_name=$(nvram show wan_wwan_rule 0 devname)
+}
+
+[ -e /sys/class/tty/${dev_name}${ifctrl_num} ] || exit 1
+
+mkdir -p /var/lock
+
+for module in slhc ppp_generic ppp_async; do
+	/sbin/insmod $module 2>&- >&-
+done
+
+# pin
+pin=$(nvram show wan_wwan_rule 0 pin)
+[ -n "$pin" ] && env -i EZPCOMPIN="$pin" /usr/sbin/ezpcom PIN \
+    -d /dev/${dev_name}${ifctrl_num} 
+# apn
+apn=$(nvram show wan_wwan_rule 0 apn)
+[ -n "$apn" ] && env -i EZPCOMAPN="$apn" /usr/sbin/ezpcom APN \
+    -d /dev/${dev_name}${ifctrl_num} 
+    
+# mode
+mode=$(nvram show wan_wwan_rule 0 mode)
+[ "$mode" != "auto" ] && env -i MODE="$mode" /usr/sbin/ezpcom \
+    -d /dev/${dev_name}${ifctrl_num} -s /etc/ezpcom/setmode.ezpcom
+    
+# dialstr
+dialstr=$(nvram show wan_wwan_rule 0 dialstr)
+[ -z "$dialstr" ] && dialstr="*99***1#"
+dialstr="ATD${dialstr}"
+
+chatscript="wwan.chat"
+[ "$dialstr" = "#777" ] && chatscript="evdo.chat"
+
+# Prevent multiple entry of pppd
+[ -e /var/run/ppp${3}.pid ] && exit
+
+#(while :; do
+	IFNAME=/dev/${dev_name}${ifdata_num}
+	USERNAME=$(nvram show wan_wwan_rule 0 username)
+	PASSWORD=$(nvram show wan_wwan_rule 0 passwd)
+	DEMAND=$(nvram show wan_wwan_rule 0 demand)
+	case "$DEMAND" in
+		on|1|enabled)
+			DEMAND=$(nvram show wan_wwan_rule 0 idletime)
+			DEMAND=${DEMAND:+demand idle $DEMAND}
+			[ -f /etc/ppp/filter ] && DEMAND=${DEMAND:+precompiled-active-filter /etc/ppp/filter $DEMAND}
+			# set up a dummy nameserver for dial on demand
+			# FIXME! echo "nameserver 1.1.1.1" > /tmp/resolv.conf
+			KEEPALIVE=""
+		;;
+        off|0|disabled)
+	        KEEPALIVE=$(nvram show wan_wwan_rule 0 redialperiod)
+            FAILURE=$(nvram show wan_wwan_rule 0 echo_failure)
+	        KEEPALIVE=${KEEPALIVE:+lcp-echo-failure $FAILURE lcp-echo-interval $KEEPALIVE}
+            DEMAND=""
+        ;;
+		*) 
+            DEMAND=""
+            KEEPALIVE=""
+        ;;
+	esac
+			
+	# Remove "nodetach" to run as a daemon.
+	/usr/sbin/pppd \
+        /dev/${dev_name}${ifdata_num} \
+        460800 \
+        lock \
+        noauth \
+        crtscts \
+        noaccomp \
+        nopcomp \
+        novj \
+        nobsdcomp \
+        noauth \
+	usepeerdns \
+	nodefaultroute \
+	ipparam "$type" \
+	linkname "$type" \
+    unit 1 \
+    	debug \
+	user "$USERNAME" \
+	password "$PASSWORD" \
+	$DEMAND \
+	$KEEPALIVE \
+	connect "WWAN_DIALSTR=\"$dialstr\" /usr/sbin/chat -V -E -f /etc/chatscripts/$chatscript"\ 
+	2>&1 >/dev/null
+#	Remove mru/mtu
+#	MTU=1200
+#	MTU=${MTU:-1492}
+#	mru $MTU \
+#	mtu $MTU \
+#	unit 0
+#done 2>&1 >/dev/null ) &

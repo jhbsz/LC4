@@ -1,0 +1,837 @@
+--- libupnp-1.3.1.orig/upnp/src/api/upnpapi.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/api/upnpapi.c	2010-06-06 16:37:39.843348028 +0800
+@@ -50,6 +50,7 @@
+ #include <arpa/inet.h>
+ #include <unistd.h>
+ 
++
+ #include "httpreadwrite.h"
+ 
+ //************************************
+@@ -68,6 +69,10 @@
+ /*
+  ****************** */
+ 
++//+++Add by shiang, move from upnp/src/inc/upnpapi.h
++virtualDirList *pVirtualDirList;
++//---Add by shiang, move from upnp/src/inc/upnpapi.h
++
+ //Mutex to synchronize the subscription handling at the client side
+ CLIENTONLY( ithread_mutex_t GlobalClientSubscribeMutex;
+      )
+@@ -83,6 +88,10 @@
+ 
+      ThreadPool gSendThreadPool;
+ 
++//+++Add by shiang for WSC
++	ThreadPool gMiniServerThreadPool;
++//---Add by shiang for WSC
++
+ //Flag to indicate the state of web server
+      WebServerState bWebServerState = WEB_SERVER_DISABLED;
+ 
+@@ -214,6 +223,15 @@
+         return UPNP_E_INIT_FAILED;
+     }
+ 
++//+++Patch by shiang for WSC
++	if( ThreadPoolInit( &gMiniServerThreadPool, &attr ) != UPNP_E_SUCCESS ) 
++	{
++		UpnpSdkInit = 0;
++		UpnpFinish(  );
++		return UPNP_E_INIT_FAILED;
++	}
++//---Patch by shiang for WSC
++
+     UpnpSdkInit = 1;
+ #if EXCLUDE_SOAP == 0
+     DEVICEONLY( SetSoapCallback( soap_device_callback );
+@@ -355,6 +373,9 @@
+ 
+     ThreadPoolShutdown( &gSendThreadPool );
+     ThreadPoolShutdown( &gRecvThreadPool );
++//+++Patch by shiang for WSC
++	ThreadPoolShutdown( &gMiniServerThreadPool );
++//---Patch by shiang for WSC
+ 
+     DBGONLY( UpnpPrintf( UPNP_INFO, API, __FILE__, __LINE__, "Exiting UpnpFinish : UpnpSdkInit is :%d:\n", UpnpSdkInit ); ThreadPoolGetStats( &gRecvThreadPool, &stats ); PrintThreadPoolStats ( __FILE__, __LINE__, "Recv Thread Pool", &stats); ThreadPoolGetStats( &gSendThreadPool, &stats ); PrintThreadPoolStats (__FILE__, __LINE__, "Send Thread Pool", &stats); )   // DBGONLY
+         DBGONLY( CloseLog(  );
+@@ -4148,9 +4169,39 @@
+                                /** Permissible content length  */
+      )
+ {
+-    return UpnpSetMaxContentLength (contentLength);
+-}
++    int errCode = UPNP_E_SUCCESS;
++    struct Handle_Info *HInfo = NULL;
++
++    do {
++        if( UpnpSdkInit != 1 ) {
++            errCode = UPNP_E_FINISH;
++            break;
++        }
++
++        HandleLock(  );
++
++        errCode = GetHandleInfo( Hnd, &HInfo );
++
++        if( errCode != HND_DEVICE ) {
++            errCode = UPNP_E_INVALID_HANDLE;
++            break;
++        }
++
++        if( contentLength > MAX_SOAP_CONTENT_LENGTH ) {
++            errCode = UPNP_E_OUTOF_BOUNDS;
++            break;
++        }
+ 	
++        g_maxContentLength = contentLength;
++
++    } while( 0 );
++
++    HandleUnlock(  );
++    return errCode;
++
++}
++
++
+ /**************************************************************************
+  * Function: UpnpSetMaxContentLength
+  *
+--- libupnp-1.3.1.orig/upnp/src/api/upnpdebug.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/api/upnpdebug.c	2010-06-06 16:37:39.863347856 +0800
+@@ -53,10 +53,10 @@
+ static FILE *InfoFileHnd = NULL;
+ 
+ //Name of the error file
+-static const char *errFileName = "IUpnpErrFile.txt";
++static const char *errFileName = "/var/IUpnpErrFile.txt";
+ 
+ //Name of the info file
+-static const char *infoFileName = "IUpnpInfoFile.txt";
++static const char *infoFileName = "/var/IUpnpInfoFile.txt";
+ 
+ 
+ 
+--- libupnp-1.3.1.orig/upnp/src/gena/gena_ctrlpt.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/gena/gena_ctrlpt.c	2010-06-06 16:37:39.872230831 +0800
+@@ -283,9 +283,11 @@
+     *sid = NULL;                // init
+ 
+     // request timeout to string
+-    if( ( timeout == NULL ) ||
+-        ( ( *timeout > 0 )
+-          && ( *timeout < CP_MINIMUM_SUBSCRIPTION_TIME ) ) ) {
++    if ( timeout == NULL ) {
++        timeout = (int *)malloc(sizeof(int));
++        if(timeout == 0) return  UPNP_E_OUTOF_MEMORY;
++        sprintf( timeout_str, "%d", CP_MINIMUM_SUBSCRIPTION_TIME );
++    } else if( ( *timeout > 0 )&& ( *timeout < CP_MINIMUM_SUBSCRIPTION_TIME ) ) {
+         sprintf( timeout_str, "%d", CP_MINIMUM_SUBSCRIPTION_TIME );
+     } else if( *timeout >= 0 ) {
+         sprintf( timeout_str, "%d", *timeout );
+--- libupnp-1.3.1.orig/upnp/src/gena/gena_device.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/gena/gena_device.c	2010-06-06 16:37:39.872230831 +0800
+@@ -41,6 +41,7 @@
+ #include "statcodes.h"
+ #include "httpparser.h"
+ #include "httpreadwrite.h"
++#include "ssdplib.h"
+ 
+ #include "unixutil.h"
+ 
+@@ -755,8 +756,8 @@
+     }
+ 
+     sprintf( headers, "CONTENT-TYPE: text/xml\r\nCONTENT-LENGTH: "
+-             "%d\r\nNT: upnp:event\r\nNTS: upnp:propchange\r\n",
+-             strlen( propertySet ) + 1 );
++             "%ld\r\nNT: upnp:event\r\nNTS: upnp:propchange\r\n",
++             (long) strlen( propertySet ) + 1 );
+ 
+     //schedule thread for initial notification
+ 
+@@ -892,8 +893,8 @@
+     //changed to add null terminator at end of content
+     //content length = (length in bytes of property set) + null char
+     sprintf( headers, "CONTENT-TYPE: text/xml\r\nCONTENT-LENGTH: "
+-             "%d\r\nNT: upnp:event\r\nNTS: upnp:propchange\r\n",
+-             strlen( propertySet ) + 1 );
++             "%ld\r\nNT: upnp:event\r\nNTS: upnp:propchange\r\n",
++             (long) strlen( propertySet ) + 1 );
+ 
+     HandleLock(  );
+ 
+@@ -1053,9 +1054,9 @@
+     }
+     //changed to add null terminator at end of content
+     //content length = (length in bytes of property set) + null char
+-    sprintf( headers, "CONTENT-TYPE: text/xml\r\nCONTENT-LENGTH: %d\r\nNT:"
++    sprintf( headers, "CONTENT-TYPE: text/xml\r\nCONTENT-LENGTH: %ld\r\nNT:"
+              " upnp:event\r\nNTS: upnp:propchange\r\n",
+-             strlen( propertySet ) + 1 );
++             (long) strlen( propertySet ) + 1 );
+ 
+     HandleLock(  );
+ 
+@@ -1165,8 +1166,8 @@
+     membuffer_init( &response );
+     response.size_inc = 30;
+     if( http_MakeMessage( &response, major, minor,
+-                          "R" "D" "S" "ssc" "sc" "c",
+-                          HTTP_OK,
++                          "R" "D" "S" "N" "Xc" "ssc" "sc" "c",
++                          HTTP_OK, 0, X_USER_AGENT,
+                           "SID: ", sub->sid, timeout_str ) != 0 ) {
+         membuffer_destroy( &response );
+         error_respond( info, HTTP_INTERNAL_SERVER_ERROR, request );
+@@ -1442,6 +1443,36 @@
+         HandleUnlock(  );
+         return;
+     }
++//+++Patch by shiang, we just accept one subscription for one remote ip/port addrss
++{
++    subscription *finger = service->subscriptionList;
++    subscription *previous = NULL;
++	uri_type *uriInfo = NULL;
++	uri_type *newURIInfo = sub->DeliveryURLs.parsedURLs;
++
++	while( finger ) {
++		uriInfo = finger->DeliveryURLs.parsedURLs;
++		if (!(memcmp(&newURIInfo->hostport.IPv4address, &uriInfo->hostport.IPv4address, sizeof(struct sockaddr_in))))
++		{
++			if( previous )
++				previous->next = finger->next;
++			else
++				service->subscriptionList = finger->next;
++			finger->next = NULL;
++			freeSubscriptionList( finger );
++			if(previous)
++				finger = previous->next;
++			else
++				finger = service->subscriptionList;
++			service->TotalSubscriptions--;
++		} else {
++			previous = finger;
++			finger = finger->next;
++		}
++	}
++}
++//---Pathc by shiang, we just accept one subscription for one remote ip/port addrss
++
+     //add to subscription list
+     sub->next = service->subscriptionList;
+     service->subscriptionList = sub;
+--- libupnp-1.3.1.orig/upnp/src/genlib/client_table/client_table.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/client_table/client_table.c	2010-06-06 16:37:39.872230831 +0800
+@@ -61,9 +61,13 @@
+             memcpy( out->sid, in->sid, SID_SIZE );
+             out->sid[SID_SIZE] = 0;
+             out->ActualSID = ( char * )malloc( len );
++            if( out->ActualSID == NULL )
++                return UPNP_E_OUTOF_MEMORY;
+             out->EventURL = ( char * )malloc( len1 );
+-            if( ( out->EventURL == NULL ) || ( out->ActualSID == NULL ) )
+-            return UPNP_E_OUTOF_MEMORY;
++            if( out->EventURL == NULL ) {
++                free(out->ActualSID);
++                return UPNP_E_OUTOF_MEMORY;
++            }
+             memcpy( out->ActualSID, in->ActualSID, len );
+             memcpy( out->EventURL, in->EventURL, len1 );
+             //copies do not get RenewEvent Ids or next
+--- libupnp-1.3.1.orig/upnp/src/genlib/miniserver/miniserver.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/miniserver/miniserver.c	2010-06-06 16:37:39.872230831 +0800
+@@ -599,7 +599,7 @@
+     int miniServerStopSock;
+ 
+     listenfd = socket( AF_INET, SOCK_STREAM, 0 );
+-    if( listenfd <= 0 ) {
++    if( listenfd < 0 ) {
+         return UPNP_E_OUTOF_SOCKET; // error creating socket
+     }
+     // As per the IANA specifications for the use of ports by applications
+@@ -783,11 +783,13 @@
+ 
+     if( ( success = get_ssdp_sockets( miniSocket ) ) != UPNP_E_SUCCESS ) {
+ 
+-        free( miniSocket );
+         shutdown( miniSocket->miniServerSock, SD_BOTH );
+         UpnpCloseSocket( miniSocket->miniServerSock );
+         shutdown( miniSocket->miniServerStopSock, SD_BOTH );
+         UpnpCloseSocket( miniSocket->miniServerStopSock );
++
++        free( miniSocket );
++
+         return success;
+     }
+ 
+@@ -797,8 +799,10 @@
+ 
+     TPJobSetFreeFunction( &job, ( free_routine ) free );
+ 
+-    success = ThreadPoolAddPersistent( &gRecvThreadPool, &job, NULL );
+-
++//+++Patch by shiang for WSC
++//    success = ThreadPoolAddPersistent( &gRecvThreadPool, &job, NULL );
++	success = ThreadPoolAddPersistent( &gMiniServerThreadPool, &job, NULL );
++//---Patch by shiang for WSC
+     if( success < 0 ) {
+         shutdown( miniSocket->miniServerSock, SD_BOTH );
+         shutdown( miniSocket->miniServerStopSock, SD_BOTH );
+--- libupnp-1.3.1.orig/upnp/src/genlib/net/http/httpparser.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/net/http/httpparser.c	2010-06-06 16:37:39.872230831 +0800
+@@ -868,11 +868,11 @@
+            OUT int *value )
+ {
+     memptr token;
+-    token_type_t tok_type;
++    token_type_t   tok_type;
+     parse_status_t status;
+-    int num;
+-    char *end_ptr;
+-    size_t save_pos;
++    long           num;
++    char          *end_ptr;
++    size_t         save_pos;
+ 
+     save_pos = scanner->cursor;
+ 
+@@ -1684,6 +1684,7 @@
+                 || membuffer_assign( &header->value, hdr_value.buf,
+                                      hdr_value.length ) != 0 ) {
+                 // not enuf mem
++                free (header);
+                 parser->http_error_code = HTTP_INTERNAL_SERVER_ERROR;
+                 return PARSE_FAILURE;
+             }
+@@ -2388,7 +2389,7 @@
+ raw_to_int( IN memptr * raw_value,
+             IN int base )
+ {
+-    int num;
++    long  num;
+     char *end_ptr;
+ 
+     if( raw_value->length == 0 ) {
+--- libupnp-1.3.1.orig/upnp/src/genlib/net/http/httpreadwrite.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/net/http/httpreadwrite.c	2010-06-06 16:37:39.872230831 +0800
+@@ -853,7 +853,7 @@
+ 
+     if( ( !handle ) || ( !size ) || ( ( ( *size ) > 0 ) && !buf )
+         || ( ( *size ) < 0 ) ) {
+-        ( *size ) = 0;
++        if(size) ( *size ) = 0;
+         return UPNP_E_INVALID_PARAM;
+     }
+     if( handle->contentLength == UPNP_USING_CHUNKED ) {
+@@ -863,6 +863,9 @@
+             tempbuf =
+                 ( char * )malloc( ( *size ) + CHUNK_HEADER_SIZE +
+                                   CHUNK_TAIL_SIZE );
++
++            if ( tempbuf == NULL) return UPNP_E_OUTOF_MEMORY;
++
+             sprintf( tempbuf, "%x\r\n", ( *size ) );    //begin chunk
+             tempSize = strlen( tempbuf );
+             memcpy( tempbuf + tempSize, buf, ( *size ) );
+@@ -1286,7 +1289,7 @@
+ 
+     if( ( !handle ) || ( !size ) || ( ( ( *size ) > 0 ) && !buf )
+         || ( ( *size ) < 0 ) ) {
+-        ( *size ) = 0;
++        if(size) ( *size ) = 0;
+         return UPNP_E_INVALID_PARAM;
+     }
+     //first parse what has already been gotten
+@@ -1633,6 +1636,9 @@
+ *				appends content-length, content-type and HTML body for given code
+ *		'T':	arg = char * content_type; format e.g: "text/html";	
+ *				 content-type header
++* --- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld@users.sourceforge.net>
++*       'X':    arg = const char useragent; "redsonic" HTTP X-User-Agent: useragent
++* --- PATCH END ---
+ *
+ *	Return : int;
+ *		0 - On Success
+@@ -1801,6 +1807,24 @@
+             }
+         }
+ 
++/* --- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld@users.sourceforge.net> */
++	else if( c == 'X' )          // C string
++        {
++            s = ( char * )va_arg( argp, char * );
++
++            assert( s );
++
++            if( membuffer_append_str( buf, "X-User-Agent: ") != 0 ) {
++                goto error_handler;
++            }
++            if( membuffer_append( buf, s, strlen( s ) ) != 0 ) {
++                goto error_handler;
++            }
++        }
++        
++/* --- PATCH END --- */
++    
++
+         else if( c == 'R' ) {
+             // response start line
+             //   e.g.: 'HTTP/1.1 200 OK'
+@@ -2238,7 +2262,7 @@
+         *info = '\0';
+     }
+ 
+-    sprintf( info, "%s/%s, UPnP/1.0, Intel SDK for UPnP devices/"
++    sprintf( info, "%s/%s, UPnP/1.0, Portable SDK for UPnP devices/"
+ 	     PACKAGE_VERSION "\r\n",
+              sys_info.sysname, sys_info.release );
+ }
+--- libupnp-1.3.1.orig/upnp/src/genlib/net/http/webserver.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/net/http/webserver.c	2010-06-06 16:37:39.872230831 +0800
+@@ -45,6 +45,7 @@
+ #include "webserver.h"
+ #include "upnp.h"
+ #include "upnpapi.h"
++#include "ssdplib.h"
+ 
+ #include <unistd.h>
+ #include <sys/stat.h>
+@@ -791,9 +792,13 @@
+     int Pos;
+ 
+     Str1 = ( char * )malloc( strlen( S1 ) + 2 );
++    if(!Str1) return NULL;
+     Str2 = ( char * )malloc( strlen( S2 ) + 2 );
+-    if( !Str1 || !Str2 )
++    if (!Str2)
++    {
++       free(Str1);
+         return NULL;
++    }
+ 
+     strcpy( Str1, S1 );
+     strcpy( Str2, S2 );
+@@ -1248,8 +1253,17 @@
+             alias_grabbed = TRUE;
+ 
+             using_alias = get_alias( request_doc, alias, &finfo );
++
++//+++Add by Shiang for work-around for the Vista
++			if(using_alias && (strcmp(request_doc, "/description.xml") == 0))
++				finfo.file_length += strlen("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
++//---Add by Shiang for work-around for the Vista
++
+             if( using_alias == TRUE ) {
+-                finfo.content_type = ixmlCloneDOMString( "text/xml" );
++//+++Modify by Shiang for work-around for the Vista
++//                finfo.content_type = ixmlCloneDOMString( "text/xml" );
++                finfo.content_type = ixmlCloneDOMString( "text/xml; charset=\"utf-8\"" );
++//---Modify by Shiang for work-around for the Vista
+ 
+                 if( finfo.content_type == NULL ) {
+                     goto error_handler;
+@@ -1368,16 +1382,22 @@
+     }
+ 
+     if( RespInstr->IsRangeActive && RespInstr->IsChunkActive ) {
++
++/* - PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net>
++ * added X-User-Agent header
++ */
++        
+         //Content-Range: bytes 222-3333/4000  HTTP_PARTIAL_CONTENT
+         //Transfer-Encoding: chunked
+         // K means add chunky header ang G means range header.
+-        if( http_MakeMessage( headers, resp_major, resp_minor, "RTGKDstcSCc", HTTP_PARTIAL_CONTENT, // status code
++        if( http_MakeMessage( headers, resp_major, resp_minor, "RTGKDstcSXcCc", HTTP_PARTIAL_CONTENT, // status code
+                               // RespInstr->ReadSendSize,// content length
+                               finfo.content_type,
+                               //     content_type.buf,            // content type
+                               RespInstr,    // Range
+                               "LAST-MODIFIED: ",
+-                              &finfo.last_modified ) != 0 ) {
++                              &finfo.last_modified,
++                              X_USER_AGENT) != 0 ) {
+             goto error_handler;
+         }
+     } else if( RespInstr->IsRangeActive && !RespInstr->IsChunkActive ) {
+@@ -1385,13 +1405,14 @@
+         //Content-Range: bytes 222-3333/4000  HTTP_PARTIAL_CONTENT
+         //Transfer-Encoding: chunked
+         // K means add chunky header ang G means range header.
+-        if( http_MakeMessage( headers, resp_major, resp_minor, "RNTGDstcSCc", HTTP_PARTIAL_CONTENT, // status code
++        if( http_MakeMessage( headers, resp_major, resp_minor, "RNTGDstcSXcCc", HTTP_PARTIAL_CONTENT, // status code
+                               RespInstr->ReadSendSize,  // content length
+                               finfo.content_type,
+                               //content_type.buf,            // content type
+                               RespInstr,    //Range Info
+                               "LAST-MODIFIED: ",
+-                              &finfo.last_modified ) != 0 ) {
++                              &finfo.last_modified,
++                              X_USER_AGENT) != 0 ) {
+             goto error_handler;
+         }
+ 
+@@ -1400,12 +1421,13 @@
+         //Content-Range: bytes 222-3333/4000  HTTP_PARTIAL_CONTENT
+         //Transfer-Encoding: chunked
+         // K means add chunky header ang G means range header.
+-        if( http_MakeMessage( headers, resp_major, resp_minor, "RKTDstcSCc", HTTP_OK,   // status code
++        if( http_MakeMessage( headers, resp_major, resp_minor, "RKTDstcSXcCc", HTTP_OK,   // status code
+                               //RespInstr->ReadSendSize,// content length
+                               finfo.content_type,
+                               // content_type.buf,            // content type
+                               "LAST-MODIFIED: ",
+-                              &finfo.last_modified ) != 0 ) {
++                              &finfo.last_modified,
++                              X_USER_AGENT) != 0 ) {
+             goto error_handler;
+         }
+ 
+@@ -1414,28 +1436,31 @@
+             //Content-Range: bytes 222-3333/4000  HTTP_PARTIAL_CONTENT
+             //Transfer-Encoding: chunked
+             // K means add chunky header ang G means range header.
+-            if( http_MakeMessage( headers, resp_major, resp_minor, "RNTDstcSCc", HTTP_OK,   // status code
++            if( http_MakeMessage( headers, resp_major, resp_minor, "RNTDstcSXcCc", HTTP_OK,   // status code
+                                   RespInstr->ReadSendSize,  // content length
+                                   finfo.content_type,
+                                   //content_type.buf,          // content type
+                                   "LAST-MODIFIED: ",
+-                                  &finfo.last_modified ) != 0 ) {
++                                  &finfo.last_modified,
++                                  X_USER_AGENT) != 0 ) {
+                 goto error_handler;
+             }
+         } else {
+             //Content-Range: bytes 222-3333/4000  HTTP_PARTIAL_CONTENT
+             //Transfer-Encoding: chunked
+             // K means add chunky header ang G means range header.
+-            if( http_MakeMessage( headers, resp_major, resp_minor, "RTDstcSCc", HTTP_OK,    // status code
++            if( http_MakeMessage( headers, resp_major, resp_minor, "RTDstcSXcCc", HTTP_OK,    // status code
+                                   //RespInstr->ReadSendSize,// content length
+                                   finfo.content_type,
+                                   //content_type.buf,          // content type
+                                   "LAST-MODIFIED: ",
+-                                  &finfo.last_modified ) != 0 ) {
++                                  &finfo.last_modified,
++                                  X_USER_AGENT) != 0 ) {
+                 goto error_handler;
+             }
+         }
+     }
++/* -- PATCH END -- */
+ 
+     if( req->method == HTTPMETHOD_HEAD ) {
+         *rtype = RESP_HEADERS;
+@@ -1533,6 +1558,7 @@
+                    && ( status != PARSE_CONTINUE_1 )
+                    && ( status != PARSE_INCOMPLETE ) ) {
+             //error
++            fclose( Fp );
+             return HTTP_BAD_REQUEST;
+         }
+         //read more if necessary entity
+@@ -1655,7 +1681,7 @@
+ {
+     int ret;
+     int timeout = 0;
+-    enum resp_type rtype;
++    enum resp_type rtype = 0;
+     membuffer headers;
+     membuffer filename;
+     struct xml_alias_t xmldoc;
+@@ -1690,9 +1716,32 @@
+                 break;
+ 
+             case RESP_XMLDOC:  // send xmldoc , I = further instruction to send data.
++//+++Modify by shiang for work-around for Vista
++#if 0
+                 http_SendMessage( info, &timeout, "Ibb", &RespInstr,
+                                   headers.buf, headers.length,
+                                   xmldoc.doc.buf, xmldoc.doc.length );
++#else
++				DBGONLY( UpnpPrintf( UPNP_INFO, HTTP, __FILE__, __LINE__,
++                         "shiang: xmldoc.name=%s!\n", xmldoc.name.buf);
++         		)
++            	if(strcmp(xmldoc.name.buf, "/description.xml") == 0)
++            	{
++            		char xmlHeader[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
++					int xmlHeaderLen;
++
++					xmlHeaderLen = strlen(xmlHeader);
++					http_SendMessage( info, &timeout, "Ibbb", &RespInstr,
++                                  headers.buf, headers.length, 
++                                  xmlHeader, xmlHeaderLen,
++                                  xmldoc.doc.buf, xmldoc.doc.length );
++            	} else {
++	                http_SendMessage( info, &timeout, "Ibb", &RespInstr,
++                                  headers.buf, headers.length,
++                                  xmldoc.doc.buf, xmldoc.doc.length );
++            	}
++#endif
++//---Modify by shiang for work-around for Vista
+                 alias_release( &xmldoc );
+                 break;
+ 
+@@ -1717,8 +1766,14 @@
+                     http_RecvPostMessage( parser, info, filename.buf,
+                                           &RespInstr );
+                 //Send response.
+-                http_MakeMessage( &headers, 1, 1, "RTDSCc", ret,
+-                                  "text/html" );
++
++/* - PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net>
++ * added X-User-Agent header
++ */
++                http_MakeMessage( &headers, 1, 1, "RTDSXcCc", ret,
++                                  "text/html", X_USER_AGENT );
++/* - PATCH END --- */
++
+                 http_SendMessage( info, &timeout, "b", headers.buf,
+                                   headers.length );
+                 break;
+--- libupnp-1.3.1.orig/upnp/src/genlib/net/sock.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/genlib/net/sock.c	2010-06-06 16:37:39.872230831 +0800
+@@ -49,6 +49,10 @@
+ #include <unistd.h>
+ #include "unixutil.h"
+ 
++#ifndef MSG_NOSIGNAL
++ #define MSG_NOSIGNAL 0
++#endif
++
+ /************************************************************************
+ *	Function :	sock_init
+ *
+--- libupnp-1.3.1.orig/upnp/src/inc/gena.h	2010-06-06 16:41:45.509598634 +0800
++++ libupnp-1.3.1.new/upnp/src/inc/gena.h	2010-06-06 16:37:39.742098059 +0800
+@@ -47,8 +47,10 @@
+ #ifdef __cplusplus
+ #define EXTERN_C extern "C"
+ #else 
++#ifndef EXTERN_C
+ #define EXTERN_C 
+ #endif
++#endif
+ 
+ #define XML_VERSION "<?xml version='1.0' encoding='ISO-8859-1' ?>\n"
+ #define XML_PROPERTYSET_HEADER \
+--- libupnp-1.3.1.orig/upnp/src/inc/ssdplib.h	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/inc/ssdplib.h	2010-06-06 16:37:39.801476186 +0800
+@@ -80,6 +80,16 @@
+ #define  THREAD_LIMIT 50
+ #define  COMMAND_LEN  300
+ 
++#ifndef X_USER_AGENT // can be overwritten by configure CFLAGS argument
++/** @name X_USER_AGENT
++ *  The {\tt X_USER_AGENT} constant specifies the value of the X-User-Agent:
++ *  HTTP header. The value "redsonic" is needed for the DSM-320. See
++ *  https://sourceforge.net/forum/message.php?msg_id=3166856 for more
++ * information
++ */ 
++ #define X_USER_AGENT "redsonic"
++#endif
++
+ //Error code
+ #define NO_ERROR_FOUND    0
+ #define E_REQUEST_INVALID  	-3
+--- libupnp-1.3.1.orig/upnp/src/inc/upnpapi.h	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/inc/upnpapi.h	2010-06-06 16:37:39.843348028 +0800
+@@ -54,6 +54,9 @@
+ 
+ #define DEFAULT_MAXAGE 1800
+ 
++#define DEFAULT_SOAP_CONTENT_LENGTH 16000
++#define MAX_SOAP_CONTENT_LENGTH 32000
++
+ extern size_t g_maxContentLength;
+ 
+ // 30-second timeout
+@@ -108,7 +111,9 @@
+ extern TimerThread gTimerThread;
+ extern ThreadPool gRecvThreadPool;
+ extern ThreadPool gSendThreadPool;
+-
++//+++Patch by shiang for WSC
++extern ThreadPool gMiniServerThreadPool;
++//---Patch by shiang for WSC
+ 
+ typedef enum {
+     SUBSCRIBE,
+@@ -160,7 +165,10 @@
+ void AutoAdvertise(void *input); 
+ int getlocalhostname(char *out);
+ 
+-virtualDirList *pVirtualDirList;
++//+++Mark by shiang, move to upnp/src/api/upnpapi.c
++//virtualDirList *pVirtualDirList;
++//---Mark by shiang, move to upnp/src/api/upnpapi.c
++
+ extern WebServerState bWebServerState;
+ 
+ #endif
+--- libupnp-1.3.1.orig/upnp/src/soap/soap_device.c	2010-06-06 16:41:45.519598405 +0800
++++ libupnp-1.3.1.new/upnp/src/soap/soap_device.c	2010-06-06 16:37:39.843348028 +0800
+@@ -45,6 +45,7 @@
+ #include "httpreadwrite.h"
+ #include "unixutil.h"
+ #include "soaplib.h"
++#include "ssdplib.h"
+ 
+ // timeout duration in secs for transmission/reception
+ #define SOAP_TIMEOUT UPNP_TIMEOUT
+@@ -220,17 +221,20 @@
+ 
+     // make headers
+     membuffer_init( &headers );
++/* -- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net> */    
+     if( http_MakeMessage( &headers, major, minor,
+-                          "RNsDsSc" "sssss",
++                          "RNsDsSXc" "sssss",
+                           500,
+                           content_length,
+                           ContentTypeHeader,
+                           "EXT:\r\n",
++                          X_USER_AGENT,
+                           start_body, err_code_str, mid_body, err_msg,
+                           end_body ) != 0 ) {
+         membuffer_destroy( &headers );
+         return;                 // out of mem
+     }
++/*-- PATCH END - */
+     // send err msg
+     http_SendMessage( info, &timeout_secs, "b",
+                       headers.buf, headers.length );
+@@ -284,16 +288,21 @@
+ 
+     // make headers
+     membuffer_init( &response );
++    
++/* -- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net> */
+     if( http_MakeMessage( &response, major, minor,
+-                          "RNsDsSc" "sss",
++                          "RNsDsSXcc" "sss",
+                           HTTP_OK,
+                           content_length,
+                           ContentTypeHeader,
+                           "EXT:\r\n",
++                          X_USER_AGENT,
+                           start_body, var_value, end_body ) != 0 ) {
+         membuffer_destroy( &response );
+         return;                 // out of mem
+     }
++/* -- PATCH END - */
++    
+     // send msg
+     http_SendMessage( info, &timeout_secs, "b",
+                       response.buf, response.length );
+@@ -703,11 +712,14 @@
+         strlen( end_body );
+ 
+     // make headers
+-    if( http_MakeMessage( &headers, major, minor, "RNsDsSc", HTTP_OK,   // status code
+-                          content_length, ContentTypeHeader, "EXT:\r\n" // EXT header
++/* -- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net> */    
++    if( http_MakeMessage( &headers, major, minor, "RNsDsSXcc", HTTP_OK,   // status code
++                          content_length, ContentTypeHeader, "EXT:\r\n", X_USER_AGENT // EXT header
+          ) != 0 ) {
+         goto error_handler;
+     }
++/* -- PATCH END - */
++
+     // send whole msg
+     ret_code = http_SendMessage( info, &timeout_secs, "bbbb",
+                                  headers.buf, headers.length,
+--- libupnp-1.3.1.orig/upnp/src/ssdp/ssdp_ctrlpt.c	2010-06-06 16:41:45.509598634 +0800
++++ libupnp-1.3.1.new/upnp/src/ssdp/ssdp_ctrlpt.c	2010-06-06 16:37:39.742098059 +0800
+@@ -138,8 +138,9 @@
+     // MAX-AGE
+     param.Expires = -1;         // assume error
+     if( httpmsg_find_hdr( hmsg, HDR_CACHE_CONTROL, &hdr_value ) != NULL ) {
+-        matchstr( hdr_value.buf, hdr_value.length,
+-                  "%imax-age = %d%0", &param.Expires );
++        if( matchstr( hdr_value.buf, hdr_value.length,
++                      "%imax-age = %d%0", &param.Expires ) != PARSE_OK )
++            return;
+     }
+ 
+     // DATE
+@@ -399,16 +400,11 @@
+                            IN char *SearchTarget )
+ {
+     char TempBuf[COMMAND_LEN];
+-    int Port;
+ 
+     strcpy( RqstBuf, "M-SEARCH * HTTP/1.1\r\n" );
+ 
+-    Port = SSDP_PORT;
+-    strcpy( TempBuf, "HOST: " );    //Added space NK.
+-    strcat( TempBuf, SSDP_IP );
+-    sprintf( TempBuf, "%s:%d\r\n", TempBuf, Port );
++    sprintf( TempBuf, "HOST: %s:%d\r\n", SSDP_IP, SSDP_PORT );
+     strcat( RqstBuf, TempBuf );
+-
+     strcat( RqstBuf, "MAN: \"ssdp:discover\"\r\n" );
+ 
+     if( Mx > 0 ) {
+--- libupnp-1.3.1.orig/upnp/src/ssdp/ssdp_device.c	2010-06-06 16:41:45.509598634 +0800
++++ libupnp-1.3.1.new/upnp/src/ssdp/ssdp_device.c	2010-06-06 16:37:39.742098059 +0800
+@@ -290,12 +290,16 @@
+     *packet = NULL;
+ 
+     if( msg_type == MSGTYPE_REPLY ) {
++/* -- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net> */
+         ret_code = http_MakeMessage( &buf, 1, 1,
+-                                     "R" "sdc" "D" "s" "ssc" "S" "ssc"
++                                     "R" "sdc" "D" "s" "ssc" "S" "Xc" "ssc"
+                                      "ssc" "c", HTTP_OK,
+                                      "CACHE-CONTROL: max-age=", duration,
+                                      "EXT:\r\n", "LOCATION: ", location,
++                                     X_USER_AGENT,
+                                      "ST: ", nt, "USN: ", usn );
++/* -- PATCH END - */
++        
+         if( ret_code != 0 ) {
+             return;
+         }
+@@ -311,13 +315,15 @@
+         // NOTE: The CACHE-CONTROL and LOCATION headers are not present in
+         //  a shutdown msg, but are present here for MS WinMe interop.
+ 
++/* -- PATCH START - Sergey 'Jin' Bostandzhyan <jin_eld at users.sourceforge.net> */
+         ret_code = http_MakeMessage( &buf, 1, 1,
+                                      "Q" "sssdc" "sdc" "ssc" "ssc" "ssc"
+-                                     "S" "ssc" "c", HTTPMETHOD_NOTIFY, "*",
++                                     "S" "Xc" "ssc" "c", HTTPMETHOD_NOTIFY, "*",
+                                      1, "HOST: ", SSDP_IP, ":", SSDP_PORT,
+                                      "CACHE-CONTROL: max-age=", duration,
+                                      "LOCATION: ", location, "NT: ", nt,
+-                                     "NTS: ", nts, "USN: ", usn );
++                                     "NTS: ", nts, X_USER_AGENT, "USN: ", usn );
++/* -- PATCH END - */        
+         if( ret_code != 0 ) {
+             return;
+         }
+--- libupnp-1.3.1.orig/upnp/src/ssdp/ssdp_server.c	2010-06-06 16:41:45.509598634 +0800
++++ libupnp-1.3.1.new/upnp/src/ssdp/ssdp_server.c	2010-06-06 16:37:39.742098059 +0800
+@@ -956,6 +956,7 @@
+     ssdpAddr.sin_family = AF_INET;
+     //  ssdpAddr.sin_addr.s_addr = inet_addr(LOCAL_HOST);
+     ssdpAddr.sin_addr.s_addr = htonl( INADDR_ANY );
++    printf("libupnp: using UDP SSDP_PORT = %d\n", SSDP_PORT);
+     ssdpAddr.sin_port = htons( SSDP_PORT );
+     if( bind
+         ( ssdpSock, ( struct sockaddr * )&ssdpAddr,
+@@ -972,7 +973,9 @@
+     }
+ 
+     memset( ( void * )&ssdpMcastAddr, 0, sizeof( struct ip_mreq ) );
++//YY
+     ssdpMcastAddr.imr_interface.s_addr = htonl( INADDR_ANY );
++//    ssdpMcastAddr.imr_interface.s_addr = inet_addr( LOCAL_HOST);
+     ssdpMcastAddr.imr_multiaddr.s_addr = inet_addr( SSDP_IP );
+     if( setsockopt( ssdpSock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                     ( char * )&ssdpMcastAddr,

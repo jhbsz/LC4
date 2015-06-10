@@ -1,0 +1,75 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+. /etc/arch.sh
+
+START=10
+log_msg="BOOT-service"
+start() {
+	[ -f /proc/mounts ] || /sbin/mount_root
+	[ -f /proc/jffs2_bbc ] && echo "S" > /proc/jffs2_bbc
+	[ -f /proc/net/vlan/config ] && vconfig set_name_type DEV_PLUS_VID_NO_PAD
+    # We moved led config into /etc/preinit to do early led indicator
+    # arch_led_config
+    local PLATFORM="$(nvram get platform)"
+    [ -z "$PLATFORM" ] && PLATFORM=AXZ
+    #check uboot
+    [ "$PLATFORM" = AXM ] && arch_initd_boot_start
+    
+    # hostname
+    hostname=$(nvram get hostname)
+    BRAND="$(nvram get brand)"
+    [ "$BRAND" = "PROX" -o "$BRAND" = "APOLLO" ] && {
+        hostname=$(nvram get prox_serial)
+        nvram fset lang="EN_PROX"
+        nvram fset lang_default="EN_PROX"
+        [ "$BRAND" = "PROX" ] && {
+            nvram fset wanupnp_rule="1"
+        }
+    }
+	echo "${hostname:-EZPacket}" > /proc/sys/kernel/hostname
+	
+	mkdir -p /var/run
+	mkdir -p /var/log
+	mkdir -p /var/lock
+	mkdir -p /var/state
+	touch /var/log/wtmp
+	touch /var/log/lastlog
+	touch /tmp/resolv.conf.auto
+	ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf
+        ifconfig lo 127.0.0.1
+
+     # the coldplugging of network interfaces needs to happen later, so we do it manually here
+        for iface in $(awk -F: '/:/ {print $1}' /proc/net/dev); do
+                /usr/bin/env -i ACTION=add INTERFACE="$iface" /sbin/hotplug-call net
+        done
+
+	# create /dev/root if it doesn't exist
+	[ -e /dev/root ] || {
+		rootdev=$(awk 'BEGIN { RS=" "; FS="="; } $1 == "root" { print $2 }' < /proc/cmdline)
+		[ -n "$rootdev" ] && ln -s "$rootdev" /dev/root
+	}
+    # setup the current time to Jan 1st 2011
+    date 010100002011
+    nvram default brand
+    [ "$PLATFORM" = "LIS" -a "$(nvram get hostname)" != "Sony" ] && {
+        nvram fset hostname="Sony"
+        echo "Sony" > /proc/sys/kernel/hostname
+        nvram commit
+    }
+    [ "$(nvram get wl0_ssid_rule_default)" != "MyMO1|MyMO2" -a \
+      "$(nvram get brand)" = "MYMO" ] && {
+        nvram fset wl0_ssid_rule_default="MyMO1|MyMO2"
+        nvram fset hostname="MyMO"
+        echo "MyMO" > /proc/sys/kernel/hostname
+        nvram commit
+    }
+    [ "$(nvram get wl0_ssid_rule_default)" != "VFG6005N|Guest" -a \
+      "$(nvram get brand)" = "ZYUS" ] && {
+        nvram fset wl0_ssid_rule_default="VFG6005N|Guest"
+        nvram commit
+    }
+    [ "$(nvram show cron_rule 0 reboot_countdown)" != "$(nvram show cron_rule 0 reboot_interval)" ] && {
+        nvram default cron_rule
+        nvram commit
+    }
+}

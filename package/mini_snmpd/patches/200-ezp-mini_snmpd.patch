@@ -1,0 +1,1275 @@
+--- mini_snmpd/linux.c	2008-10-09 01:48:24.000000000 +0800
++++ mini_snmpd/linux.c	2011-12-22 17:46:02.820049420 +0800
+@@ -38,10 +38,11 @@
+ #include <math.h>
+ 
+ #include "mini_snmpd.h"
++#include "bcmnvram.h"
++#include "ezp-lib.h"
++#include "ezpcom-lib.h"
+ 
+-
+-
+-unsigned int get_process_uptime(void)
++unsigned long get_process_uptime(void)
+ {
+ 	/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
+ 	static unsigned int uptime_start = 0;
+@@ -54,13 +55,13 @@
+ 	return uptime_now - uptime_start;
+ }
+ 
+-unsigned int get_system_uptime(void)
++unsigned long get_system_uptime(void)
+ {
+ 	/* We need the uptime in 1/100 seconds, so we can't use sysinfo() */
+ 	char buffer[128];
+ 
+ 	if (read_file("/proc/uptime", buffer, sizeof (buffer)) != -1) {
+-		return (unsigned int)(atof(buffer) * 100);
++		return (unsigned long)(atof(buffer)*100);
+ 	} else {
+ 		return -1;
+ 	}
+@@ -163,7 +164,11 @@
+ 	}
+ 	fd = socket(AF_INET, SOCK_DGRAM, 0);
+ 	for (i = 0; i < g_interface_list_length; i++) {
++#ifdef EZP_PROD_BRAND_PROX
++		snprintf(ifreq.ifr_name, sizeof (ifreq.ifr_name), "%s", get_real_ifname(i));
++#else
+ 		snprintf(ifreq.ifr_name, sizeof (ifreq.ifr_name), "%s", g_interface_list[i]);
++#endif
+ 		if (fd != -1 && ioctl(fd, SIOCGIFFLAGS, &ifreq) != -1) {
+ 			if (ifreq.ifr_flags & IFF_UP) {
+ 				netinfo->status[i] = (ifreq.ifr_flags & IFF_RUNNING) ? 1 : 7;
+@@ -174,7 +179,11 @@
+ 			netinfo->status[i] = 4;
+ 		}
+ 		if (buffer[0] != '\0') {
+-			snprintf(name, sizeof (name), "%s:", g_interface_list[i]);
++#ifdef EZP_PROD_BRAND_PROX
++			snprintf(name, sizeof (name), "%s:", get_real_ifname(i));
++#else            
++            snprintf(name, sizeof (name), "%s:", g_interface_list[i]);
++#endif            
+ 			read_values(buffer, name, values, 16);
+ 		} else {
+ 			memset(values, 0, sizeof (values));
+@@ -193,7 +202,363 @@
+ 	}
+ }
+ 
++#ifdef EZP_PROD_BRAND_PROX
++void get_ipinfo(ipinfo_t *ipinfo)
++{
++	char buffer[BUFSIZ];
++	unsigned int values[19];
++
++	if (read_file("/proc/net/snmp", buffer, sizeof (buffer)) != -1) {
++		read_values(buffer, "Ip:", values, 19);
++        	ipinfo->forwarding = values[0];
++        	ipinfo->defaultttl = values[1];
++        	ipinfo->inreceives = values[2];
++        	ipinfo->inhdrerrors = values[3];
++        	ipinfo->inaddrerrors = values[4];
++        	ipinfo->forwdatagrams = values[5];
++        	ipinfo->inunknownprotos = values[6];
++        	ipinfo->indiscards = values[7];
++        	ipinfo->indelivers = values[8];
++        	ipinfo->outrequests = values[9];
++        	ipinfo->outdiscards = values[10];
++        	ipinfo->outnoroutes = values[11];
++        	ipinfo->reasmtimeout = values[12];
++        	ipinfo->reasmreqds = values[13];
++        	ipinfo->reasmoks = values[14];
++        	ipinfo->reasmfails = values[15];
++        	ipinfo->fragoks = values[16];
++        	ipinfo->fragfails = values[17];
++        	ipinfo->fragcreates = values[18];
++	} else {
++		memset(ipinfo, 0, sizeof (ipinfo_t));
++	}
++}
++
++
++void get_icmpinfo(icmpinfo_t *icmpinfo)
++{
++	char buffer[BUFSIZ];
++	unsigned int values[26];
++
++	if (read_file("/proc/net/snmp", buffer, sizeof (buffer)) != -1) {
++		read_values(buffer, "Icmp:", values, 26);
++		icmpinfo->inmsgs = values[0];
++		icmpinfo->inerrors = values[1];
++		icmpinfo->indestunreachs = values[2];
++		icmpinfo->intimeexcds = values[3];
++		icmpinfo->inparmprobs = values[4];
++		icmpinfo->insrcquenchs = values[5];
++		icmpinfo->inredirects = values[6];
++		icmpinfo->inechos = values[7];
++		icmpinfo->inechoreps = values[8];
++		icmpinfo->intimestamps = values[9];
++		icmpinfo->intimestampreps = values[10];
++		icmpinfo->inaddrmasks = values[11];
++		icmpinfo->inaddrmaskreps = values[12];
++		icmpinfo->outmsgs = values[13];
++		icmpinfo->outerrors = values[14];
++		icmpinfo->outdestunreachs = values[15];
++		icmpinfo->outtimeexcds = values[16];
++		icmpinfo->outparmprobs = values[17];
++		icmpinfo->outsrcquenchs = values[18];
++		icmpinfo->outredirects = values[19];
++		icmpinfo->outechos = values[20];
++		icmpinfo->outechoreps = values[21];
++		icmpinfo->outtimestamps = values[22];
++		icmpinfo->outtimestampreps = values[23];
++		icmpinfo->outaddrmasks = values[24];
++		icmpinfo->outaddrmaskreps = values[25];
++	} else {
++		memset(icmpinfo, 0, sizeof (icmpinfo_t));
++	}
++}
++
++void get_tcpinfo(tcpinfo_t *tcpinfo)
++{
++	char buffer[BUFSIZ];
++	unsigned int values[12];
++
++	if (read_file("/proc/net/snmp", buffer, sizeof (buffer)) != -1) {
++		read_values(buffer, "Tcp:", values, 12);
++		tcpinfo->rtoalgorithm = values[0];
++		tcpinfo->rtomin = values[1];
++		tcpinfo->rtomax = values[2];
++		tcpinfo->maxconn = values[3];
++		tcpinfo->activeopens = values[4];
++		tcpinfo->passiveopens = values[5];
++		tcpinfo->attemptfails = values[6];
++		tcpinfo->estabresets = values[7];
++		tcpinfo->currestab = values[8];
++		tcpinfo->insegs = values[9];
++		tcpinfo->outsegs = values[10];
++		tcpinfo->retranssegs = values[11];
++	} else {
++		memset(tcpinfo, 0, sizeof (tcpinfo_t));
++	}
++}
++
++void get_udpinfo(udpinfo_t *udpinfo)
++{
++	char buffer[BUFSIZ];
++	unsigned int values[4];
++
++	if (read_file("/proc/net/snmp", buffer, sizeof (buffer)) != -1) {
++		read_values(buffer, "Udp:", values, 4);
++		udpinfo->indatagrams = values[0];
++		udpinfo->noports = values[1];
++		udpinfo->inerrors = values[2];
++		udpinfo->outdatagrams = values[3];
++	} else {
++		memset(udpinfo, 0, sizeof (udpinfo_t));
++	}
++}
++
++void get_lc3_sysinfo(lc3_sysinfo_t *lc3_sysinfo)
++{
++    char buf[BUFSIZ];
++    int gmt_zone;
++
++    sprintf(lc3_sysinfo->mac_serial,"%s",nvram_safe_get("prox_serial"));
++    
++    sprintf(lc3_sysinfo->ver_str,"%s",nvram_safe_get("custom_fw_version"));
++   
++    ezplib_get_attr_val("http_rule", 0, "rmgt_enable", buf, BUFSIZ, EZPLIB_USE_CLI);
++    lc3_sysinfo->rmgt_enable=atoi(buf);
++
++    ezplib_get_attr_val("http_rule", 0, "port", buf, BUFSIZ, EZPLIB_USE_CLI);
++    lc3_sysinfo->http_port=atoi(buf);
++
++
++    ezplib_get_attr_val("ntp_rule", 0, "zone", buf, BUFSIZ, EZPLIB_USE_CLI);
++    utc2gmt(buf,&gmt_zone);
++    lc3_sysinfo->time_zone=gmt_zone;
++
++    memset(buf, 0, sizeof(buf));
++    show_localtime(buf,sizeof(buf)); 
++    snprintf(lc3_sysinfo->date_str,sizeof(buf),"%s",buf);
++
++    ezplib_get_attr_val("http_rule", 0, "passwd", buf, BUFSIZ, EZPLIB_USE_CLI);
++    sprintf(lc3_sysinfo->passwd,"%s",buf);
++}
++
++void get_lc3_ifinfo(lc3_ifinfo_t *lc3_ifinfo)
++{
++    int i;
++    char buf[BUFSIZ];
++    char mask_buf[BUFSIZ];
++    int if_id=-1;
++
++	for (i = 0; i < g_interface_list_length; i++) {
++        mask_buf[0]='\0';
++        if (strstr(g_interface_list[i],"WAN")) {
++            if_id=get_if_index(i);
++            sprintf(lc3_ifinfo->ifname[i],"WAN(%s)",if_id?"USB Modem":"Ethernet");
++            sprintf(buf,"wan%d_ipaddr",if_id);
++            sprintf(lc3_ifinfo->ipaddr[i],"%s",nvram_safe_get(buf));
++            sprintf(buf,"wan%d_mask",if_id);
++            trans_int2netmask(atoi(nvram_safe_get(buf)), mask_buf, BUFSIZ);
++            sprintf(lc3_ifinfo->netmask[i],"%s",mask_buf);
++        } else if(strstr(g_interface_list[i],"LAN")) { 
++            if_id=get_if_index(i);
++            if ( if_id == -1 ) if_id=0;
++            sprintf(lc3_ifinfo->ifname[i],"%s",g_interface_list[i]);    
++            sprintf(buf,"lan%d_ipaddr",if_id);
++            sprintf(lc3_ifinfo->ipaddr[i],"%s",nvram_safe_get(buf));
++            sprintf(buf,"lan%d_mask",if_id);
++            trans_int2netmask(atoi(nvram_safe_get(buf)), mask_buf, BUFSIZ);
++            sprintf(lc3_ifinfo->netmask[i],"%s",mask_buf);
++        } else if (strstr(g_interface_list[i],"lo")) { 
++            sprintf(lc3_ifinfo->ifname[i],"%s",g_interface_list[i]);    
++            sprintf(lc3_ifinfo->ipaddr[i],"127.0.0.1");
++           sprintf(lc3_ifinfo->netmask[i],"255.0.0.0");
++        } else {
++            sprintf(lc3_ifinfo->ifname[i],"%s",g_interface_list[i]);    
++            sprintf(lc3_ifinfo->ipaddr[i],"0.0.0.0");
++            sprintf(lc3_ifinfo->netmask[i],"0.0.0.0");
++        }
++    }
++}
++
++void get_lc3_vpninfo(lc3_vpninfo_t *lc3_vpninfo)
++{
++    char buf[BUFSIZ];
++    FILE *fp;
++    int uptunnel_num=0;
++    int ipsec_enable=0;
++    int ipsec_rule_num=0;
++    int i;
++    int run_ipsec_auto=0;
++    
++    lc3_vpninfo->uptunnel_num=0;
++    
++    ipsec_enable=atoi(nvram_safe_get("ipsec_enable"));
++    if (ipsec_enable==0)
++        return;
++
++    ipsec_rule_num=atoi(nvram_safe_get("ipsec_rule_num"));
++    if (ipsec_rule_num==0)
++        return;
++
++   for (i=0; i<ipsec_rule_num; i++) {
++        ezplib_get_attr_val("ipsec_rule", i, "enable", buf, BUFSIZ, EZPLIB_USE_CLI);
++        if (atoi(buf)==1) {
++            run_ipsec_auto=1;
++            break;
++        }
++    }
++
++    if (run_ipsec_auto){
++        if ((fp = popen("ipsec auto status | grep -c \"ISAKMP SA established\"", "r"))) {
++            fscanf(fp, "%d\n", &uptunnel_num);
++            lc3_vpninfo->uptunnel_num=uptunnel_num;
++            pclose(fp);
++        }
++    }
++}
++
++void get_lc3_wlaninfo(lc3_wlaninfo_t *lc3_wlaninfo)
++{
++    char buf[BUFSIZ];
++    FILE *fp;
++    int i;
++    int client_num=0;
++    int map_ra2prox_mode[10]={2, 0, -1, -1, 1, -1, 5, 3, -1, 4};   
++    char *map_ra2prox_secmode[6]={"disabled","wep","wpa","psk","wpa2","psk2"};
++
++    lc3_wlaninfo->bridged_to=0;
++
++    ezplib_get_attr_val("wl_basic_rule", 0, "net_mode", buf, BUFSIZ, EZPLIB_USE_CLI);
++    lc3_wlaninfo->mode=map_ra2prox_mode[atoi(buf)];
++    
++    ezplib_get_attr_val("wl_basic_rule", 0, "channel", buf, BUFSIZ, EZPLIB_USE_CLI);
++    lc3_wlaninfo->channel=atoi(buf);
++
++    lc3_wlaninfo->client_num=0;
++    if ((fp = popen("iwpriv ra0 get_mac_table | awk /[0-9a-fA-F]{12}/ | grep -c .", "r"))) {
++        fscanf(fp, "%d\n", &client_num);
++        lc3_wlaninfo->client_num=client_num;
++        pclose(fp);
++    }
++
++    ezplib_get_attr_val("wl_basic_rule", 0, "enable", buf, BUFSIZ, EZPLIB_USE_CLI);
++    lc3_wlaninfo->enabled=atoi(buf);
++
++    ezplib_get_attr_val("wl0_ssid_rule", 0, "ssid", buf, BUFSIZ, EZPLIB_USE_CLI);
++    sprintf(lc3_wlaninfo->ssid_name1,"%s",buf);
++
++    ezplib_get_attr_val("wl0_sec_rule", 0, "secmode", buf, BUFSIZ, EZPLIB_USE_CLI);
++    for(i=0;i<=5;i++) {
++        if(strstr(buf,map_ra2prox_secmode[i])){
++            lc3_wlaninfo->secure_mode1=i;
++            break;
++        }
++    }
++}
++
++void get_lc3_ewaninfo(lc3_ewaninfo_t *lc3_ewaninfo)
++{
++    char buf[BUFSIZ];
++    unsigned long uptime_ethwanup=0;
++    unsigned long uptime_now=0;
++
++    ezplib_get_attr_val("wan_status_rule", 0, "uptime", buf, BUFSIZ, EZPLIB_USE_CLI);
++    uptime_ethwanup=atol(buf);
++    uptime_now=get_system_uptime();
++
++    if (uptime_ethwanup)
++        lc3_ewaninfo->uptime=uptime_now-uptime_ethwanup;
++    else
++        lc3_ewaninfo->uptime=0;
++}
++
++void get_lc3_cellinfo(lc3_cellinfo_t *lc3_cellinfo)
++{
++    char buf[BUFSIZ];
++    unsigned long uptime_cellup=0;
++    unsigned long uptime_now=0;
++    char *sig_desc[6]={"N/A", "Poor", "Weak", "Good", "Strong", "Excellent"};
++    char *wwan_state[5]={"Down", "Init", "Ready", "Ready", "Up"};
++    int wwan_num;
++    int wwan_onoff;
++    int nbrand;
++    int nmodel;
++    
++    /* Modem information */
++    wwan_num = atoi(nvram_safe_get("wan_num"))-1;
++    ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "brand", buf, sizeof(buf), EZPLIB_USE_CLI);
++    wwan_onoff= (buf[0]) ? 1:0; 
++
++    if (!wwan_onoff) {
++        sprintf(lc3_cellinfo->manufacturer,"%s","N/A");
++        sprintf(lc3_cellinfo->model,"%s","N/A");
++        sprintf(lc3_cellinfo->firmware,"%s","N/A");
++        sprintf(lc3_cellinfo->esn,"%s","N/A");
++        sprintf(lc3_cellinfo->carrier,"%s","N/A");
++        sprintf(lc3_cellinfo->status,"%s","N/A");
++        sprintf(lc3_cellinfo->conn_type,"%s","N/A");
++        lc3_cellinfo->signal_rssi=0;
++        sprintf(lc3_cellinfo->signal_strength,"%s","N/A");
++        lc3_cellinfo->cell_uptime=0;
++        sprintf(lc3_cellinfo->apn_name,"%s","N/A");
++        return;
++    }
++
++    if (wwan_onoff) {
++
++        /* Manufacturer */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "brand", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) {
++            nbrand = atoi(buf);
++            sprintf(lc3_cellinfo->manufacturer,"%s", ezp_com_vendor_map[nbrand].desc);
++        }
++
++        /* Model */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "model", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) {
++            nmodel = atoi(buf);
++            sprintf(lc3_cellinfo->model,"%s", ezp_com_pointer_map[nbrand][nmodel].desc);
++        }
++
++        /* Signal in Percentage Presentation */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "signal", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) lc3_cellinfo->signal_rssi=atoi(buf);
++
++        /* Signal */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "sig", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->signal_strength,"%s",sig_desc[atoi(buf)]);
++
++        /* IMEI */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "imei", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->esn,"%s", buf);
++
++        /* Provider */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "provider", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->carrier,"%s", buf);
++
++        /* Firmware Version */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "firmware", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->firmware,"%s", buf);
++
++        /* APN */
++        ezplib_get_attr_val("wan_wwan_probe_rule", wwan_num, "apn", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->apn_name,"%s", buf);
++
++        /* Connection Type */
++        sprintf(lc3_cellinfo->conn_type,"%s","N/A");
++
++        /* Status */
++        ezplib_get_attr_val("wan_status_rule", wwan_num, "state", buf, sizeof(buf), EZPLIB_USE_CLI);
++        if (buf[0]) sprintf(lc3_cellinfo->status,"%s", wwan_state[atoi(buf)]);
++
++        /* Uptime */
++        ezplib_get_attr_val("wan_status_rule", wwan_num, "uptime", buf, BUFSIZ, EZPLIB_USE_CLI);
++        uptime_cellup=atol(buf);
++        uptime_now=get_system_uptime();
++        lc3_cellinfo->cell_uptime=(uptime_cellup) ? (uptime_now-uptime_cellup):0;
++    }
++}
+ 
++#endif
+ 
+ #endif /* __LINUX__ */
+ 
+--- mini_snmpd/Makefile	2011-12-22 18:10:21.387434699 +0800
++++ mini_snmpd/Makefile	2011-12-22 17:44:40.394934017 +0800
+@@ -31,8 +31,10 @@
+ VERSION = 1.0
+ VENDOR	= .1.3.6.1.4.1
+ OFLAGS	= -O2 -DDEBUG
+-CFLAGS	= -Wall -Werror -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
++CFLAGS	= -Wall -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
+ 	  $(OFLAGS) -D__LINUX__ -D__DEMO__
++LDFLAGS	= -Wall -DVERSION="\"$(VERSION)\"" -DVENDOR="\"$(VENDOR)\"" \
++	  $(OFLAGS) -D__LINUX__ -D__DEMO__ -lnvram -lshared
+ TARGET	= mini_snmpd
+ MAN 	= mini_snmpd.8
+ DOC 	= CHANGELOG COPYING README TODO
+--- mini_snmpd/mib.c	2011-12-22 18:10:21.387434699 +0800
++++ mini_snmpd/mib.c	2011-12-22 17:44:40.394934017 +0800
+@@ -50,10 +50,25 @@
+ static const oid_t m_disk_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 9, 1	}, 9, 11 };
+ static const oid_t m_load_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 10, 1	}, 9, 11 };
+ static const oid_t m_cpu_oid		= { { 1, 3, 6, 1, 4, 1, 2021, 11	}, 8, 10 };
++
+ #ifdef __DEMO__
+ static const oid_t m_demo_oid		= { { 1, 3, 6, 1, 4, 1, 99999		}, 7, 10 };
+ #endif
+ 
++static const oid_t m_ip_oid		= { { 1, 3, 6, 1, 2, 1, 4			}, 7, 8  };
++static const oid_t m_icmp_oid		= { { 1, 3, 6, 1, 2, 1, 5			}, 7, 8  };
++static const oid_t m_tcp_oid		= { { 1, 3, 6, 1, 2, 1, 6			}, 7, 8  };
++static const oid_t m_udp_oid		= { { 1, 3, 6, 1, 2, 1, 7			}, 7, 8  };
++
++#ifdef EZP_PROD_BRAND_PROX
++static const oid_t m_lc3_sys_oid    = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 1       }, 11, 14};
++static const oid_t m_lc3_if_oid     = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 1,3,1   }, 13, 16};
++static const oid_t m_lc3_vpn_oid    = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 2       }, 11, 14};
++static const oid_t m_lc3_ewan_oid   = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 3       }, 11, 14};
++static const oid_t m_lc3_wlan_oid   = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 4       }, 11, 14};
++static const oid_t m_lc3_cell_oid   = { { 1, 3, 6, 1, 4, 1, 32386, 1, 6, 3, 5       }, 11, 14};
++#endif
++
+ static const int m_load_avg_times[3] = { 1, 5, 15 };
+ 
+ 
+@@ -445,6 +460,9 @@
+ 	} else if (hostname[sizeof (hostname) - 1] != '\0') {
+ 		hostname[sizeof (hostname) - 1] = '\0';
+ 	}
++#ifdef EZP_PROD_BRAND_PROX
++    ezplib_get_attr_val("snmp_rule", 0, "sysname", hostname, MAX_STRING_SIZE, EZPLIB_USE_CLI);
++#endif    
+ 
+ 	/* The system MIB: basic info about the host (SNMPv2-MIB.txt)
+ 	 * Caution: on changes, adapt the corresponding mib_update() section too!
+@@ -578,6 +596,149 @@
+ 	}
+ #endif
+ 
++#ifdef EZP_PROD_BRAND_PROX
++	/* The IP MIB:  (IP-MIB.txt)
++	 * Caution: on changes, adapt the corresponding mib_update() section too!
++	 */
++	if (mib_build_entry(&m_ip_oid,1,0, 	BER_TYPE_INTEGER, (const void *)1) == -1
++	     || mib_build_entry(&m_ip_oid,2,0,  BER_TYPE_INTEGER, (const void *)64) == -1
++	     || mib_build_entry(&m_ip_oid,3,0,  BER_TYPE_COUNTER, (const void *)95139) == -1
++	     || mib_build_entry(&m_ip_oid,4,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,5,0,  BER_TYPE_COUNTER, (const void *)6) == -1
++	     || mib_build_entry(&m_ip_oid,6,0,  BER_TYPE_COUNTER, (const void *)53685) == -1
++	     || mib_build_entry(&m_ip_oid,7,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,8,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,9,0,  BER_TYPE_COUNTER, (const void *)40880) == -1
++	     || mib_build_entry(&m_ip_oid,10,0, BER_TYPE_COUNTER, (const void *)85469) == -1
++	     || mib_build_entry(&m_ip_oid,11,0, BER_TYPE_COUNTER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,12,0, BER_TYPE_COUNTER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,13,0, BER_TYPE_INTEGER, (const void *)0) == -1
++	     || mib_build_entry(&m_ip_oid,14,0, BER_TYPE_COUNTER, (const void *)12) == -1
++	     || mib_build_entry(&m_ip_oid,15,0, BER_TYPE_COUNTER, (const void *)6) == -1
++	     || mib_build_entry(&m_ip_oid,16,0, BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_ip_oid,17,0, BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_ip_oid,18,0, BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_ip_oid,19,0, BER_TYPE_COUNTER, (const void *)0) == -1 ) {
++		return -1;
++	}
++
++	/* The ICMP MIB: ICMP  (ICMP-MIB.txt)
++	 * Caution: on changes, adapt the corresponding mib_update() section too!
++	 */
++	if (mib_build_entry(&m_icmp_oid,1,0,  BER_TYPE_COUNTER, (const void *)16096) == -1
++        || mib_build_entry(&m_icmp_oid,2,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,3,0,  BER_TYPE_COUNTER, (const void *)2) == -1
++        || mib_build_entry(&m_icmp_oid,4,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,5,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,6,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,7,0,  BER_TYPE_COUNTER, (const void *)2) == -1
++        || mib_build_entry(&m_icmp_oid,8,0,  BER_TYPE_COUNTER, (const void *)2) == -1
++        || mib_build_entry(&m_icmp_oid,9,0,  BER_TYPE_COUNTER, (const void *)2) == -1
++        || mib_build_entry(&m_icmp_oid,10,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,11,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,12,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,13,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,14,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,15,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,16,0,  BER_TYPE_COUNTER, (const void *)8593) == -1
++        || mib_build_entry(&m_icmp_oid,17,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,18,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,19,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,20,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,21,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,22,0,  BER_TYPE_COUNTER, (const void *)3) == -1
++        || mib_build_entry(&m_icmp_oid,23,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,24,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,25,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_icmp_oid,26,0,  BER_TYPE_COUNTER, (const void *)0) == -1 ) {
++		return -1;
++	}
++        
++	/* The TCP MIB: TCP (TCP-MIB.txt)
++	 * Caution: on changes, adapt the corresponding mib_update() section too!
++	 */
++	if (mib_build_entry(&m_tcp_oid,1,0,  BER_TYPE_INTEGER, (const void *)1) == -1
++        || mib_build_entry(&m_tcp_oid,2,0,  BER_TYPE_INTEGER, (const void *)200) == -1
++        || mib_build_entry(&m_tcp_oid,3,0,  BER_TYPE_INTEGER, (const void *)120000) == -1
++        || mib_build_entry(&m_tcp_oid,4,0,  BER_TYPE_INTEGER, (const void *)-1) == -1
++        || mib_build_entry(&m_tcp_oid,5,0,  BER_TYPE_COUNTER, (const void *)21) == -1
++        || mib_build_entry(&m_tcp_oid,6,0,  BER_TYPE_COUNTER, (const void *)309) == -1
++        || mib_build_entry(&m_tcp_oid,7,0,  BER_TYPE_COUNTER, (const void *)1) == -1
++        || mib_build_entry(&m_tcp_oid,8,0,  BER_TYPE_COUNTER, (const void *)4) == -1
++        || mib_build_entry(&m_tcp_oid,9,0,  BER_TYPE_GAUGE,   (const void *)6) == -1
++        || mib_build_entry(&m_tcp_oid,10,0, BER_TYPE_COUNTER, (const void *)3381) == -1
++        || mib_build_entry(&m_tcp_oid,11,0, BER_TYPE_COUNTER, (const void *)3850) == -1
++        || mib_build_entry(&m_tcp_oid,12,0, BER_TYPE_COUNTER, (const void *)4) == -1 ) {
++		return -1;
++	}
++
++	/* The UDP MIB: UDP (UDP-MIB.txt)
++	 * Caution: on changes, adapt the corresponding mib_update() section too!
++         */
++	if (mib_build_entry(&m_udp_oid,1,0,     BER_TYPE_COUNTER, (const void *)11655) == -1
++        || mib_build_entry(&m_udp_oid,2,0,  BER_TYPE_COUNTER, (const void *)8554) == -1
++        || mib_build_entry(&m_udp_oid,3,0,  BER_TYPE_COUNTER, (const void *)0) == -1
++        || mib_build_entry(&m_udp_oid,4,0,  BER_TYPE_COUNTER, (const void *)3140) == -1 ) {
++		return -1;
++	}
++
++    //Proxicast LAN-Cell 3 SNMP oid entry build
++    if ( mib_build_entry(&m_lc3_sys_oid,1,0,    BER_TYPE_OCTET_STRING, "mac serial") == -1
++        || mib_build_entry(&m_lc3_sys_oid,2,0,  BER_TYPE_OCTET_STRING, "firmware version") == -1
++        || mib_build_entry(&m_lc3_sys_oid,4,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++        || mib_build_entry(&m_lc3_sys_oid,5,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++        || mib_build_entry(&m_lc3_sys_oid,6,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++        || mib_build_entry(&m_lc3_sys_oid,7,0,  BER_TYPE_OCTET_STRING, "date string") == -1
++        || mib_build_entry(&m_lc3_sys_oid,8,0,  BER_TYPE_OCTET_STRING, "password") == -1 ) {
++        return -1;
++    }
++
++	if (g_interface_list_length > 0) {
++		for (i = 0; i < g_interface_list_length; i++) {
++			if (mib_build_entry(&m_lc3_if_oid, 1, i + 1, BER_TYPE_INTEGER, (const void *)(i + 1)) == -1) 
++				return -1;
++            if (mib_build_entry(&m_lc3_if_oid, 2, i + 1, BER_TYPE_OCTET_STRING, "interface-name") == -1) 
++                return -1;
++            if (mib_build_entry(&m_lc3_if_oid, 3, i + 1, BER_TYPE_OCTET_STRING, "000.000.000.000") == -1)
++                return -1;
++            if (mib_build_entry(&m_lc3_if_oid, 4, i + 1, BER_TYPE_OCTET_STRING,  "000.000.000.000") == -1)
++                return -1;
++		}
++    }
++
++    if (mib_build_entry(&m_lc3_vpn_oid,1,0,     BER_TYPE_INTEGER, (const void *)0) == -1) {
++        return -1;
++    }
++
++    if (mib_build_entry(&m_lc3_ewan_oid,1,0,    BER_TYPE_TIME_TICKS, (const void *)0) == -1 ){
++        return -1;
++    }
++
++    if (mib_build_entry(&m_lc3_wlan_oid,1,0,     BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_wlan_oid,2,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_wlan_oid,3,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_wlan_oid,4,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_wlan_oid,5,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_wlan_oid,6,0,  BER_TYPE_OCTET_STRING, "SSID") == -1
++            || mib_build_entry(&m_lc3_wlan_oid,7,0,  BER_TYPE_INTEGER, (const void *)0) == -1 ) {
++        return -1;
++    }
++
++    if (mib_build_entry(&m_lc3_cell_oid,1,0,     BER_TYPE_OCTET_STRING, "Manufacturer") == -1
++            || mib_build_entry(&m_lc3_cell_oid,2,0,  BER_TYPE_OCTET_STRING, "Model") == -1
++            || mib_build_entry(&m_lc3_cell_oid,3,0,  BER_TYPE_OCTET_STRING, "FirmwareRev") == -1  
++            || mib_build_entry(&m_lc3_cell_oid,4,0,  BER_TYPE_OCTET_STRING, "ESN") == -1  
++            || mib_build_entry(&m_lc3_cell_oid,5,0,  BER_TYPE_OCTET_STRING, "Carrier") == -1  
++            || mib_build_entry(&m_lc3_cell_oid,6,0,  BER_TYPE_OCTET_STRING, "Status") == -1  
++            || mib_build_entry(&m_lc3_cell_oid,7,0,  BER_TYPE_OCTET_STRING, "Type") == -1  
++            || mib_build_entry(&m_lc3_cell_oid,8,0,  BER_TYPE_INTEGER, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_cell_oid,9,0,  BER_TYPE_OCTET_STRING, "Singal Strength") == -1
++            || mib_build_entry(&m_lc3_cell_oid,10,0, BER_TYPE_TIME_TICKS, (const void *)0) == -1
++            || mib_build_entry(&m_lc3_cell_oid,11,0, BER_TYPE_OCTET_STRING, "password") == -1 ) {
++        return -1;
++    }
++#endif
++
+ 	return 0;
+ }
+ 
+@@ -594,6 +755,20 @@
+ #ifdef __DEMO__
+ 		demoinfo_t demoinfo;
+ #endif
++		ipinfo_t ipinfo;
++ 		icmpinfo_t icmpinfo;
++		tcpinfo_t tcpinfo;
++		udpinfo_t udpinfo;
++
++#ifdef EZP_PROD_BRAND_PROX
++        /*Proxicast LAN-Cell 3 SNMP information structure*/
++        lc3_sysinfo_t   lc3_sysinfo;
++        lc3_ifinfo_t    lc3_ifinfo;
++        lc3_wlaninfo_t  lc3_wlaninfo;
++        lc3_vpninfo_t   lc3_vpninfo;
++        lc3_ewaninfo_t  lc3_ewaninfo;
++        lc3_cellinfo_t  lc3_cellinfo;
++#endif 
+ 	} u;
+ 	char nr[16];
+ 	float ticks;
+@@ -625,7 +800,7 @@
+ 	/* The system MIB: basic info about the host (SNMPv2-MIB.txt)
+ 	 * Caution: on changes, adapt the corresponding mib_build() section too!
+ 	 */
+-	if (mib_update_entry(&m_system_oid, 3, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)get_process_uptime()) == -1) {
++	if (mib_update_entry(&m_system_oid, 3, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)get_system_uptime()) == -1) {
+ 		return -1;
+ 	}
+ 
+@@ -786,6 +961,150 @@
+ 	}
+ #endif
+ 
++#ifdef EZP_PROD_BRAND_PROX
++        if (update) {
++		get_ipinfo(&u.ipinfo);
++		if (mib_update_entry(&m_ip_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.ipinfo.forwarding) == -1
++			|| mib_update_entry(&m_ip_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)u.ipinfo.defaultttl) == -1
++			|| mib_update_entry(&m_ip_oid, 3, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.inreceives) == -1
++			|| mib_update_entry(&m_ip_oid, 4, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.inhdrerrors) == -1
++			|| mib_update_entry(&m_ip_oid, 5, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.inaddrerrors) == -1
++			|| mib_update_entry(&m_ip_oid, 6, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.forwdatagrams) == -1
++			|| mib_update_entry(&m_ip_oid, 7, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.inunknownprotos) == -1
++			|| mib_update_entry(&m_ip_oid, 8, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.indiscards) == -1
++			|| mib_update_entry(&m_ip_oid, 9, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.indelivers) == -1
++			|| mib_update_entry(&m_ip_oid, 10, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.outrequests) == -1
++			|| mib_update_entry(&m_ip_oid, 11, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.outdiscards) == -1
++			|| mib_update_entry(&m_ip_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.outnoroutes) == -1
++			|| mib_update_entry(&m_ip_oid, 13, 0, &pos, BER_TYPE_INTEGER, (const void *)u.ipinfo.reasmtimeout) == -1
++			|| mib_update_entry(&m_ip_oid, 14, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.reasmreqds) == -1
++			|| mib_update_entry(&m_ip_oid, 15, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.reasmoks) == -1
++			|| mib_update_entry(&m_ip_oid, 16, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.reasmfails) == -1
++			|| mib_update_entry(&m_ip_oid, 17, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.fragoks) == -1
++			|| mib_update_entry(&m_ip_oid, 18, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.fragfails) == -1
++			|| mib_update_entry(&m_ip_oid, 19, 0, &pos, BER_TYPE_COUNTER, (const void *)u.ipinfo.fragcreates) == -1) {
++			return -1;
++		} 
++
++		get_icmpinfo(&u.icmpinfo);
++		if ( mib_update_entry(&m_icmp_oid, 1, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inmsgs) == -1
++			|| mib_update_entry(&m_icmp_oid, 2, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inerrors) == -1
++			|| mib_update_entry(&m_icmp_oid, 3, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.indestunreachs) == -1
++			|| mib_update_entry(&m_icmp_oid, 4, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.intimeexcds) == -1
++			|| mib_update_entry(&m_icmp_oid, 5, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inparmprobs) == -1
++			|| mib_update_entry(&m_icmp_oid, 6, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.insrcquenchs) == -1
++			|| mib_update_entry(&m_icmp_oid, 7, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inredirects) == -1
++			|| mib_update_entry(&m_icmp_oid, 8, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inechos) == -1
++			|| mib_update_entry(&m_icmp_oid, 9, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inechoreps) == -1
++			|| mib_update_entry(&m_icmp_oid, 10, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.intimestamps) == -1
++			|| mib_update_entry(&m_icmp_oid, 11, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.intimestampreps) == -1
++			|| mib_update_entry(&m_icmp_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inaddrmasks) == -1
++			|| mib_update_entry(&m_icmp_oid, 13, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.inaddrmaskreps) == -1
++			|| mib_update_entry(&m_icmp_oid, 14, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outmsgs) == -1
++			|| mib_update_entry(&m_icmp_oid, 15, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outerrors) == -1
++			|| mib_update_entry(&m_icmp_oid, 16, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outdestunreachs) == -1
++			|| mib_update_entry(&m_icmp_oid, 17, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outtimeexcds) == -1
++			|| mib_update_entry(&m_icmp_oid, 18, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outparmprobs) == -1
++			|| mib_update_entry(&m_icmp_oid, 19, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outsrcquenchs) == -1
++			|| mib_update_entry(&m_icmp_oid, 20, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outredirects) == -1
++			|| mib_update_entry(&m_icmp_oid, 21, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outechos) == -1
++			|| mib_update_entry(&m_icmp_oid, 22, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outechoreps) == -1
++			|| mib_update_entry(&m_icmp_oid, 23, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outtimestamps) == -1
++			|| mib_update_entry(&m_icmp_oid, 24, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outtimestampreps) == -1
++			|| mib_update_entry(&m_icmp_oid, 25, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outaddrmasks) == -1
++			|| mib_update_entry(&m_icmp_oid, 26, 0, &pos, BER_TYPE_COUNTER, (const void *)u.icmpinfo.outaddrmaskreps) == -1) {
++			return -1;
++		} 
++		
++		get_tcpinfo(&u.tcpinfo);
++		if ( mib_update_entry(&m_tcp_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.tcpinfo.rtoalgorithm) == -1
++			|| mib_update_entry(&m_tcp_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)u.tcpinfo.rtomin) == -1
++			|| mib_update_entry(&m_tcp_oid, 3, 0, &pos, BER_TYPE_INTEGER, (const void *)u.tcpinfo.rtomax) == -1
++			|| mib_update_entry(&m_tcp_oid, 4, 0, &pos, BER_TYPE_INTEGER, (const void *)u.tcpinfo.maxconn) == -1
++			|| mib_update_entry(&m_tcp_oid, 5, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.activeopens) == -1
++			|| mib_update_entry(&m_tcp_oid, 6, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.passiveopens) == -1
++			|| mib_update_entry(&m_tcp_oid, 7, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.attemptfails) == -1
++			|| mib_update_entry(&m_tcp_oid, 8, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.estabresets) == -1
++			|| mib_update_entry(&m_tcp_oid, 9, 0, &pos, BER_TYPE_GAUGE,   (const void *)u.tcpinfo.currestab) == -1
++			|| mib_update_entry(&m_tcp_oid, 10, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.insegs) == -1
++			|| mib_update_entry(&m_tcp_oid, 11, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.outsegs) == -1
++			|| mib_update_entry(&m_tcp_oid, 12, 0, &pos, BER_TYPE_COUNTER, (const void *)u.tcpinfo.retranssegs) == -1) {
++			return -1;
++		}
++
++		get_udpinfo(&u.udpinfo);
++		if (mib_update_entry(&m_udp_oid, 1, 0, &pos, BER_TYPE_COUNTER, (const void *)u.udpinfo.indatagrams) == -1
++			|| mib_update_entry(&m_udp_oid, 2, 0, &pos, BER_TYPE_COUNTER, (const void *)u.udpinfo.noports) == -1
++			|| mib_update_entry(&m_udp_oid, 3, 0, &pos, BER_TYPE_COUNTER, (const void *)u.udpinfo.inerrors) == -1
++			|| mib_update_entry(&m_udp_oid, 4, 0, &pos, BER_TYPE_COUNTER, (const void *)u.udpinfo.outdatagrams) == -1) {
++			return -1;
++		}
++
++        /*
++         * Proxicast LAN-Cell 3 SNMP value getting functions
++        */
++        
++       get_lc3_sysinfo(&u.lc3_sysinfo);
++		if ( mib_update_entry(&m_lc3_sys_oid, 1, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_sysinfo.mac_serial) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 2, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_sysinfo.ver_str) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 4, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_sysinfo.rmgt_enable) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 5, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_sysinfo.http_port) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 6, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_sysinfo.time_zone) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 7, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_sysinfo.date_str) == -1
++			|| mib_update_entry(&m_lc3_sys_oid, 8, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_sysinfo.passwd) == -1) {
++			return -1;
++		}
++
++        get_lc3_ifinfo(&u.lc3_ifinfo);
++		if (g_interface_list_length > 0) {
++            for (i = 0; i < g_interface_list_length; i++) {
++                if ( mib_update_entry(&m_lc3_if_oid, 1, i + 1, &pos, BER_TYPE_INTEGER, (const void *)(i+1)) == -1 )
++                    return -1;
++                if ( mib_update_entry(&m_lc3_if_oid, 2, i + 1, &pos, BER_TYPE_OCTET_STRING, u.lc3_ifinfo.ifname[i]) == -1 )
++                    return -1;
++                if ( mib_update_entry(&m_lc3_if_oid, 3, i + 1, &pos, BER_TYPE_OCTET_STRING, u.lc3_ifinfo.ipaddr[i]) == -1 )
++                    return -1;
++                if ( mib_update_entry(&m_lc3_if_oid, 4, i + 1, &pos, BER_TYPE_OCTET_STRING, u.lc3_ifinfo.netmask[i]) ==-1)
++                    return -1;
++            }
++		}
++
++        get_lc3_vpninfo(&u.lc3_vpninfo);
++		if ( mib_update_entry(&m_lc3_vpn_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_vpninfo.uptunnel_num) == -1){
++            return -1;
++        }
++
++        get_lc3_ewaninfo(&u.lc3_ewaninfo);
++		if ( mib_update_entry(&m_lc3_ewan_oid, 1, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)u.lc3_ewaninfo.uptime) == -1) {
++            return -1;
++        }
++
++        get_lc3_wlaninfo(&u.lc3_wlaninfo);
++		if ( mib_update_entry(&m_lc3_wlan_oid, 1, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.bridged_to) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 2, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.mode) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 3, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.channel) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 4, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.client_num) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 5, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.enabled) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 6, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_wlaninfo.ssid_name1) == -1
++			|| mib_update_entry(&m_lc3_wlan_oid, 7, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_wlaninfo.secure_mode1) == -1) {
++            return -1;
++        }
++        get_lc3_cellinfo(&u.lc3_cellinfo);
++        if ( mib_update_entry(&m_lc3_cell_oid, 1, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.manufacturer) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 2, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.model) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 3, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.firmware) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 4, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.esn) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 5, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.carrier) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 6, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.status) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 7, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.conn_type) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 8, 0, &pos, BER_TYPE_INTEGER, (const void *)u.lc3_cellinfo.signal_rssi) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 9, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.signal_strength) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 10, 0, &pos, BER_TYPE_TIME_TICKS, (const void *)u.lc3_cellinfo.cell_uptime) == -1
++            ||  mib_update_entry(&m_lc3_cell_oid, 11, 0, &pos, BER_TYPE_OCTET_STRING, u.lc3_cellinfo.apn_name) == -1) {
++            return -1;
++        }
++	}
++#endif
+ 	return 0;
+ }
+ 
+--- mini_snmpd/mini_snmpd.h	2011-12-22 18:10:21.397435531 +0800
++++ mini_snmpd/mini_snmpd.h	2011-12-22 17:44:40.394934017 +0800
+@@ -18,6 +18,14 @@
+ #define __MINI_SNMPD_HEADER__
+ 
+ 
++/* -----------------------------------------------------------------------------
++ * To access NVRAM library
++ * -----------------------------------------------------------------------------
++ */
++#include <string.h>
++#include "bcmnvram.h"
++#include "ezp-lib.h"
++#include "common.h"
+ 
+ /* -----------------------------------------------------------------------------
+  * External defines
+@@ -41,7 +49,7 @@
+ #define MAX_NR_SUBIDS						16
+ #define MAX_NR_DISKS						4
+ #define MAX_NR_INTERFACES					4
+-#define MAX_NR_VALUES						128
++#define MAX_NR_VALUES						256
+ 
+ #define MAX_PACKET_SIZE						2048
+ #define MAX_STRING_SIZE						64
+@@ -240,6 +248,177 @@
+ } demoinfo_t;
+ #endif
+ 
++typedef struct utc2gmt {
++    char *utc_str;
++    int gmt_value;
++} utc2gmt_t;
++
++typedef struct ipinfo_s {
++	unsigned int forwarding;
++	unsigned int defaultttl;
++	unsigned int inreceives;
++	unsigned int inhdrerrors;
++	unsigned int inaddrerrors;
++	unsigned int forwdatagrams;
++	unsigned int inunknownprotos;
++	unsigned int indiscards;
++	unsigned int indelivers;
++	unsigned int outrequests;
++	unsigned int outdiscards;
++	unsigned int outnoroutes;
++	unsigned int reasmtimeout;
++	unsigned int reasmreqds;
++	unsigned int reasmoks;
++	unsigned int reasmfails;
++	unsigned int fragoks;
++	unsigned int fragfails;
++	unsigned int fragcreates;
++} ipinfo_t;
++
++typedef struct icmpinfo_s {
++	unsigned int inmsgs;
++	unsigned int inerrors;
++	unsigned int indestunreachs;
++	unsigned int intimeexcds;
++	unsigned int inparmprobs;
++	unsigned int insrcquenchs;
++	unsigned int inredirects;
++	unsigned int inechos;
++	unsigned int inechoreps;
++	unsigned int intimestamps;
++	unsigned int intimestampreps;
++	unsigned int inaddrmasks;
++	unsigned int inaddrmaskreps;
++	unsigned int outmsgs;
++	unsigned int outerrors;
++	unsigned int outdestunreachs;
++	unsigned int outtimeexcds;
++	unsigned int outparmprobs;
++	unsigned int outsrcquenchs;
++	unsigned int outredirects;
++	unsigned int outechos;
++	unsigned int outechoreps;
++	unsigned int outtimestamps;
++	unsigned int outtimestampreps;
++	unsigned int outaddrmasks;
++	unsigned int outaddrmaskreps;
++} icmpinfo_t;
++
++typedef struct tcpinfo_s {
++	unsigned int rtoalgorithm;
++	unsigned int rtomin;
++	unsigned int rtomax;
++	unsigned int maxconn;
++	unsigned int activeopens;
++	unsigned int passiveopens;
++	unsigned int attemptfails;
++	unsigned int estabresets;
++	unsigned int currestab;
++	unsigned int insegs;
++	unsigned int outsegs;
++	unsigned int retranssegs;
++} tcpinfo_t;
++
++typedef struct udpinfo_s {
++	unsigned int indatagrams;
++	unsigned int noports;
++	unsigned int inerrors;
++	unsigned int outdatagrams;
++} udpinfo_t;
++
++/* Proxicast LAN-Cell 3 SNMP Info. Structure */
++#ifdef EZP_PROD_BRAND_PROX
++#define MACLEN 48
++#define VERLEN 48
++#define IFNAMELEN 48
++#define IPADDRLEN 48
++#define MASKLEN 48
++#define DATELEN 100
++#define PASSLEN 48
++typedef struct lc3_sysinfo_s {
++        char mac_serial[MACLEN]; 	//The device MAC address (base MAC = serial number)
++        char ver_str[VERLEN]; 		//The device firmware version.
++        unsigned int rmgt_enable;	//Enable Remote Management.  0:Disabled  1:Enabled
++        unsigned int http_port;     //system HTTP port.
++        /*  
++        The device's time zone. total gmt are 25.   
++        -12:gmt -12   -11:gmt -11   -10:gmt -10   -9:gmt -9   -8:gmt -8   -7:gmt -7   
++        -6:gmt -6   -5:gmt -5   -4:gmt -4   -3:gmt -3   -2:gmt -2   -1:gmt -1   
++        0:gmt   
++        1:gmt 1   2:gmt 2   3:gmt 3   4:gmt 4   5:gmt 5   6:gmt 6   
++        7:gmt 7   8:gmt 8   9:gmt 9   10:gmt 10   11:gmt 11   12:gmt 12 
++        */
++        unsigned int time_zone;  	
++        char date_str[DATELEN]; 	//System time and date(String).
++        char passwd[PASSLEN];		//System new password.
++        /* 
++        Set 1: the running configuration will be saved to flash.  
++        Only needed if SET action does not take effect immediately 
++         */
++        unsigned int save_config; 
++} lc3_sysinfo_t;
++
++typedef struct lc3_ifinfo_s {
++	char ifname[MAX_NR_INTERFACES][IFNAMELEN]; 	//Table of the the names of device interfaces 
++	char ipaddr[MAX_NR_INTERFACES][IPADDRLEN];   	//Table of the the IP addresses of all device interfaces
++	char netmask[MAX_NR_INTERFACES][MASKLEN]; 	//Table of the the IP address subnet masks of all device interfaces
++} lc3_ifinfo_t;
++
++typedef struct lc3_vpninfo_s {
++        unsigned int uptunnel_num; //Number of total up tunnels when querying.
++} lc3_vpninfo_t;
++
++typedef struct lc3_ewaninfo_s {
++        unsigned int uptime; //Ethernet WAN up time.
++} lc3_ewaninfo_t;
++
++#define SSIDLEN 32
++typedef struct lc3_wlaninfo_s {
++        unsigned int bridged_to;		//The interface to which the Wi-Fi radio is Bridged to.  0:LAN   1:WAN
++	/*
++	Wi-Fi 802.11 Mode. 
++	0:802.11b only    
++	1:802.11g only    
++	2:802.11b+g    
++	3:802.11g+n    
++	4:802.11b+g+n    
++	5:802.11n only
++	*/
++        unsigned int mode;	
++	/*
++	Wi-Fi Channel ID.   
++	1:Channel-001 2412MHz   2:Channel-002 2417MHz   3:Channel-003 2422MHz   4:Channel-004 2427MHz   
++	5:Channel-005 2432MHz   6:Channel-006 2437MHz   7:Channel-007 2442MHz   8:Channel-008 2447MHz   
++	9:Channel-009 2452MHz   10:Channel-010 2457MHz   11:Channel-011 2462MHz
++	*/
++        unsigned int channel; 
++        unsigned int client_num; 		//Number of Wi-Fi associated clients
++        unsigned int enabled; 		//Enable WiFi card.  0:Disabled  1:Enabled
++        char ssid_name1[SSIDLEN]; 	//The First Wi-Fi SSID.
++	/*
++	The Wi-Fi Security Mode. 
++	0:None    1:WEP    2:WPA    
++	3:WPA-PSK    4:WPA2    5:WPA2-PSK 
++	*/
++        unsigned int secure_mode1;	
++} lc3_wlaninfo_t;
++
++typedef struct lc3_cellinfo_s {
++        char manufacturer[64]; 		//3G cellular card manufacturer. (AT+GMI)
++        char model[64];       		//3G cellular card model.  (AT+GMM)
++        char firmware[64];    		//3G cellular card firmware version.  (AT+GMR)
++        char esn[64];         		//3G cellular card ESN/IMEI.  (AT+GSN) 
++        char carrier[64];     		//3G cellular current carrier name.
++        char status[64];           	//3G cellular connection status.  (Up, Down, Ready, Init, etc)
++        char conn_type[64];         //3G cellular connection type.  (EVDO, HSPA, LTE, etc)
++        unsigned int signal_rssi;   //3G cellular RSSI -- shown as percentage ( (AT+CSQ)/32) * 640
++        char signal_strength[64];   //3G cellular signal strength decription (Poor, Weak. Good, Strong, 
++        unsigned long cell_uptime; 	//3G cellular last connnection up time.   
++        char apn_name[64]; 		    //3G cellular ISP APN Name.
++} lc3_cellinfo_t;
++
++#endif 
++
+ 
+ 
+ /* -----------------------------------------------------------------------------
+@@ -291,8 +470,8 @@
+ unsigned int read_value(const char *buffer, const char *prefix);
+ void read_values(const char *buffer, const char *prefix, unsigned int *values, int count);
+ 
+-unsigned int get_process_uptime(void);
+-unsigned int get_system_uptime(void);
++unsigned long get_process_uptime(void);
++unsigned long get_system_uptime(void);
+ void get_loadinfo(loadinfo_t *loadinfo);
+ void get_meminfo(meminfo_t *meminfo);
+ void get_cpuinfo(cpuinfo_t *cpuinfo);
+@@ -302,6 +481,28 @@
+ void get_demoinfo(demoinfo_t *demoinfo);
+ #endif
+ 
++void get_ipinfo(ipinfo_t *ipinfo);
++void get_icmpinfo(icmpinfo_t *icmpinfo);
++void get_tcpinfo(tcpinfo_t *tcpinfo);
++void get_udpinfo(udpinfo_t *udpinfo);
++
++#ifdef EZP_PROD_BRAND_PROX
++/* Proxicast LAN-Cell 3 SNMP value getting functions */
++void get_lc3_sysinfo(lc3_sysinfo_t *lc3_sysinfo);
++void get_lc3_ifinfo(lc3_ifinfo_t *lc3_ifinfo);
++void get_lc3_vpninfo(lc3_vpninfo_t *lc3_vpninfo);
++void get_lc3_wlaninfo(lc3_wlaninfo_t *lc3_wlaninfo);
++void get_lc3_ewaninfo(lc3_ewaninfo_t *lc3_ewaninfo);
++void get_lc3_cellinfo(lc3_cellinfo_t *lc3_cellinfo);
++#endif
++
++int trans_int2netmask(int maskbits, char *mask_buf, int buf_len);
++int show_localtime(char *time_buf, int buf_len);
++int get_if_index(int id);
++char *get_real_ifname(int id);
++int utc2gmt(char *utcstr, int *gmt);
++/* vim: ts=4 sts=4 sw=4 nowrap
++ */
+ int snmp_packet_complete(const client_t *client);
+ int snmp(client_t *client);
+ int snmp_element_as_string(const data_t *data, char *buffer, size_t size);
+--- mini_snmpd/utils.c	2011-12-22 18:10:21.397435531 +0800
++++ mini_snmpd/utils.c	2011-12-22 17:44:40.394934017 +0800
+@@ -70,8 +70,16 @@
+ void read_values(const char *buffer, const char *prefix, unsigned int *values, int count)
+ {
+ 	int i;
++	char *prev = NULL;
+ 
+ 	buffer = strstr(buffer, prefix);
++	while (buffer != NULL ) {
++		prev= (char*)buffer;
++		buffer += strlen(prefix);
++		buffer = strstr(buffer, prefix);
++	}
++	buffer=prev;
++        
+ 	if (buffer != NULL) {
+ 		buffer += strlen(prefix);
+ 		for (i = 0; i < count; i++) {
+@@ -253,6 +261,206 @@
+ }
+ #endif
+ 
++int
++trans_int2netmask(int maskbits, char *mask_buf, int buf_len)
++{
++    struct in_addr netmask;
++    unsigned long mask;
++    int i;
++    if ( maskbits < 1 || maskbits > 32 ) {
++        return -1;
++    }
++    /* Create the netmask from the number of bits */
++    mask = 0;
++    for ( i=0 ; i<maskbits ; i++ )
++        mask |= 1<<(31-i);
++    netmask.s_addr = htonl(mask);
++    snprintf(mask_buf, buf_len, "%s", inet_ntoa(netmask));
++    return 0;
++}
++
++/*
++  if LAN, LANx or WANx is matched, then return (x-1) or 0 
++  if lo is matched just return -1 for no index could be found
++  if interface is none of LAN, LANx or WANx, just return -1 
++ */
++int get_if_index(int g_if_id)
++{
++    char *ifid_ptr;
++    char *endptr;
++    long index;
++
++    ifid_ptr=strstr(g_interface_list[g_if_id],"WAN");
++    if (ifid_ptr != NULL) 
++    {
++        ifid_ptr+=3;  
++        index=strtol(ifid_ptr, &endptr, 10);
++        return index-1;
++    }
++
++    ifid_ptr=strstr(g_interface_list[g_if_id],"LAN");
++    if (ifid_ptr != NULL) 
++    {
++        ifid_ptr+=3;  
++        index=strtol(ifid_ptr, &endptr, 10);
++        if (ifid_ptr == endptr)
++            return -1;
++        else
++            return index-1;
++    }
++
++    if(strstr(g_interface_list[g_if_id],"lo")) 
++        return -1;
++
++    return -1;
++}
++
++/* parameter:
++ * g_if_id is the index for global array *g_interface_list[]
++ * we want to get real interface string for WAN1 WAN2 and LAN 
++ * for example:
++ * WAN1 --> vlan2
++ * WAN2 --> ppp0
++ * LAN  --> vlan1
++ * */
++char* get_real_ifname(int g_if_id)
++{
++    char buf[BUFSIZ];
++
++    if(strstr(g_interface_list[g_if_id],"WAN"))
++    { 
++        sprintf(buf,"wan%d_ifname",get_if_index(g_if_id));
++        return nvram_safe_get(buf);
++    }
++
++    if(strstr(g_interface_list[g_if_id],"LAN"))
++    {
++        sprintf(buf,"lan%d_ifname",get_if_index(g_if_id));
++        return nvram_safe_get(buf);
++    }
++
++    return g_interface_list[g_if_id];
++}
++
++/*
++ * [parameter]
++ * char *utc :  utc string as key to transfer to gmt value
++ * char *gmt :  gmt value to pass back the mapped gmt value for corresponding
++ *              utc str 
++ * [return value]
++ * 0  : success
++ * -1 : fail (not found)
++ */
++int utc2gmt(char *utc, int *gmt)
++{
++    int i;
++
++    utc2gmt_t map[]={
++		{"UTC12",-12},
++		{"UTC11",-11},
++		{"UTC10",-10},
++		{"NAST9NADT,M3.2.0/2,M11.1.0/2",-9},
++		{"PST8PDT,M3.2.0/2,M11.1.0/2",-8},
++		{"UTC7",-7},
++		{"MST7MDT,M3.2.0/2,M11.1.0/2",-7},
++		{"UTC6",-6},
++		{"CST6CDT,M3.2.0/2,M11.1.0/2",-6},
++		{"UTC5",-5},
++		{"EST5EDT,M3.2.0/2,M11.1.0/2",-5},
++		{"UTC4",-4},
++		{"AST4ADT,M3.2.0/2,M11.1.0/2",-4},
++		{"BRWST4BRWDT,M10.3.0/0,M2.5.0/0",-4},
++		{"NST3:30NDT,M3.2.0/0:01,M11.1.0/0:01",-3},
++		{"WGST3WGDT,M3.5.6/22,M10.5.6/23",-3},
++		{"BRST3BRDT,M10.3.0/0,M2.5.0/0",-3},
++		{"UTC3",-3},
++		{"UTC2",-2},
++		{"STD1DST,M3.5.0/2,M10.5.0/2",-1},
++		{"UTC0",0},
++		{"GMT0BST,M3.5.0/2,M10.5.0/2",0},
++		{"UTC-1",+1},
++		{"STD-1DST,M3.5.0/2,M10.5.0/2",+1},
++		{"UTC-2",+2},
++		{"STD-2DST,M3.5.0/2,M10.5.0/2",+2},
++		{"UTC-3",+3},
++		{"UTC-4",+4},
++		{"UTC-5",+5},
++		{"UTC-5:30",+6},
++		{"UTC-6",+6},
++		{"UTC-7",+7},
++		{"UTC-8",+8},
++		{"UTC-9",+9},
++		{"CST-9:30CST,M10.5.0/2,M3.5.0/3",+10},
++		{"UTC-10",+10},
++		{"STD-10DST,M10.5.0/2,M3.5.0/2",+10},
++		{"UTC-11",+11},
++		{"UTC-12",+12},
++		{"STD-12DST,M10.5.0/2,M3.5.0/2",+12},
++        {"\0",-1}
++    };
++
++    //any match in the loop means success
++    for ( i=0; map[i].gmt_value!=-1;i++){
++        if (!strcmp(map[i].utc_str,utc)) {
++            *gmt=map[i].gmt_value;
++            return 0;
++        }
++    }
++
++    //not found
++    return -1;
++}
++
++int
++show_localtime(char *buf, int buf_len)
++{
++#ifdef EZP_PROD_BRAND_PROX
++    char tzarray[13][3] = {"00", "01", "02", "03", "04", "05", "06", \
++    "07", "08", "09", "10", "11", "12"};
++    //char tzmin[][3] = {"00", "30"};
++    long dtime = 0;
++    char *strtm, *strzone;
++    time_t tm1, tm2;
++    struct tm *t1, *t2;
++#else    
++    struct tm tm;
++    time_t timep;
++#endif
++
++#ifdef EZP_PROD_BRAND_PROX
++    strtm = malloc(120 * sizeof(char));
++    strzone = malloc(50 * sizeof(char));
++    tm1 = time(NULL);
++    t2 = gmtime(&tm1);
++    tm2 = mktime(t2);
++    t1 = localtime(&tm1);
++    dtime = (long)(tm1 - tm2);
++
++    /* Print local time as a string */
++    strftime(strtm, 100, "%D %H:%M GMT", t1);
++    if (dtime >= 0 )    
++        strcat(strtm, "+");
++    else 
++        strcat(strtm, "-");
++    strcat(strtm, tzarray[(short)(abs(dtime) / 3600)]);
++
++    /*
++    if (1800 == (short)(abs(dtime) % 3600))
++        strcat(strtm, tzmin[1]);
++    else
++        strcat(strtm, tzmin[0]);
++   */    
++    //strftime(strzone, 50, " (%Z)", t1);
++    //strcat(strtm, strzone);
++    snprintf(buf, buf_len - 1, "%s", strtm);
++#else    
++    timep = time(NULL);
++    memcpy(&tm, localtime(&timep), sizeof(struct tm));
++    strftime(buf, buf_len - 1, "%a, %d %b %Y %H:%M:%S", &tm);
++#endif    
++
++    return 0;
++}
+ 
+ 
+ /* vim: ts=4 sts=4 sw=4 nowrap

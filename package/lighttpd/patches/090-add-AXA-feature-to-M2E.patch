@@ -1,0 +1,96 @@
+--- lighttpd-1.4.30/src/server.c	2013-11-19 17:10:45.578093819 +0800
++++ lighttpd-1.4.30/src/server.c	2013-11-19 17:12:00.522095827 +0800
+@@ -31,7 +31,7 @@
+ 
+ #include <stdio.h>
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+ #include <sys/socket.h>
+ #include "command.h"
+ #include <pthread.h>
+@@ -78,7 +78,7 @@
+     server thread to receive command from httpd
+ */
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+ void *open_socket()
+ {
+     int         server_sockfd;
+@@ -1247,7 +1247,7 @@
+ 		}
+ 	}
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+ 	/* create thread for socket connection */
+ 	pthread_t p;
+ 	pthread_create(&p, NULL, open_socket, NULL);
+
+
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-11-19 17:13:36.290098392 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-11-19 17:10:55.186094076 +0800
+@@ -23,7 +23,7 @@
+ #include <unistd.h>
+ #include <dirent.h>
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+ #include "command.h"
+ #endif
+ 
+@@ -716,7 +716,7 @@
+         ntotal += n_chars;
+         usleep(40000);
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+         /* get the command to cancel copy */
+         if( command_signal == COPY_RECV) 
+         {
+@@ -1157,7 +1157,7 @@
+ 			}
+ 		}
+ 	} else {
+-#if defined(PLATFORM_AXA)
++#if defined(PLATFORM_AXA) || defined (PLATFORM_M2E)
+                 /* just do one times LSTAT to abate time-wasting */
+                 webdav_get_live_property(srv, con, p, dst, "listing_fastpath", b_200);
+ #else
+@@ -1462,7 +1462,7 @@
+ 			break;
+ 		}
+ 
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+ 		int goto_fast_list = webdav_parse_prop(con->request_content_queue, "fastlist");
+         int get_fast_check = webdav_parse_prop(con->request_content_queue, "fastcheck");
+ #endif
+@@ -1574,7 +1574,7 @@
+ 		switch(depth) {
+ 		case 0:
+ 			/* Depth: 0 */
+-#if defined (PLATFORM_AXA)
++#if defined (PLATFORM_AXA) || defined (PLATFORM_M2E)
+             if(get_fast_check && check_file_existence(con->physical.path->ptr)) {
+                 buffer_append_string_len(b,CONST_STR_LEN("<D:response>\n"));
+                 buffer_append_string_len(b,CONST_STR_LEN("<D:href>"));
+@@ -1660,7 +1660,7 @@
+ 					buffer_reset(prop_200);
+ 					buffer_reset(prop_404);
+ 
+-#if defined(PLATFORM_AXA)
++#if defined(PLATFORM_AXA) || defined (PLATFORM_M2E)
+ 					if(goto_fast_list !=1)
+ #endif
+ 						webdav_get_props(srv, con, p, &d, req_props, prop_200, prop_404);
+@@ -1673,7 +1673,7 @@
+ 					buffer_append_string_buffer(b, con->uri.authority);
+ 					buffer_append_string_encoded(b, CONST_BUF_LEN(d.rel_path), ENCODING_REL_URI);
+ 					buffer_append_string_len(b,CONST_STR_LEN("</D:href>\n"));
+-#if defined(PLATFORM_AXA)
++#if defined(PLATFORM_AXA) || defined (PLATFORM_M2E)
+ 			                /* MJ add for fast listing */
+                     if(goto_fast_list == 1) {
+ 

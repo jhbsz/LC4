@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-vpnstatus/Makefile
+Package: ezp-vpnstatus
+Version: 1
+Depends: ezp-nvram
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: VPN status updater
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Command Line Interface.
+@@
+

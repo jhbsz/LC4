@@ -1,0 +1,50 @@
+Source-Makefile: package/udev/Makefile
+Package: udev
+Version: 106-1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Dynamic device management subsystem
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  udev provides a dynamic device directory containing only the files for 
+ actually present devices. It creates or removes device node files in 
+ the /dev directory, or it renames network interfaces.
+
+http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html
+@@
+Package: udevtrigger
+Version: 106-1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: base
+Category: Base system
+Title: Small utility to request kernel devices events for coldplug
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Small utility to request kernel devices events for coldplug
+
+http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html
+@@
+Package: udevextras
+Menu: 1
+Version: 106-1
+Depends: @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: Utilities for udev scripts, for general device discovery
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Utilities for udev scripts, for general device discovery
+
+http://www.kernel.org/pub/linux/utils/kernel/hotplug/udev.html
+@@
+Config: 
+  source "package/udev/udevextras-config.in"
+@@
+

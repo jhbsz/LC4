@@ -1,0 +1,106 @@
+--- transmission-2.03/libtransmission/transmission.h	2010-08-04 11:57:13.635010727 +0800
++++ transmission-2.03/libtransmission/transmission.h	2010-08-04 11:56:01.382692362 +0800
+@@ -214,7 +214,14 @@
+ /* EZP */
+ #define TR_MAX_DOWNLOAD_TORRENT                 "max-download-torrent"
+ 
+-
++/* EZP file system */
++enum
++{
++    NONE = 0,
++    VFAT,
++    EXT3,
++    EXFAT
++};
+ 
+ /**
+  * Add libtransmission's default settings to the benc dictionary.
+--- transmission-2.03/libtransmission/utils.c	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/utils.c	2010-08-04 11:56:12.135011845 +0800
+@@ -636,6 +636,18 @@
+     return 0;
+ }
+ 
++/* EZP */
++void
++lowercase(char *name, int size)
++{
++    int i;
++    char prefix[32];
++    snprintf(prefix, sizeof(prefix), "/tmp/%s", mount_point(NULL));
++    for (i = strlen(prefix);i < size; i++) {
++        name[i] = tolower(name[i]);
++    }
++}
++
+ char*
+ tr_buildPath( const char *first_element, ... )
+ {
+@@ -674,6 +686,12 @@
+ 
+     /* sanity checks & return */
+     assert( pch - buf == (off_t)bufLen );
++
++    /* EZP translate filename to lowercase  if file system is vfat */
++    if(fs_info(NONE) == VFAT) {
++        lowercase(buf, bufLen);
++    }
++
+     return buf;
+ }
+ 
+--- transmission-2.03/libtransmission/metainfo.c	2010-07-21 12:13:41.000000000 +0800
++++ transmission-2.03/libtransmission/metainfo.c	2010-08-04 11:56:22.216254890 +0800
+@@ -43,7 +43,10 @@
+     for( pch=name; pch && *pch; ++pch )
+         if( *pch == '/' )
+             *pch = '_';
+-   
++    /* EZP translate filename to lowercase  if file system is vfat */
++    if(fs_info(NONE) == VFAT) {
++        lowercase(name, strlen(name));
++    }
+     ret = tr_strdup_printf( "%s.%16.16s", name, inf->hashString );
+ 
+     tr_free( name );
+--- transmission-2.03/libtransmission/session.c	2010-08-04 11:57:13.635010727 +0800
++++ transmission-2.03/libtransmission/session.c	2010-08-04 11:56:35.642577899 +0800
+@@ -603,6 +603,15 @@
+     tr_bool       messageQueuingEnabled;
+     tr_benc     * clientSettings;
+ };
++/* EZP setup and get file system type info */
++int fs_info( int type )
++{
++    static int fs_type = 0;
++    if ( type > 0 ) {
++        fs_type = type;
++    }
++    return fs_type;
++}
+ 
+ char * mount_point(char * dev_path)
+ {
+@@ -646,6 +655,21 @@
+         pclose(fd);
+     }
+ 
++    /* EZP setup file system type */
++    char fs[16];
++    fd = popen("nvram show storage_state_rule 0 format", "r");
++    if (fd != NULL) {
++        fgets(fs, sizeof(fs),fd);
++        if (strcmp(fs, "vfat\n") == 0) {
++            fs_info(VFAT);
++        } else if (strcmp(fs, "ext3\n") == 0){
++            fs_info(EXT3);
++        } else if (strcmp(fs, "exfat\n") == 0){
++            fs_info(EXFAT);
++        }
++        pclose(fd);
++    }
++
+     /* initialize the bare skeleton of the session object */
+     session = tr_new0( tr_session, 1 );
+     session->bandwidth = tr_bandwidthNew( session, NULL );

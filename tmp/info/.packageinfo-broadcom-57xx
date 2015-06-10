@@ -1,0 +1,15 @@
+Source-Makefile: package/broadcom-57xx/Makefile
+Package: kmod-brcm-57xx
+Submenu: Network Devices
+Version: <LINUX_VERSION>--1
+Depends: @TARGET_brcm_2_4 +kmod-switch
+Provides: 
+Build-Depends: 
+Section: kernel
+Category: Kernel modules
+Title: Broadcom 57xx ethernet support
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Broadcom 57xx ethernet support
+@@
+

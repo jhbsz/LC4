@@ -1,0 +1,61 @@
+/* table */
+table {
+    margin:0 auto;
+    width:100%;
+    border-spacing:.3em;
+}
+table tr th {
+    color:#FFF;
+    font-weight:normal;
+    border-style:solid;
+    border-color:#ccc #666 #666 #ccc;
+    text-align:left;
+    padding: 1px;
+    background:#999;
+    vertical-align:bottom;
+    font-size: 11px;
+}
+fieldset table tr:hover {
+    background: #e8e8e8;
+}
+table td {
+    padding:0;
+    font-size: 10px;
+}
+table#miduserblock div.moduletable,
+table#botuserblock div.moduletable {
+    padding: 13px;
+}
+
+table#mainblock,
+table#botuserblock {
+    border: 0;
+    width: 100%;
+}
+
+table#mainblock tr,
+table#botuserblock tr {
+    vertical-align: top;
+}
+
+table#botuserblock td {
+    width: 50%;
+    padding-right: 3px;
+}
+
+td#sidenav {
+    width: 199px;
+}
+
+td#main div.padding {
+    padding: 5px 2px 5px 5px;
+}
+
+td.right div.sidenav div.padding {
+     padding: 6px 6px 6px 7px;
+}
+
+td.left div.sidenav div.padding {
+     padding: 6px 8px 6px 5px;
+}
+

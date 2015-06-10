@@ -1,0 +1,11 @@
+--- Uboot-spi-3.5.2.0/lib_mips/board.c	2013-03-29 17:29:14.000000000 +0800
++++ Uboot-spi-3.5.2.0/lib_mips/board.c	2013-04-10 17:19:14.339501640 +0800
+@@ -91,7 +91,7 @@
+ ulong monitor_flash_len;
+ 
+ const char version_string[] =
+-	U_BOOT_VERSION" (" __DATE__ " - " __TIME__ ")";
++    "\nU-Boot "RALINK_LOCAL_VERSION" MUSIC (" __DATE__ " - " __TIME__ ")";
+ 
+ extern ulong load_addr; /* Default Load Address */
+ 

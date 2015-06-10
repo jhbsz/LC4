@@ -1,0 +1,620 @@
+Subnet Mask	子網路遮罩	Subnetz-Maske	子网掩码
+User Name	使用者名稱	Benutzername	用户名
+Password	密碼	Kennwort	密码
+Save Settings	儲存設定	Einstellungen speichern	保存
+Cancel Changes	取消	Abbrechen	取消
+Primary Settings	主要設定	Haupteinstellungen	主要设置
+Spanning Tree Protocol	生成樹協定	Spanning Tree Protokoll	生成树协议
+Connection Type	連線類型	Verbindungstyp	连接类型
+Optional Settings	次要設定	Optionale Einstellungen	可选设置
+MTU Size	最大傳送資料量	Die maximale Menge der übertragenen Daten	最大传输单元
+WAN	外部網路	WAN	广域网
+WAN Advanced	外部網路進階	WAN Advanced	广域网进阶
+LAN	內部網路	LAN	局域网
+Internal IP Address	內部網路IP位址	Interne Netzwerk-IP-Adresse	内网IP地址
+External IP Address	外部網路IP位址	Externe Netzwerk-IP-Adresse	外网IP地址
+Router IP	內部網路設定	Interne Netzwerk-Konfiguration	路由器IP
+Local IP Address	IP位址	IP-Adresse	IP地址
+DHCP Server Settings	DHCP 伺服器設定	DHCP-Server-Einstellungen	DHCP服务器设置
+DHCP Server	DHCP 伺服器	DHCP-Server	DHCP服务器
+Starting IP Address	IP 開始位址	Start IP-Adresse	IP起始地址
+Maximum DHCP Users	最多IP使用者	Maximale DHCP-Benutzer	最大DHCP用户数
+NTP Sync	使用NTP協定	NTP Abgleich	网络时间同步
+Time	時間	Zeit	时间
+Time(s)	次數	Zeit	次数
+Time Zone	時區	Zeitzone	时区
+Time Synchronization	時間同步	Zeitsynchronisation	时间同步
+Time Server Area	時間伺服器區域	Zeit-Server-Region	时间服务器区域
+Time Server Type	時間伺服器類型	Zeit-Server-Typen	时间服务器类型
+Time Server Pool	時間伺服器群	Zeit-Server-Gruppe	时间服务器池
+Time Server IP Address	時間伺服器IP位址	Zeit-Server IP-Adresse	时间服务器IP地址
+Periodic Synchronization	定期同步	Regelmäßige Synchronisation	定期同步
+Synchronization Interval	同步間隔時間	Synchronisation Intervall	同步间隔时间
+Day Light Saving	日光節約	Sommerzeit	夏令时
+Wireless Distributed System	無線布建系統	Wireless Distributed System	无线分布式系统
+This setting is most commonly used by Cable operators.	一般為Cable用戶所使用。	Diese Einstellung wird am häufigsten von Kabelnetzbetreibern genutzt.	此设置一般为有线电视运营商使用
+Static IP	固定IP	Feste IP	静态IP
+PPP Connection Type	PPP 連線模式	PPP-Verbindungsmodus	PPP链接类型
+Always Connected	主動連線	Ständig Verbunden	总是链接
+On Demand	被動連線	Manuelle Verbindung	一经要求/按需分配
+Max Idle Time	最大停頓時間	Maximale Pausenzeit	最大空闲时间
+Keep Alive	主動連線	Ständige Verbindung	保持链接
+Seconds	秒	Sekunden	秒
+seconds	秒	Sekunden	秒
+Gateway	預設閘道	Standardgateway	网关
+Static DNS 1	主要DNS	Erster DNS	主要DNS
+Static DNS 2	次要DNS	Zweiter DNS	次要DNS
+DDNS Type	DDNS類型	DDNS Typ	DDNS类型
+Host Name	主機名稱	Host-Name	主机名称
+Enable	啟動	aktivieren	启用
+Disable	關閉	deaktivieren	禁用
+Clone WAN MAC	複製外部網路之MAC位址	Kopieren der MAC-Adresse des externen Netzes	MAC地址克隆
+MAC Address	MAC位址	MAC-Adresse	MAC地址
+Wireless Network (WiFi)	無線網路	Wireless-Netzwerk (WiFi)	无线网络（WiFi）
+Wireless Network	無線網路	Wireless-Netzwerk	无线网络
+Wireless Connection	無線網路功能	Wireless-Verbindung	无线连接
+Wireless SSID Name	無線網路SSID名稱	Wireless Netzwerk-SSID-Namen	无线SSID名称
+Wireless SSID Broadcasting	無線網路SSID廣播	Wireless SSID Ausstrahlung	无线SSID广播
+Wireless Channel	頻道	Kanäle	无线信道
+Users can turn on or off the wireless signal.	使用者可開啟或關閉無線訊號。	Benutzer können das drahtlose Signal ein-oder ausschalten .	用户可开启或关闭无线信号
+The router uses SSID as the station name of the wireless access point. Wireless clients connect with the access point based on SSID.	路由器以SSID為無線節點之站名。無線客戶根據SSID來聯結此節點。	Der Router benutzt SSID als den Stationsnamen des Wireless Access Points	该路由器使用SSID作为无线接入点站名。无线客户端连接基于接入点的SSID。
+The router is able to broadcast SSID periodically. Users can turn on or off based on their needs. Broadcasting SSID brings convenience for users to find and connect access points. Disabling broadcasting SSID enhances the security by hiding SSID information.	網路分享器可定期地廣播SSID。使用者可依須求開啟或關閉。此廣播功能帶給使用者聯結節點的便利性，而關閉廣播藉以隱藏SSID提升安全性。	Der Router ist in der Lage, die SSID periodisch auszustrahlen. Benutzer können dies nach Ihren Bedürfnisssen ein- bzw. ausschalten. SSID- Ausstrahlung erhöht den Komfor für den Benutzer um einen Accesspoint zu finden und zu verbinden. Eine deaktivierte SSID- Austrahlung erhöht die Sicherheit.	路由器可定期广播SSID。用户可以根据需求打开或关闭。此广播功能可以使使用者方便的连接无线接入点。而禁用广播功能通过隐藏SSID信息以提高安全性。
+Users can select which channel they prefer to use.	使用者可自行選擇頻道。	Benutzer können den bevorzugten Kanal auswählen	用户可以自行选择通道。
+Wi-Fi Multimedia	無線網路多媒體	Wireless Multimedia	Wi-Fi多媒体
+Different traffic types can be prioritized based on their characteristics. For example, VoIP or video traffic could have higer priorities over the ordinary traffic.	不同的流量依據其特性設定優先權。舉例而言，VoIP或其它影像流量可擁有較其它流量更高的優先權。	Verschiedene Arten von Traffic können auf der Grundlage ihrer Eigenschaften priorisiert werden. Zum Beispiel VoIP-Traffic, oder andere Bilder haben möglicherweise eine höhere Priorität als anderer Traffic.	可根据不同流量特点设定其优先级。例如，VoIP或其他影像流量可以拥有比普通数据流量更高的优先级。
+Wireless Network Security	無線網路安全	Wireless Netzwerk Sicherheit	无线网络安全
+Security Mode	加密類型	Verschlüsselungs-Typ	加密类型
+Key Index	加密金鑰標誌	ID des bevorzugten Schlüssels	密钥索引
+Key	加密金鑰	Schlüssel	密钥
+Pre-Shared Key	分享式金鑰	Pre-Shared-Key	预共享密钥
+Encryptoin Mode	加密模式	Verschlüsselungs-Modus	加密模式
+Encryption Method	加密方式	Verschlüsselungs-Methode	加密方法
+Rekey Method	金鑰交換方式	Rekey-Methode	密钥交换方式
+Rekey Time Interval	金鑰交換時間間隔	Rekey Zeitintervall	密钥交换时间间隔
+Rekey Packet Interval	金鑰交換封包間隔	Rekey Paketintervall	密钥交换封包间隔
+Radius Server IP Address	Radius伺服器IP位址	Radius-Server IP-Adresse	Radius服务器IP地址
+Radius Server Port	Radius伺服器埠號	Radius-Server-Port	Radius服务器端口号
+Radius Key	Radius加密金鑰	Radius Schlüssel	Radius密钥
+Users may choose from different security mode based on needs. Disable, WEP, WPA Pre-Shared Key, WPA, WPA2 Pre-Shared Key, WPA2. All machines under this network must use the same security mode.	使用者可以依據須求選擇不同的加密模式，關閉加密、WEB、WPA Pre-Shared Key、 WPA、WPA2 Pre-Shared Key或WPA2。所有位於此網路之機器皆必須使用相同的加密模式。	Benutzer können unterschiedliche Anforderungen nach der Verschlüsselung Modus wählen, schalten Sie die Verschlüsselung, WEB, WPA Pre-Shared Key, WPA, WPA2 Pre-Shared Key oder WPA2. Alle Maschinen sind in diesem Netzwerk befinden, müssen die gleiche Verschlüsselung Modus zu verwenden.	用户可以根据需要选择不同的加密模式。禁用WEP、 WPA Pre-Shared Key， WPA、 WPA2 Pre-Shared Key或WPA2。所有处于该网络内的机器必须使用相同的加密模式。
+Users can specify neighbor MAC addresses to bridge serveral wireless routers.	使用者可以指定鄰近之MAC位址以橋接至其它無線網路分享器。	Benutzer können die MAC-Adresse zu überbrücken neben anderen Wireless-Netzwerk-Router.	用户可以指定临近的MAC地址以桥接至其他无线路由。
+Bandwidth Management	頻寬管理	Bandbreiten-Management	带宽管理
+Per Session Download	個別連線下載頻寬	Download-Bandbreite von einzelnen Verbindungen	单个连接下载带宽
+Per Session Upload	個別連線上傳頻寬	Upload Bandbreite von einzelnen Verbindungen	单个连接下载带宽
+Starting Managed IP Address	起始被管理之IP位址	Starten der verwalteten IP Adresse	起始管理IP地址
+Maximum Managed Users	最多管理人數	Maximale Anzahl der verwalteten Benutzer	最大管理用户数
+Broadband Efficiency	頻寬效能	Bandbreiten-Auslastung	带宽使用率
+Enable or disable the bandwidth management.	啟用或關閉頻寬管理	Aktivieren oder Deaktivieren des Bandbreiten-Managements	启用或禁用带宽管理
+In general, the real bandwidth is smaller than what ISPs claim. Based on the link quality, bandwidth efficiency varies.	一般而言，真正的頻寬較ISP所宣稱的小，根據連結的品質，頻寬的效能亦有所不同。	Im Allgemeinen, behauptete die reale Bandbreite kleiner als die ISP nach Qualität der Verbindung, Bandbreiten-Effizienz ist auch anders.	一般而言，用户的实际带宽总是比ISP所宣称的小，根据链路的质量，带宽使用率也不相同。
+Firewall Security	防火牆安全	Firewall-Sicherheit	防火墙安全
+Firewall Protection	防火牆保護	Firewall-Schutz	防火墙保护
+Enable or disable the SPI firewall.	啟用或關閉SPI防火牆。	Aktivieren oder Deaktivieren der SPI-Firewall.	启用或禁用SPI防火墙
+Users are able to choose to enable PPTP, IPSec passthrough to allow local machines to communicate outside via VPN.	使用者可以選擇啟用PPTP或IPSec passthrough以允許本地機器透過VPN連絡外部。	Benutzer können wählen, zu ermöglichen, PPTP oder IPSec Passthrough zu ermöglichen Kontakte außerhalb der lokalen Maschine über das VPN.	用户可以选择启用PPTP或IPSec passthrough以允许本地机器通过VPN连接到外部。
+MAC Filter Settings	MAC過濾條件設定	MAC-Filter Einstellungen	MAC过滤设置
+MAC Filter Rules	MAC過慮條件規則	MAC-Filter Regeln	MAC过滤规则
+MAC Filtering	是否啟動MAC過濾條件功能	MAC-Filterung	MAC过滤
+Users are able to enable or disable the MAC filtering.	使用者可選擇是否啟用MAC過濾功能。	Benutzer können wählen, ob Sie MAC-Filterung aktivieren.	用户可选择是否启用MAC过滤功能
+Permited	允許	Erlauben	允许
+Port Range Forwarding	特殊應用規則	Regeln für spezielle Anwendungen	多端口转发
+Port Range Forwarding Rule	特殊應用規則	Regeln für spezielle Anwendungen	多端口转发规则
+Port Range Forward	特殊應用規則	Port Range Forward	多端口转发
+Port Forwarding	埠轉送	Port Weiterleitung	端口转发
+Rule	規則	Regel	规则
+Rule Name	規則名稱	Regel Name	规则名称
+Protocol	協定	Protokoll	协议
+Target IP Address	目標IP位址	Ziel IP-Adresse	目的IP地址
+DMZ IP Address	DMZ IP位址	DMZ-IP-Adresse	DMZ IP地址
+Administrator Password	管理者密碼	Administrator-Passwort	管理员密码
+Re-type Password	確認新密碼	Neues Passwort bestätigen	确认密码
+Web Management	遠端管理協定	Web Management	web界面管理
+Management Port	管理埠號	Management-Port	管理端口
+Remote Management	啟用遠端管理	Remote-Management	远程管理
+Restore Factory Default Settings	恢復出廠預設值	Auslieferungszustand wiederherstellen	恢复出厂设置
+This will reset all settings back to factory defaults. All of your settings will be erased.	恢復所有設定至出廠預設值，所有您的設定將會被清除。	Wiederherstellen aller Einstellungen auf Werkseinstellungen werden alle Einstellungen gelöscht werden.	恢复所有设定至出厂预设值，所有您所做的设定将被清除。
+Firmware Upgrade	軔體更新	Firmware-Update	软件升级
+Please select a file to upgrade	請選擇更新檔案位址	Bitte wählen Sie die Update-Datei	请选择更新包位置
+Warning: Upgrading firmware takes few minutes. During upgrading, please don't turn off the power, press the Reset button, or access any web management pages.	警告： 更新軔體須要花費幾分鐘時間。在更新期間，請勿關機、按下重設鍵或存取任何管理介面的頁面。	Warnung: Firmware-Update haben sich ein paar Minuten zu verbringen. Während der Aktualisierung nicht heruntergefahren, drücken Sie die Reset-Taste oder den Zugang zu Management-Interface-Seite.	警告：固件升级需要花费几分钟时间。在更新过程中，请勿关机、按下复位按钮或访问任何web管理界面。
+Please wait for 6 minutes.	請等待六分鐘。	Bitte warten Sie ca. 6 Minuten	请等待6分钟
+Upgrade	更新	Aktualisierung	升级
+Click on the <em>Browse</em> button to select the firmware file to be uploaded to the router.	按下<em>瀏覽鍵</em>以選擇欲更新至路由器之檔案。	Presse <em> Schaltfläche Durchsuchen </ em>, um die Dateien auswählen wollen, um den Router zu aktualisieren.	点击浏览按钮选择固件文件上传到路由器
+Click the <em>Upgrade</em> button to begin the upgrade process. Upgrade must not be interrupted.	按下<em>更新鍵</em>便開始更新。請勿中斷更新過程。	Presse <em> Update-Schlüssel </ em> wird das Update zu starten. Unterbrechen Sie nicht den Update-Prozess.	点击升级按钮开始升级。升级过程请勿中断。
+WAN IP	外部網路IP位址	WAN-IP-Adresse	外部网络IP地址
+Running Time	已開機時間	Laufzeit	系统运行时间
+Not Available	無法取得	Nicht verfügbar	不可用
+Setup	設定	Setup	设定
+Basic Setup	基本設定	Grundeinstellungen	基本设定
+DDNS	動態 DNS	DDNS	动态DNS
+MAC Address Clone	MAC 位址複製	MAC Adresse klonen	MAC地址克隆
+Wireless	無線網路	Wireless	无线网络
+Basic Settings	基本設定	Grundeinstellungen	基本设定
+Wireless Security	無線網路安全	Wireless Sicherheit	无线安全
+Security	網路安全	Sicherheit	安全
+Firewall	防火牆	Firewall	防火前
+Bandwidth	頻寬管理	Bandbreite	带宽
+Access Control	存取控制	Zugangskontrolle	存取控制
+MAC Filter	MAC位址過濾	MAC-Adressen-Filter	MAC地址过滤
+MAC Address Binding	MAC位址對映	MAC-Adressen-Bindung	MAC地址绑定
+MAC Address Binding Settings	MAC位址對映設定	MAC-Adressen-Bindungs-Einstellung	MAC地址绑定设置
+Applications	網路應用程式	Anwendungen	应用
+Admin	管理	Admin	管理员
+Management	系統管理	Management	管理
+USB Storage	USB 儲存裝置	USB-Speichergerät	USB存储
+Factory Defaults	原廠設定回復	Werkseinstellungen wiederherstellen	出厂设置
+Status	狀態	Status	状态
+Router Information	網路分享器資訊	Router Information	路由器信息
+Model Name	產品型號	Modell Name	产品型号
+Firmware Version	軟體版本	Software Version	固件版本
+License	使用授權	Lizenz	使用授权
+Current Time	現在時間	Aktuelle Zeit	当前时间
+Internet Connection (WAN) Type	外部網路連線型態	WAN-Verbindungs-Typ	互联网连接（WAN）类型
+Wireless Mode	無線模式	Wireless-Modus	无线模式
+Access Point	無線基地台	Access-Point	无线接入点
+Router	網路分享器	Router	路由器
+Start IP Address	起始IP位址	Erste IP-Adresse	起始IP地址
+End IP Address	結束IP位址	Letzte IP-Adresse	终止IP地址
+Language	語言設定	Spracheinstellungen	语言
+Refresh	更新	Aktualisierung	更新
+Reboot Router	重新開機	Neustart des Routers	重启路由
+Get Current PC MAC Address	取得現在個人電腦MAC位址	MAC-Adresse des Computers übernehmen	获取当前PC的MAC地址
+Internet Connection (WAN) MAC Clone	網際網路連線(WAN)MAC位址複製	Internet-Anschluss (WAN)-MAC-Adresse klonen	互联网连接（WAN）MAC地址复制
+Authorized	已授權	Autorisiert	已授权
+Unauthorized	尚未授權	Nicht autorisiert	未授权
+Locked	已封鎖	Gesperrt	已锁
+hour	小時	Stunde	小时
+hours	小時	Stunden	小时
+day	天	Tag	天
+days	天	Tage	天
+day(s)	天	Tag(e)	天
+Name	名稱	Name	名称
+Expiration Time	有效期限	Gültigkeitsdauer	过期时间（或有效期限）
+Table	表	Tabelle	表格
+If any other configuration change is needed, please press 'Continue' to go on.	若仍須其它設定，請按'繼續'以進行下一步設定。	Wenn noch andere Einstellungen erfolgen sollen, drücken Sie die 'Weiter', um fortzufahren.	如需进行其他设定，请点击“继续”以便进行下一步设定。
+Please remember rebooting is required to make all changes effective.	但仍須重新開機讓更改生效。	Damit die Änderungen wirksam werden, muss das Gerät neu gestartet werden	请记得重新启动才能使所有更改生效
+No changes of the settings are made.	設定值並未被更動。	Keine Einstellungen wurden übernommen	设置没有更改
+Settings are saved successfully.	設定已被儲存，	Einstellungen wurden gespeichert	设置已经成功保存
+Settings take effect immediately.	並即將生效。	Einstellungen werden in Kürze übernommen	设置立即生效
+The values you entered are invalid.	您所輸入的值無效，	Der eingegebene Wert ist ungültig	您所输入的值无效。
+Please try again.	請重新輸入。	Bitte versuchen Sie es erneut.	请重新输入
+DDNS Service	DDNS服務	DDNS Service	动态DNS服务（或DDNS服务）
+Dynamic Domain Name Service	動態網域名稱服務	Dynamic Domain Name Service	动态域名服务
+DDNS allows users to access the router's external IP addresses by using domain names. The router has to update domain information while any changes on IP addresses. Users must sign up for service through DynDNS.org or TZO.com or ZoneEdit.com.	DDNS允許使用者透過網域名稱聯結網路分享器之外部IP位址，而網路分享器須要當IP位址更動時，更新網域名稱資訊。使用者必須登錄上DynDNS.org、TZO.com或ZoneEdit.com。	DDNS ermöglicht Nutzern den Austausch von Internet-Verbindung durch den Domain-Name des Geräts der externen IP-Adresse, Netzwerk-Router und IP-Adresse ändert sich, wenn nötig, die aktualisierte Informationen Domain-Namen. Benutzer müssen über DynDNS.org, TZO.com ZoneEdit.com oder log.	DDNS允许用户通过域名连接路由器外部IP地址，对于基于IP地址的任何改动路由器会更新域信息。用户必须通过DynDNS.org或TZO.com或ZoneEdit.com注册服务。
+Administration Interface	管理介面	Management-Schnittstelle	管理界面
+recommended	建議值	Empfohlen	建议
+Continue	繼續	Fortsetzen	继续
+Reboot	重新開機	Reboot	重启
+Reboot Interval	重新開機間隔時間	Reboot Interval	重启间隔时间
+Cancel	取消	Abbrechen	取消
+Please wait	請稍待	Bitte warten	请等待
+Please wait for	請稍待	Bitte warten	请等待
+Rebooting	重新開機中	Reboot in	重启中
+The firmware is upgraded successfully.	軔體更新成功。	Firmware-Update erfolgreich.	软件升级成功
+The firmware you provided is invalid. Please try again.	您所提供之軔體無效，請重新嘗試。	Diese Firmware ist ungültig, bitte versuchen Sie es erneut.	您所提供的软件无效，请重试。
+The router reboots automatically after upgrade is completed.	更新成功後，網路分享器會自動重新開機。	Nach erfolgreichem Update, wird das Gerät automatisch neu gestartet.	升级成功后，路由器会自动重启
+Bandwidth Type	頻寬類型	Bandbreiten-Typ	带宽类型
+Bandwidth Type (Download/Upload)	頻寬類型 (下載/上傳)	Bandbreiten-Typ (download / upload)	带宽类型（下载/上传）
+Custom	自訂	Benutzerdefiniert	自定制？
+Netmask	網路遮罩	Netzmaske	网络掩码
+DHCP Service	DHCP服務	DHCP-Dienst	DHCP服务
+DHCP Start IP Address	DHCP 起始IP 位址	DHCP erste IP-Adresse	DHCP起始IP地址
+DHCP End IP Address	DHCP 結束IP 位址	DHCP letzte IP-Adresse 	DHCP结束IP地址
+Max DHCP Clients	最多DHCP 客戶	Max. Anzahl DHCP-Clients	最大DHCP客户端
+Lease	DHCP釋放有效期間	Gültigkeit	地址租期
+Domain	網域	Domain	域名
+DHCP DNS Server Type	DHCP DNS 伺服器類型	DHCP DNS-Server-Typ	DHCP DNS服务器类型
+DHCP DNS Server IP Address	DHCP DNS 伺服器IP 位址	DHCP DNS-Server IP-Adresse	DHCP DNS服务器IP地址
+Type	類型	Typ	类型
+Priority Type	優先權類型	Priritäts-Typ	优先类型
+Load Balance	平衡負載	Lastausgleich	负载平衡
+Load Balance Priority	平衡負載優先權	Lastausgleich-Prioriät	负载平衡优先
+External Connection Detection	外部網路連線偵測	Externe Netzwerkverbindungs-Erkennung	外部连接检测
+Detection Type	偵測類型	Erkennungs-Typ	检测类型
+Detection Host	偵測主機	Erkennung von Host	检测主机
+Detection Interval	偵測間隔	Erkennungs-Intervall	检测间隔
+Connection Detection Threshold	連線偵測次數門檻	Grenzwert der Verbindungserkennung	连接检测阀值
+Routing	路由	Routing	路由
+Routing Rule	路由規則	Routing Regeln	路由规则
+SPI Firewall Protection	SPI 防火牆防護	SPI-Firewall-Schutz	SPI防火墙保护
+TCP SYN DoS Protection	TCP SYN DoS 防護	TCP SYN DoS-Schutz	TCP SYN DoS保护
+ICMP Broadcasting Protection	ICMP 廣播防護	ICMP Broadcasting Protection	ICMP广播保护
+ICMP Redirect Protection	ICMP 轉向防護	ICMP Redirect Protection	ICMP重定向保护
+Default Access Control Action	預設存取控制動作	Standard-Zugriffskontrolle 	默认访问控制动作
+Default MAC Access Control Action	預設MAC存取控制動作	Standard MAC Zugriffskontrolle 	默认MAC存取控制动作
+Streaming / VPN	串流 / VPN	Streaming / VPN	串流/VPN
+Streaming	串流	Streaming	串流
+Video Conference	視訊會議	Video-Konferenz	视频会议
+Port	埠	Port	端口
+Configuration	系統設定	Konfiguration	配置
+Configuration Export	系統設定輸出	Speichern der Einstellungen	导出配置
+Export	輸出	Speichern	导出配置
+Configuration Import	系統設定載入	Laden der Einstellungen	导入配置
+Import	載入	Laden	导入配置
+Default Configuration Restore	回復原廠設定值	Werkseinstellungen wiederherstellen	恢复默认配置
+Firmware	軔體	Firmware	软件
+Graph	圖形	Graph	图表
+Graph Scale	圖形顯示範圍	Grafische Anzeige	图表显示范围
+Two Hours	兩小時	2 Stunden	两小时
+One Day	一天	1 Tag	一天
+One Week	一週	1 Woche	一周
+One Month	一月	1 Monat	一月
+Enabled	已啟動	Aktiviert	启用
+Disabled	已關閉	Deaktiviert	禁用
+SVG plugin is required to display the graphs	需安裝SVG plugin以顯示圖形	SVG-Plugin muss installiert sein, um die Grafik anzuzeigen	需安装SVG plugin以显示图表
+Time Setting	時間設定	Zeiteinstellung	时间设定
+Current	現在	Jetzt	现在
+Averaged	平均值	Durchschnitt	平均值
+Total Traffic	全部	Gesamter Traffic	全部
+Max	最大值	Maximum	最大值
+Max Seen	已出現最大值	Maximaler Wert	已出现最大值
+Since Boot	自開機	Seit dem Start	自启动
+Max Allowed	最大允許值	Maximal zulässiger Wert	最大允许值
+Traditional Chinese	正體中文	Kategorien Stil	繁体中文
+User	使用者	Benutzer	用户
+ARP Type	ARP類型	ARP-Typ	ARP类型
+Log	紀錄	Logbuch	日志
+System Log	系統紀錄	System Logbuch	系统日志
+ACL Log	ACL 紀錄	ACL Logbuch	ACL日志
+Download	下載	Download	下载
+Upload	上傳	Upload	上传
+Session	連線數	Sitzung	连接数
+Traffic	流量	Traffic	流量
+Default	預設值	Standard	默认值
+ALLOW	允許存取	Erlauben	允许存取
+DENY	拒絕存取	Verweigern	拒绝存取
+Automatic	自動	Automatisch	自动
+Manual	手動	Manuell	手动
+Aggregation	合併頻寬	Kombinierte Bandbreite	合并带宽
+Local Connection	內部連線	Interne Verbindung	本地连接
+Basic	基本	Basic	基本
+Internal IP Range	內部 IP 範圍	Interner IP-Bereich	内部IP范围
+External IP Range	外部 IP 範圍	Externer IP-Bereich	外部IP范围
+External Port Range	外部埠號範圍	Externer Port Bereich	外部端口范围
+Internal Port Range	內部埠號範圍	Interner Port Bereich	内部端口范围
+Service Port Range	服務埠號範圍	Service Port Bereich	服务端口范围
+External Interface	外部介面	Externe Schnittstelle	外部界面
+Action	動作	Aktion	动作
+DBM IP Enable	DBM IP 啟動	DBM IP aktivieren	DBM IP启动
+ACL Enable	ACL 啟動	ACL aktivieren	ACL启动
+Static ARP Enable	靜態 ARP 啟動	Static ARP aktivieren	静态ARP启动
+Static DHCP Enable	靜態 DHCP 啟動	Static DHCP aktivieren	静态DHCP启用
+IP Address	IP 位址	IP-Adresse	IP地址
+Internal IP	內部 IP	Interne IP	内部IP
+Confirm	確認	Bestätigen	确认
+Add	增加	Hinzufügen	增加
+Delete	刪除	Löschen	删除
+Modify	編輯	Bearbeiten	编辑
+Up	上	Auf	上
+Down	下	Ab	下
+Sequence Number	順序	Lfd. Nummer	序列号
+Please wait about 7 minutes.	請稍等約七分鐘	Bitte warte Sie ca. 7 Minuten	请稍等7分钟
+Asia	亞洲	Asien	亚洲
+Europe	歐洲	Europa	欧洲
+North America	北美洲	Nordamerika	北美洲
+South America	南美洲	Südamerika	南美洲
+Africa	非洲	Afrika	费中
+Bytes	位元	Bytes	字节
+Bandwidth Setting	頻寬設定	Bandbreiten Einstellung	带宽设定
+Auto	自動模式	Automatischer Modus	自动模式
+DBM Mode	DBM模式	DBM-Modus	DBM模式
+Expert	專業模式	Professional-Modus	专业模式
+Warning: The auto mode is strongly recommended for the general usage. Please be cautious that the expert mode might cause DBM not working properly.	警告：強烈建議一般使用下，請選擇自動模式。請小心設定專業模式，不正確的設定可能使得DBM功能無法正常運作。	Warnung: Es wird dringend empfohlen, bei normalem Gebrauch den automatischen Modus zu wählen. Bitte seien Sie vorsichtig mit dem professionellen Modus, denn bei falschen Einstellungen funktioniert das DBM nicht richtig.	警告：强烈建议一般情况下，请选择自动模式。请谨慎，专业模式设定不当可能使DBM功能无法正常使用。
+Warning:	DBM function has been disabled 警告：DBM功能已被關閉	DBM-Funktion wurde deaktiviert. WARNUNG: DBM-Funktion wurde geschlossen	警告：DBM功能已被禁用
+Throughput Optimizer	流量最佳化引擎	Durchsatz-Optimierer	吞吐量优化
+Intelligent Dynamic Bandwidth Management	智慧型頻寬管理	Intelligentes Bandbreitenmanagement	智能带宽管理
+iDBM	智慧型頻寬管理	iDBM	智能带宽管理
+Dynamic Bandwidth Management	動態頻寬管理	Dynamisches Bandbreiten Management	动态带宽管理
+ACL 	存取控制 / DBM IP	Access Control / DBM IP	访问控制 / DBM IP
+Access Control List	存取控制	Access Control	访问控制列表
+Rule Enable	啟動規則	Regel aktivieren	规则启用
+Total Sessions	全部連線數	Totale Verbindungen	全部连接数
+TCP Sessions	TCP 連線數	Anzahl der TCP-Verbindungen	TCP连接数
+UDP Sessions	UDP 連線數	Anzahl der UDP-Verbindungen	UDP连接数
+ICMP Sessions	ICMP 連線數	Anzahl der ICMP-Verbindungen	ICMP连接数
+Opened	已建立	Geöffnet	已建立
+Closed	已關閉	Geschlossen	已关闭
+MAC Access Control	MAC 存取控制	MAC Access Control	MAC访问控制
+MAC Access Control Rule	MAC 存取控制規則	MAC Access Control Regeln	MAC访问控制规则
+OpenDNS Service	 OpenDNS 服務	OpenDNS Service	OpenDNS 服务
+OpenDNS Username	OpenDNS 帳號	OpenDNS-Benutzername	 OpenDNS 账号
+OpenDNS Password	OpenDNS 密碼	OpenDNS Passwort	 OpenDNS 密码
+DNS Query Redirection to OpenDNS DNS Servers	DNS 流量強迫流向 OpenDNS DNS 伺服器	Abfrageumleitung zum OpenDNS DNS Server	DNS查询重定向到OpenDNS服务器
+All traffic will be redirected to OpenDNS servers if this feature is enabled.	當 OpenDNS 服務開啟時，所有 DNS 流量強迫流向 OpenDNS DNS 伺服器	Wenn der OpenDNS-Service aktiviert ist, werden alle Abfragen an den OpenDNS DNS-Server umgeleitet	当OpenDNS服务启用时，所有DNS流量重定向到OpenDNS服务器
+From	從	Von	从
+To	到	Zu	到
+For the security and display reasons, IE7.0+ and FireFox are strongly suggested.	由於安全性及顯示的原因，強烈建議您使用IE7.0、FireFox。	Aufgrund der Sicherheitseinstellungen und der Bildschirmanzeige empfehlen Ihnen dringend, IE7.0, Firefox zu verwenden.	由于安全性及显示的原因，强烈建议您使用IE7.0、FireFox。
+VPN Start IP Address	VPN 起始IP 位址	VPN erste IP-Adresse	VPN起始IP地址
+Max VPN Clients	最多VPN 客戶	Max. Anzahl VPN-Clients	最大VPN客户数
+Auto DNS	自動DNS	Auto DNS	自动DNS
+CHAP Enable	CHAP 啟動	CHAP aktivieren	CHAP启用
+MSCHAP Enable	MSCHAP 啟動	MSCHAP aktivieren	MSCHAP启用
+MSCHAP v2 Enable	MSCHAP v2 啟動	MSCHAP v2 aktivieren	MSCHAP v2启用
+MPPE128 Enable	MPPE128 啟動	MPPE128 aktivieren	MPPE128启用
+Proxy ARP Enable	Proxy ARP 啟動	Proxy ARP aktivieren	Proxy ARP启用
+NAT Enable	NAT 啟動	NAT aktivieren	NAT启用
+User Rule	使用者規則	Benutzerregeln	用户规则
+user(s)	位使用者	Benutzer	用户
+users	位使用者	Benutzer	用户
+user	位使用者	Benutzer	用户
+User / Current	使用者 / 現在	Benutzer / aktuell	用户/当前
+User / DHCP	使用者 / DHCP	Benutzer / DHCP	用户/DHCP
+Wireless and Wired	無線及有線	Drahtlose und drahtgebundene	无线和有线
+Wired	有線網路	Drahtgebunden	有线网络
+Interface	網路介面	Schnittstelle	网络界面
+Access Point Name	接入點名稱	Access Point Name	无线接入点名称
+Personal Identification Number	個人身份識別碼	Persönliche Identifikationsnummer	个人身份识别码
+Connection Mode	連線模式	Verbindungs-Modus	连接模式
+Mobile WAN MTU	行動網路MTU	MTU	移动WAN网络MTU
+Connection Name	連線名稱	Verbindungsname	连接名称
+VPN Mode	VPN 模式	VPN-Modus	VPN模式
+L2TP Enable	L2TP 啟用	L2TP aktivieren	L2TP启用
+IKE Key Mode	IKE 金鑰模式	IKE-Schlüssel-Modus	IKE 密钥模式
+Advanced Options	進階選項	Erweiterte Optionen	高级选项
+Local External Interface	近端外部網路介面	Lokale externe Netzwerkschnittstelle	本地外部接口
+Local Internal IP Address	近端IP位址	Lokale interne IP-Adresse	本地IP地址
+Local Netmask	近端網路遮罩	Lokale Netzmaske	本地网络掩码
+Remote Gateway	遠端閘道	Remote Gateway	远程网关
+Remote Subnet IP	遠端子網域IP位址	Remote Subnet IP	远程子网IP地址
+Remote Netmask	遠端網路遮罩	Remote Netmask	远程网络掩码
+Remote IP Address	遠端網域IP位址	Remote IP Address	远程IP地址
+Remote TCP Port	遠端阜號	Remote TCP Port	远程埠号
+Syslog Server	系統記錄伺服器	Syslog Server	系统记录伺服器
+Log Server Setting	系統記錄伺服器設定	Log Server Setting	系统记录伺服器设定
+Connection Initiation	主動起始連線	Verbindungs-Initiierung	连接启动
+Phase 1	第一階段	Phase 1	第一阶段
+Phase 2	第二階段	Phase 2	第二阶段
+Phase 1 Mode	第一階段模式	Phase 1 Mode	第一阶段模式
+Phase 1 Authentication	第一階段認證	Phase 1 Authentication	第一阶段认证
+Phase 1 Encryption	第一階段加密	Phase 1 Encryption	第一阶段加密
+Phase 1 ID	第一階段ID	Phase 1 ID	第一阶段ID
+Phase 2 Mode	第二階段模式	Phase 2 Mode	第二阶段模式
+Phase 2 Authentication	第二階段認證	Phase 2 Authentication	第二阶段认证
+Phase 2 Encryption	第二階段加密	Phase 2 Encryption	第二阶段加密
+Phase 1 Lifetime	第一階段使用週期	Phase 1 Lifetime	第一阶段使用周期
+Phase 2 Lifetime	第二階段使用週期	Phase 2 Lifetime	第二阶段使用周期
+Perfect Forward Secrecy	完整轉發安全性	Perfect Forward Secrecy	完整转发安全性
+Preshared Key	預先共用金鑰	Preshared Key	预共享密钥
+8-40 digits	8至40碼	80 bis 40 Zeichen	8-40位
+Are you sure to restore to the default configuration?	您確定要回復成原廠設定值？	Sind Sie sicher, dass Sie die Werkseinstellungen wiederherstellen möchten?	您确定要恢复出厂设置？
+Every Hour	每小時	Jede Stunde	每小时
+Every 6 Hours	每6小時	Alle 6 Stunden	每6小时
+Every 12 Hours	每12小時	Alle 12 Stunden	每12小时
+Every Day	每一天	Täglich	每一天
+Every Week	每一週	Wöchentlich	每一周
+Phase 1 Group Key Management	第一階段群組金鑰管理	Phase 1 Group Key Management	第一阶段群组密钥管理
+Phase 2 Group Key Management (PFS)	第二階段群組金鑰管理(PFS)	Phase 2 Group Key Management (PFS)	第二阶段群组密钥管理
+Wireless Interface	無線介面	Wireless Schnittstelle	无线界面
+Transmission Power	傳輸功率	Sendeleistung	传输功率
+Wireless SSID	無線網路SSID	Wireless Netzwerk-SSID	无线网络SSID
+Pre-authentication	預先認證	Pre-Authentifizierung	预认证
+Advanced	進階	Fortgeschritten	进阶
+Milliseconds	毫秒	Millisekunden	毫秒
+Beacon Interval	Beacon間隔	Beacon Interval	Beacon间隔
+Header Preamble	標頭前導訊息	Header Preamble	标题前导讯息
+Long	長	Lang	长
+Short	短	Kurz	短
+WDS MAC Address	WDS MAC位址	WDS MAC-Adresse	WDS MAC地址
+WDS Mode	WDS模式	WDS-Modus	WDS模式
+Bridge (AP Disabled)	橋接模式 (AP停用)	Bridge-Modus (AP deaktiviert)	桥接模式（AP停用）
+Repeater (AP Enabled)	中繼模式 (AP啟用)	Repeater-Modus (AP aktiviert)	中继模式（AP启用）
+Packet Number	封包數	Paketnummer	封包数
+Universal Repeater	延伸訊號中繼模式	Universal Repeater	延伸讯号中继模式
+Target SSID	目標SSID	Ziel SSID	目标SSID
+Target BSSID (MAC)	目標BSSID (MAC)	Ziel BSSID (MAC)	目标BSSID（MAC）
+Region	地區	Region	地区
+Region Setting	地區設定	Regionale Einstellung	地区设定
+US, Canada and Taiwan	美國、加拿大、台灣	Vereinigten Staaten, Kanada, Taiwan	美国、加拿大、台湾
+Europe, Australia and Hong Kong	歐洲、澳洲、香港	Europa, Australien, Hong Kong	欧洲、澳洲、香港
+Japan	日本	Japan	日本
+channel	頻道	Kanal	频道
+The WEP Keys are ASCII strings of 5/13 digits, or HEX strings of 10/26 digits.	WEP加密金鑰為5或13位ASCII字串，或10或26位十六進位字串	WEP-Schlüssel für 5 oder 13 ASCII-String, oder 10 oder 26 hexadezimale Zeichenfolge	WEP加密密钥为5或13位ASCII字符，或10或26位十六进制字符
+The Key is an ASCII string of 8-63 digits, or a HEX string of 64 digits.	加密金鑰為8至63位元ASCII字串或64位十六位元字串	Encryption Key als ASCII-String von 8 bis 63 Zeichen oder 64 hexadezimale Zeichenfolge.	加密密钥为8至63位ASCII字符或64位十六进制字符
+Are you sure to connect?	您確定要連線嗎？	Sind Sie sicher, dass Sie damit verbinden möchten?	您确定要连接吗？
+Are you sure to disconnect?	您確定要斷線嗎？	Sind Sie sicher, dass Sie die Verbindung trennen möchten?	您确定要断线吗？
+Are you sure to unload the device?	您確定要移除此裝置嗎？	Sind Sie sicher, dass Sie dieses Gerät entfernen möchten?	您确定要移除此装置吗？
+Update	更新	Aktualisierung	更新
+Not Connected	尚未連線	Nicht verbunden	尚未连接
+TurboNAT	TurboNAT 加速引擎	TurboNAT	TurboNAT加速引擎
+Wireless Isolation	無線區域網路阻斷	Wireless Isolation	无线网络阻断
+Wireless Isolation Between SSIDs	無線SSID間阻斷	Wireless Isolation zwischen SSIDs	无线SSID间阻断
+arial	新細明體	Arial	宋体
+Application	應用程式	Anwendung	应用程序
+Download Bandwidth	下載頻寬	Download Bandwidth	Download Bandwidth	下载带宽
+Upload Bandwidth	上傳頻寬	Upload Bandwidth	上传带宽
+Router Reserved Bandwidth	路由器保留頻寬	Router Reserved Bandwidth	路由器预留带宽
+Static Bandwidth Management	靜態頻寬管理	Statisches Bandbreiten Management	静态带宽管理
+Bandwidth Allocation	頻寬分配	Bandbreiten-Bereitstellung	带宽分配
+By Ratio	依比例	Nach Anteil	依比例
+By Bandwidth	依指定頻寬	Nach Bandbreite	依制定带宽
+Ratio	比例	Anteil	比例
+Available Bandwidth	可使用頻寬	Verfügbare Bandbreite	可使用带宽
+DBM Available Bandwidth	DBM 可使用頻寬	DBM verfügbare Bandbreite	DBM可使用带宽
+insufficient bandwidth	頻寬不足	Unzureichende Bandbreite	带宽不足
+SBM internal IP or protocol/port	SBM 內部 IP 位址或通訊協定/埠號	SBM interne IP-Adresse oder Protokoll / Port-Nummer	SBM内部IP地址或通讯协议/端口
+SBM port	SBM 埠號	SBM-Port	SBM端口
+SBM bandwidth ratio	SBM 頻寬比例	SBM Bandbreiten-Anteil	SBM带宽比例
+SBM bandwidth upload	SBM 上傳頻寬	SBM Upload-Bandbreite	SBM上传带宽
+SBM bandwidth download	SBM 下載頻寬	SBM Download-Bandbreite	SBM下载带宽
+not defined	未指定	Nicht spezifiziert	未指定
+Utilize Bandwidth More Than Guaranteed	使用保證頻寬外的頻寬	Nutzung mehr als der garantierten Bandreite	使用保证带宽外的带宽
+The rest bandwidth from setting SBM would be totally used for DBM.	扣除 SBM 所使用的頻寬後，全數由 DBM 分派使用	Die verbleibende Bandbreite der SBM Einstellung wird für DBM genutzt.	扣除SBM所使用的带宽后，全部由DBM分派使用
+Use Maximal Ratio	使用最大比例	Max. Anteil benutzen	使用最大比例
+Use Maximal Upload	使用最大上傳	Max. Upload benutzen	使用最大上传
+Use Maximal Download	使用最大下載	Max. Download benutzen	使用最大下载
+should be larger than	應大於	Sollte größer sein als	应大于
+should be less than 	應小於	Sollte weniger sein als	应小于
+.	。	.	.
+Too less reserved buffering bandwidth might cause congestion in a unstable network.	太少的預留緩衝頻寬可能因網路不穩定而造成壅塞	Zu wenig des reservierten Puffer der Netzwerk-Bandbreite kann Instabilität verursachen	太少的预留缓冲带宽可能会因网路不稳定而导致网络拥塞
+Application Priority	應用程式優先權	Anwendungs-Priorität	应用程序优先级
+Not enabled	尚未啟用	Nicht aktiviert	尚未启用
+License Key	認證碼	Lizenzschlüssel	验证码
+By service provider	選擇電信業者	Nach Anbieter	由服务提供商
+Chunghwa Telecom	中華電信	Chunghwa Telecom	Chunghwa Telecom
+Far EasTone (internet)	遠傳電信 (internet)	Far EasTone Telecommunications (Internet)	Far EasTone (internet)
+Far EasTone (fetims)	遠傳電信 (fetims)	Far EasTone Telecommunications (fetims)	Far EasTone (fetims)
+Taiwan Cellular	台灣大哥大	Taiwan Mobile	Taiwan Cellular
+Vibo	威寶電信	Vibo Telecom	Vibo
+Taiwan	台灣	Taiwan	Taiwan
+Service Provider	電信業者	Anbieter	服务提供商
+Modem Brand	數據機品牌	Modem Hersteller	数据机品牌
+Modem Model	數據機型號	Modem-Typ	数据机型号
+APN Type	APN 設定方式	APN-Typ	APN设定方式
+Location	地區	Region	地区
+Dial Number	撥接號碼	Einwahlnummer	拨号号码
+Loaded	已安裝	Installiert	已安装
+Not Loaded	尚未安裝	Nicht installiert	尚未安装
+USB Device	USB 裝置	USB-Gerät	USB设备
+Storage Size	儲存裝置容量	Speicherkapazität	存储设备容量
+Used / Free	 使用 / 剩餘	Verwendet / ungenutzt	使用/剩余
+File System	 檔案系統	Dateisystem	档案系统
+BT Engine	 BT 下載引擎	BT Download Engine	BT下载引擎
+Unload	移除裝置	Entfernen Sie das Gerät	移除设备
+Please unload the device by clicking the button above before unplugging it.	請在拔除USB裝置前，按上方按鈕以移除此裝置。	Um das USB-Gerät zu entfernen, drücken Sie bitte zuerst die Tste darüber.	请在拔出USB设备前按上方按钮移除此设备。
+PPP Echo Interval	PPP 偵測間隔	PPP Echo Intervall	PPP侦测间隔
+PPP Retry Threshold	PPP 偵測次數門檻	PPP Wiederholungsgrenzwert	PPP侦测次数门槛
+By Service Provider	所屬電信業者	Nach Anbieter	所属电信运营商
+BT Download	BT 下載引擎	BT Download Engine	BT下载引擎
+Maximum Peers Per File	單一種子最大來源數	Maximum Peers Per File	单一种子最大来源数
+BT Port Range	BT 埠號範圍	BT Portbereich	BT端口范围
+DHT Port	DHT 埠號	DHT-Port	DHT端口
+Maximum Download Rate	最大下載流量	Maximale Download Rate	最大下载流量
+Maximum Upload Rate	最大上傳流量	Maximale Upload Rate	最大上传流量
+Storage Device	儲存裝置	Speichergerät	储存设备
+FTP Server	FTP 伺服器	FTP-Server	FTP服务器
+FTP Server Port	FTP 伺服器埠號	FTP-Server-Port	FTP服务器端口
+FTP Bandwidth	FTP 頻寬	FTP-Bandbreite	FTP带宽
+FTP Server External Access	FTP 伺服器外部存取	Externer Zugriff auf FTP-Server	FTP服务器外部存取
+iSNS Server	iSNS伺服器	iSNS Server	iSNS服务器
+IP address or domain name	IP位址或域名	IP oder Domain-Name	IP地址或域名
+Target ID	iSCSI目標識別碼	iSCSI Target-ID	目标ID
+LUN Alias	LUN別名	LUN-Alias	LUN别名
+Max Connection	最大連線數	Die maximale Anzahl der Verbindungen	最大连接数
+Max Transmision Data Length	最大封包傳送長度	Maximale Länge der Datenübetragung	最大封包传送长度
+Max Receiving Data Length	最大封包接收長度	Maximale Länge des Datenempfangs	最大封包接受长度
+For the safe removal of the 3G USB Modem, please either press and hold down the WPS button for 3 seconds or click the safe removal icon available on the User Interface, and wait for the red status light to stop flashing.	在移除3G USB網卡前，請長按WPS按鈕三秒或者點選設定頁面上的移除圖示，並等待紅色狀態燈停止閃爍。	Um die 3G USB-Karte zu entfernen, drücken Sie bitte die WPS-Taste für drei Sekunden oder klicken Sie auf der Seite Einstellungen auf das Sichere-Entfernen-Symbol und warten, bis die rote Status-LED aufhört zu blinken.	在移除3G USB网卡前，请长按WPS按钮三秒或者点选用户界面上的移除图标，并等待红色状态灯停止闪烁。
+Device	裝置	Gerät	设备
+Swap	分頁檔	Auslagerungsdatei	分页档
+Used	已使用	Verwendet	已使用
+Unused	未使用	Nicht verwendet	未使用
+Mounted	已安裝	Installierte	已使用
+Unknown	未知	Unbekannt	未知
+Unplugged	未安裝	Nicht installiert	未安装
+Are you sure to format USB storage?\nAll data on it will be lost!	你確定要格式化USB儲存裝置?\n所有在裝置上的資料都將被刪除!!\n	Sind Sie sicher, dass Sie das USB-Speichergerät formatieren wollen? \n Alle Daten auf dem Gerät werden gelöscht!! 	你确定要格式化USB存储设备？所有在设备上的资料都将被删除！！
+Please note: Router will blink a red light during the re-formatting process. Do not remove USB device or turn off the router.	請注意:在進行格式化的過程中分享器會閃爍紅燈!\n請不要關閉分享器的電源或是移除儲存裝置!!\n	Bitte beachten Sie: Während der Formatierung blinkt ein rotes Licht bei dem Router! \n Bitte das Gerät nicht ausschalten oder das USB-Speichergerät entfernen!!	请注意：在进行格式化的过程中路由器会闪烁红灯！请不要关闭路由器电源或是移除储存装置！！
+Swap File Size	分頁檔大小	Größe der Auslagerungsdatei	交换文件大小
+Format	格式化	Format	格式化
+File System Type	檔案系統格式	Dateisystemformat	文件系统类型
+Format USB HDD	格式化儲存裝置	Formatiere Speichergerät	格式化存储设备
+Storage	儲存	Speicher	储存
+Storage Management	儲存裝置管理	Speicher Management	存储设备管理
+Bigpond Login	Bigpond 登入	Bigpond Login	Bigpond 登陆
+Bigpond Login Server	Bigpond 登入伺服器	Bigpond Login Server	Bigpond 登陆服务器
+Bigpond Login User Name	Bigpond 登入使用者名稱	Bigpond Login Username	Bigpond 登陆用户名
+Bigpond Login Password	Bigpond 登入密碼	Bigpond Passwort	Bigpond 登陆密码
+Authentication	認證方式	Authentifizierung	认证方式
+Samba Server	Samba 伺服器	Samba-Server	Samba 服务器
+Samba Server Share Name	Samba 伺服器分享名稱	Samba Server Share-Name	Samba 服务器共享名
+Samba Server Allow Guest	Samba 伺服器允許匿名連線	Samba-Server ermöglicht anonyme Verbindungen	Samba 服务器允许匿名登陆
+Samba Server Read Only	Samba 伺服器唯讀	Samba-Server read-only	Samba 服务器只读
+Samba Server External Access	Samba 伺服器允許外部連線	Samba-Server für externe Verbindungen	Samba 服务器允许外部访问
+Samba Password	Samba 密碼設定	Samba-Passwort	Samba 密码设定
+( Default user name is admin, default password is admin )	( 預設使用者名稱為admin, 預設使用者密碼為admin )	(Der Standard-Benutzernamen bzw. das Passwort ist admin)	（默认用户名为admin,默认密码为admin）
+iSCSI Server	iSCSI 伺服器	iSCSI Server	iSCSI服务器
+System Utilities	系統工具	System-Tools	系统工具
+Target Host	目標主機	Ziel-Host	目的主机
+Number of Packets	傳送封包數	Anzahl Übertragungs-Pakete	传送封包数
+Packets	封包	Pakete	封包
+Hop Count	路由主機數	Hop Count	路由主机数
+Counts	個	Counts	个
+Within the same broadcasting domain	在同一個廣播網域中才有作用	Innerhalb der gleichen Broadcast-Domain	在同一个广播域中才有效
+Packet Sent	傳送封包	Pakete versendet	传送包
+Packet Received	接收封包	Pakete erhalten	接收包
+Average Time	平均時間	Durchschnittliche Zeit	平均时间
+Cannot send packet to host	封包無法傳送到對目標主機	Kann keine Pakete an den Zielrechner senden	包无法传送到目的主机
+Device is not ARPable	網路介面無法使用ARPing(可能是PPPoE或WWAN)	Device is not ARPable	网络界面无法使用ARPing(可能是PPPoE或WWAN）
+complete	執行完成	beendigt	完成
+Routing Gateway	路由閘道選擇	Routing Gateway	路由网关
+Default Gateway	使用預設閘道	Standard Gateway	缺省网关
+Static Gateway	指定靜態閘道	Statisches Gateway	静态网关
+Gateway IP Address	閘道IP位址	Gateway IP-Adresse	网关IP地址
+Web Filtering	網頁過濾	Web Filtering	网页过滤
+Web Content Filtering	網頁內容過濾	Web Content Filtering	网页内容过滤
+Activex Filtering	ActiveX過濾	ActiveX-Filter	ActiveX过滤
+Java/JavaScript Filtering	Java/JavaScript過濾	Java / JavaScript-Filterung	Java/JavaScript过滤
+Proxy Filtering	Proxy過濾	Proxy-Filter	Proxy过滤
+Web Filtering Rule	網頁過濾規則	Web Filter Regeln	网页过滤规则
+Filter Keyword	篩選關鍵字	Keyword Filter	过滤关键字
+Filter Type	篩選類型	Filtertyp	过滤类型
+url	網頁	Webseite	网页
+host	主機	Host	主机
+Bits	位元	Bits	位
+Microseconds	微秒	Mikrosekunden	微妙
+TxMode	傳輸模式	Tx-Modus	传输模式
+HT Control Field	HT 控制欄位	HT Control-Feld	HT控制场
+HT Band Width	HT 頻寬	HT-Bandbreite	HT带宽
+Block Ack Setup Automatically	自動設定 Block Ack	Block Ack Setup Automatically	自动设定Block Ack
+Block Ack Window Size	Block Ack 欄位寬度	Block Ack Window Size	Block Ack窗口大小
+Reject Block Ack	拒絕 Block Ack 要求	Reject Block Ack	拒绝Block Ack要求
+Packet Aggregate	封包匯集	Packet Aggregate	分组总结
+Reverse Direction Grant	反向回饋	Reverse Direction Grant	反向回馈
+Link Adapt	連線調適	Link Adapt	链接适应
+Operation Mode	運作模式	Operation Modus	运作模式
+iTunes Server	iTunes 伺服器	iTunes-Server	iTunes 服务器
+iTunes Password	iTunes 密碼設定	iTunes-Passwort	iTunes 密码设定
+iTunes Server Name	iTunes 伺服器名稱	iTunes-Server-Name	iTunes 服务器名称
+More than 13 Characters	密碼必須大於13碼	Das Passwort muss mind. 13 Zeichen enthalten.	密码必须大于13个字符
+WAN Detect	外部連線偵測 	WAN Erkennung	外部连接检测
+This might increase data charge	可能會增加數據費用	Aktiviert erhöht es eventuell die Gebühr für Ihre 3G Datennutzung	可能会增加数据收费
+Session Manager	連線數回收管理	Session Manager	会话管理
+Recycle Mode	回收模式	Wiederherstellungs-Modus	回收模式
+Fast	快速	Schnell	快速
+Regular	平衡	Normal	平衡
+Slow	慢速	Langsam	缓慢
+BT Engine Maximum Peers	BT下載引擎最大來源數	BT Engine Maximum Peers	BT下载引擎最大来源数
+Virtual Hosts	虛擬主機	Virtuelle Hosts	虚拟主机
+Virtual Host Rule	虛擬主機規則	Virtuelle Host Regel	虚拟主机规则
+Mapped LAN IP Address	虛擬對映網址	Mapped LAN IP-Adresse	局域网IP地址映射
+Login	登錄	Login	登陆
+Mode Switch	模式切換	Mode Switch	模式切换
+Login Success.	登錄成功	Login erfolgreich.	登陆成功
+Ethernet Port	網路埠	Ethernet Anschluß	网口
+The ethernet port will be configured as a WAN port.	網路埠將設定為外部網路埠	Der Ethernet-Anschluss wird als WAN-Port konfiguriert	The ethernet port will be configured as a WAN port.
+Configuring the ethernet port as the LAN port will cause the WAN connectivity issue	將網路埠設定為內部網路會造成對外網路連線問題	Die Konfiguration des Ethernet-Anschlusses als LAN Port deaktiviert die Konnektivität über den WAN-Port	Configuring the ethernet port as the LAN port will cause the WAN connectivity issue
+WPS Router PIN Code	路由器WPS PIN碼	WPS Router PIN Code	WPS Router PIN Code
+Generate PIN Code	產生PIN碼	PIN Code generieren	Generate PIN Code
+WPS Connect	WPS連線	WPS Verbindung	WPS Connect
+WPS Push Button	WPS按鈕連線	WPS Push Button	WPS Push Button
+Push Button	按鈕連線	Push Button	Push Button
+WPS Client Pin Code Connect	WPS用戶PIN碼連線	WPS Client Pin Code	 WPS Client Pin Code Connect
+Connection	連線	Verbinden	Connection
+Start Hardware NAT failed	啟動Hardware NAT失敗	Start Hardware NAT failed	启动Hardware NAT失败
+Need to turn off iDBM, Web Filter and Universal Repeater first	請關閉智慧型頻寬管理,網頁過濾與延伸訊號中繼模式	iDBM, Web Filter und Universal Repeater werden zuerst abgeschaltet	请关闭智慧型频宽管理,网页过滤与延伸讯号中继模式
+Need to turn off Hardware NAT first	請先關閉Hardware NAT	Hardware NAT muss zuerst abgeschaltet werden	请先关闭Hardware NAT
+Start iDBM failed	啟動智慧型頻寬管理失敗	iDBM Start fehlgeschlagen	启动智慧型频宽管理失败
+Start Web Filtering failed	啟動網頁過濾失敗	Web Filtering Start fehlgeschlagen	启动网页过滤失败
+Start Universal Repeater failed	啟動延伸訊號中繼模式失敗	Universal Repeater Start fehlgeschlagen	启动延伸讯号中继模式失败
+AirCloud	隨身雲端	AirCloud	随身云端
+Drive	硬碟	Laufwerk	硬碟
+Drive Allow Guest	允許匿名	Gastzugriff	允许匿名
+Drive External Access	允許外部連線	Externer Zugriff	允许外部连线
+Drive Port	管理埠號	Port	管理埠号
+Drive user name	使用者名稱	Benutzername	使用者名称
+Drive Password	密碼設定	Passwort	密码设定
+USB Mode	USB 模式	USB Mode	USB 模式
+Day	日	Day	日
+Hour	時	Hour	时
+Minute	分	Minute	分
+Backup WAN	備援網路	Backup WAN	Backup WAN
+Load Balance Weight	平衡負載權重	Load Balance Weight	Load Balance Weight
+Detection Timeout	偵測超時	Detection Timeout	Detection Timeout
+Custom Detection Host	自訂偵測站台	Custom Detection Host	Custom Detection Host
+Site Survey	網路搜尋	Site Survey	Site Survey
+Extention Channel	延伸頻道	Extention Channel	Extention Channel
+Daylight Saving Support	日光節約時間	Daylight Saving Support	日光节约时间
+Logout	登出	Logout	登出
+Camera	攝影機	Camera	摄像机
+Camera Port	管理埠號	Camera Port	管理埠号
+Camera Account Login	帳號登入	Camera Account Login	埠号登入
+Camera user name	使用者名稱	Benutzername	使用者名称
+Camera Password	密碼設定	Passwort	密码设定
+Music	音樂	Music	音乐
+The SSID name must be no longer than 31 characters. The first and final characters must not be spaces.
+The allowed characters are: A-Z, a-z, 0-9, - _ () and spaces.
+The Password must be no longer than 31 characters. The first and final characters must not be spaces.

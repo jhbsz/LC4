@@ -1,0 +1,21 @@
+--- updatedd-2.6.old/src/plugins/Makefile.in	2007-08-24 00:19:53.000000000 +0800
++++ updatedd-2.6.new/src/plugins/Makefile.in	2009-03-12 02:34:16.000000000 +0800
+@@ -84,6 +84,7 @@
+ libtzo_la_DEPENDENCIES = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ am_libtzo_la_OBJECTS = libtzo.lo
+ libtzo_la_OBJECTS = $(am_libtzo_la_OBJECTS)
++libzoneedit_la_DEPENDENCIES = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ am_libzoneedit_la_OBJECTS = libzoneedit.lo
+ libzoneedit_la_OBJECTS = $(am_libzoneedit_la_OBJECTS)
+ DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
+@@ -246,8 +247,8 @@
+ libregfish_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ libtzo_la_SOURCES = libtzo.c libtzo.h
+ libtzo_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+-libtzo_la_SOURCES = libzoneedit.c libzoneedit.h
+-libtzo_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
++libzoneedit_la_SOURCES = libzoneedit.c libzoneedit.h
++libzoneedit_la_LIBADD = $(top_builddir)/libupdatedd-exception/libupdatedd-exception.la
+ INCLUDES = -I$(top_srcdir)/include
+ include_HEADERS = libchangeip.h libdyndns.h libeurodyndns.h libhn.h libnoip.h libods.h libovh.h libregfish.h libtzo.h libzoneedit.h
+ all: all-am

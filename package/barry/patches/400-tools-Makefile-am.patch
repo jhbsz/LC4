@@ -1,0 +1,11 @@
+--- barry-0.16/tools/Makefile.am	2009-10-01 12:16:17.000000000 +0800
++++ barry-0.16/tools/Makefile.am.new	2010-11-29 20:57:18.684322638 +0800
+@@ -50,7 +50,7 @@
+ bjvmdebug_LDADD = ../src/libbarry.la $(LIBUSB_LIBS) -lpthread
+ 
+ bdptest_SOURCES = bdptest.cc
+-bdptest_LDADD = ../src/libbarrydp.la
++bdptest_LDADD = ../src/libbarrydp.la -lbarry -L.
+ 
+ bjdwp_SOURCES = bjdwp.cc
+ bjdwp_LDADD = ../src/libbarry.la ../src/libbarrydp.la ../src/libbarryjdwp.la

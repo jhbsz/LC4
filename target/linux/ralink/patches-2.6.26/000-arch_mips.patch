@@ -1,0 +1,361 @@
+diff -Nurbp linux-2.6.26-orig/arch/mips/Kconfig linux-2.6.26-new/arch/mips/Kconfig
+--- linux-2.6.26-orig/arch/mips/Kconfig	2011-10-05 15:17:19.717915751 +0800
++++ linux-2.6.26-new/arch/mips/Kconfig	2011-10-17 14:24:52.224162066 +0800
+@@ -13,10 +13,102 @@ menu "Machine selection"
+ 
+ config ZONE_DMA
+ 	bool
++	default y
+ 
++config RALINK_RT2880_MP
++	bool
++config RALINK_RT2880_SHUTTLE
++	bool
++config RALINK_RT3052_MP2
++	bool
++config RALINK_RT3352_MP
++	bool
++config RALINK_RT5350_MP
++	bool
++config RALINK_RT3883_MP
++	bool
+ choice
+ 	prompt "System type"
+-	default SGI_IP22
++	default RALINK_RT3052
++
++config RALINK_RT2880
++        bool "Ralink RT2880 board"
++	select DMA_NONCOHERENT
++	select IRQ_CPU
++	select HW_HAS_PCI
++	select SWAP_IO_SPACE
++	select SYS_HAS_CPU_MIPS32_R1
++	select SYS_SUPPORTS_LITTLE_ENDIAN
++	select BOOT_ELF32
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select RALINK_RT2880_MP
++        help
++         Ralink evaluation board based on RT2880
++
++config RALINK_RT3052
++        bool "Ralink RT305x/RT3350 board"
++	select CEVT_R4K
++	select CSRC_R4K
++	select DMA_NONCOHERENT
++	select IRQ_CPU
++	select SWAP_IO_SPACE
++	select SYS_HAS_CPU_MIPS32_R1
++        select SYS_HAS_CPU_MIPS32_R2
++	select SYS_SUPPORTS_LITTLE_ENDIAN
++	select BOOT_ELF32
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select RALINK_RT3052_MP2 if !RALINK_RT3350
++        help
++         Ralink evaluation board based on RT3052
++
++ config RALINK_RT3352
++        bool "Ralink RT3352 board"
++	select CEVT_R4K
++	select CSRC_R4K
++	select DMA_NONCOHERENT
++	select IRQ_CPU
++	select SWAP_IO_SPACE
++	select SYS_HAS_CPU_MIPS32_R1
++        select SYS_HAS_CPU_MIPS32_R2
++	select SYS_SUPPORTS_LITTLE_ENDIAN
++	select BOOT_ELF32
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select RALINK_RT3352_MP
++        help
++         Ralink evaluation board based on RT3352
++
++config RALINK_RT5350
++	bool "Ralink RT5350 board"
++	select CEVT_R4K
++	select CSRC_R4K
++	select DMA_NONCOHERENT
++	select IRQ_CPU
++	select SWAP_IO_SPACE
++	select SYS_HAS_CPU_MIPS32_R1
++	select SYS_HAS_CPU_MIPS32_R2
++	select SYS_SUPPORTS_LITTLE_ENDIAN
++	select BOOT_ELF32
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select RALINK_RT5350_MP
++	help
++	 Ralink evaluation board based on RT5350
++
++config RALINK_RT3883
++        bool "Ralink RT3883 board"
++	select CEVT_R4K
++	select CSRC_R4K
++	select DMA_NONCOHERENT
++	select IRQ_CPU
++	select HW_HAS_PCI
++	select SWAP_IO_SPACE
++	select SYS_HAS_CPU_MIPS32_R1
++        select SYS_HAS_CPU_MIPS32_R2
++	select SYS_SUPPORTS_LITTLE_ENDIAN
++	select BOOT_ELF32
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select RALINK_RT3883_MP
++        help
++         Ralink evaluation board based on RT3883
+ 
+ config MACH_ALCHEMY
+ 	bool "Alchemy processor based machines"
+@@ -697,6 +785,10 @@ source "arch/mips/sibyte/Kconfig"
+ source "arch/mips/tx4927/Kconfig"
+ source "arch/mips/tx4938/Kconfig"
+ source "arch/mips/vr41xx/Kconfig"
++source "arch/mips/rt2880/Kconfig"
++  
++config SERIAL_CONSOLE 
++	bool
+ 
+ endmenu
+ 
+@@ -1999,6 +2091,7 @@ config PCI_DOMAINS
+ 	bool
+ 
+ source "drivers/pci/Kconfig"
++source "drivers/pci/pcie/Kconfig" 
+ 
+ #
+ # ISA support is now enabled via select.  Too many systems still have the one
+diff -Nurbp linux-2.6.26-orig/arch/mips/Kconfig.debug linux-2.6.26-new/arch/mips/Kconfig.debug
+--- linux-2.6.26-orig/arch/mips/Kconfig.debug	2011-10-05 15:17:19.727915973 +0800
++++ linux-2.6.26-new/arch/mips/Kconfig.debug	2011-08-08 22:05:33.000000000 +0800
+@@ -16,6 +16,12 @@ config CMDLINE
+ 	  other cases you can specify kernel args so that you don't have
+ 	  to set them up in board prom initialization routines.
+ 
++config UBOOT_CMDLINE
++	bool "UBoot kernel command line"
++	default ""
++	help
++	  Say Y here if you want to use UBoot parameter "bootargs" as kernel command line.
++
+ config DEBUG_STACK_USAGE
+ 	bool "Enable stack utilization instrumentation"
+ 	depends on DEBUG_KERNEL
+diff -Nurbp linux-2.6.26-orig/arch/mips/kernel/time.c linux-2.6.26-new/arch/mips/kernel/time.c
+--- linux-2.6.26-orig/arch/mips/kernel/time.c	2011-10-05 15:17:19.737915952 +0800
++++ linux-2.6.26-new/arch/mips/kernel/time.c	2011-08-08 22:05:33.000000000 +0800
+@@ -28,6 +28,11 @@
+ #include <asm/smtc_ipi.h>
+ #include <asm/time.h>
+ 
++#ifdef CONFIG_RALINK_EXTERNAL_TIMER
++#include <asm/rt2880/rt_mmap.h>
++#define RALINK_16BIT_COUNT_CMP
++#endif
++
+ /*
+  * forward reference
+  */
+diff -Nurbp linux-2.6.26-orig/arch/mips/kernel/vmlinux.lds.S linux-2.6.26-new/arch/mips/kernel/vmlinux.lds.S
+--- linux-2.6.26-orig/arch/mips/kernel/vmlinux.lds.S	2011-10-05 15:17:19.737915952 +0800
++++ linux-2.6.26-new/arch/mips/kernel/vmlinux.lds.S	2011-08-08 22:15:56.000000000 +0800
+@@ -32,6 +32,7 @@ SECTIONS
+ 	/* read-only */
+ 	_text = .;	/* Text and read-only data */
+ 	.text : {
++		. = . + 0x8000;
+ 		TEXT_TEXT
+ 		SCHED_TEXT
+ 		LOCK_TEXT
+@@ -170,6 +171,10 @@ SECTIONS
+ 	.bss : {
+ 		*(.bss)
+ 		*(COMMON)
++		*(.cod0)
++		*(.cod1)
++		*(.dec0)
++		*(.dec1)
+ 	}
+ 	__bss_stop = .;
+ 
+diff -Nurbp linux-2.6.26-orig/arch/mips/lib/iomap.c linux-2.6.26-new/arch/mips/lib/iomap.c
+--- linux-2.6.26-orig/arch/mips/lib/iomap.c	2011-10-05 15:17:19.737915952 +0800
++++ linux-2.6.26-new/arch/mips/lib/iomap.c	2011-08-08 22:05:33.000000000 +0800
+@@ -23,7 +23,7 @@
+  * implementation and should do their own copy.
+  */
+ 
+-#define PIO_MASK	0x0ffffUL
++#define PIO_MASK	0xffffffffUL
+ 
+ unsigned int ioread8(void __iomem *addr)
+ {
+diff -Nurbp linux-2.6.26-orig/arch/mips/Makefile linux-2.6.26-new/arch/mips/Makefile
+--- linux-2.6.26-orig/arch/mips/Makefile	2011-10-05 15:17:19.737915952 +0800
++++ linux-2.6.26-new/arch/mips/Makefile	2011-10-17 14:05:56.935419160 +0800
+@@ -167,6 +167,41 @@ libs-$(CONFIG_SIBYTE_CFE)	+= arch/mips/s
+ #
+ 
+ #
++# Ralink RT2880 board
++#
++core-$(CONFIG_RALINK_RT2880)	+= arch/mips/rt2880/
++cflags-$(CONFIG_RALINK_RT2880)	+= -Iinclude/asm-mips/rt2880
++load-$(CONFIG_RALINK_RT2880)	+= 0x88000000
++
++#
++# Ralink RT3052 board
++#
++core-$(CONFIG_RALINK_RT3052)	+= arch/mips/rt2880/
++cflags-$(CONFIG_RALINK_RT3052)	+= -Iinclude/asm-mips/rt2880
++load-$(CONFIG_RALINK_RT3052)	+= 0x80000000
++
++#
++# Ralink RT3352 board
++#
++core-$(CONFIG_RALINK_RT3352)	+= arch/mips/rt2880/
++cflags-$(CONFIG_RALINK_RT3352)	+= -Iinclude/asm-mips/rt2880
++load-$(CONFIG_RALINK_RT3352)	+= 0x80000000
++
++#
++# Ralink RT5350 board
++#
++core-$(CONFIG_RALINK_RT5350)	+= arch/mips/rt2880/
++cflags-$(CONFIG_RALINK_RT5350)	+= -Iinclude/asm-mips/rt2880
++load-$(CONFIG_RALINK_RT5350)	+= 0x80000000
++
++#
++# Ralink RT3883 board
++#
++core-$(CONFIG_RALINK_RT3883)	+= arch/mips/rt2880/
++cflags-$(CONFIG_RALINK_RT3883)	+= -Iinclude/asm-mips/rt2880
++load-$(CONFIG_RALINK_RT3883)	+= 0x80000000
++
++#
+ # Acer PICA 61, Mips Magnum 4000 and Olivetti M700.
+ #
+ core-$(CONFIG_MACH_JAZZ)	+= arch/mips/jazz/
+@@ -685,6 +720,30 @@ endif
+ vmlinux.32: vmlinux
+ 	$(OBJCOPY) -O $(32bit-bfd) $(OBJCOPYFLAGS) $< $@
+ 
++ifdef CONFIG_RALINK_RT2880
++#error zImage rImage
++zImage rImage: vmlinux $(TOPDIR)/.config
++	$(Q)$(MAKE) $(build)=arch/mips/rt2880/boot $@
++endif
++
++ifdef CONFIG_RALINK_RT3052
++#error zImage rImage
++zImage rImage: vmlinux $(TOPDIR)/.config
++	$(Q)$(MAKE) $(build)=arch/mips/rt2880/boot $@
++endif
++
++ifdef CONFIG_RALINK_RT3352
++#error zImage rImage
++zImage rImage: vmlinux $(TOPDIR)/.config
++	$(Q)$(MAKE) $(build)=arch/mips/rt2880/boot $@
++endif
++
++ifdef CONFIG_RALINK_RT3352
++#error zImage rImage
++zImage rImage: vmlinux $(TOPDIR)/.config
++	$(Q)$(MAKE) $(build)=arch/mips/rt2880/boot $@
++endif
++
+ #
+ # The 64-bit ELF tools are pretty broken so at this time we generate 64-bit
+ # ELF files from 32-bit files by conversion.
+diff -Nurbp linux-2.6.26-orig/arch/mips/pci/pci.c linux-2.6.26-new/arch/mips/pci/pci.c
+--- linux-2.6.26-orig/arch/mips/pci/pci.c	2011-10-05 15:17:19.727915973 +0800
++++ linux-2.6.26-new/arch/mips/pci/pci.c	2011-08-04 23:42:31.000000000 +0800
+@@ -123,10 +123,15 @@ static u8 __init common_swizzle(struct p
+ 	return PCI_SLOT(dev->devfn);
+ }
+ 
++int mips_system_has_legacy_ide;
++
++EXPORT_SYMBOL_GPL(mips_system_has_legacy_ide);
++
+ static int __init pcibios_init(void)
+ {
+ 	struct pci_controller *hose;
+ 	struct pci_bus *bus;
++	struct pci_dev *dev;
+ 	int next_busno;
+ 	int need_domain_info = 0;
+ 
+@@ -158,6 +163,13 @@ static int __init pcibios_init(void)
+ 		pci_assign_unassigned_resources();
+ 	pci_fixup_irqs(common_swizzle, pcibios_map_irq);
+ 
++	if ((dev = pci_get_class(PCI_CLASS_BRIDGE_EISA << 8, NULL)) != NULL ||
++	    (dev = pci_get_class(PCI_CLASS_BRIDGE_ISA << 8, NULL)) != NULL) {
++		pci_dev_put(dev);
++
++		mips_system_has_legacy_ide = 1;
++	}
++
+ 	return 0;
+ }
+ 
+--- old/arch/mips/kernel/cevt-r4k.c	2008-07-14 05:51:29.000000000 +0800
++++ new/arch/mips/kernel/cevt-r4k.c	2008-12-02 14:11:18.000000000 +0800
+@@ -172,6 +172,7 @@
+ /*
+  * FIXME: This doesn't hold for the relocated E9000 compare interrupt.
+  */
++#ifdef EZPACKET
+ static int c0_compare_int_pending(void)
+ {
+ 	return (read_c0_cause() >> cp0_compare_irq) & 0x100;
+@@ -210,7 +211,7 @@
+ 
+ 	write_c0_compare(read_c0_count());
+ 	irq_disable_hazard();
+-	if (c0_compare_int_pending())
++	if (c0_compare_int_pending()) 
+ 		return 0;
+ 
+ 	/*
+@@ -218,6 +219,7 @@
+ 	 */
+ 	return 1;
+ }
++#endif
+ 
+ int __cpuinit mips_clockevent_init(void)
+ {
+@@ -240,8 +242,10 @@
+ 		return 0;
+ #endif
+ 
+-	if (!c0_compare_int_usable())
++#ifdef EZPACKET
++    if (!c0_compare_int_usable())
+ 		return -ENXIO;
++#endif
+ 
+ 	/*
+ 	 * With vectored interrupts things are getting platform specific.
+@@ -287,6 +291,11 @@
+ #else
+ 	setup_irq(irq, &c0_compare_irqaction);
+ #endif
++#ifndef EZPACKET
++#define ALLINTS (IE_IRQ0 | IE_IRQ1 | IE_IRQ2 | IE_IRQ3 | IE_IRQ4 | IE_IRQ5)
++    write_c0_compare(read_c0_count() + 3000000);
++    set_c0_status(ALLINTS);
++#endif
+ 
+ 	return 0;
+ }
+--- old/arch/mips/mm/cache.c	2009-02-25 17:29:41.000000000 +0800
++++ new/arch/mips/mm/cache.c	2009-02-25 17:27:38.000000000 +0800
+@@ -50,6 +50,7 @@
+ void (*_dma_cache_inv)(unsigned long start, unsigned long size);
+ 
+ EXPORT_SYMBOL(_dma_cache_wback_inv);
++EXPORT_SYMBOL(_dma_cache_inv);
+ 
+ #endif /* CONFIG_DMA_NONCOHERENT */
+ 

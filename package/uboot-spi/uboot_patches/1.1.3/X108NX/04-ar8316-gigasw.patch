@@ -1,0 +1,484 @@
+--- uboot/drivers/mii_mgr.c	2010-07-21 16:19:12.000000000 +0800
++++ uboot/drivers/mii_mgr.c	2010-07-22 14:26:24.000000000 +0800
+@@ -1,3 +1,4 @@
++#include <../autoconf.h>
+ #include <common.h>
+ #include <command.h>
+ #include <rt_mmap.h>
+@@ -31,6 +32,7 @@
+ void enable_mdio(int enable)
+ {
+ #if !defined (P5_MAC_TO_PHY_MODE)
++    #warning "CONFIG with 3052 and MAC to PHY"
+ 	u32 data = inw(GPIO_PRUPOSE);
+ 	if(enable)
+ 		data &= ~GPIO_MDIO_BIT;
+@@ -274,6 +276,343 @@
+ 	}
+ 	return 0;
+ }
++/* EZP: Supported for AR8316 giga switch */
++#ifdef CONFIG_AR8316
++#warning "CONFIG_AR8316: athrs16_reg_read, athrs16_reg_write, athrs16_init and athrs16_LAN_WAN_Par"
++//#define outw(address, value)    *((volatile uint32_t *)(address)) = cpu_to_le32(value)
++//#define inw(address)            le32_to_cpu(*(volatile u32 *)(address))
++static uint32_t
++athrs16_reg_read(uint32_t reg_addr)
++{
++    uint32_t reg_word_addr;
++    uint32_t phy_addr, tmp_val, reg_val;
++    uint32_t phy_val;
++    uint32_t phy_reg;
++    //uint32_t mo_reg;
++
++    /* change reg_addr to 16-bit word address, 32-bit aligned */
++    reg_word_addr = (reg_addr & 0xfffffffc) >> 1;
++
++    /* configure register high address */
++    phy_addr = 0x18;
++    phy_reg = 0x0;
++    phy_val = ((reg_word_addr >> 8) & 0x3ff);  /* A18-A9 of reg address */
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++    /* For some registers such as MIBs, since it is read/clear, we should */
++    /* read the lower 16-bit register then the higher one */
++
++    /* read register in lower address */
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_read(phy_addr, phy_reg, &reg_val);
++
++    /* read register in higher address */
++    reg_word_addr++;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_read(phy_addr, phy_reg, &tmp_val);
++    reg_val |= (tmp_val << 16);
++
++    return reg_val;   
++}
++
++static void
++athrs16_reg_write(uint32_t reg_addr, uint32_t reg_val)
++{
++    uint32_t reg_word_addr;
++    uint32_t phy_addr;
++    uint32_t phy_val;
++    uint32_t phy_reg;
++    //uint32_t mo_reg;
++
++    /* change reg_addr to 16-bit word address, 32-bit aligned */
++    reg_word_addr = (reg_addr & 0xfffffffc) >> 1;
++
++    /* configure register high address */
++    phy_addr = 0x18;
++    phy_reg = 0x0;
++    phy_val = ((reg_word_addr >> 8) & 0x3ff);  /* A18-A9 of reg address */
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++    /* For some registers such as ARL and VLAN, since they include BUSY bit */
++    /* in lower address, we should write the higher 16-bit register then the */
++    /* lower one */
++
++    /* read register in higher address */
++    reg_word_addr++;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    phy_val = ((reg_val >> 16) & 0xffff);
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_write(phy_addr, phy_reg, phy_val);
++
++    /* write register in lower address */
++    reg_word_addr--;
++    phy_addr = 0x10 | ((reg_word_addr >> 5) & 0x7); /* A8-A6 of reg address */
++    phy_reg = (reg_word_addr & 0x1f);   /* A5-A1 of reg address */
++    phy_val = (reg_val & 0xffff);
++    //change P5 external PHY address before operation
++    //mo_reg = inw(0xb01100c8);
++    //mo_reg &= 0xe0ffffff;
++    //mo_reg |= (phy_addr << 24); 
++    //outw(0xb01100c8, mo_reg);
++    mii_mgr_write(phy_addr, phy_reg, phy_val); 
++}
++
++#define BITS(_s, _n) 	(((1UL << (_n)) - 1) << _s)
++#define BIT(_s) (1UL << _s)
++
++#define AR8316_REG_VTU                  0x0040
++#define   AR8316_VTU_OP                 BITS(0, 3)
++#define   AR8316_VTU_OP_NOOP            0x0
++#define   AR8316_VTU_OP_FLUSH           0x1
++#define   AR8316_VTU_OP_LOAD            0x2
++#define   AR8316_VTU_OP_PURGE           0x3
++#define   AR8316_VTU_OP_REMOVE_PORT     0x4
++#define   AR8316_VTU_ACTIVE             BIT(3)
++#define   AR8316_VTU_PORT               BITS(8, 4)
++#define   AR8316_VTU_PORT_S             8
++#define   AR8316_VTU_VID                BITS(16, 12)
++#define   AR8316_VTU_VID_S              16
++#define   AR8316_VTU_PRIO               BITS(28, 3)
++#define   AR8316_VTU_PRIO_S             28
++#define   AR8316_VTU_PRIO_EN            BIT(31)
++
++#define AR8316_REG_VTU_DATA             0x0044
++#define   AR8316_VTUDATA_MEMBER         BITS(0, 6)
++#define   AR8316_VTUDATA_VALID          BIT(11)
++	
++static void
++ar8316_vtu_op( u32 op, u32 val)
++{
++    //check Vlan Table is not on busy
++    if ((athrs16_reg_read(0x0040)& AR8316_VTU_ACTIVE)== AR8316_VTU_ACTIVE)
++        return;
++    if ((op & AR8316_VTU_OP) == AR8316_VTU_OP_LOAD) {
++        val &= AR8316_VTUDATA_MEMBER;
++        val |= AR8316_VTUDATA_VALID;
++        athrs16_reg_write(AR8316_REG_VTU_DATA, val);
++    }
++    //set VT_BUSY=1 to make VT start operation
++    op |= AR8316_VTU_ACTIVE;
++    athrs16_reg_write(AR8316_REG_VTU, op);
++}
++
++void athrs16_init()
++{
++    static int athr16_init_flag=0;
++    uint32_t po_reg_val; 
++    /* if using header for register configuration, we have to     */
++    /* configure s16 register after frame transmission is enabled */
++    if (athr16_init_flag)
++        return;
++
++    /*Power on strip mode setup*/
++    /*Configure the MAC0 RGMII PHY mode, and enable the input clock delay*/
++    /*AR8316 only support RGMII MAC0 PHY mode. MACO in MAC mode is only supported when us GMII*/
++    /*RT3052 only have RGMII interface, hence MAC0 of AR8316 is set to PHY mode in this case*/
++    athrs16_reg_write(0x8, 0x012e1be2);
++    /*The MAC0 speed/duplex is enabled by CPU. The link status of MAC1~MAC5 */
++    /*are controlled by PHY0~PHY4*/
++    athrs16_reg_write(0x100, 0x7e);
++    athrs16_reg_write(0x200, 0x0200);
++    athrs16_reg_write(0x300, 0x0200);
++    athrs16_reg_write(0x400, 0x0200);
++    athrs16_reg_write(0x500, 0x0200);
++    athrs16_reg_write(0x600, 0x0200);
++    /*unitcast and multicast flood destination port*/
++    //athrs16_reg_write(0x2c, 0x003f003f);
++
++    /*allow single vlan tag to be transmitted and received for all port*/
++    /*Enable learning and forwarding*/
++    athrs16_reg_write(0x104, 0x6004);
++    athrs16_reg_write(0x204, 0x6004);
++    athrs16_reg_write(0x304, 0x6004);
++    athrs16_reg_write(0x404, 0x6004);
++    athrs16_reg_write(0x504, 0x6004);    
++    athrs16_reg_write(0x604, 0x6004);
++
++    //get Power-On Strapping Reg Value to verify we indeed write the correct value.
++    po_reg_val = athrs16_reg_read(0x8);
++    //printk("\n AR8316's Power-On Strapping Reg Value is 0x%08X \n", po_reg_val);
++    //printk("\n AR8316's MAC0 started as PHY mode in RGMII.\n");
++    printf("AR8316 Support!!\n");
++
++    athr16_init_flag = 1;
++}
++/* Enable VLAN for Port Partitions
++ use port-based VLAN only
++ in the AR8316, there are 3 relative register to be set(every port has its own reg., eg. per port settings)
++ 1. PVID for ingress port. When untag frame comes in, the VID will be PVID
++ 2. Tag/unTag for egress port. When frame is going out the port, VID tag can be add, remove or unmofified. 
++ 3. Port member for each port. AR8316's port-based VLAN is VLAN table independent, and this port member setting restrict the 	 frame forwarding.
++*/
++void athrs16_LAN_WAN_Par(void)
++{
++    //port arrangement is LLLLW, P1~P5    
++    //port member for each port
++    //P0:111110 = 0x3E
++    //P1:011101 = 0x1D
++    //P2:011011 = 0x1B
++    //P3:010111 = 0x17
++    //P4:001111 = 0x0F
++    //P5:000001 = 0x01
++
++    //PVID setting
++    //P0:1
++    //P1:1
++    //P2:1
++    //P3:1
++    //P4:1
++    //P5:2
++
++    //Egress Port Tagging
++    //P0:tag/unmodified
++    //P1:untag
++    //P2:untag
++    //P3:untag
++    //P4:untag
++    //P5:untag
++
++    //reg value for Port-based VLAN register(0x108,0x208,0x308,0x408,0x508,0x608)
++    //0x108 = 0x003E0001
++    //0x208 = 0x001D0001
++    //0x308 = 0x001B0001
++    //0x408 = 0x00170001
++    //0x508 = 0x000F0001
++    //0x608 = 0x00010002
++
++    //reg value for Port Control register(0x104, 0x204, 0x304, 0x404, 0x504, 0x604)
++    //the initial value for this is 00, means unmodifying the tag. So, we don't need to set this.
++
++    athrs16_reg_write(0x108, 0x003e0001);
++    athrs16_reg_write(0x208, 0x001d0001);
++    athrs16_reg_write(0x308, 0x001b0001);
++    athrs16_reg_write(0x408, 0x00170001);
++    athrs16_reg_write(0x508, 0x000f0001);
++    athrs16_reg_write(0x608, 0x00010002);
++
++
++    //P0 tag,
++    athrs16_reg_write(0x104, 0x00006204);
++    //P1 untag
++    athrs16_reg_write(0x204, 0x00006104);
++    //P2 untag
++    athrs16_reg_write(0x304, 0x00006104);
++    //P3 untag
++    athrs16_reg_write(0x404, 0x00006104);
++    //P4 untag
++    athrs16_reg_write(0x504, 0x00006104);
++    //P5 untag
++    athrs16_reg_write(0x604, 0x00006104);
++    /*
++    // check VT is busy
++    u32 temp=0;
++    temp = athrs16_reg_read(0x0040);
++    temp = temp&0x00000004;
++    while (temp == 0x4){
++    athrs16_reg_write(0x0044, 0x0000080e);
++    athrs16_reg_write(0x0040, 0x0001000a);
++    }
++    temp = athrs16_reg_read(0x0040);
++    temp = temp&0x00000004;
++    while (temp == 0x4){
++    athrs16_reg_write(0x0044, 0x00000818);
++    athrs16_reg_write(0x0040, 0x0002000a);
++    }
++     */
++    /*
++    // This is a test !! We test the tag is outting from P3
++    u32 temp;
++
++    //P0: PVID=1, port_mem=(P0,P5), ingress=port_vlan, egress=untag
++    athrs16_reg_write(0x108, 0x00200001);
++    temp = athrs16_reg_read(0x108);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++    //P1: PVID=2, port_mem=(P1, P2, P3), ingress=port_vlan, egress=untag	
++    athrs16_reg_write(0x208, 0x000c0002);
++    temp = athrs16_reg_read(0x208);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++    //P2: PVID=2, port_mem=(P1, P2, P3), ingress=port_vlan, egress=untag
++    athrs16_reg_write(0x308, 0x000a0002);
++    temp = athrs16_reg_read(0x308);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++    //P3: PVID=5, port_mem=(P1, P2, P3, P4), ingress=port_vlan, egress=tag
++    athrs16_reg_write(0x408, 0x00160005);
++    temp = athrs16_reg_read(0x408);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++    //P4: PVID=3, port_mem=(P3, P4), ingress=port_vlan, egress=untag
++    athrs16_reg_write(0x508, 0x00080003);
++    temp = athrs16_reg_read(0x508);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++    //P5: PVID=1, port_mem=(P0,P5), ingress=port_vlan, egress=untag
++    athrs16_reg_write(0x608, 0x00010001);
++    temp = athrs16_reg_read(0x608);
++    printf("\n Port Settin 0xn08 is %08x \n", temp);
++
++
++    //force P3 add tag on egress to see if there is a tag exit
++    //P0 untag
++    athrs16_reg_write(0x104, 0x00006104);
++    temp = athrs16_reg_read(0x104);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++    //P1 untag
++    athrs16_reg_write(0x204, 0x00006104);
++    temp = athrs16_reg_read(0x204);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++    //P2 untag
++    athrs16_reg_write(0x304, 0x00006104);
++    temp = athrs16_reg_read(0x304);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++    //P3 tag
++    athrs16_reg_write(0x404, 0x00006304);
++    temp = athrs16_reg_read(0x404);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++    //P4 untag
++    athrs16_reg_write(0x504, 0x00006104);
++    temp = athrs16_reg_read(0x504);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++    //P5 untag
++    athrs16_reg_write(0x604, 0x00006104);
++    temp = athrs16_reg_read(0x604);
++    printf("\n Port Settin 0xn04 is %08x \n", temp);
++
++    printf("\n AR8316 VLAN Support Now.\n");
++
++    */
++}
++
++#endif /* EZP: Support for AR8316 */
+ 
+ U_BOOT_CMD(
+  	mdio,	4,	1,	rt2880_mdio_access,
+--- uboot/drivers/rt2880_eth.c	2010-07-21 16:19:12.000000000 +0800
++++ uboot/drivers/rt2880_eth.c	2010-07-22 14:24:32.000000000 +0800
+@@ -416,6 +416,10 @@
+ int   mii_mgr_read(u32 phy_addr, u32 phy_register, u32 *read_data);
+ int   mii_mgr_write(u32 phy_addr, u32 phy_register, u32 write_data);
+ 
++#ifdef CONFIG_AR8316
++void athrs16_init(void);
++void athrs16_LAN_WAN_Par(void);
++#endif
+ 
+ static int   rt2880_eth_setup(struct eth_device* dev);
+ static int   rt2880_eth_initd;
+@@ -796,8 +800,11 @@
+ 
+ #if defined (RT3052_ASIC_BOARD) || defined (RT3052_FPGA_BOARD) || \
+     defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD)
++	printf("\n RT3052 ASIC Setting switch. \n");
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x14)) = 0x405555; //enable VLAN
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x50)) = 0x2001; //VLAN id
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x54)) = 0x4003; //VLAN id
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x58)) = 0x6005; //VLAN id
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x98)) = 0x7f7f; //remove VLAN tag
+ #ifdef RALINK_DEMO_BOARD_PVLAN
+ 	//WLLLL, wan at P0, demo board
+@@ -813,6 +820,17 @@
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x48)) = 0x1002; //PVID
+ 	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x70)) = 0xffff506f; //VLAN member
+ #endif
++#ifdef RALINK_EZP_BOARD_PVLAN
++	//VVVVV, ALL VLAN, EZP board
++
++	printf("\n EZP Setting VLAN. \n");
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x40)) = 0x2001; //PVID
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x44)) = 0x4003; //PVID
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x48)) = 0x6005; //PVID
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x70)) = 0x48444241; //VLAN member
++	*((volatile u32 *)(RALINK_ETH_SW_BASE + 0x74)) = 0xffffff50; //VLAN member
++	#warning "new ezp board"
++#endif
+ #endif // (RT3052_ASIC_BOARD || RT3052_FPGA_BOARD || RT3352_ASIC_BOARD || RT3352_FPGA_BOARD)
+ }
+ 
+@@ -927,6 +945,8 @@
+ #endif
+ 
+ #if defined (MAC_TO_GIGAPHY_MODE) || defined (P5_MAC_TO_PHY_MODE) 
++
++
+ #define EV_MARVELL_PHY_ID0 0x0141
+ #define EV_MARVELL_PHY_ID1 0x0CC2
+ static int isMarvellGigaPHY(void)
+@@ -971,6 +991,35 @@
+ 	return 0;
+ }
+ 
++#define EV_AR8316_PHY0_ID0 0x004d
++#define EV_AR8316_PHY0_ID1 0xd041
++static int isARGigaPHY(void)
++{
++    	u32 phy_id0,phy_id1;
++	//u32 reg_val;
++
++	//reg_val = le32_to_cpu(*(volatile u_long *)(0xb01100C8));
++	//reg_val &= 0xe0ffffff;//P5 external phy addr = 0x0;
++	//*(volatile u_long *)(0xb01100C8) = cpu_to_le32(reg_val);
++        
++	if( ! mii_mgr_read(0, 2, &phy_id0)){
++                printf("\n Read PhyID 0 is Fail!!\n");
++                //phy_id0 =0;
++        }
++
++        if( ! mii_mgr_read(0, 3, &phy_id1)){
++                printf("\n Read PhyID 1 is Fail!!\n");
++                //phy_id1 = 0;
++        }
++
++        if((phy_id0 == EV_AR8316_PHY0_ID0) && (phy_id1 == EV_AR8316_PHY0_ID1))
++                return 1;
++  
++        printf("\n Cannot find AR8316, write back original reg value! \n");
++        printf("\n PhyID 0 is 0x%08X !!\n",phy_id0);
++        printf("\n PhyID 1 is 0x%08X !!\n",phy_id1);
++        return 0;
++}
+ #endif // MAC_TO_GIGAPHY_MODE || P5_MAC_TO_PHY_MODE //
+ 
+ #if defined (MAC_TO_GIGAPHY_MODE) || defined (P5_MAC_TO_PHY_MODE) || defined (MAC_TO_100PHY_MODE)
+@@ -1034,6 +1083,7 @@
+ 	RT2882_REG(0xb0110008) = 0xC8A07850;       
+ 	RT2882_REG(0xb01100E4) = 0x00000000;
+ 	RT2882_REG(0xb0110014) = 0x00405555;
++	RT2882_REG(0xb0110050) = 0x00002001;
+ 	RT2882_REG(0xb0110090) = 0x00007f7f;
+ 	RT2882_REG(0xb0110098) = 0x00007f3f; //disable VLAN
+ 	RT2882_REG(0xb01100CC) = 0x00d6500c;
+@@ -1132,6 +1182,7 @@
+ #endif // RT3052_ASIC_BOARD || RT3352_ASIC_BOARD //
+ 
+ #if defined (P5_RGMII_TO_MAC_MODE)
++#warning "P5_RGMII_TO_MAC_MODE 0xb01100C8 0xb0000060"
+ 	RT2882_REG(0xb0000060) &= ~(1 << 9); //set RGMII to Normal mode
+ 	RT2882_REG(0xb01100C8) &= ~(1<<29); //disable port 5 auto-polling
+ 	RT2882_REG(0xb01100C8) |= 0x3fff; //force 1000M full duplex
+@@ -1237,10 +1288,20 @@
+       defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD)
+ 	rt305x_esw_init();
+ #ifdef P5_RGMII_TO_MAC_MODE
++    /*
+ 	printf("\n Vitesse giga Mac support \n");
+ 	ResetSWusingGPIOx();
+ 	udelay(125000);
+ 	vtss_init();
++     */
++    #ifdef CONFIG_AR8316
++    #warning "CONFIG_AR8316: RT2882_REG(0xb01100C8) &= 0xe0ffffff; athrs16_init athrs16_LAN_WAN_Par"
++    //using AR8316 GigaSW
++    printf("\n AR8316 Giga Switch support \n");
++    RT2882_REG(0xb01100C8) &= 0xe0ffffff; //set P5 external phy address to 0
++    athrs16_init();
++    athrs16_LAN_WAN_Par();        
++    #endif
+ #endif
+ // RT288x/RT388x + GigaSW
+ #elif defined (MAC_TO_VITESSE_MODE)

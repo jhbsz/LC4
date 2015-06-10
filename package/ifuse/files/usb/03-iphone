@@ -1,0 +1,32 @@
+#!/bin/sh
+. /etc/arch.sh
+product="$(echo $PRODUCT | sed 's/\/.*$//g')"
+[ "$product" != "5ac" ] && exit
+[ "$(nvram show appmgr_rule 0 iphone)" != "1" ] && exit
+case "$ACTION" in
+        add)
+        local mount_point="/tmp/netdevdrv"
+        local pid_iphone_mount="/tmp/iphone_mount.pid"
+        if [ -e "$pid_iphone_mount" ];then
+            echo iphone_mount exists
+        else
+            mkdir -p $mount_point
+            mkdir -p /var/lib
+            /etc/iphone_mount.sh &
+        fi
+        [ "$(nvram show drive_rule 0 enable)" = "1" ] && sh /etc/rc.common /etc/init.d/lighttpd start 
+        ;;
+        remove)
+        local iphone="$(cat /proc/bus/usb/devices | grep iPhone)"
+        [ -z "$iphone" ] && {
+            local mount_point="/tmp/netdevdrv"
+			local pid_iphone_mount="/tmp/iphone_mount.pid"
+            sh /etc/rc.common /etc/init.d/lighttpd stop
+            PID="$(cat /tmp/iphone_mount.pid)"
+            [ -n "$PID" ] && kill -9 $PID
+            rm "$pid_iphone_mount"
+            umount "$mount_point"
+            kill -9 $(pidof usbmuxd)
+        }
+        ;;
+esac

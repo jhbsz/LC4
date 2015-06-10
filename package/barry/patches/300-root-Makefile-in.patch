@@ -1,0 +1,11 @@
+--- barry-0.16/Makefile.in	2009-10-01 12:16:17.000000000 +0800
++++ barry-0.16/Makefile.in.new	2010-11-29 20:24:22.911643005 +0800
+@@ -224,7 +224,7 @@
+ 	udev
+ 
+ # conditionally configured nested subdirectories are listed in $(subdirs)
+-SUBDIRS = . src tools examples man $(subdirs)
++SUBDIRS = . src tools $(subdirs)
+ pkgconfig_DATA = libbarry-0.pc libbarrydp-0.pc libbarryjdwp-0.pc
+ 
+ # these directories will be tested for during make dist to warn if they are

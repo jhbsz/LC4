@@ -1,0 +1,16 @@
+Source-Makefile: package/yamonenv/Makefile
+Package: yamonenv
+Version: 20051022-1
+Depends: @TARGET_au1000
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: YAMON configuration utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	YAMON configuration utility
+
+http://meshcube.org/nylon/stable/sources/
+@@
+

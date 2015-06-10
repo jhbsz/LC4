@@ -1,0 +1,158 @@
+--- lighttpd-1.4.30/src/mod_webdav.c	2013-01-31 18:14:07.045863605 +0800
++++ lighttpd-1.4.30/src/mod_webdav.c	2013-01-31 18:14:51.074081922 +0800
+@@ -44,6 +44,7 @@
+  *
+  */
+ 
++#define USE_NATIVE_COPY_FILE
+ #define WEBDAV_FILE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
+ #define WEBDAV_DIR_MODE  S_IRWXU | S_IRWXG | S_IRWXO
+ 
+@@ -659,12 +660,137 @@
+ 	return have_multi_status;
+ }
+ 
++#ifdef USE_NATIVE_COPY_FILE
++#warning "Using native copy file and folder interface"
++/* Try to use 1024k buffer size */
++#define BUFFERSIZE  2048*1024
++static int copy_file( char *in_filename, char *out_filename, int overwrite){
++
++    int     in_fd = -1, out_fd = -1, n_chars, wn_chars, write_failed = 0;
++    int     retcode = 0;
++    // char    buf[BUFFERSIZE];
++    char    *buf = (char*)malloc(BUFFERSIZE);
++    int     ntotal = 0;
++    if(!buf) {
++        goto error_return;
++    }
++    /* open files   */
++    if ( (in_fd=open(in_filename, O_RDONLY)) == -1 ) {
++        fprintf(stderr, "open source file %s failed\n", in_filename);
++        retcode = 403;
++        goto error_return;
++    }
++    else if ((out_fd = open(out_filename, O_WRONLY|O_TRUNC|O_CREAT|(overwrite ? 0 : O_EXCL), WEBDAV_FILE_MODE)) == -1) {
++        switch(errno) {
++            case EEXIST:
++                fprintf(stderr, "open destination file %s failed, file exist\n", 
++                        out_filename);
++                retcode = 412;
++                break;
++            case EISDIR:
++                fprintf(stderr, "open destination file %s failed, is a directory\n", 
++                        out_filename);
++                retcode = 409;
++                break;
++            case ENOENT:
++                fprintf(stderr, "open destination file %s failed, directory error\n", 
++                        out_filename);
++                /* at least one part in the middle wasn't existing */
++                retcode = 409;
++                break;
++            default:
++                fprintf(stderr, "open destination file %s failed\n", 
++                        out_filename);
++                retcode = 403;
++                break;
++        }
++        close(in_fd);
++        goto error_return;
++    }
++    /* copy files */
++    while ( (n_chars = read(in_fd , buf, BUFFERSIZE)) > 0 ) {
++        ntotal += n_chars;
++        usleep(50000);
++        if ((wn_chars = write( out_fd, buf, n_chars )) != n_chars ) {
++            switch(errno) {
++                case ENOSPC:
++                    fprintf(stderr, "Write error to %s, no free space\n", out_filename);
++                    retcode = 507;
++                    break;
++                default:
++                    fprintf(stderr, "Write error to %s\n", out_filename);
++                    retcode = 403;
++                    break;
++            }
++            write_failed = 1;
++            break;
++        }
++    }
++    if ( n_chars == -1 ) {
++        fprintf(stderr, "Read error from %s\n", in_filename);
++        retcode = 403;
++    }
++
++    /* close files */
++    if ((in_fd > 0) && (close(in_fd) == -1)) {
++        fprintf(stderr, "Error closing input files\n");
++        retcode = 403;
++    }
++    if ((out_fd > 0) && (close(out_fd) == -1)) {
++        fprintf(stderr, "Error closing output files\n");
++        retcode = 403;
++    }
++    if(write_failed) {
++        unlink(out_filename);
++    }
++error_return:
++    if(buf) {
++        free(buf);
++    }
++    return retcode;
++}
++
++static int webdav_copy_file(server *srv, connection *con, plugin_data *p, physical *src, physical *dst, int overwrite) {
++	int status = 0;
++	UNUSED(srv);
++	UNUSED(con);
++#ifdef USE_PROPPATCH
++	if (0 == status) {
++		/* copy worked fine, copy connected properties */
++		sqlite3_stmt *stmt = p->conf.stmt_copy_uri;
++
++		if (stmt) {
++			sqlite3_reset(stmt);
++
++			/* bind the values to the insert */
++			sqlite3_bind_text(stmt, 1,
++					  dst->rel_path->ptr,
++					  dst->rel_path->used - 1,
++					  SQLITE_TRANSIENT);
++
++			sqlite3_bind_text(stmt, 2,
++					  src->rel_path->ptr,
++					  src->rel_path->used - 1,
++					  SQLITE_TRANSIENT);
++
++			if (SQLITE_DONE != sqlite3_step(stmt)) {
++				/* */
++			}
++		}
++	}
++#else
++	UNUSED(p);
++#endif
++    status = copy_file(src->path->ptr, dst->path->ptr, overwrite);
++	return status;
++}
++#else
++#warning "Using webdav copy file and folder interface"
+ static int webdav_copy_file(server *srv, connection *con, plugin_data *p, physical *src, physical *dst, int overwrite) {
+ 	stream s;
+ 	int status = 0, ofd;
+ 	UNUSED(srv);
+ 	UNUSED(con);
+-
+ 	if (stream_open(&s, src->path)) {
+ 		return 403;
+ 	}
+@@ -733,7 +859,7 @@
+ #endif
+ 	return status;
+ }
+-
++#endif
+ static int webdav_copy_dir(server *srv, connection *con, plugin_data *p, physical *src, physical *dst, int overwrite) {
+ 	DIR *srcdir;
+ 	int status = 0;

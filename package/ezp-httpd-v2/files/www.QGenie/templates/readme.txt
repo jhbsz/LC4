@@ -1,0 +1,1 @@
+This folder contains MS Office templates used in 'New Document' command.

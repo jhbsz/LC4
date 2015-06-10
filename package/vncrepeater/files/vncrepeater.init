@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=70
+
+BIN=/usr/sbin/repeater
+CONFIG_FILE=/etc/vncrepeater.ini
+
+. /etc/network.sh
+. /etc/log.sh
+
+log_msg="VNCKVM-server"
+
+start () {
+    [ $(nvram show vnc_rule 0 enable) = "0" -o -n "$(pidof repeater)" ] && exit
+    $BIN $CONFIG_FILE &
+}
+
+stop () {
+    [ -z "$(pidof repeater)" ] && exit
+    killall repeater
+}

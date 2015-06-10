@@ -1,0 +1,16 @@
+Source-Makefile: package/ipset/Makefile
+Package: ipset
+Version: 2.3.0-1
+Depends: @!TARGET_etrax @LINUX_2_6
+Provides: 
+Build-Depends: 
+Section: net
+Category: Network
+Title: Netfilter ip sets administration utility
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Netfilter ip sets administration utility
+
+http://ipset.netfilter.org/
+@@
+

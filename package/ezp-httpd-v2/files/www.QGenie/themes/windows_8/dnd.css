@@ -1,0 +1,138 @@
+
+.ih_style .dragInfoDiv {
+	position: absolute;
+	width: 106px;
+	height: 128px;
+	overflow: visible;
+	border: none;
+	font-size: 14px;
+	padding: 0px;
+}
+
+.ih_style .dragIconDiv {
+	width: 94px;
+	height: 94px;
+	padding: 5px;
+	border: 1px solid #d9f1fc;
+	background-color: #eff8fc;
+	text-align: center;
+	opacity: 0.6;
+	font-size: 94px;
+	line-height: 94px;
+	white-space: nowrap;
+}
+.dj_ie .ih_style .dragIconDiv {
+	filter: alpha(opacity=60);
+}
+
+.ih_style .dragIcon {
+	
+	padding: 0px;
+	margin: auto;
+	outline: none;
+	vertical-align: middle;
+	visibility: hidden;
+}
+.ih_style .dragIcon.visible {
+	visibility: visible;
+}
+.ih_style .dragIcon.dndFolder {
+	width: 94px;
+	height: 94px;
+	background: url('images/normal/94/_dd_folder.png') no-repeat;
+	visibility: visible;
+}
+.ih_style .dragIcon.dndFile {
+	width: 94px;
+	height: 94px;
+	background: url('images/normal/94/_dd_file.png') no-repeat;
+	visibility: visible;
+}
+
+.ih_style .dragItemsCountCenterDiv {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	height: 17px;
+}
+.ih_style .dragItemsCount {
+	position: relative;
+	left: -50%;
+	top: -50%;
+	line-height: 15px;
+	height: 15px;
+	padding: 0px 3px;
+	background: #0046ac url('images/dnd/count_bg.png') repeat-x;
+	border: 1px solid white;
+	color: #fff;
+	text-align: center;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+
+.ih_style .dragActionDiv {
+	position: absolute;
+	height: 20px;
+	left: 63px;
+	bottom: 0px;
+	font-size: 11px;
+	z-index:4 !important;
+
+}
+.ih_style .dragActionDiv ul {
+	margin: 0;
+	padding: 0 3px;
+	list-style: none;
+}
+.ih_style .dragActionDiv ul.content {
+	border: 1px solid #767676;
+	background: #58a6e2;
+	color: #fff;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.ih_style .dragActionDiv ul li {
+	padding: 0 0 0 0;
+	padding-left: 15px;
+	height: 18px;
+	line-height: 18px;
+	background-repeat: no-repeat;
+	background-position: 0 1px;
+	padding-left:20px !important;
+	white-space: nowrap;
+}
+.ih_style .dragActionDiv ul li.copy{
+	background-image: url('images/normal/16/dd_copy.png');
+}
+.ih_style .dragActionDiv ul li.move{
+	background-image: url('images/normal/16/dd_move.png');
+}
+.ih_style .dragActionDiv ul li.cancel{
+	background-image: url('images/normal/16/dd_cancel.png');
+}
+.ih_style .dragActionDiv li span {
+	color: #fff;
+}
+
+.ih_style .uponMe {}
+
+.ih_style .dropZone{
+	padding-top:4px !important;
+	height:37px !important;
+	background:#e5f4fb !important;
+	border:none !important;
+	border-top:1px solid #c8cfd9 !important;
+}
+
+.ih_style .dropZone.drag_over {
+	background:#cce9f8 !important;
+	color:#002d64;
+}
+
+body {
+	/*BUGFIX:DIME #4*/
+	/*-khtml-user-drag: element;
+	-webkit-user-drag: element;*/
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+}

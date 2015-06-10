@@ -1,0 +1,100 @@
+--- linux-2.6.26.orig/drivers/ata/libata-core.c	2008-07-14 05:51:29.000000000 +0800
++++ linux-2.6.26.to_patch/drivers/ata/libata-core.c	2009-12-04 10:40:59.000000000 +0800
+@@ -1737,7 +1737,13 @@
+ 	*tf = qc->result_tf;
+ 	err_mask = qc->err_mask;
+ 
+-	ata_qc_free(qc);
++	/* EZPacket : patched from OXNAS */
++    /* orig : ata_qc_free(qc); */
++	if (ap->ops->qc_free) {
++        ap->ops->qc_free(qc);
++    } else {
++        ata_qc_free(qc);
++    }
+ 	link->active_tag = preempted_tag;
+ 	link->sactive = preempted_sactive;
+ 	ap->qc_active = preempted_qc_active;
+@@ -1908,11 +1914,14 @@
+ 	int may_fallback = 1, tried_spinup = 0;
+ 	int rc;
+ 
++    VPRINTK("\n");
+ 	if (ata_msg_ctl(ap))
+ 		ata_dev_printk(dev, KERN_DEBUG, "%s: ENTER\n", __func__);
+ 
+  retry:
+ 	ata_tf_init(dev, &tf);
++    
++    tf.device |= ATA_LBA ;
+ 
+ 	switch (class) {
+ 	case ATA_DEV_ATA:
+@@ -2359,9 +2368,10 @@
+ 		/* reset link pm_policy for this port to no pm */
+ 		ap->pm_policy = MAX_PERFORMANCE;
+ 	}
+-
++    /* EZPacket : patched from OXNAS */
++    /* orig : ap->ops->dev_config(dev); */
+ 	if (ap->ops->dev_config)
+-		ap->ops->dev_config(dev);
++		ap->ops->dev_config(ap, dev);
+ 
+ 	if (dev->horkage & ATA_HORKAGE_DIAGNOSTIC) {
+ 		/* Let the user know. We don't want to disallow opens for
+@@ -4392,14 +4402,36 @@
+  *	Zero on success, negative on error.
+  *
+  */
++
++static inline int sg_virt_to_dma(
++	struct device			*dev,
++	struct scatterlist		*sg,
++	int						 nents,
++	enum dma_data_direction  dir)
++{
++	int i;
++	for (i = 0; i < nents; i++, sg++) {
++		sg->dma_address = virt_to_dma(dev, sg_virt(sg));
++	}
++	return nents;
++}
++
+ static int ata_sg_setup(struct ata_queued_cmd *qc)
+ {
+ 	struct ata_port *ap = qc->ap;
+ 	unsigned int n_elem;
+ 
+ 	VPRINTK("ENTER, ata%u\n", ap->print_id);
+-
+-	n_elem = dma_map_sg(ap->dev, qc->sg, qc->n_elem, qc->dma_dir);
++    /* EZPacket : patch from OXNAS */
++	/* orig : n_elem = dma_map_sg(ap->dev, qc->sg, qc->n_elem, qc->dma_dir);*/
++    if (likely(qc->scsicmd) &&
++        likely(qc->scsicmd->request) && 
++        likely(qc->scsicmd->request->bio) &&
++        (qc->scsicmd->request->bio->bi_rw & (1 << BIO_RW_INCOHERENT))) {
++        n_elem = sg_virt_to_dma(ap->dev, qc->sg, qc->n_elem, qc->dma_dir);
++    } else {
++        n_elem = dma_map_sg(ap->dev, qc->sg, qc->n_elem, qc->dma_dir);
++    }
+ 	if (n_elem < 1)
+ 		return -1;
+ 
+@@ -4477,7 +4509,14 @@
+ 	struct ata_port *ap = dev->link->ap;
+ 	struct ata_queued_cmd *qc;
+ 
+-	qc = ata_qc_new(ap);
++    VPRINTK("\n");
++    /* if a specialised version is not available, call the default */
++    if (ap->ops->qc_new) {
++        qc = ap->ops->qc_new(ap);
++    } else {
++        qc = ata_qc_new(ap);
++    }
++
+ 	if (qc) {
+ 		qc->scsicmd = NULL;
+ 		qc->ap = ap;

@@ -1,0 +1,112 @@
+# w
+# $Id: Makefile 3621 2006-04-12 00:17:43Z nico $
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=xl2tpd
+PKG_VERSION:=1.2.4
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=http://www.xelerance.com/software/xl2tpd
+PKG_MD5SUM:=d94fc8a13596f12a561240dfcea9f977
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/xl2tpd
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=L2TP (Layer 2 Tunneling Protocol) daemon
+  URL:=http://www.xelerance.com/software/xl2tpd
+  SUBMENU:=VPN
+endef
+
+# EZP: this should depend on menuconfig
+# TODO: Remove  WAN_NUM, LAN_NUM, WL_NUM
+ifeq ($(CONFIG_TARGET_ralink),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_ralink_7620),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_RT305X
+endif
+
+ifeq ($(CONFIG_TARGET_as500),y)
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_AS500
+endif
+
+ifeq ($(BR2_LINUX_2_4_FV13XX),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_FV13XX
+endif
+
+ifeq ($(BR2_LINUX_2_4_BRCM),y)
+#BR2_PACKAGE_NVRAM:=y
+EZP_CFLAGS:=-DNVRAM_MMAP=1 -DCONFIG_EZP_ARCH_BRCM
+endif
+
+ifeq ($(CONFIG_EZP_PRODUCT_SUPERCATEGORY),"")
+# EZP: Pass WAN_NUM, LAN_NUM, WL_NUM while compiling
+EZP_CFLAGS+= -DWAN_NUM=$(CONFIG_WAN_NUM) -DLAN_NUM=$(CONFIG_LAN_NUM) -DWL_NUM=$(CONFIG_WL_NUM) \
+  -DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_CATEGORY) \
+  -DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_SUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_BRAND_$(CONFIG_EZP_SECRET) \
+  -DEZP_PROD_VERSION=$(CONFIG_EZP_PRODUCT_VERSION)
+else
+EZP_CFLAGS+= -DWAN_NUM=$(CONFIG_WAN_NUM) -DLAN_NUM=$(CONFIG_LAN_NUM) -DWL_NUM=$(CONFIG_WL_NUM) \
+  -DEZP_PROD_SUPERCAT=$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+  -DEZP_PROD_SUPERCAT_$(CONFIG_EZP_PRODUCT_SUPERCATEGORY) \
+  -DEZP_PROD_CAT=$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+  -DEZP_PROD_SUBCAT=$(CONFIG_EZP_PRODUCT_MAJOR_SUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT_$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_SUBSUBCAT=$(CONFIG_EZP_PRODUCT_SUBSUBCATEGORY) \
+  -DEZP_PROD_MAJOR_CAT_$(CONFIG_EZP_PRODUCT_MAJOR_CATEGORY) \
+  -DEZP_PROD_MAJOR_SUBCAT=$(CONFIG_EZP_PRODUCT_MAJOR_SUBCATEGORY) \
+  -DEZP_PROD_ALT_CAT_$(CONFIG_EZP_PRODUCT_ALT_CATEGORY) \
+  -DEZP_PROD_ALT_SUBCAT=$(CONFIG_EZP_PRODUCT_ALT_SUBCATEGORY) \
+  -DEZP_PROD_BRAND_$(CONFIG_EZP_SECRET) \
+  -DEZP_PROD_VERSION=$(CONFIG_EZP_PRODUCT_VERSION)
+endif
+
+EZP_CFLAGS+= -I $(TOPDIR)/package/ezp-nvram/src -I $(TOPDIR)/package/ezp-nvram/include
+
+define Build/Configure
+	$(call Build/Configure/Default, \
+		--with-bcrelay \
+	)
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default, \
+		CFLAGS+="$(TARGET_CFLAGS) $(EZP_CFLAGS)  -DDEBUG_PPPD -DTRUST_PPPD_TO_DIE  -DLINUX  -DIP_ALLOCATION" \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		INSTALL="install" \
+		all install \
+	)
+endef
+
+showvar:
+	echo "$(TARGET_CFLAGS)"
+	echo "$(EZP_CFLAGS)"
+
+define Package/xl2tpd/install
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/ppp
+	$(INSTALL_DIR) $(1)/etc/xl2tpd
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/usr/sbin
+#	$(INSTALL_DATA) $(1)/etc/ppp/chap-secrets
+	ln -sf /tmp/chap-secrets $(1)/etc/ppp/chap-secrets
+	ln -sf /tmp/options.xl2tpd $(1)/etc/ppp/options.xl2tpd
+	ln -sf /tmp/xl2tpd.conf $(1)/etc/xl2tpd/xl2tpd.conf
+	$(INSTALL_BIN) ./files/xl2tpd.init $(1)/etc/init.d/xl2tpd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xl2tpd $(1)/usr/sbin/
+endef
+
+$(eval $(call BuildPackage,xl2tpd))
+

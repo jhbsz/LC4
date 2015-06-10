@@ -1,0 +1,103 @@
+#!/bin/sh
+FILEDNS="/tmp/dnslog"
+FILENCSI="/tmp/ncsi"
+findDNS=0
+returnvalue=0
+tmp_captive_portal=0
+dnsdest="$1"
+num="$2"
+
+searchstring() {
+	local localstring="$1"
+	local localfiledns="$2"
+        grep -q "$localstring" "$localfiledns"
+        if [ $? = 0 ]; 	then
+		returnvalue=1
+	else
+		returnvalue=0
+        fi   
+}
+if [ -f $FILEDNS ];
+then
+	echo Delete dnsloig
+	rm -f $FILEDNS 
+fi
+
+if [ -f $FILENCSI ];
+then
+        echo Delete NCSI
+        rm -f $FILENCSI
+fi
+
+case $dnsdest in
+MICROSOFT ) nslookup dns.msftncsi.com >> "$FILEDNS"
+        if [ -f $FILEDNS ]; then
+            searchstring "131.107.255.255" "$FILEDNS"
+            [ $returnvalue = "1" ] &&{
+                findDNS=1
+#                ip r a "131.107.255.255" dev vlan2 via 10.1.1.254
+            } || {
+                searchstring "Address" "$FILEDNS"
+                if [ $returnvalue = "1" ]; then
+                    tmp_captive_portal=1
+                    findDNS=1
+                else
+                    findDNS=0
+                fi
+            }
+        else
+            findDNS=0
+        fi
+        ;;
+
+GOOGLE    ) echo "google rule"
+		;;
+*	) echo "please key dns server rule"
+	;;
+esac
+
+if [ $findDNS = "1" ]; then
+	case $dnsdest in
+	MICROSOFT )
+#		curl  http://www.msftncsi.com/ncsi.txt -o /tmp/ncsi
+ 		wget -O /tmp/ncsi http://www.msftncsi.com/ncsi.txt
+		if [ -f $FILENCSI ]; then
+		 	searchstring "Microsoft NCSI" "$FILENCSI"
+			if [ $returnvalue = "1" ]; then
+				tmp_captive_portal=0
+            else
+				tmp_captive_portal=1
+			fi
+		else
+			tmp_captive_portal=1
+		fi 
+		;;
+	*       ) echo "please key dns server rule"
+        	;;
+	esac
+else
+	return $findDNS
+fi
+local captive=$(nvram show WISP_detect_portal_rule $num captive_portal)
+
+if [ "$captive" = "0" ]; then
+	[ "$tmp_captive_portal" = "0" ] && {
+        	nvram replace attr  WISP_detect_portal_rule  $num captive_portal "0"
+        	nvram replace attr  WISP_detect_portal_rule  $num status "1"
+	} || {
+        	nvram replace attr  WISP_detect_portal_rule  $num captive_portal "1"
+        	nvram replace attr  WISP_detect_portal_rule  $num status "0"
+	}
+
+
+elif [ "$captive" = "1" ]; then
+	[ "$tmp_captive_portal" = "0" ] && {
+        	nvram replace attr  WISP_detect_portal_rule  $num captive_portal "2"
+        	nvram replace attr  WISP_detect_portal_rule  $num status "1"
+	} || {
+        	nvram replace attr  WISP_detect_portal_rule  $num captive_portal "1"
+        	nvram replace attr  WISP_detect_portal_rule  $num status "0"
+	}
+
+fi
+return $findDNS

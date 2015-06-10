@@ -1,0 +1,30 @@
+
+ENV{FIRMWARE}!="", RUN+="/sbin/hotplug-call firmware"
+
+# remove
+ACTION=="remove", SUBSYSTEM=="button|usb|block|scsi_generic|sound", RUN+="/sbin/hotplug-call $env{SUBSYSTEM}"
+
+# add
+
+# for 3G/4G dongle
+ACTION=="remove", KERNEL=="tty*", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 0"
+ACTION=="add|change", KERNEL=="tty*", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 1"
+ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{bInterfaceClass}=="0[38]", RUN+="/etc/hotplug.d/usb/02-wwan"
+ACTION=="add|change", DRIVER=="sierra|cdc_acm|sierra_net|cdc_ether|Gobi*", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 1" 
+ACTION=="add|change", SUBSYSTEM=="scsi_generic", RUN+="/etc/hotplug.d/scsi_generic/10-wwan" 
+
+# android
+ACTION=="remove", SUBSYSTEM=="net", KERNEL!="tty*", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 0"
+ACTION=="remove", SUBSYSTEM=="net", KERNEL!="tty*", RUN+="/etc/hotplug.d/net/11-dhcp"
+ACTION=="add", DRIVER=="rndis_host", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 1"
+
+# iphone
+ACTION=="remove", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 0"
+ACTION=="remove", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", RUN+="/etc/hotplug.d/net/11-dhcp"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", RUN+="/usr/sbin/nvram replace attr plug_rule 0 usb 1"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", RUN+="/etc/hotplug.d/usb/03-iphone"
+
+# disk
+ACTION=="add", KERNEL=="sd*", SUBSYSTEM=="block", RUN+="/etc/hotplug.d/block/15-multi-mount"
+ACTION=="add", KERNEL=="mmc*", SUBSYSTEM=="block", RUN+="/etc/hotplug.d/block/15-multi-mount"
+

@@ -1,0 +1,14 @@
+Source-Makefile: package/ezp-netstat/Makefile
+Package: ezp-netstat
+Version: 1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Utilities
+Title: A tiny network status daemon
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A small daemon constantly watches network flow and failover
+@@
+

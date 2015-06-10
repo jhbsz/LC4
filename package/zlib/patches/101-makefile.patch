@@ -1,0 +1,11 @@
+--- zlib-1.2.3/Makefile.in	2013-10-19 19:26:45.920281689 +0800
++++ zlib-1.2.3/Makefile.in	2013-10-19 19:27:51.644283449 +0800
+@@ -83,7 +83,7 @@
+ $(SHAREDLIB): $(SHAREDLIBV)
+ 
+ $(SHAREDLIBV): $(OBJS)
+-	$(LDSHARED) -lc -o $@ $(OBJS)
++	$(LDSHARED) -lc -shared -o $@ $(OBJS)
+ 	rm -f $(SHAREDLIB) $(SHAREDLIBM)
+ 	ln -s $@ $(SHAREDLIB)
+ 	ln -s $@ $(SHAREDLIBM)

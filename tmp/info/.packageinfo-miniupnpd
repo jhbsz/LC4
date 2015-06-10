@@ -1,0 +1,14 @@
+Source-Makefile: package/miniupnpd/Makefile
+Package: miniupnpd
+Version: 1.1-1
+Depends: 
+Provides: 
+Build-Depends: 
+Section: uitls
+Category: Network
+Title: upnpd - mini upnp server
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	A very tiny miniupnpd server.
+@@
+

@@ -1,0 +1,14 @@
+Source-Makefile: package/qcloud/Makefile
+Package: qcloud
+Version: 1
+Depends: +ezp-nvram +libjson +libjson-c +curl +sqlite3
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: qcloud - myQNAPcloud library, daemon & sample code
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	myQNAPcloud library, daemon & sample code
+@@
+

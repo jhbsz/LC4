@@ -1,0 +1,11 @@
+--- a/drivers/net/rt_rdm/rdm.c	2013-10-09 13:48:39.000000000 +0800
++++ b/drivers/net/rt_rdm/rdm.c	2014-03-31 10:00:14.991519672 +0800
+@@ -22,7 +22,7 @@
+ #ifdef  CONFIG_DEVFS_FS
+ static devfs_handle_t devfs_handle;
+ #endif
+-int rdm_major =  253;
++int rdm_major =  171;
+ 
+ 
+ int rdm_open(struct inode *inode, struct file *filp)

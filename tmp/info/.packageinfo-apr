@@ -1,0 +1,16 @@
+Source-Makefile: package/apr/Makefile
+Package: libapr
+Version: 1.4.5-2
+Depends: +libpthread +librt +libuuid
+Provides: 
+Build-Depends: 
+Section: libs
+Category: Libraries
+Title: Apache Portable Runtime Library
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description: 	Apache Portable Runtime Library
+
+http://apr.apache.org/
+@@
+

@@ -1,0 +1,15 @@
+Source-Makefile: package/mtd/Makefile
+Package: mtd
+Version: 8
+Depends: 
+Provides: 
+Build-Depends: 
+Section: utils
+Category: Base system
+Title: Update utility for trx firmware images
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Type: ipkg
+Description:  This package contains an utility useful to upgrade from other firmware or 
+ older OpenWrt releases.
+@@
+

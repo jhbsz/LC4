@@ -1,0 +1,134 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2007 OpenWrt.org
+BIN=/usr/sbin/dnsmasq
+CONFIG_FILE=/etc/ethers
+CONFIG_RFILE=/var/ethers
+# We moved the dhcp server startup timing to faster boot up
+START=14
+LANTRIGGER=20
+LANTRIGGER_STOP=20
+log_msg="DHCP-server"
+local_config () {
+    local i;
+    local limit;
+    [ "$(nvram get fl_hwaddr_enable)" = "1" ] && {
+    # construct /etc/ethers 
+    i=0
+    limit=$(nvram get fl_hwaddr_rule_num)
+    rm $CONFIG_RFILE
+    while [ $i -lt $limit ];
+    do
+        [ "$(nvram show fl_hwaddr_rule $i dhcp_enable)" = "1" ] && {
+            hwaddr=$(nvram show fl_hwaddr_rule $i hwaddr)
+            ipaddr=$(nvram show fl_hwaddr_rule $i ipaddr)
+            echo "$hwaddr $ipaddr" >> $CONFIG_FILE
+        }
+        i=$(($i+1))
+    done
+    }
+}
+
+start() {
+    [ "$(nvram show lan_dhcps_rule 0 enable)" = "1" ] && {
+	    local i;
+	    local limit;
+        local guest_enable=0
+        local NET_LAN=""
+        local NET_GUEST=""
+	    i=0
+	    limit=$(nvram get wan_num)
+        pidof dnsmasq > /dev/null && stop
+        local_config
+        # calculate settings
+        iface="lan0"
+        ipaddr=$(nvram get ${iface}_ipaddr)
+        mask=$(nvram get ${iface}_mask)
+        start=$(nvram show lan_dhcps_rule 0 start)
+        num=$(nvram show lan_dhcps_rule 0 num)
+        dnstype=$(nvram show lan_dhcps_rule 0 dnstype)
+        WLV_NUM="$(expr $(nvram get wlv_rule_num) - 1)"
+        [ "$(nvram show guest_lan_rule 0 enable)" = "1" -a \
+          "$(nvram show wl0_basic_rule $WLV_NUM enable)" = "1" ] && {
+            [ "$dnstype" = "dnsrelay" ] && {
+                NET_LAN="LAN,"
+                NET_GUEST="GUEST_LAN,"
+            }
+            guest_enable=1
+        } || guest_enable=0
+
+        eval $(ipcalc $ipaddr $mask ${start:-100} ${num:-150})
+        lease=$(nvram show lan_dhcps_rule 0 lease)
+
+        domain=$(nvram show lan_dhcps_rule 0 domain)
+        args="-K -F ${NET_LAN}$START,$END,$NETMASK,${lease:-1h} --dhcp-sequential-ip"
+        [ "$guest_enable" = "1" ] && {
+            guest_ipaddr="$(nvram show guest_lan_rule 0 ipaddr)"
+            guest_mask="$(nvram show guest_lan_rule 0 mask)"
+            eval $(ipcalc $guest_ipaddr $guest_mask ${start:-100} ${num:-150})
+            args="${args} -F ${NET_GUEST}$START,$END,$NETMASK,${lease:-1h} "
+        }
+        # ARM Enable
+        arm_enable=1
+        [ "$arm_enable" = "1" ] && {
+            arm_ipaddr="172.16.1.1"
+            arm_mask="255.255.0.0"
+            ifconfig vlan3 ${arm_ipaddr} netmask ${arm_mask} up
+        }
+        # specify the lease file
+        args="${args} -l /var/dhcp.leases -Z"
+
+        # we need to comment out this for different op mode
+	    while [ $i -lt $limit ];
+	    do
+	       args="${args} -I $(nvram get wan${i}_ifname) "
+           i=$(($i+1))
+	    done
+
+        args="${args} ${domain:+-s ${domain}}"
+
+        dns=""
+        [ "$dnstype" = "dnsrelay" ] && {
+            [ -n "$(nvram show lan_static_rule 0 ipaddr)" ] && \
+                dns="${dns},$(nvram show lan_static_rule 0 ipaddr)"
+            [ "$guest_enable" = "1" ] && guest_dns=,$guest_ipaddr
+        }
+        # [ "$dnstype" = "ispdns" ] && {
+        #     # Without bringing --dhcp-option, it causes the dnsmasq to fetch
+        #     # the WAN's DNS server IP address.
+        # }
+        [ "$dnstype" = "opendns" -o "$dnstype" = "custom" -o "$dnstype" = "googledns" ] && {
+            dnsaddr="$(nvram show lan_dhcps_rule 0 dnsaddr1)"
+            [ -n "${dnsaddr}" ] && dns="${dns}${dnsaddr:+,$dnsaddr}"
+            dnsaddr="$(nvram show lan_dhcps_rule 0 dnsaddr2)"
+            [ -n "${dnsaddr}" ] && dns="${dns}${dnsaddr:+,$dnsaddr}"
+        }
+
+        [ -z "$dns" ] && {
+            [ ! -f "/tmp/resolv.conf" -o -z "$(cat /tmp/resolv.conf)" ] && {
+                dns=",208.67.220.220,208.67.222.222"
+            }
+        }
+        [ -n "$dns" ] && {
+            args="${args} --dhcp-option=${NET_LAN}6$dns"
+            [ -n "$guest_dns" ] && args="${args} --dhcp-option=${NET_GUEST}6$guest_dns"
+        }
+
+        $BIN $args || err=1 
+
+        [ "$(nvram get platform)" = "GMA" ] && {
+            garmin-fixedip.sh
+        }
+    }
+    return $err
+
+}
+
+stop () {
+    [ -f /tmp/resolv.conf ] && {
+        rm -f /tmp/resolv.conf
+        ln -s /tmp/resolv.conf.auto /tmp/resolv.conf
+    }
+    killall dnsmasq
+    return 0
+}
+

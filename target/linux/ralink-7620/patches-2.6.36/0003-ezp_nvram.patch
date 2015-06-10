@@ -1,0 +1,3171 @@
+diff --git a/drivers/char/Kconfig b/drivers/char/Kconfig
+index 0386960..87e6989 100644
+--- a/drivers/char/Kconfig
++++ b/drivers/char/Kconfig
+@@ -980,6 +980,8 @@ config NVRAM
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called nvram.
+ 
++source "drivers/char/nvram_cfg/Kconfig"
++
+ #
+ # These legacy RTC drivers just cause too many conflicts with the generic
+ # RTC framework ... let's not even try to coexist any more.
+diff --git a/drivers/char/Makefile b/drivers/char/Makefile
+index 71f8d88..7cea8f0 100644
+--- a/drivers/char/Makefile
++++ b/drivers/char/Makefile
+@@ -87,6 +87,9 @@ ifeq ($(CONFIG_GENERIC_NVRAM),y)
+ else
+   obj-$(CONFIG_NVRAM)	+= nvram.o
+ endif
++
++obj-$(CONFIG_NVRAM_CFG)		+= nvram_cfg/
++
+ obj-$(CONFIG_TOSHIBA)		+= toshiba.o
+ obj-$(CONFIG_I8K)		+= i8k.o
+ obj-$(CONFIG_DS1620)		+= ds1620.o
+diff --git a/drivers/char/nvram_cfg/Kconfig b/drivers/char/nvram_cfg/Kconfig
+new file mode 100644
+index 0000000..92476c6
+--- /dev/null
++++ b/drivers/char/nvram_cfg/Kconfig
+@@ -0,0 +1,9 @@
++#
++# NVRAM_CFG device configuration
++#
++
++config NVRAM_CFG
++	tristate "EZ Packet NVRAM kernel module"
++	---help---
++	  This is used for EZ Packet configuration respository.
++
+diff --git a/drivers/char/nvram_cfg/Makefile b/drivers/char/nvram_cfg/Makefile
+new file mode 100644
+index 0000000..cab88fb
+--- /dev/null
++++ b/drivers/char/nvram_cfg/Makefile
+@@ -0,0 +1,6 @@
++
++obj-$(CONFIG_NVRAM_CFG) += nvram_cfg.o 
++
++export-objs := nvram_linux.o
++
++nvram_cfg-objs := nvram_linux.o nvram.o ez_osl.o ezutils.o
+diff --git a/drivers/char/nvram_cfg/bcmendian.h b/drivers/char/nvram_cfg/bcmendian.h
+new file mode 100644
+index 0000000..7cbc7e2
+--- /dev/null
++++ b/drivers/char/nvram_cfg/bcmendian.h
+@@ -0,0 +1,168 @@
++/*
++ * local version of endian.h - byte order defines
++ *
++ * Copyright 2005, Broadcom Corporation   
++ * All Rights Reserved.   
++ *    
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY   
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM   
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS   
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.   
++ *
++ *  $Id$
++*/
++
++#ifndef _BCMENDIAN_H_
++#define _BCMENDIAN_H_
++
++#include "typedefs.h"
++
++/* Byte swap a 16 bit value */
++#define BCMSWAP16(val) \
++	((uint16)( \
++		(((uint16)(val) & (uint16)0x00ffU) << 8) | \
++		(((uint16)(val) & (uint16)0xff00U) >> 8) ))
++	
++/* Byte swap a 32 bit value */
++#define BCMSWAP32(val) \
++	((uint32)( \
++		(((uint32)(val) & (uint32)0x000000ffUL) << 24) | \
++		(((uint32)(val) & (uint32)0x0000ff00UL) <<  8) | \
++		(((uint32)(val) & (uint32)0x00ff0000UL) >>  8) | \
++		(((uint32)(val) & (uint32)0xff000000UL) >> 24) ))
++
++static INLINE uint16
++bcmswap16(uint16 val)
++{
++	return BCMSWAP16(val);
++}
++
++static INLINE uint32
++bcmswap32(uint32 val)
++{
++	return BCMSWAP32(val);
++}
++
++/* buf	- start of buffer of shorts to swap */
++/* len  - byte length of buffer */
++static INLINE void
++bcmswap16_buf(uint16 *buf, uint len)
++{
++	len = len/2;
++
++	while(len--){
++		*buf = bcmswap16(*buf);
++		buf++;
++	}
++}
++
++#ifndef hton16
++#ifndef IL_BIGENDIAN
++#define HTON16(i) BCMSWAP16(i)
++#define	hton16(i) bcmswap16(i)
++#define	hton32(i) bcmswap32(i)
++#define	ntoh16(i) bcmswap16(i)
++#define	ntoh32(i) bcmswap32(i)
++#define ltoh16(i) (i)
++#define ltoh32(i) (i)
++#define htol16(i) (i)
++#define htol32(i) (i)
++#else
++#define HTON16(i) (i)
++#define	hton16(i) (i)
++#define	hton32(i) (i)
++#define	ntoh16(i) (i)
++#define	ntoh32(i) (i)
++#define	ltoh16(i) bcmswap16(i)
++#define	ltoh32(i) bcmswap32(i)
++#define htol16(i) bcmswap16(i)
++#define htol32(i) bcmswap32(i)
++#endif
++#endif
++
++#ifndef IL_BIGENDIAN
++#define ltoh16_buf(buf, i)
++#define htol16_buf(buf, i)
++#else
++#define ltoh16_buf(buf, i) bcmswap16_buf((uint16*)buf, i)
++#define htol16_buf(buf, i) bcmswap16_buf((uint16*)buf, i)
++#endif
++
++/*
++* load 16-bit value from unaligned little endian byte array.
++*/
++static INLINE uint16
++ltoh16_ua(uint8 *bytes)
++{
++	return (bytes[1]<<8)+bytes[0];
++}
++
++/*
++* load 32-bit value from unaligned little endian byte array.
++*/
++static INLINE uint32
++ltoh32_ua(uint8 *bytes)
++{
++	return (bytes[3]<<24)+(bytes[2]<<16)+(bytes[1]<<8)+bytes[0];
++}
++
++/*
++* load 16-bit value from unaligned big(network) endian byte array.
++*/
++static INLINE uint16
++ntoh16_ua(uint8 *bytes)
++{
++	return (bytes[0]<<8)+bytes[1];
++}
++
++/*
++* load 32-bit value from unaligned big(network) endian byte array.
++*/
++static INLINE uint32
++ntoh32_ua(uint8 *bytes)
++{
++	return (bytes[0]<<24)+(bytes[1]<<16)+(bytes[2]<<8)+bytes[3];
++}
++
++/* get_ua adapted from Linux asm-mips/unaligned.h */
++#ifdef IL_BIGENDIAN
++#define get_ua(ptr)						\
++({									\
++	__typeof__(*(ptr)) __val;					\
++									\
++	switch (sizeof(*(ptr))) {					\
++	case 1:								\
++		__val = *(uint8 *)ptr;			\
++		break;							\
++	case 2:								\
++		__val = ntoh16_ua((uint8 *)ptr);		\
++		break;							\
++	case 4:								\
++		__val = ntoh32_ua((uint8 *)ptr);		\
++		break;							\
++	}								\
++									\
++	__val;								\
++})
++#else
++#define get_ua(ptr)						\
++({									\
++	__typeof__(*(ptr)) __val;					\
++									\
++	switch (sizeof(*(ptr))) {					\
++	case 1:								\
++		__val = *(uint8 *)ptr;			\
++		break;							\
++	case 2:								\
++		__val = ltoh16_ua((uint8 *)ptr);		\
++		break;							\
++	case 4:								\
++		__val = ltoh32_ua((uint8 *)ptr);		\
++		break;							\
++	}								\
++									\
++	__val;								\
++})
++#endif
++
++#endif /* _BCMENDIAN_H_ */
+diff --git a/drivers/char/nvram_cfg/bcmnvram.h b/drivers/char/nvram_cfg/bcmnvram.h
+new file mode 100644
+index 0000000..1443412
+--- /dev/null
++++ b/drivers/char/nvram_cfg/bcmnvram.h
+@@ -0,0 +1,132 @@
++/*
++ * NVRAM variable manipulation
++ *
++ * Copyright 2005, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ *
++ * $Id$
++ */
++
++#ifndef _bcmnvram_h_
++#define _bcmnvram_h_
++
++#ifndef _LANGUAGE_ASSEMBLY
++
++#include "typedefs.h"
++
++struct nvram_header {
++	uint32 magic;
++	uint32 len;
++	uint32 crc_ver_init;	/* 0:7 crc, 8:15 ver, 16:27 init, mem. test 28, 29-31 reserved */
++	uint32 config_refresh;	/* 0:15 config, 16:31 refresh */
++	uint32 config_ncdl;	/* ncdl values for memc */
++};
++
++struct nvram_tuple {
++	char *name;
++	char *value;
++	struct nvram_tuple *next;
++};
++
++/*
++ * Initialize NVRAM access. May be unnecessary or undefined on certain
++ * platforms.
++ */
++extern int BCMINIT(nvram_init)(void *sbh);
++
++/*
++ * Disable NVRAM access. May be unnecessary or undefined on certain
++ * platforms.
++ */
++extern void BCMINIT(nvram_exit)(void);
++
++/*
++ * Get the value of an NVRAM variable. The pointer returned may be
++ * invalid after a set.
++ * @param	name	name of variable to get
++ * @return	value of variable or NULL if undefined
++ */
++extern char * BCMINIT(nvram_get)(const char *name);
++
++/* 
++ * Get the value of an NVRAM variable.
++ * @param	name	name of variable to get
++ * @return	value of variable or NUL if undefined
++ */
++#define nvram_safe_get(name) (BCMINIT(nvram_get)(name) ? : "")
++
++/*
++ * Match an NVRAM variable.
++ * @param	name	name of variable to match
++ * @param	match	value to compare against value of variable
++ * @return	TRUE if variable is defined and its value is string equal
++ *		to match or FALSE otherwise
++ */
++static INLINE int
++nvram_match(char *name, char *match) {
++	const char *value = BCMINIT(nvram_get)(name);
++	return (value && !strcmp(value, match));
++}
++
++/*
++ * Inversely match an NVRAM variable.
++ * @param	name	name of variable to match
++ * @param	match	value to compare against value of variable
++ * @return	TRUE if variable is defined and its value is not string
++ *		equal to invmatch or FALSE otherwise
++ */
++static INLINE int
++nvram_invmatch(char *name, char *invmatch) {
++	const char *value = BCMINIT(nvram_get)(name);
++	return (value && strcmp(value, invmatch));
++}
++
++/*
++ * Set the value of an NVRAM variable. The name and value strings are
++ * copied into private storage. Pointers to previously set values
++ * may become invalid. The new value may be immediately
++ * retrieved but will not be permanently stored until a commit.
++ * @param	name	name of variable to set
++ * @param	value	value of variable
++ * @return	0 on success and errno on failure
++ */
++extern int BCMINIT(nvram_set)(const char *name, const char *value);
++
++/*
++ * Unset an NVRAM variable. Pointers to previously set values
++ * remain valid until a set.
++ * @param	name	name of variable to unset
++ * @return	0 on success and errno on failure
++ * NOTE: use nvram_commit to commit this change to flash.
++ */
++extern int BCMINIT(nvram_unset)(const char *name);
++
++/*
++ * Commit NVRAM variables to permanent storage. All pointers to values
++ * may be invalid after a commit.
++ * NVRAM values are undefined after a commit.
++ * @return	0 on success and errno on failure
++ */
++extern int BCMINIT(nvram_commit)(void);
++
++/*
++ * Get all NVRAM variables (format name=value\0 ... \0\0).
++ * @param	buf	buffer to store variables
++ * @param	count	size of buffer in bytes
++ * @return	0 on success and errno on failure
++ */
++extern int BCMINIT(nvram_getall)(char *buf, int count);
++
++#endif /* _LANGUAGE_ASSEMBLY */
++
++#define NVRAM_MAGIC		0x48534C46	/* 'FLSH' */
++#define NVRAM_VERSION		1
++#define NVRAM_HEADER_SIZE	20
++#define NVRAM_SPACE		0x8000
++
++#endif /* _bcmnvram_h_ */
+diff --git a/drivers/char/nvram_cfg/bcmutils.h b/drivers/char/nvram_cfg/bcmutils.h
+new file mode 100644
+index 0000000..da83855
+--- /dev/null
++++ b/drivers/char/nvram_cfg/bcmutils.h
+@@ -0,0 +1,245 @@
++/*
++ * Misc useful os-independent macros and functions.
++ *
++ * Copyright 2005, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ * $Id$
++ */
++
++#ifndef	_bcmutils_h_
++#define	_bcmutils_h_
++
++#define ezpacket
++
++#include "osl.h"
++
++/*** driver-only section ***/
++#ifdef BCMDRIVER
++
++
++
++/*
++ * Spin at most 'us' microseconds while 'exp' is true.
++ * Caller should explicitly test 'exp' when this completes
++ * and take appropriate error action if 'exp' is still true.
++ */
++#define SPINWAIT(exp, us) { \
++	uint countdown = (us) + 9; \
++	while ((exp) && (countdown >= 10)) {\
++		OSL_DELAY(10); \
++		countdown -= 10; \
++	} \
++}
++
++/* generic osl packet queue */
++struct pktq {
++	void *head;	/* first packet to dequeue */
++	void *tail;	/* last packet to dequeue */
++	uint len;	/* number of queued packets */
++	uint maxlen;	/* maximum number of queued packets */
++	bool priority;	/* enqueue by packet priority */
++	uint8 prio_map[MAXPRIO+1]; /* user priority to packet enqueue policy map */
++};
++#define DEFAULT_QLEN	128
++
++#define	pktq_len(q)	((q)->len)
++#define	pktq_avail(q)	((q)->maxlen - (q)->len)
++#define	pktq_head(q)	((q)->head)
++#define	pktq_full(q)	((q)->len >= (q)->maxlen)
++#define	_pktq_pri(q, pri)	((q)->prio_map[pri])
++#define	pktq_tailpri(q)	((q)->tail ? _pktq_pri(q, PKTPRIO((q)->tail)) : _pktq_pri(q, 0))
++
++/* externs */
++/* packet */
++extern uint pktcopy(void *drv, void *p, uint offset, int len, uchar *buf);
++extern uint pkttotlen(void *drv, void *);
++extern void pktq_init(struct pktq *q, uint maxlen, const uint8 prio_map[]);
++extern void pktenq(struct pktq *q, void *p, bool lifo);
++extern void *pktdeq(struct pktq *q);
++extern void *pktdeqtail(struct pktq *q);
++/* string */
++extern ulong wchar2ascii(char *abuf, ushort *wbuf, ushort wbuflen, ulong abuflen);
++/* variable access */
++extern char *getvar(char *vars, char *name);
++extern int getintvar(char *vars, char *name);
++extern uint getgpiopin(char *vars, char *pin_name, uint def_pin);
++#define	bcmlog(fmt, a1, a2)
++#define	bcmdumplog(buf, size)	*buf = '\0'
++#define	bcmdumplogent(buf, idx)	-1
++#endif	/* #ifdef BCMDRIVER */
++
++extern unsigned char bcm_ctype[];
++#define bcm_ismask(x) (bcm_ctype[(int)(unsigned char)(x)])
++
++#define _BCM_U	0x01	/* upper */
++#define _BCM_L	0x02	/* lower */
++#define _BCM_D	0x04	/* digit */
++#define _BCM_C	0x08	/* cntrl */
++#define _BCM_P	0x10	/* punct */
++#define _BCM_S	0x20	/* white space (space/lf/tab) */
++#define _BCM_X	0x40	/* hex digit */
++#define _BCM_SP	0x80	/* hard space (0x20) */
++
++#define bcm_isalnum(c)	((bcm_ismask(c)&(_BCM_U|_BCM_L|_BCM_D)) != 0)
++#define bcm_isalpha(c)	((bcm_ismask(c)&(_BCM_U|_BCM_L)) != 0)
++#define bcm_iscntrl(c)	((bcm_ismask(c)&(_BCM_C)) != 0)
++#define bcm_isdigit(c)	((bcm_ismask(c)&(_BCM_D)) != 0)
++#define bcm_isgraph(c)	((bcm_ismask(c)&(_BCM_P|_BCM_U|_BCM_L|_BCM_D)) != 0)
++#define bcm_islower(c)	((bcm_ismask(c)&(_BCM_L)) != 0)
++#define bcm_isprint(c)	((bcm_ismask(c)&(_BCM_P|_BCM_U|_BCM_L|_BCM_D|_BCM_SP)) != 0)
++#define bcm_ispunct(c)	((bcm_ismask(c)&(_BCM_P)) != 0)
++#define bcm_isspace(c)	((bcm_ismask(c)&(_BCM_S)) != 0)
++#define bcm_isupper(c)	((bcm_ismask(c)&(_BCM_U)) != 0)
++#define bcm_isxdigit(c)	((bcm_ismask(c)&(_BCM_D|_BCM_X)) != 0)
++
++extern uint bcm_atoi(char *s);
++extern uchar bcm_toupper(uchar c);
++extern ulong bcm_strtoul(char *cp, char **endp, uint base);
++extern char *bcmstrstr(char *haystack, char *needle);
++extern char *bcmstrcat(char *dest, const char *src);
++/* ethernet address */
++extern char *bcm_ether_ntoa(char *ea, char *buf);
++extern int bcm_ether_atoe(char *p, char *ea);
++/* delay */
++extern void bcm_mdelay(uint ms);
++
++/*** driver/apps-shared section ***/
++#ifndef MIN
++#define	MIN(a, b)		(((a)<(b))?(a):(b))
++#endif
++
++#ifndef MAX
++#define	MAX(a, b)		(((a)>(b))?(a):(b))
++#endif
++
++#define CEIL(x, y)		(((x) + ((y)-1)) / (y))
++#define	ROUNDUP(x, y)		((((x)+((y)-1))/(y))*(y))
++#define	ISALIGNED(a, x)		(((a) & ((x)-1)) == 0)
++#define	ISPOWEROF2(x)		((((x)-1)&(x))==0)
++#define	OFFSETOF(type, member)	((uint)(uintptr)&((type *)0)->member)
++#define ARRAYSIZE(a)		(sizeof(a)/sizeof(a[0]))
++
++/* bit map related macros */
++#ifndef setbit
++#define	NBBY	8	/* 8 bits per byte */
++#define	setbit(a,i)	(((uint8 *)a)[(i)/NBBY] |= 1<<((i)%NBBY))
++#define	clrbit(a,i)	(((uint8 *)a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
++#define	isset(a,i)	(((uint8 *)a)[(i)/NBBY] & (1<<((i)%NBBY)))
++#define	isclr(a,i)	((((uint8 *)a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
++#endif
++
++#define	NBITS(type)	(sizeof (type) * 8)
++
++/* crc defines */
++#define CRC8_INIT_VALUE  0xff		/* Initial CRC8 checksum value */
++#define CRC8_GOOD_VALUE  0x9f		/* Good final CRC8 checksum value */
++#define CRC16_INIT_VALUE 0xffff		/* Initial CRC16 checksum value */
++#define CRC16_GOOD_VALUE 0xf0b8		/* Good final CRC16 checksum value */
++#define CRC32_INIT_VALUE 0xffffffff	/* Initial CRC32 checksum value */
++#define CRC32_GOOD_VALUE 0xdebb20e3	/* Good final CRC32 checksum value */
++
++/* bcm_format_flags() bit description structure */
++typedef struct bcm_bit_desc {
++	uint32	bit;
++	char*	name;
++} bcm_bit_desc_t;
++
++/* tag_ID/length/value_buffer tuple */
++typedef struct bcm_tlv {
++	uint8	id;
++	uint8	len;
++	uint8	data[1];
++} bcm_tlv_t;
++
++/* Check that bcm_tlv_t fits into the given buflen */
++#define bcm_valid_tlv(elt, buflen) ((buflen) >= 2 && (buflen) >= 2 + (elt)->len)
++
++/* buffer length for ethernet address from bcm_ether_ntoa() */
++#define ETHER_ADDR_STR_LEN	18
++
++/* unaligned load and store macros */
++#ifdef IL_BIGENDIAN
++static INLINE uint32
++load32_ua(uint8 *a)
++{
++	return ((a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3]);
++}
++
++static INLINE void
++store32_ua(uint8 *a, uint32 v)
++{
++	a[0] = (v >> 24) & 0xff;
++	a[1] = (v >> 16) & 0xff;
++	a[2] = (v >> 8) & 0xff;
++	a[3] = v & 0xff;
++}
++
++static INLINE uint16
++load16_ua(uint8 *a)
++{
++	return ((a[0] << 8) | a[1]);
++}
++
++static INLINE void
++store16_ua(uint8 *a, uint16 v)
++{
++	a[0] = (v >> 8) & 0xff;
++	a[1] = v & 0xff;
++}
++
++#else
++
++static INLINE uint32
++load32_ua(uint8 *a)
++{
++	return ((a[3] << 24) | (a[2] << 16) | (a[1] << 8) | a[0]);
++}
++
++static INLINE void
++store32_ua(uint8 *a, uint32 v)
++{
++	a[3] = (v >> 24) & 0xff;
++	a[2] = (v >> 16) & 0xff;
++	a[1] = (v >> 8) & 0xff;
++	a[0] = v & 0xff;
++}
++
++static INLINE uint16
++load16_ua(uint8 *a)
++{
++	return ((a[1] << 8) | a[0]);
++}
++
++static INLINE void
++store16_ua(uint8 *a, uint16 v)
++{
++	a[1] = (v >> 8) & 0xff;
++	a[0] = v & 0xff;
++}
++
++#endif
++
++/* externs */
++/* crc */
++extern uint8 hndcrc8(uint8 *p, uint nbytes, uint8 crc);
++extern uint16 hndcrc16(uint8 *p, uint nbytes, uint16 crc);
++extern uint32 hndcrc32(uint8 *p, uint nbytes, uint32 crc);
++/* format/print */
++/* IE parsing */
++extern bcm_tlv_t *bcm_next_tlv(bcm_tlv_t *elt, int *buflen);
++extern bcm_tlv_t *bcm_parse_tlvs(void *buf, int buflen, uint key);
++extern bcm_tlv_t *bcm_parse_ordered_tlvs(void *buf, int buflen, uint key);
++
++/* multi-bool data type: set of bools, mbool is true if any is set */
++typedef uint32 mbool;
++#define mboolset(mb, bit)		(mb |= bit)		/* set one bool */
++#define mboolclr(mb, bit)		(mb &= ~bit)		/* clear one bool */
++#define mboolisset(mb, bit)		((mb & bit) != 0)	/* TRUE if one bool is set */
++#define	mboolmaskset(mb, mask, val)	((mb) = (((mb) & ~(mask)) | (val)))
++
++#endif	/* _bcmutils_h_ */
+diff --git a/drivers/char/nvram_cfg/ez_osl.c b/drivers/char/nvram_cfg/ez_osl.c
+new file mode 100644
+index 0000000..f03616e
+--- /dev/null
++++ b/drivers/char/nvram_cfg/ez_osl.c
+@@ -0,0 +1,111 @@
++/*
++ * Linux OS Independent Layer
++ *
++ * Copyright 2004, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ *
++ * $Id$
++ */
++
++#define LINUX_OSL
++
++#include <linux/module.h>
++#include <linux/delay.h>
++#include "linuxver.h"
++#include "ez_osl.h"
++#include "typedefs.h"
++#include "bcmendian.h"
++#include "bcmutils.h"
++
++#define OS_HANDLE_MAGIC		0x1234abcd
++#define BCM_MEM_FILENAME_LEN 	24
++
++typedef struct bcm_mem_link {
++    struct bcm_mem_link *prev;
++    struct bcm_mem_link *next;
++    uint    size;
++    int     line;
++    char    file[BCM_MEM_FILENAME_LEN];
++} bcm_mem_link_t;
++
++typedef struct os_handle {
++    uint magic;
++    void *pdev;
++    uint malloced;
++    uint failed;
++    bcm_mem_link_t *dbgmem_list;
++} os_handle_t;
++
++
++
++void *
++osl_attach(void *pdev)
++{
++	os_handle_t *osh;
++
++	osh = kmalloc(sizeof(os_handle_t), GFP_ATOMIC);
++	ASSERT(osh);
++
++	osh->magic = OS_HANDLE_MAGIC;
++	osh->malloced = 0;
++	osh->failed = 0;
++	osh->dbgmem_list = NULL;
++	osh->pdev = pdev;
++
++	return osh;
++}
++
++void
++osl_detach(void *osh)
++{
++	ASSERT((osh && (((os_handle_t *)osh)->magic == OS_HANDLE_MAGIC)));
++	kfree(osh);
++}
++
++
++void*
++osl_malloc(void *osh, uint size)
++{
++	os_handle_t *h = (os_handle_t *)osh;
++	void *addr;
++
++	ASSERT((h && (h->magic == OS_HANDLE_MAGIC)));
++	h->malloced += size;
++	addr = kmalloc(size, GFP_ATOMIC);
++	if (!addr)
++		h->failed++;
++	return (addr);
++}
++
++void
++osl_mfree(void *osh, void *addr, uint size)
++{
++	os_handle_t *h = (os_handle_t *)osh;
++
++	ASSERT((h && (h->magic == OS_HANDLE_MAGIC)));
++	h->malloced -= size;
++	kfree(addr);
++}
++
++uint
++osl_malloced(void *osh)
++{
++	os_handle_t *h = (os_handle_t *)osh;
++
++	ASSERT((h && (h->magic == OS_HANDLE_MAGIC)));
++	return (h->malloced);
++}
++
++uint osl_malloc_failed(void *osh)
++{
++	os_handle_t *h = (os_handle_t *)osh;
++
++	ASSERT((h && (h->magic == OS_HANDLE_MAGIC)));
++	return (h->failed);
++}
++
+diff --git a/drivers/char/nvram_cfg/ez_osl.h b/drivers/char/nvram_cfg/ez_osl.h
+new file mode 100644
+index 0000000..6f44f89
+--- /dev/null
++++ b/drivers/char/nvram_cfg/ez_osl.h
+@@ -0,0 +1,31 @@
++#ifndef _ez_osl_h_
++#define _ez_osl_h_
++
++#include "typedefs.h"
++#include "linuxver.h"
++
++
++#define	MALLOC(osh, size)	osl_malloc((osh), (size))
++#define	MFREE(osh, addr, size)	osl_mfree((osh), (addr), (size))
++#define MALLOCED(osh)		osl_malloced((osh))
++#define	MALLOC_FAILED(osh)	osl_malloc_failed((osh))
++
++/* bcopy, bcmp, and bzero */
++#define	bcopy(src, dst, len)	memcpy((dst), (src), (len))
++#define	bcmp(b1, b2, len)	memcmp((b1), (b2), (len))
++#define	bzero(b, len)		memset((b), '\0', (len))
++#define printf(fmt, args...)    printk(fmt, ## args)
++
++#define ASSERT(exp)             do {} while (0)
++
++
++
++extern void *osl_malloc(void *osh, uint size);
++extern void osl_mfree(void *osh, void *addr, uint size);
++extern uint osl_malloced(void *osh);
++extern uint osl_malloc_failed(void *osh);
++extern void *osl_attach(void *pdev);
++extern void osl_detach(void *osh);
++
++#endif /* #ifndef _ez_osl_h_ */
++
+diff --git a/drivers/char/nvram_cfg/ezutils.c b/drivers/char/nvram_cfg/ezutils.c
+new file mode 100644
+index 0000000..faf93d5
+--- /dev/null
++++ b/drivers/char/nvram_cfg/ezutils.c
+@@ -0,0 +1,514 @@
++/*
++ * Misc useful OS-independent routines.
++ *
++ * Copyright 2004, Broadcom Corporation      
++ * All Rights Reserved.      
++ *       
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY      
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM      
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS      
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.      
++ * $Id$
++ */
++
++#define ezpacket
++
++#include <linux/module.h>
++#include "typedefs.h"
++#include "osl.h"
++#include "bcmnvram.h"
++#include "bcmutils.h"
++#include "bcmendian.h"
++
++/*******************************************************************************
++ * crc8
++ *
++ * Computes a crc8 over the input data using the polynomial:
++ *
++ *       x^8 + x^7 +x^6 + x^4 + x^2 + 1
++ *
++ * The caller provides the initial value (either CRC8_INIT_VALUE
++ * or the previous returned value) to allow for processing of 
++ * discontiguous blocks of data.  When generating the CRC the
++ * caller is responsible for complementing the final return value
++ * and inserting it into the byte stream.  When checking, a final
++ * return value of CRC8_GOOD_VALUE indicates a valid CRC.
++ *
++ * Reference: Dallas Semiconductor Application Note 27
++ *   Williams, Ross N., "A Painless Guide to CRC Error Detection Algorithms", 
++ *     ver 3, Aug 1993, ross@guest.adelaide.edu.au, Rocksoft Pty Ltd.,
++ *     ftp://ftp.rocksoft.com/clients/rocksoft/papers/crc_v3.txt
++ *
++ ******************************************************************************/
++
++static uint8 crc8_table[256] = {
++    0x00, 0xF7, 0xB9, 0x4E, 0x25, 0xD2, 0x9C, 0x6B,
++    0x4A, 0xBD, 0xF3, 0x04, 0x6F, 0x98, 0xD6, 0x21,
++    0x94, 0x63, 0x2D, 0xDA, 0xB1, 0x46, 0x08, 0xFF,
++    0xDE, 0x29, 0x67, 0x90, 0xFB, 0x0C, 0x42, 0xB5,
++    0x7F, 0x88, 0xC6, 0x31, 0x5A, 0xAD, 0xE3, 0x14,
++    0x35, 0xC2, 0x8C, 0x7B, 0x10, 0xE7, 0xA9, 0x5E,
++    0xEB, 0x1C, 0x52, 0xA5, 0xCE, 0x39, 0x77, 0x80,
++    0xA1, 0x56, 0x18, 0xEF, 0x84, 0x73, 0x3D, 0xCA,
++    0xFE, 0x09, 0x47, 0xB0, 0xDB, 0x2C, 0x62, 0x95,
++    0xB4, 0x43, 0x0D, 0xFA, 0x91, 0x66, 0x28, 0xDF,
++    0x6A, 0x9D, 0xD3, 0x24, 0x4F, 0xB8, 0xF6, 0x01,
++    0x20, 0xD7, 0x99, 0x6E, 0x05, 0xF2, 0xBC, 0x4B,
++    0x81, 0x76, 0x38, 0xCF, 0xA4, 0x53, 0x1D, 0xEA,
++    0xCB, 0x3C, 0x72, 0x85, 0xEE, 0x19, 0x57, 0xA0,
++    0x15, 0xE2, 0xAC, 0x5B, 0x30, 0xC7, 0x89, 0x7E,
++    0x5F, 0xA8, 0xE6, 0x11, 0x7A, 0x8D, 0xC3, 0x34,
++    0xAB, 0x5C, 0x12, 0xE5, 0x8E, 0x79, 0x37, 0xC0,
++    0xE1, 0x16, 0x58, 0xAF, 0xC4, 0x33, 0x7D, 0x8A,
++    0x3F, 0xC8, 0x86, 0x71, 0x1A, 0xED, 0xA3, 0x54,
++    0x75, 0x82, 0xCC, 0x3B, 0x50, 0xA7, 0xE9, 0x1E,
++    0xD4, 0x23, 0x6D, 0x9A, 0xF1, 0x06, 0x48, 0xBF,
++    0x9E, 0x69, 0x27, 0xD0, 0xBB, 0x4C, 0x02, 0xF5,
++    0x40, 0xB7, 0xF9, 0x0E, 0x65, 0x92, 0xDC, 0x2B,
++    0x0A, 0xFD, 0xB3, 0x44, 0x2F, 0xD8, 0x96, 0x61,
++    0x55, 0xA2, 0xEC, 0x1B, 0x70, 0x87, 0xC9, 0x3E,
++    0x1F, 0xE8, 0xA6, 0x51, 0x3A, 0xCD, 0x83, 0x74,
++    0xC1, 0x36, 0x78, 0x8F, 0xE4, 0x13, 0x5D, 0xAA,
++    0x8B, 0x7C, 0x32, 0xC5, 0xAE, 0x59, 0x17, 0xE0,
++    0x2A, 0xDD, 0x93, 0x64, 0x0F, 0xF8, 0xB6, 0x41,
++    0x60, 0x97, 0xD9, 0x2E, 0x45, 0xB2, 0xFC, 0x0B,
++    0xBE, 0x49, 0x07, 0xF0, 0x9B, 0x6C, 0x22, 0xD5,
++    0xF4, 0x03, 0x4D, 0xBA, 0xD1, 0x26, 0x68, 0x9F
++};
++
++#define CRC_INNER_LOOP(n, c, x) \
++    (c) = ((c) >> 8) ^ crc##n##_table[((c) ^ (x)) & 0xff]
++
++uint8
++hndcrc8(
++	uint8 *pdata,	/* pointer to array of data to process */
++	uint  nbytes,	/* number of input data bytes to process */
++	uint8 crc	/* either CRC8_INIT_VALUE or previous return value */
++)
++{
++	/* hard code the crc loop instead of using CRC_INNER_LOOP macro
++	 * to avoid the undefined and unnecessary (uint8 >> 8) operation. */
++	while (nbytes-- > 0)
++		crc = crc8_table[(crc ^ *pdata++) & 0xff];
++
++	return crc;
++}
++
++/*******************************************************************************
++ * crc16
++ *
++ * Computes a crc16 over the input data using the polynomial:
++ *
++ *       x^16 + x^12 +x^5 + 1
++ *
++ * The caller provides the initial value (either CRC16_INIT_VALUE
++ * or the previous returned value) to allow for processing of 
++ * discontiguous blocks of data.  When generating the CRC the
++ * caller is responsible for complementing the final return value
++ * and inserting it into the byte stream.  When checking, a final
++ * return value of CRC16_GOOD_VALUE indicates a valid CRC.
++ *
++ * Reference: Dallas Semiconductor Application Note 27
++ *   Williams, Ross N., "A Painless Guide to CRC Error Detection Algorithms", 
++ *     ver 3, Aug 1993, ross@guest.adelaide.edu.au, Rocksoft Pty Ltd.,
++ *     ftp://ftp.rocksoft.com/clients/rocksoft/papers/crc_v3.txt
++ *
++ ******************************************************************************/
++
++static uint16 crc16_table[256] = {
++    0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
++    0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7,
++    0x1081, 0x0108, 0x3393, 0x221A, 0x56A5, 0x472C, 0x75B7, 0x643E,
++    0x9CC9, 0x8D40, 0xBFDB, 0xAE52, 0xDAED, 0xCB64, 0xF9FF, 0xE876,
++    0x2102, 0x308B, 0x0210, 0x1399, 0x6726, 0x76AF, 0x4434, 0x55BD,
++    0xAD4A, 0xBCC3, 0x8E58, 0x9FD1, 0xEB6E, 0xFAE7, 0xC87C, 0xD9F5,
++    0x3183, 0x200A, 0x1291, 0x0318, 0x77A7, 0x662E, 0x54B5, 0x453C,
++    0xBDCB, 0xAC42, 0x9ED9, 0x8F50, 0xFBEF, 0xEA66, 0xD8FD, 0xC974,
++    0x4204, 0x538D, 0x6116, 0x709F, 0x0420, 0x15A9, 0x2732, 0x36BB,
++    0xCE4C, 0xDFC5, 0xED5E, 0xFCD7, 0x8868, 0x99E1, 0xAB7A, 0xBAF3,
++    0x5285, 0x430C, 0x7197, 0x601E, 0x14A1, 0x0528, 0x37B3, 0x263A,
++    0xDECD, 0xCF44, 0xFDDF, 0xEC56, 0x98E9, 0x8960, 0xBBFB, 0xAA72,
++    0x6306, 0x728F, 0x4014, 0x519D, 0x2522, 0x34AB, 0x0630, 0x17B9,
++    0xEF4E, 0xFEC7, 0xCC5C, 0xDDD5, 0xA96A, 0xB8E3, 0x8A78, 0x9BF1,
++    0x7387, 0x620E, 0x5095, 0x411C, 0x35A3, 0x242A, 0x16B1, 0x0738,
++    0xFFCF, 0xEE46, 0xDCDD, 0xCD54, 0xB9EB, 0xA862, 0x9AF9, 0x8B70,
++    0x8408, 0x9581, 0xA71A, 0xB693, 0xC22C, 0xD3A5, 0xE13E, 0xF0B7,
++    0x0840, 0x19C9, 0x2B52, 0x3ADB, 0x4E64, 0x5FED, 0x6D76, 0x7CFF,
++    0x9489, 0x8500, 0xB79B, 0xA612, 0xD2AD, 0xC324, 0xF1BF, 0xE036,
++    0x18C1, 0x0948, 0x3BD3, 0x2A5A, 0x5EE5, 0x4F6C, 0x7DF7, 0x6C7E,
++    0xA50A, 0xB483, 0x8618, 0x9791, 0xE32E, 0xF2A7, 0xC03C, 0xD1B5,
++    0x2942, 0x38CB, 0x0A50, 0x1BD9, 0x6F66, 0x7EEF, 0x4C74, 0x5DFD,
++    0xB58B, 0xA402, 0x9699, 0x8710, 0xF3AF, 0xE226, 0xD0BD, 0xC134,
++    0x39C3, 0x284A, 0x1AD1, 0x0B58, 0x7FE7, 0x6E6E, 0x5CF5, 0x4D7C,
++    0xC60C, 0xD785, 0xE51E, 0xF497, 0x8028, 0x91A1, 0xA33A, 0xB2B3,
++    0x4A44, 0x5BCD, 0x6956, 0x78DF, 0x0C60, 0x1DE9, 0x2F72, 0x3EFB,
++    0xD68D, 0xC704, 0xF59F, 0xE416, 0x90A9, 0x8120, 0xB3BB, 0xA232,
++    0x5AC5, 0x4B4C, 0x79D7, 0x685E, 0x1CE1, 0x0D68, 0x3FF3, 0x2E7A,
++    0xE70E, 0xF687, 0xC41C, 0xD595, 0xA12A, 0xB0A3, 0x8238, 0x93B1,
++    0x6B46, 0x7ACF, 0x4854, 0x59DD, 0x2D62, 0x3CEB, 0x0E70, 0x1FF9,
++    0xF78F, 0xE606, 0xD49D, 0xC514, 0xB1AB, 0xA022, 0x92B9, 0x8330,
++    0x7BC7, 0x6A4E, 0x58D5, 0x495C, 0x3DE3, 0x2C6A, 0x1EF1, 0x0F78
++};
++
++uint16
++hndcrc16(
++    uint8 *pdata,  /* pointer to array of data to process */
++    uint nbytes, /* number of input data bytes to process */
++    uint16 crc     /* either CRC16_INIT_VALUE or previous return value */
++)
++{
++    while (nbytes-- > 0)
++        CRC_INNER_LOOP(16, crc, *pdata++);
++    return crc;
++}
++
++static uint32 crc32_table[256] = {
++    0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
++    0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
++    0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
++    0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
++    0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE,
++    0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
++    0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC,
++    0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
++    0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172,
++    0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
++    0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940,
++    0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
++    0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116,
++    0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
++    0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924,
++    0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
++    0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A,
++    0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
++    0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818,
++    0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
++    0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E,
++    0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
++    0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C,
++    0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
++    0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2,
++    0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
++    0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0,
++    0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
++    0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086,
++    0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
++    0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4,
++    0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
++    0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A,
++    0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
++    0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8,
++    0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
++    0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE,
++    0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
++    0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC,
++    0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
++    0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252,
++    0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
++    0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60,
++    0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
++    0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236,
++    0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
++    0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04,
++    0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
++    0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A,
++    0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
++    0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38,
++    0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
++    0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E,
++    0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
++    0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C,
++    0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
++    0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2,
++    0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
++    0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0,
++    0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
++    0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6,
++    0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
++    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
++    0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
++};
++
++uint32
++hndcrc32(
++    uint8 *pdata,  /* pointer to array of data to process */
++    uint   nbytes, /* number of input data bytes to process */
++    uint32 crc     /* either CRC32_INIT_VALUE or previous return value */
++)
++{
++    uint8 *pend;
++#ifdef __mips__
++    uint8 tmp[4];
++    ulong *tptr = (ulong *)tmp, *tptr1;
++
++	/* in case the beginning of the buffer isn't aligned */
++	pend = (uint8 *)((uint)(pdata + 3) & 0xfffffffc);
++	nbytes -= (pend - pdata);
++	while (pdata < pend)
++		CRC_INNER_LOOP(32, crc, *pdata++);
++
++    /* handle bulk of data as 32-bit words */
++    pend = pdata + (nbytes & 0xfffffffc);
++    tptr1 = (ulong *)pdata;
++    while (pdata < pend) {
++        tptr1 = (ulong *)pdata;
++	    *tptr = *(tptr1++);  
++        pdata = (uint8 *)tptr1;
++        CRC_INNER_LOOP(32, crc, tmp[0]);
++        CRC_INNER_LOOP(32, crc, tmp[1]);
++        CRC_INNER_LOOP(32, crc, tmp[2]);
++        CRC_INNER_LOOP(32, crc, tmp[3]);
++    }
++
++    /* 1-3 bytes at end of buffer */
++    pend = pdata + (nbytes & 0x03);
++    while (pdata < pend)
++        CRC_INNER_LOOP(32, crc, *pdata++);
++#else
++    pend = pdata + nbytes;
++    while (pdata < pend)
++        CRC_INNER_LOOP(32, crc, *pdata++);
++#endif
++       
++    return crc;
++}
++
++
++/* 
++ * Advance from the current 1-byte tag/1-byte length/variable-length value 
++ * triple, to the next, returning a pointer to the next.
++ */
++bcm_tlv_t *
++bcm_next_tlv(bcm_tlv_t *elt, int *buflen)
++{
++	int len;
++
++	/* validate current elt */
++	if (*buflen < 2) {
++		return NULL;
++	}
++	
++	len = elt->len;
++
++	/* validate remaining buflen */
++	if (*buflen >= (2 + len + 2)) {
++		elt = (bcm_tlv_t*)(elt->data + len);
++		*buflen -= (2 + len);
++	} else {
++		elt = NULL;
++	}
++	
++	return elt;
++}
++
++/* 
++ * Traverse a string of 1-byte tag/1-byte length/variable-length value 
++ * triples, returning a pointer to the substring whose first element 
++ * matches tag
++ */
++bcm_tlv_t *
++bcm_parse_tlvs(void *buf, int buflen, uint key)
++{
++	bcm_tlv_t *elt;
++	int totlen;
++
++	elt = (bcm_tlv_t*)buf;
++	totlen = buflen;
++
++	/* find tagged parameter */
++	while (totlen >= 2) {
++		int len = elt->len;
++
++		/* validate remaining totlen */
++		if ((elt->id == key) && (totlen >= (len + 2)))
++			return (elt);
++
++		elt = (bcm_tlv_t*)((uint8*)elt + (len + 2));
++		totlen -= (len + 2);
++	}
++	
++	return NULL;
++}
++
++/* 
++ * Traverse a string of 1-byte tag/1-byte length/variable-length value 
++ * triples, returning a pointer to the substring whose first element 
++ * matches tag.  Stop parsing when we see an element whose ID is greater
++ * than the target key. 
++ */
++bcm_tlv_t *
++bcm_parse_ordered_tlvs(void *buf, int buflen, uint key)
++{
++	bcm_tlv_t *elt;
++	int totlen;
++
++	elt = (bcm_tlv_t*)buf;
++	totlen = buflen;
++
++	/* find tagged parameter */
++	while (totlen >= 2) {
++		uint id = elt->id;
++		int len = elt->len;
++		
++		/* Punt if we start seeing IDs > than target key */
++		if (id > key)
++			return(NULL);
++
++		/* validate remaining totlen */
++		if ((id == key) && (totlen >= (len + 2)))
++			return (elt);
++
++		elt = (bcm_tlv_t*)((uint8*)elt + (len + 2));
++		totlen -= (len + 2);
++	}
++	return NULL;
++}
++
++
++unsigned char bcm_ctype[] = {
++	_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,			/* 0-7 */
++	_BCM_C,_BCM_C|_BCM_S,_BCM_C|_BCM_S,_BCM_C|_BCM_S,_BCM_C|_BCM_S,_BCM_C|_BCM_S,_BCM_C,_BCM_C,		/* 8-15 */
++	_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,			/* 16-23 */
++	_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,_BCM_C,			/* 24-31 */
++	_BCM_S|_BCM_SP,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,			/* 32-39 */
++	_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,			/* 40-47 */
++	_BCM_D,_BCM_D,_BCM_D,_BCM_D,_BCM_D,_BCM_D,_BCM_D,_BCM_D,			/* 48-55 */
++	_BCM_D,_BCM_D,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,			/* 56-63 */
++	_BCM_P,_BCM_U|_BCM_X,_BCM_U|_BCM_X,_BCM_U|_BCM_X,_BCM_U|_BCM_X,_BCM_U|_BCM_X,_BCM_U|_BCM_X,_BCM_U,	/* 64-71 */
++	_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,			/* 72-79 */
++	_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,			/* 80-87 */
++	_BCM_U,_BCM_U,_BCM_U,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,			/* 88-95 */
++	_BCM_P,_BCM_L|_BCM_X,_BCM_L|_BCM_X,_BCM_L|_BCM_X,_BCM_L|_BCM_X,_BCM_L|_BCM_X,_BCM_L|_BCM_X,_BCM_L,	/* 96-103 */
++	_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,			/* 104-111 */
++	_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,			/* 112-119 */
++	_BCM_L,_BCM_L,_BCM_L,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_C,			/* 120-127 */
++	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		/* 128-143 */
++	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		/* 144-159 */
++	_BCM_S|_BCM_SP,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,   /* 160-175 */
++	_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,_BCM_P,       /* 176-191 */
++	_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,       /* 192-207 */
++	_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_P,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_U,_BCM_L,       /* 208-223 */
++	_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,       /* 224-239 */
++	_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_P,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L,_BCM_L        /* 240-255 */
++};
++
++uchar
++bcm_toupper(uchar c)
++{
++	if (bcm_islower(c))
++		c -= 'a'-'A';
++	return (c);
++}
++
++ulong
++bcm_strtoul(char *cp, char **endp, uint base)
++{
++	ulong result, value;
++	bool minus;
++	
++	minus = FALSE;
++
++	while (bcm_isspace(*cp))
++		cp++;
++	
++	if (cp[0] == '+')
++		cp++;
++	else if (cp[0] == '-') {
++		minus = TRUE;
++		cp++;
++	}
++	
++	if (base == 0) {
++		if (cp[0] == '0') {
++			if ((cp[1] == 'x') || (cp[1] == 'X')) {
++				base = 16;
++				cp = &cp[2];
++			} else {
++				base = 8;
++				cp = &cp[1];
++			}
++		} else
++			base = 10;
++	} else if (base == 16 && (cp[0] == '0') && ((cp[1] == 'x') || (cp[1] == 'X'))) {
++		cp = &cp[2];
++	}
++		   
++	result = 0;
++
++	while (bcm_isxdigit(*cp) &&
++	       (value = bcm_isdigit(*cp) ? *cp-'0' : bcm_toupper(*cp)-'A'+10) < base) {
++		result = result*base + value;
++		cp++;
++	}
++
++	if (minus)
++		result = (ulong)(result * -1);
++
++	if (endp)
++		*endp = (char *)cp;
++
++	return (result);
++}
++
++uint
++bcm_atoi(char *s)
++{
++	uint n;
++
++	n = 0;
++
++	while (bcm_isdigit(*s))
++		n = (n * 10) + *s++ - '0';
++	return (n);
++}
++
++/* return pointer to location of substring 'needle' in 'haystack' */
++char*
++bcmstrstr(char *haystack, char *needle)
++{
++	int len, nlen;
++	int i;
++
++	if ((haystack == NULL) || (needle == NULL))
++		return (haystack);
++
++	nlen = strlen(needle);
++	len = strlen(haystack) - nlen + 1;
++
++	for (i = 0; i < len; i++)
++		if (bcmp(needle, &haystack[i], nlen) == 0)
++			return (&haystack[i]);
++	return (NULL);
++}
++
++char*
++bcmstrcat(char *dest, const char *src)
++{
++	strcpy(&dest[strlen(dest)], src);
++	return (dest);
++}
++
++char*
++bcm_ether_ntoa(char *ea, char *buf)
++{
++	sprintf(buf,"%02x:%02x:%02x:%02x:%02x:%02x",
++		(uchar)ea[0]&0xff, (uchar)ea[1]&0xff, (uchar)ea[2]&0xff,
++		(uchar)ea[3]&0xff, (uchar)ea[4]&0xff, (uchar)ea[5]&0xff);
++	return (buf);
++}
++
++/* parse a xx:xx:xx:xx:xx:xx format ethernet address */
++int
++bcm_ether_atoe(char *p, char *ea)
++{
++	int i = 0;
++
++	for (;;) {
++		ea[i++] = (char) bcm_strtoul(p, &p, 16);
++		if (!*p++ || i == 6)
++			break;
++	}
++
++	return (i == 6);
++}
++
+diff --git a/drivers/char/nvram_cfg/linuxver.h b/drivers/char/nvram_cfg/linuxver.h
+new file mode 100644
+index 0000000..c9511d2
+--- /dev/null
++++ b/drivers/char/nvram_cfg/linuxver.h
+@@ -0,0 +1,399 @@
++/*
++ * Linux-specific abstractions to gain some independence from linux kernel versions.
++ * Pave over some 2.2 versus 2.4 versus 2.6 kernel differences.
++ *
++ * Copyright 2005, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ *   
++ * $Id$
++ */
++
++#ifndef _linuxver_h_
++#define _linuxver_h_
++
++#include <linux/config.h>
++#include <linux/version.h>
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,0))
++/* __NO_VERSION__ must be defined for all linkables except one in 2.2 */
++#ifdef __UNDEF_NO_VERSION__
++#undef __NO_VERSION__
++#else
++#define __NO_VERSION__
++#endif
++#endif
++
++#if defined(MODULE) && defined(MODVERSIONS)
++#include <linux/modversions.h>
++#endif
++
++/* linux/malloc.h is deprecated, use linux/slab.h instead. */
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,9))
++#include <linux/malloc.h>
++#else
++#include <linux/slab.h>
++#endif
++
++#include <linux/types.h>
++#include <linux/init.h>
++#include <linux/mm.h>
++#include <linux/string.h>
++#include <linux/pci.h>
++#include <linux/interrupt.h>
++#include <linux/netdevice.h>
++#include <asm/io.h>
++
++#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,5,41))
++#include <linux/workqueue.h>
++#else
++#include <linux/tqueue.h>
++#ifndef work_struct
++#define work_struct tq_struct
++#endif
++#ifndef INIT_WORK
++#define INIT_WORK(_work, _func, _data) INIT_TQUEUE((_work), (_func), (_data))
++#endif
++#ifndef schedule_work
++#define schedule_work(_work) schedule_task((_work))
++#endif
++#ifndef flush_scheduled_work
++#define flush_scheduled_work() flush_scheduled_tasks()
++#endif
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
++/* Some distributions have their own 2.6.x compatibility layers */
++#ifndef IRQ_NONE
++typedef void irqreturn_t;
++#define IRQ_NONE
++#define IRQ_HANDLED
++#define IRQ_RETVAL(x)
++#endif
++#endif
++
++#if defined(CONFIG_PCMCIA) || defined(CONFIG_PCMCIA_MODULE)
++
++#include <pcmcia/version.h>
++#include <pcmcia/cs_types.h>
++#include <pcmcia/cs.h>
++#include <pcmcia/cistpl.h>
++#include <pcmcia/cisreg.h>
++#include <pcmcia/ds.h>
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,69))
++/* In 2.5 (as of 2.5.69 at least) there is a cs_error exported which
++ * does this, but it's not in 2.4 so we do our own for now. */
++static inline void
++cs_error(client_handle_t handle, int func, int ret)
++{
++	error_info_t err = { func, ret };
++	CardServices(ReportError, handle, &err);
++}
++#endif
++
++#endif /* CONFIG_PCMCIA */
++
++#ifndef __exit
++#define __exit
++#endif
++#ifndef __devexit
++#define __devexit
++#endif
++#ifndef __devinit
++#define __devinit	__init
++#endif
++#ifndef __devinitdata
++#define __devinitdata
++#endif
++#ifndef __devexit_p
++#define __devexit_p(x)	x
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++
++#define pci_get_drvdata(dev)		(dev)->sysdata
++#define pci_set_drvdata(dev, value)	(dev)->sysdata=(value)
++
++/*
++ * New-style (2.4.x) PCI/hot-pluggable PCI/CardBus registration
++ */
++
++struct pci_device_id {
++	unsigned int vendor, device;		/* Vendor and device ID or PCI_ANY_ID */
++	unsigned int subvendor, subdevice;	/* Subsystem ID's or PCI_ANY_ID */
++	unsigned int class, class_mask;		/* (class,subclass,prog-if) triplet */
++	unsigned long driver_data;		/* Data private to the driver */
++};
++
++struct pci_driver {
++	struct list_head node;
++	char *name;
++	const struct pci_device_id *id_table;	/* NULL if wants all devices */
++	int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);	/* New device inserted */
++	void (*remove)(struct pci_dev *dev);	/* Device removed (NULL if not a hot-plug capable driver) */
++	void (*suspend)(struct pci_dev *dev);	/* Device suspended */
++	void (*resume)(struct pci_dev *dev);	/* Device woken up */
++};
++
++#define MODULE_DEVICE_TABLE(type, name)
++#define PCI_ANY_ID (~0)
++
++/* compatpci.c */
++#define pci_module_init pci_register_driver
++extern int pci_register_driver(struct pci_driver *drv);
++extern void pci_unregister_driver(struct pci_driver *drv);
++
++#endif /* PCI registration */
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,2,18))
++#ifdef MODULE
++#define module_init(x) int init_module(void) { return x(); }
++#define module_exit(x) void cleanup_module(void) { x(); }
++#else
++#define module_init(x)	__initcall(x);
++#define module_exit(x)	__exitcall(x);
++#endif
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,48))
++#define list_for_each(pos, head) \
++	for (pos = (head)->next; pos != (head); pos = pos->next)
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,13))
++#define pci_resource_start(dev, bar)	((dev)->base_address[(bar)])
++#elif (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,44))
++#define pci_resource_start(dev, bar)	((dev)->resource[(bar)].start)
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,23))
++#define pci_enable_device(dev) do { } while (0)
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,14))
++#define net_device device
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,42))
++
++/*
++ * DMA mapping
++ *
++ * See linux/Documentation/DMA-mapping.txt
++ */
++
++#ifndef PCI_DMA_TODEVICE
++#define	PCI_DMA_TODEVICE	1
++#define	PCI_DMA_FROMDEVICE	2
++#endif
++
++typedef u32 dma_addr_t;
++
++/* Pure 2^n version of get_order */
++static inline int get_order(unsigned long size)
++{
++	int order;
++
++	size = (size-1) >> (PAGE_SHIFT-1);
++	order = -1;
++	do {
++		size >>= 1;
++		order++;
++	} while (size);
++	return order;
++}
++
++static inline void *pci_alloc_consistent(struct pci_dev *hwdev, size_t size,
++					 dma_addr_t *dma_handle)
++{
++	void *ret;
++	int gfp = GFP_ATOMIC | GFP_DMA;
++
++	ret = (void *)__get_free_pages(gfp, get_order(size));
++
++	if (ret != NULL) {
++		memset(ret, 0, size);
++		*dma_handle = virt_to_bus(ret);
++	}
++	return ret;
++}
++static inline void pci_free_consistent(struct pci_dev *hwdev, size_t size,
++				       void *vaddr, dma_addr_t dma_handle)
++{
++	free_pages((unsigned long)vaddr, get_order(size));
++}
++#ifdef ILSIM
++extern uint pci_map_single(void *dev, void *va, uint size, int direction);
++extern void pci_unmap_single(void *dev, uint pa, uint size, int direction);
++#else
++#define pci_map_single(cookie, address, size, dir)	virt_to_bus(address)
++#define pci_unmap_single(cookie, address, size, dir)
++#endif
++
++#endif /* DMA mapping */
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,3,43))
++
++#define dev_kfree_skb_any(a)		dev_kfree_skb(a)
++#define netif_down(dev)			do { (dev)->start = 0; } while(0)
++
++/* pcmcia-cs provides its own netdevice compatibility layer */
++#ifndef _COMPAT_NETDEVICE_H
++
++/*
++ * SoftNet
++ *
++ * For pre-softnet kernels we need to tell the upper layer not to
++ * re-enter start_xmit() while we are in there. However softnet
++ * guarantees not to enter while we are in there so there is no need
++ * to do the netif_stop_queue() dance unless the transmit queue really
++ * gets stuck. This should also improve performance according to tests
++ * done by Aman Singla.
++ */
++
++#define dev_kfree_skb_irq(a)		dev_kfree_skb(a)
++#define netif_wake_queue(dev)		do { clear_bit(0, &(dev)->tbusy); mark_bh(NET_BH); } while(0)
++#define netif_stop_queue(dev)		set_bit(0, &(dev)->tbusy)
++
++static inline void netif_start_queue(struct net_device *dev)
++{
++	dev->tbusy = 0;
++	dev->interrupt = 0;
++	dev->start = 1;
++}
++
++#define netif_queue_stopped(dev)	(dev)->tbusy
++#define netif_running(dev)		(dev)->start
++
++#endif /* _COMPAT_NETDEVICE_H */
++
++#define netif_device_attach(dev)	netif_start_queue(dev)
++#define netif_device_detach(dev)	netif_stop_queue(dev)
++
++/* 2.4.x renamed bottom halves to tasklets */
++#define tasklet_struct				tq_struct
++static inline void tasklet_schedule(struct tasklet_struct *tasklet)
++{
++	queue_task(tasklet, &tq_immediate);
++	mark_bh(IMMEDIATE_BH);
++}
++
++static inline void tasklet_init(struct tasklet_struct *tasklet,
++				void (*func)(unsigned long),
++				unsigned long data)
++{
++	tasklet->next = NULL;
++	tasklet->sync = 0;
++	tasklet->routine = (void (*)(void *))func;
++	tasklet->data = (void *)data;
++}
++#define tasklet_kill(tasklet)			{do{} while(0);}
++
++/* 2.4.x introduced del_timer_sync() */
++#define del_timer_sync(timer) del_timer(timer)
++
++#else
++
++#define netif_down(dev)
++
++#endif /* SoftNet */
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,3))
++
++/*
++ * Emit code to initialise a tq_struct's routine and data pointers
++ */
++#define PREPARE_TQUEUE(_tq, _routine, _data)			\
++	do {							\
++		(_tq)->routine = _routine;			\
++		(_tq)->data = _data;				\
++	} while (0)
++
++/*
++ * Emit code to initialise all of a tq_struct
++ */
++#define INIT_TQUEUE(_tq, _routine, _data)			\
++	do {							\
++		INIT_LIST_HEAD(&(_tq)->list);			\
++		(_tq)->sync = 0;				\
++		PREPARE_TQUEUE((_tq), (_routine), (_data));	\
++	} while (0)
++
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,6))
++
++/* Power management related routines */
++
++static inline int
++pci_save_state(struct pci_dev *dev, u32 *buffer)
++{
++	int i;
++	if (buffer) {
++		for (i = 0; i < 16; i++)
++			pci_read_config_dword(dev, i * 4,&buffer[i]);
++	}
++	return 0;
++}
++
++static inline int 
++pci_restore_state(struct pci_dev *dev, u32 *buffer)
++{
++	int i;
++
++	if (buffer) {
++		for (i = 0; i < 16; i++)
++			pci_write_config_dword(dev,i * 4, buffer[i]);
++	}
++	/*
++	 * otherwise, write the context information we know from bootup.
++	 * This works around a problem where warm-booting from Windows
++	 * combined with a D3(hot)->D0 transition causes PCI config
++	 * header data to be forgotten.
++	 */	
++	else {
++		for (i = 0; i < 6; i ++)
++			pci_write_config_dword(dev,
++					       PCI_BASE_ADDRESS_0 + (i * 4),
++					       pci_resource_start(dev, i));
++		pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
++	}
++	return 0;
++}
++
++#endif /* PCI power management */
++
++/* Old cp0 access macros deprecated in 2.4.19 */
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,19))
++#define read_c0_count() read_32bit_cp0_register(CP0_COUNT)
++#endif
++
++/* Module refcount handled internally in 2.6.x */
++#ifndef SET_MODULE_OWNER
++#define SET_MODULE_OWNER(dev)		do {} while (0)
++#define OLD_MOD_INC_USE_COUNT		MOD_INC_USE_COUNT
++#define OLD_MOD_DEC_USE_COUNT		MOD_DEC_USE_COUNT
++#else
++#define OLD_MOD_INC_USE_COUNT		do {} while (0)
++#define OLD_MOD_DEC_USE_COUNT		do {} while (0)
++#endif
++
++#ifndef SET_NETDEV_DEV
++#define SET_NETDEV_DEV(net, pdev)	do {} while (0)
++#endif
++
++#ifndef HAVE_FREE_NETDEV
++#define free_netdev(dev)		kfree(dev)
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
++/* struct packet_type redefined in 2.6.x */
++#define af_packet_priv			data
++#endif
++
++#endif /* _linuxver_h_ */
+diff --git a/drivers/char/nvram_cfg/nvram.c b/drivers/char/nvram_cfg/nvram.c
+new file mode 100644
+index 0000000..bd17767
+--- /dev/null
++++ b/drivers/char/nvram_cfg/nvram.c
+@@ -0,0 +1,376 @@
++/*
++ * NVRAM variable manipulation (common)
++ *
++ * Copyright 2004, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ *
++ * $Id$
++ */
++
++#define ezpacket
++
++#include <linux/mtd/mtd.h>
++#include "osl.h"
++#include "typedefs.h"
++#include "bcmutils.h"
++#include "bcmnvram.h"
++#include "bcmendian.h"
++#if defined(RUSS)
++#include "sbsdram.h"
++#endif /* RUSS */
++
++extern struct nvram_tuple * BCMINIT(_nvram_realloc)(struct nvram_tuple *t, const char *name, const char *value);
++extern void BCMINIT(_nvram_free)(struct nvram_tuple *t);
++extern int BCMINIT(_nvram_read)(struct mtd_info *tmp_mtd, void *buf);
++
++char * BCMINIT(_nvram_get)(const char *name);
++int BCMINIT(_nvram_set)(const char *name, const char *value);
++int BCMINIT(_nvram_unset)(const char *name);
++int BCMINIT(_nvram_getall)(char *buf, int count);
++int BCMINIT(_nvram_commit)(struct nvram_header *header);
++int BCMINIT(_nvram_init)(struct mtd_info *tmp_mtd, int failsafe);
++void BCMINIT(_nvram_exit)(void);
++
++static struct nvram_tuple * BCMINITDATA(nvram_hash)[257];
++static struct nvram_tuple * nvram_dead;
++
++/* Free all tuples. Should be locked. */
++static void  
++BCMINITFN(nvram_free)(void)
++{
++	uint i;
++	struct nvram_tuple *t, *next;
++
++	/* Free hash table */
++	for (i = 0; i < ARRAYSIZE(BCMINIT(nvram_hash)); i++) {
++		for (t = BCMINIT(nvram_hash)[i]; t; t = next) {
++			next = t->next;
++			BCMINIT(_nvram_free)(t);
++		}
++		BCMINIT(nvram_hash)[i] = NULL;
++	}
++
++	/* Free dead table */
++	for (t = nvram_dead; t; t = next) {
++		next = t->next;
++		BCMINIT(_nvram_free)(t);
++	}
++	nvram_dead = NULL;
++
++	/* Indicate to per-port code that all tuples have been freed */
++	BCMINIT(_nvram_free)(NULL);
++}
++
++/* String hash */
++static INLINE uint
++hash(const char *s)
++{
++	uint hash = 0;
++
++	while (*s)
++		hash = 31 * hash + *s++;
++
++	return hash;
++}
++
++/* (Re)initialize the hash table. Should be locked. */
++static int 
++BCMINITFN(nvram_rehash)(struct nvram_header *header)
++{
++#ifdef RUSS
++	char buf[] = "0xXXXXXXXX";
++#endif
++	char *name, *value, *end, *eq;
++
++	/* (Re)initialize hash table */
++	BCMINIT(nvram_free)();
++
++	/* Parse and set "name=value\0 ... \0\0" */
++	name = (char *) &header[1];
++	end = (char *) header + NVRAM_SPACE - 2;
++	end[0] = end[1] = '\0';
++	for (; *name; name = value + strlen(value) + 1) {
++		if (!(eq = strchr(name, '=')))
++			break;
++		*eq = '\0';
++		value = eq + 1;
++		BCMINIT(_nvram_set)(name, value);
++		*eq = '=';
++	}
++
++#ifdef RUSS
++	/* These are platform-dependent */
++
++	/* Set special SDRAM parameters */
++	if (!BCMINIT(_nvram_get)("sdram_init")) {
++		sprintf(buf, "0x%04X", (uint16)(ltoh32(header->crc_ver_init) >> 16));
++		BCMINIT(_nvram_set)("sdram_init", buf);
++	}
++	if (!BCMINIT(_nvram_get)("sdram_config")) {
++		sprintf(buf, "0x%04X", (uint16)(ltoh32(header->config_refresh) & 0xffff));
++		BCMINIT(_nvram_set)("sdram_config", buf);
++	}
++	if (!BCMINIT(_nvram_get)("sdram_refresh")) {
++		sprintf(buf, "0x%04X", (uint16)((ltoh32(header->config_refresh) >> 16) & 0xffff));
++		BCMINIT(_nvram_set)("sdram_refresh", buf);
++	}
++	if (!BCMINIT(_nvram_get)("sdram_ncdl")) {
++		sprintf(buf, "0x%08X", ltoh32(header->config_ncdl));
++		BCMINIT(_nvram_set)("sdram_ncdl", buf);
++	}
++#endif /* RUSS */
++
++	return 0;
++}
++
++/* Get the value of an NVRAM variable. Should be locked. */
++char * 
++BCMINITFN(_nvram_get)(const char *name)
++{
++	uint i;
++	struct nvram_tuple *t;
++	char *value;
++
++	if (!name)
++		return NULL;
++
++	/* Hash the name */
++	i = hash(name) % ARRAYSIZE(BCMINIT(nvram_hash));
++
++	/* Find the associated tuple in the hash table */
++	for (t = BCMINIT(nvram_hash)[i]; t && strcmp(t->name, name); t = t->next);
++
++	value = t ? t->value : NULL;
++
++	return value;
++}
++
++/* Get the value of an NVRAM variable. Should be locked. */
++int 
++BCMINITFN(_nvram_set)(const char *name, const char *value)
++{
++	uint i;
++	struct nvram_tuple *t, *u, **prev;
++
++	/* Hash the name */
++	i = hash(name) % ARRAYSIZE(BCMINIT(nvram_hash));
++
++	/* Find the associated tuple in the hash table */
++	for (prev = &BCMINIT(nvram_hash)[i], t = *prev; t && strcmp(t->name, name); prev = &t->next, t = *prev);
++
++	/* (Re)allocate tuple */
++	if (!(u = BCMINIT(_nvram_realloc)(t, name, value)))
++		return -12; /* -ENOMEM */
++
++	/* Value reallocated */
++	if (t && t == u)
++		return 0;
++
++	/* Move old tuple to the dead table */
++	if (t) {
++		*prev = t->next;
++		t->next = nvram_dead;
++		nvram_dead = t;
++	}
++
++	/* Add new tuple to the hash table */
++	u->next = BCMINIT(nvram_hash)[i];
++	BCMINIT(nvram_hash)[i] = u;
++
++	return 0;
++}
++
++/* Unset the value of an NVRAM variable. Should be locked. */
++int 
++BCMINITFN(_nvram_unset)(const char *name)
++{
++	uint i;
++	struct nvram_tuple *t, **prev;
++
++	if (!name)
++		return 0;
++
++	/* Hash the name */
++	i = hash(name) % ARRAYSIZE(BCMINIT(nvram_hash));
++
++	/* Find the associated tuple in the hash table */
++	for (prev = &BCMINIT(nvram_hash)[i], t = *prev; t && strcmp(t->name, name); prev = &t->next, t = *prev);
++
++	/* Move it to the dead table */
++	if (t) {
++		*prev = t->next;
++		t->next = nvram_dead;
++		nvram_dead = t;
++	}
++
++	return 0;
++}
++
++/* Get all NVRAM variables. Should be locked. */
++int 
++BCMINITFN(_nvram_getall)(char *buf, int count)
++{
++	uint i;
++	struct nvram_tuple *t;
++	int len = 0;
++
++	bzero(buf, count);
++
++	/* Write name=value\0 ... \0\0 */
++	for (i = 0; i < ARRAYSIZE(BCMINIT(nvram_hash)); i++) {
++		for (t = BCMINIT(nvram_hash)[i]; t; t = t->next) {
++			if ((count - len) > (strlen(t->name) + 1 + strlen(t->value) + 1))
++				len += sprintf(buf + len, "%s=%s", t->name, t->value) + 1;
++			else
++				break;
++		}
++	}
++
++	return 0;
++}
++
++/* Validate the NVRAM header and checksum. */
++int 
++BCMINITFN(_nvram_valid)(struct nvram_header *header, int failsafe)
++{
++	uint8 crc;
++
++	/* Check the magic value. */
++	if (header->magic != htol32(NVRAM_MAGIC)) {
++		printk("NVRAM magic value invalid\n");
++		return 1;
++	}
++	/* Check the checksum. The least significant byte. */
++
++	/* Calculate the checksum. */
++	/* Little-endian CRC8 over the last 11 bytes of the header */
++	/* crc = hndcrc8(((char *) &header) + 9, sizeof(struct nvram_header) - 9, CRC8_INIT_VALUE); */
++	/* Continue CRC8 over data bytes */
++	/* crc = hndcrc8((char *) &header[1], ltoh32(header->len) - sizeof(struct nvram_header), crc); */
++    /* 
++     * EZP: For some reason, the _nvram_valid cannot read the right value if
++     * we take the header into account. 
++     */
++	crc = hndcrc8((char *) &header[1], ltoh32(header->len) - sizeof(struct nvram_header), CRC8_INIT_VALUE);
++
++	if (!failsafe && crc != (uint8) ltoh32(header->crc_ver_init)) {
++		printk("NVRAM CRC invalid\n");
++		return 1;
++	}
++
++	return 0;
++}
++
++/* Regenerate NVRAM. Should be locked. */
++int
++BCMINITFN(_nvram_commit)(struct nvram_header *header)
++{
++	char *init, *config, *refresh, *ncdl;
++	char *ptr, *end;
++	int i;
++	struct nvram_tuple *t;
++	uint8 crc;
++
++	/* Regenerate header */
++	header->magic = htol32(NVRAM_MAGIC);
++	header->crc_ver_init = htol32((NVRAM_VERSION << 8));
++	if (!(init = BCMINIT(_nvram_get)("sdram_init")) ||
++	    !(config = BCMINIT(_nvram_get)("sdram_config")) ||
++	    !(refresh = BCMINIT(_nvram_get)("sdram_refresh")) ||
++	    !(ncdl = BCMINIT(_nvram_get)("sdram_ncdl"))) {
++#if defined(RUSS)
++		header->crc_ver_init |= htol32(SDRAM_INIT << 16);
++		header->config_refresh = htol32(SDRAM_CONFIG);
++		header->config_refresh |= htol32(SDRAM_REFRESH << 16);
++		header->config_ncdl = htol32(0);
++#else
++		header->crc_ver_init |= htol32(0) ;
++		header->config_refresh = htol32(0) ;
++		header->config_ncdl |= htol32(0);
++#endif
++	} else {
++		header->crc_ver_init |= htol32((bcm_strtoul(init, NULL, 0) & 0xffff) << 16);
++		header->config_refresh = htol32(bcm_strtoul(config, NULL, 0) & 0xffff);
++		header->config_refresh |= htol32((bcm_strtoul(refresh, NULL, 0) & 0xffff) << 16);
++		header->config_ncdl = htol32(bcm_strtoul(ncdl, NULL, 0));
++	}
++
++	/* Clear data area */
++	ptr = (char *) header + sizeof(struct nvram_header);
++	bzero(ptr, NVRAM_SPACE - sizeof(struct nvram_header));
++
++	/* Leave space for a double NUL at the end */
++	end = (char *) header + NVRAM_SPACE - 2;
++
++	/* Write out all tuples */
++	for (i = 0; i < ARRAYSIZE(BCMINIT(nvram_hash)); i++) {
++		for (t = BCMINIT(nvram_hash)[i]; t; t = t->next) {
++			if ((ptr + strlen(t->name) + 1 + strlen(t->value) + 1) > end)
++				break;
++			ptr += sprintf(ptr, "%s=%s", t->name, t->value) + 1;
++		}
++	}
++
++	/* End with a double NUL */
++	ptr += 2;
++
++	/* Set new length */
++	header->len = htol32(ROUNDUP(ptr - (char *) header, 4));
++
++	/* Little-endian CRC8 over the last 11 bytes of the header */
++	/* EZP: nvram_header is in the little endian format.
++	struct nvram_header tmp;
++        tmp.crc_ver_init = htol32(header->crc_ver_init);
++	tmp.config_refresh = htol32(header->config_refresh);
++	tmp.config_ncdl = htol32(header->config_ncdl);
++	*/
++
++	/* crc = hndcrc8(((char *) &header) + 9, sizeof(struct nvram_header) - 9, CRC8_INIT_VALUE); */
++	/* Continue CRC8 over data bytes */
++	/* crc = hndcrc8((char *) &header[1], ltoh32(header->len) - sizeof(struct nvram_header), crc); */
++	crc = hndcrc8((char *) &header[1], ltoh32(header->len) - sizeof(struct nvram_header), CRC8_INIT_VALUE);
++
++	/* Set new CRC8 ("OR" the least significant byte) */
++	header->crc_ver_init |= htol32(crc);
++
++	/* Reinitialize hash table */
++	return BCMINIT(nvram_rehash)(header);
++}
++
++/* Initialize hash table. Should be locked. */
++int 
++BCMINITFN(_nvram_init)(struct mtd_info *tmp_mtd, int failsafe)
++{
++	struct nvram_header *header;
++	int ret;
++	void *osh;
++
++	/* get kernel osl handler */
++	osh = osl_attach(NULL);
++
++	if (!(header = (struct nvram_header *) MALLOC(osh, NVRAM_SPACE))) {
++		printf("nvram_init: out of memory, malloced %d bytes\n", MALLOCED(osh));
++		return -12; /* -ENOMEM */
++	}
++
++	/* Read the header first. Validate the header.*/
++	if ((ret = BCMINIT(_nvram_read)(tmp_mtd, header)) == 0 &&
++	    (ret = BCMINIT(_nvram_valid)(header, failsafe)) == 0)
++		BCMINIT(nvram_rehash)(header);
++
++	MFREE(osh, header, NVRAM_SPACE);
++	return ret;
++}
++
++/* Free hash table. Should be locked. */
++void 
++BCMINITFN(_nvram_exit)(void)
++{
++	BCMINIT(nvram_free)();
++}
++
+diff --git a/drivers/char/nvram_cfg/nvram_linux.c b/drivers/char/nvram_cfg/nvram_linux.c
+new file mode 100644
+index 0000000..7e4fe25
+--- /dev/null
++++ b/drivers/char/nvram_cfg/nvram_linux.c
+@@ -0,0 +1,710 @@
++/*
++ * NVRAM variable manipulation (Linux kernel half)
++ *
++ * Copyright 2004, Broadcom Corporation
++ * All Rights Reserved.
++ * 
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
++ *
++ * $Id$
++ */
++
++#include <linux/config.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/string.h>
++#include <linux/interrupt.h>
++#include <linux/spinlock.h>
++#include <linux/slab.h>
++#include <linux/bootmem.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/mtd/mtd.h>
++#include <linux/autoconf.h>
++#include <linux/sched.h>
++
++#include <asm/io.h>
++#include <asm/uaccess.h>
++#include "typedefs.h"
++#include "bcmendian.h"
++#include "bcmnvram.h"
++#include "bcmutils.h"
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++#include <linux/wrapper.h> 
++#else
++#include <linux/page-flags.h> 
++#endif
++
++#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 16))
++#include <linux/device.h>
++#include <asm/cacheflush.h>
++#endif
++#define MAX_MTD_DEVICES 32
++#if !defined(NVRAMDBG)
++static int nvram_dbg = 0 ;
++#define RUSSDBG(args...)
++#else
++static int nvram_dbg = 1 ;
++#define RUSSDBG(fmt...)	if(en){ printk("%s: ", __func__); printk(fmt);}
++#endif /* #if defined(RUSS) */
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++MODULE_PARM(nvram_dbg,"i");
++MODULE_PARM_DESC(nvram_dbg, "Turn on/off debugging messages") ;
++#else
++module_param(nvram_dbg, int, 0);
++MODULE_PARM_DESC(nvram_dbg, "Turn on/off debugging messages") ;
++#endif
++
++/* In BSS to minimize text size and page aligned so it can be mmap()-ed */
++static char nvram_buf[NVRAM_SPACE] __attribute__((aligned(PAGE_SIZE)));
++
++#define early_nvram_get(name) nvram_get(name)
++
++extern char * _nvram_get(const char *name);
++extern int _nvram_set(const char *name, const char *value);
++extern int _nvram_unset(const char *name);
++extern int _nvram_getall(char *buf, int count);
++extern int _nvram_commit(struct nvram_header *header);
++extern int _nvram_init(struct mtd_info *tmp_mtd, int failsafe);
++extern void _nvram_exit(void);
++
++/* Globals */
++static spinlock_t nvram_lock = SPIN_LOCK_UNLOCKED;
++static struct semaphore nvram_sem;
++static unsigned long nvram_offset = 0;
++static int nvram_major = -1;
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++static devfs_handle_t nvram_handle = NULL;
++#else
++static struct class *nvram_class = NULL;
++#endif
++static struct mtd_info *nvram_mtd = NULL, *nvram_backup_mtd = NULL, *tmp_mtd;
++
++int
++_nvram_read(struct mtd_info *tmp_mtd, char *buf)
++{
++	size_t len;
++
++	if (!tmp_mtd ||
++	    tmp_mtd->read(tmp_mtd, tmp_mtd->size - NVRAM_SPACE, NVRAM_SPACE, &len, buf) ||
++	    len != NVRAM_SPACE) {
++		/* Maybe we can recover some data from early initialization */
++		memcpy(buf, nvram_buf, NVRAM_SPACE);
++	}
++
++	return 0;
++}
++
++struct nvram_tuple *
++_nvram_realloc(struct nvram_tuple *t, const char *name, const char *value)
++{
++	if ((nvram_offset + strlen(value) + 1) > NVRAM_SPACE)
++		return NULL;
++
++	if (!t) {
++		if (!(t = kmalloc(sizeof(struct nvram_tuple) + strlen(name) + 1, GFP_ATOMIC)))
++			return NULL;
++
++		/* Copy name */
++		t->name = (char *) &t[1];
++		strcpy(t->name, name);
++
++		t->value = NULL;
++	}
++
++	/* Copy value */
++	if (!t->value || strcmp(t->value, value)) {
++		t->value = &nvram_buf[nvram_offset];
++		strcpy(t->value, value);
++		nvram_offset += strlen(value) + 1;
++	}
++
++	return t;
++}
++
++void
++_nvram_free(struct nvram_tuple *t)
++{
++	if (!t)
++		nvram_offset = 0;
++	else
++		kfree(t);
++}
++
++int
++nvram_set(const char *name, const char *value)
++{
++	unsigned long flags;
++	int ret;
++	struct nvram_header *header;
++
++	// spin_lock_irqsave(&nvram_lock, flags);
++	down(&nvram_sem);
++	if ((ret = _nvram_set(name, value))) {
++		/* Consolidate space and try again */
++		if ((header = kmalloc(NVRAM_SPACE, GFP_ATOMIC))) {
++			if (_nvram_commit(header) == 0)
++				ret = _nvram_set(name, value);
++			kfree(header);
++		}
++	}
++	up(&nvram_sem);
++	//spin_unlock_irqrestore(&nvram_lock, flags);
++
++	return ret;
++}
++
++char *
++real_nvram_get(const char *name)
++{
++	unsigned long flags;
++	char *value;
++
++	// spin_lock_irqsave(&nvram_lock, flags);
++	down(&nvram_sem);
++	value = _nvram_get(name);
++	up(&nvram_sem);
++	// spin_unlock_irqrestore(&nvram_lock, flags);
++
++	return value;
++}
++
++char *
++nvram_get(const char *name)
++{
++	if (nvram_major >= 0)
++		return real_nvram_get(name);
++	else
++		return early_nvram_get(name);
++}
++
++int
++nvram_unset(const char *name)
++{
++	unsigned long flags;
++	int ret;
++
++	// spin_lock_irqsave(&nvram_lock, flags);
++	down(&nvram_sem);
++	ret = _nvram_unset(name);
++	up(&nvram_sem);
++	// spin_unlock_irqrestore(&nvram_lock, flags);
++
++	return ret;
++}
++
++static void
++erase_callback(struct erase_info *done)
++{
++	wait_queue_head_t *wait_q = (wait_queue_head_t *) done->priv;
++	wake_up(wait_q);
++}
++
++int
++nvram_mtd_commit(struct mtd_info *tmp_mtd)
++{
++	char *buf;
++	int ret;
++	struct nvram_header *header;
++	size_t erasesize, len;
++	unsigned int i;
++	unsigned long flags;
++	u_int32_t offset;
++	DECLARE_WAITQUEUE(wait, current);
++	wait_queue_head_t wait_q;
++	struct erase_info erase;
++
++	/* Backup sector blocks to be erased */
++	erasesize = ROUNDUP(NVRAM_SPACE, tmp_mtd->erasesize);
++	if (!(buf = kmalloc(erasesize, GFP_KERNEL))) {
++		printk("%s: out of memory\n", __func__);
++		ret = -ENOMEM;
++        goto done;
++	}
++
++	/* Find out the offset and the header position in a MTD partition. */
++	if ((i = erasesize - NVRAM_SPACE) > 0) {
++		offset = tmp_mtd->size - erasesize;
++		len = 0;
++		ret = tmp_mtd->read(tmp_mtd, offset, i, &len, buf);
++		if (ret || len != i) {
++			printk("%s: read error ret = %d, len = %d/%d\n", __func__, ret, len, i);
++			ret = -EIO;
++            goto done;
++		}
++		header = (struct nvram_header *)(buf + i);
++	} else {
++		offset = tmp_mtd->size - NVRAM_SPACE;
++		header = (struct nvram_header *)buf;
++	}
++
++	/* Regenerate NVRAM */
++	// spin_lock_irqsave(&nvram_lock, flags);
++	ret = _nvram_commit(header);
++	// spin_unlock_irqrestore(&nvram_lock, flags);
++	if (ret)
++        goto done;
++
++	/* Erase sector blocks */
++	init_waitqueue_head(&wait_q);
++	for (; offset < tmp_mtd->size - NVRAM_SPACE + ltoh32(header->len); offset += tmp_mtd->erasesize) {
++		erase.mtd = tmp_mtd;
++		erase.addr = offset;
++		erase.len = tmp_mtd->erasesize;
++		erase.callback = erase_callback;
++		erase.priv = (u_long) &wait_q;
++
++		set_current_state(TASK_INTERRUPTIBLE);
++		add_wait_queue(&wait_q, &wait);
++
++		/* Unlock sector blocks */
++		if (tmp_mtd->unlock)
++			tmp_mtd->unlock(tmp_mtd, offset, tmp_mtd->erasesize);
++
++		if ((ret = tmp_mtd->erase(tmp_mtd, &erase))) {
++			set_current_state(TASK_RUNNING);
++			remove_wait_queue(&wait_q, &wait);
++			printk("%s: erase error\n", __func__);
++            goto done;
++		}
++
++		/* Wait for erase to finish */
++		schedule();
++		remove_wait_queue(&wait_q, &wait);
++	}
++
++	/* Write partition up to end of data area */
++	offset = tmp_mtd->size - erasesize;
++	i = erasesize - NVRAM_SPACE + ltoh32(header->len);
++	ret = tmp_mtd->write(tmp_mtd, offset, i, &len, buf);
++	if (ret || len != i) {
++		printk("%s: write error\n", __func__);
++		ret = -EIO;
++		goto done;
++	}
++
++	offset = tmp_mtd->size - erasesize;
++	ret = tmp_mtd->read(tmp_mtd, offset, 4, &len, buf);
++
++done:
++	if (buf) {
++		kfree(buf);
++	}
++	return ret;
++}
++
++int
++nvram_commit(void)
++{
++	int ret;
++
++	if (!nvram_mtd) {
++		printk("nvram_commit: NVRAM not found\n");
++		return -ENODEV;
++	}
++
++	if (!nvram_backup_mtd) {
++		/* Nice to have. If none, live with it :) */
++		printk("nvram_commit: NVRAM backup not found\n");
++	}
++
++	if (in_interrupt()) {
++		printk("nvram_commit: not committing in interrupt\n");
++		return -EINVAL;
++	}
++
++	down(&nvram_sem);
++	// spin_lock(&nvram_lock);
++	/* Backup NVRAM partition. */
++	if (nvram_backup_mtd && (ret = nvram_mtd_commit(nvram_backup_mtd))) {
++		printk("%s: nvram_backup_mtd commit failed\n", __func__);
++	}
++	/* Primary NVRAM partition. */
++	if ((ret = nvram_mtd_commit(nvram_mtd))) {
++		printk("%s: nvram_mtd commit failed\n", __func__);
++	}
++	/* XXX: ret is overwritten in the second nvram_mtd_commit(). */
++	up(&nvram_sem);
++	// spin_unlock(&nvram_lock);
++	return ret;
++}
++
++int
++nvram_getall(char *buf, int count)
++{
++	unsigned long flags;
++	int ret;
++
++	// spin_lock_irqsave(&nvram_lock, flags);
++	down(&nvram_sem);
++	ret = _nvram_getall(buf, count);
++	up(&nvram_sem);
++	// spin_unlock_irqrestore(&nvram_lock, flags);
++
++	return ret;
++}
++
++EXPORT_SYMBOL(nvram_get);
++EXPORT_SYMBOL(nvram_getall);
++EXPORT_SYMBOL(nvram_set);
++EXPORT_SYMBOL(nvram_unset);
++EXPORT_SYMBOL(nvram_commit);
++
++/* User mode interface below */
++
++static ssize_t
++dev_nvram_read(struct file *file, char *buf, size_t count, loff_t *ppos)
++{
++	char tmp[100], *name = tmp, *value;
++	ssize_t ret, vallen;
++	unsigned long off;
++
++	if (count > sizeof(tmp)) {
++		if (!(name = kmalloc(count, GFP_KERNEL)))
++			return -ENOMEM;
++	}
++
++	if (copy_from_user(name, buf, count)) {
++		ret = -EFAULT;
++		goto done;
++	}
++
++	if (*name == '\0') {
++		/* Get all variables */
++		ret = nvram_getall(name, count);
++		if (ret == 0) {
++			if (copy_to_user(buf, name, count)) {
++				ret = -EFAULT;
++				goto done;
++			}
++			ret = count;
++		}
++	} else {
++		if (!(value = nvram_get(name))) {
++			ret = 0;
++			goto done;
++		}
++
++		RUSSDBG("nvram_buf(%p)='%s'\n", nvram_buf, nvram_buf)
++		RUSSDBG("value(%8p)='%s'\n", value, value);
++
++		/* Provide the offset into mmap() space */
++		off = (unsigned long) value - (unsigned long) nvram_buf;
++		RUSSDBG("off='%lu'\n", off);
++
++#ifndef RUSS
++		if (put_user(off, (unsigned long *) buf)) {
++			ret = -EFAULT;
++			goto done;
++		}
++		ret = sizeof(unsigned long);
++#else
++		vallen=strlen(value) + 1 ;
++		if(vallen > count)
++			vallen=count ;
++		copy_to_user(buf, value, vallen) ;
++		ret = vallen ;
++#endif
++
++	}
++
++	flush_cache_all();	
++ 
++done:
++	if (name != tmp)
++		kfree(name);
++
++	return ret;
++}
++
++static ssize_t
++dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
++{
++	char tmp[100], *name = tmp, *value;
++	ssize_t ret;
++
++	if (count > sizeof(tmp)) {
++		if (!(name = kmalloc(count, GFP_KERNEL)))
++			return -ENOMEM;
++	}
++
++	if (copy_from_user(name, buf, count)) {
++		ret = -EFAULT;
++		goto done;
++	}
++
++	value = name;
++	name = strsep(&value, "=");
++    /* EZP: if NULL value, unset. */
++	if (value && *value)
++		ret = nvram_set(name, value) ? : count;
++	else
++		ret = nvram_unset(name) ? : count;
++
++ done:
++	if (name != tmp)
++		kfree(name);
++
++	return ret;
++}	
++
++#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
++static int
++dev_nvram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++#else
++static int
++dev_nvram_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
++#endif
++{
++	if (cmd != NVRAM_MAGIC)
++		return -EINVAL;
++	return nvram_commit();
++}
++
++#ifndef RUSS
++static int
++dev_nvram_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	unsigned long offset = virt_to_phys(nvram_buf);
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++	if (remap_page_range(vma->vm_start, offset, vma->vm_end-vma->vm_start,
++			     vma->vm_page_prot))
++#else
++	if (remap_pfn_range(vma, vma->vm_start, offset >> PAGE_SHIFT, 
++                vma->vm_end-vma->vm_start, vma->vm_page_prot))
++#endif
++		return -EAGAIN;
++
++	RUSSDBG(1, "nvram_buf(%p)='%s'\n", nvram_buf, nvram_buf)
++	RUSSDBG(1, "vma->vm_start=%08lX, offset=%08lX, vma->vm_end=%08lX\n",
++		vma->vm_start, offset, vma->vm_end)
++
++	return 0;
++}
++#endif
++
++static int
++dev_nvram_open(struct inode *inode, struct file * file)
++{
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++	MOD_INC_USE_COUNT;
++#else
++    try_module_get(THIS_MODULE);
++#endif
++	return 0;
++}
++
++static int
++dev_nvram_release(struct inode *inode, struct file * file)
++{
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++	MOD_DEC_USE_COUNT;
++#else
++    module_put(THIS_MODULE);
++#endif
++	return 0;
++}
++
++static struct file_operations dev_nvram_fops = {
++	owner:		THIS_MODULE,
++	open:		dev_nvram_open,
++	release:	dev_nvram_release,
++	read:		dev_nvram_read,
++	write:		dev_nvram_write,
++	compat_ioctl:		dev_nvram_ioctl,
++	unlocked_ioctl:		dev_nvram_ioctl,
++#ifndef RUSS
++	mmap:		dev_nvram_mmap,
++#endif
++};
++
++static void
++dev_nvram_exit(void)
++{
++	int order = 0;
++	struct page *page, *end;
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++	if (nvram_handle)
++		devfs_unregister(nvram_handle);
++#else
++/* Unregister. */
++    device_destroy(nvram_class, MKDEV(nvram_major, 0));
++    class_destroy(nvram_class);
++#endif
++
++	if (nvram_major >= 0)
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++		devfs_unregister_chrdev(nvram_major, "nvram");
++#else
++    unregister_chrdev(nvram_major, "nvram");
++#endif
++
++	if (nvram_mtd)
++		put_mtd_device(nvram_mtd);
++
++	if (nvram_backup_mtd)
++		put_mtd_device(nvram_backup_mtd);
++
++	while ((PAGE_SIZE << order) < NVRAM_SPACE)
++		order++;
++	end = virt_to_page(nvram_buf + (PAGE_SIZE << order) - 1);
++	for (page = virt_to_page(nvram_buf); page <= end; page++)
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++		mem_map_unreserve(page);
++#else
++        ClearPageReserved(page);
++#endif
++
++	_nvram_exit();
++}
++
++static int __init
++dev_nvram_init(void)
++{
++	int order = 0, ret = 0;
++	struct page *page, *end;
++	unsigned int i;
++
++	/* Allocate and reserve memory to mmap() */
++	while ((PAGE_SIZE << order) < NVRAM_SPACE)
++		order++;
++	end = virt_to_page(nvram_buf + (PAGE_SIZE << order) - 1);
++	for (page = virt_to_page(nvram_buf); page <= end; page++) {
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++		mem_map_reserve(page);
++#else
++        SetPageReserved(page);
++#endif
++    }
++
++#if defined(CONFIG_MTD) || defined(CONFIG_MTD_MODULE)
++	/* Find associated MTD device */
++	for (i = 0; i < MAX_MTD_DEVICES; i++) {
++		tmp_mtd = get_mtd_device(NULL, i);
++        if (IS_ERR(tmp_mtd)) {
++            break;
++        }
++		if (tmp_mtd) {
++			if (!strcmp(tmp_mtd->name, "nvram") &&
++			    tmp_mtd->size >= NVRAM_SPACE)
++				nvram_mtd = tmp_mtd;
++			else if (!strcmp(tmp_mtd->name, "nvram_backup") &&
++			    tmp_mtd->size >= NVRAM_SPACE)
++				nvram_backup_mtd = tmp_mtd;
++			else
++				put_mtd_device(tmp_mtd);
++		}
++	}
++	if(!nvram_mtd) {
++		printk("%s: cannot locate nvram_mtd\n", __func__);
++        goto err;
++    }
++	if(!nvram_backup_mtd) {
++		printk("%s: cannot locate nvram_backup_mtd\n", __func__);
++    }
++#else
++#error nvram_cfg needs CONFIG_MTD
++#endif
++
++	/* Initialize hash table lock */
++	spin_lock_init(&nvram_lock);
++
++	/* Initialize commit semaphore */
++	init_MUTEX(&nvram_sem);
++
++	/* Initialize hash table */
++	if ((ret = _nvram_init(nvram_mtd, 0))) {
++		printk("%s: invalid nvram_mtd\n", __func__);
++		if (nvram_backup_mtd) {
++            if ((ret = _nvram_init(nvram_backup_mtd, 0))) {
++                /* The worst case. Read whatever nvram has (also failover). */
++                printk("%s: invalid nvram_backup_mtd\n", __func__);
++                printk("%s: access nvram_mtd (failsafe)\n", __func__);
++                _nvram_init(nvram_mtd, 1);
++            } else {
++                /* Recover nvram_mtd. */
++                printk("%s: access nvram_backup_mtd\n", __func__);
++                printk("%s: recover nvram_mtd\n", __func__);
++                if ((ret = nvram_mtd_commit(nvram_mtd))) {
++                    printk("%s: nvram_mtd commit failed\n", __func__);
++                }
++            }
++        } else {
++                printk("%s: no nvram_backup_mtd found\n", __func__);
++                printk("%s: access nvram_mtd (failsafe)\n", __func__);
++                _nvram_init(nvram_mtd, 1);
++        }
++	} else {
++        /* Try to validate nvram_backup.*/
++		printk("%s: access nvram_mtd\n", __func__);
++        if (nvram_backup_mtd && (ret = _nvram_init(nvram_backup_mtd, 0))) {
++            /* Failed and commit into nvram_backup.*/
++            ret = _nvram_init(nvram_mtd, 0);
++            printk("%s: recover nvram_backup_mtd[%d]\n", __func__, ret);
++            if ((ret = nvram_mtd_commit(nvram_backup_mtd))) {
++                printk("%s: nvram_backup_mtd commit failed\n", __func__);
++            }
++        }
++    }
++
++	/* Register char device */
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++    if ((nvram_major = devfs_register_chrdev(0, "nvram", &dev_nvram_fops)) < 0) {
++#else
++    /* Register: XXX: */
++    if ((nvram_major = register_chrdev(0, "nvram", &dev_nvram_fops)) < 0) {
++#endif
++        ret = nvram_major;
++        goto err;
++    }
++
++	RUSSDBG("%s: nvram_major = %d\n", __func__, nvram_major) ;
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
++	/* Create /dev/nvram handle */
++	nvram_handle = devfs_register(NULL, "nvram", DEVFS_FL_NONE, nvram_major, 0,
++				      S_IFCHR | S_IRUSR | S_IWUSR | S_IRGRP, &dev_nvram_fops, NULL);
++#else
++    /* Register: XXX: */
++    nvram_class = class_create(THIS_MODULE, "nvram_class");
++    device_create(nvram_class, NULL, MKDEV(nvram_major, 0), NULL, "nvram");
++#endif
++
++#if defined(RUSS)
++	/* Set the SDRAM NCDL value into NVRAM if not already done */
++	if (getintvar(NULL, "sdram_ncdl") == 0) {
++		unsigned int ncdl;
++		char buf[] = "0x00000000";
++
++		if ((ncdl = sb_memc_get_ncdl(sbh))) {
++			sprintf(buf, "0x%08x", ncdl);
++			nvram_set("sdram_ncdl", buf);
++			nvram_commit();
++		}
++	}
++#endif /* RUSS */
++	RUSSDBG(1, "nvram_buf=%8p\n", nvram_buf)
++
++	return 0;
++
++ err:
++	dev_nvram_exit();
++	return ret;
++}
++
++module_init(dev_nvram_init);
++module_exit(dev_nvram_exit);
++
++MODULE_DESCRIPTION("EZ Packet NVRAM Module");
++MODULE_AUTHOR("CK Wang <ckjwang@ezpacket.com>");
++MODULE_SUPPORTED_DEVICE("NVRAM");
++MODULE_VERSION(MOD_VERSION);
++MODULE_LICENSE("GPL");
+diff --git a/drivers/char/nvram_cfg/osl.h b/drivers/char/nvram_cfg/osl.h
+new file mode 100644
+index 0000000..9ca351e
+--- /dev/null
++++ b/drivers/char/nvram_cfg/osl.h
+@@ -0,0 +1,41 @@
++/*
++ * OS Independent Layer
++ * 
++ * Copyright 2005, Broadcom Corporation      
++ * All Rights Reserved.      
++ *       
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY      
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM      
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS      
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.      
++ * $Id$
++ */
++
++#ifndef _osl_h_
++#define _osl_h_
++
++#if defined(ezpacket)
++#include "ez_osl.h"
++#elif defined(linux)
++#include "linux_osl.h"
++#elif defined(NDIS)
++#include <ndis_osl.h>
++#elif defined(_CFE_)
++#include <cfe_osl.h>
++#elif defined(_HNDRTE_)
++#include <hndrte_osl.h>
++#elif defined(_MINOSL_)
++#include <min_osl.h>
++#elif PMON
++#include <pmon_osl.h>
++#elif defined(MACOSX)
++#include <macosx_osl.h>
++#else
++#error "Unsupported OSL requested"
++#endif
++
++/* handy */
++#define	SET_REG(r, mask, val)	W_REG((r), ((R_REG(r) & ~(mask)) | (val)))
++#define	MAXPRIO		7	/* 0-7 */
++
++#endif	/* _osl_h_ */
+diff --git a/drivers/char/nvram_cfg/typedefs.h b/drivers/char/nvram_cfg/typedefs.h
+new file mode 100644
+index 0000000..b507f8e
+--- /dev/null
++++ b/drivers/char/nvram_cfg/typedefs.h
+@@ -0,0 +1,324 @@
++/*
++ * Copyright 2005, Broadcom Corporation      
++ * All Rights Reserved.      
++ *       
++ * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY      
++ * KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM      
++ * SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS      
++ * FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.      
++ * $Id$
++ */
++
++#ifndef _TYPEDEFS_H_
++#define _TYPEDEFS_H_
++
++
++/* Define 'SITE_TYPEDEFS' in the compile to include a site specific
++ * typedef file "site_typedefs.h".
++ *
++ * If 'SITE_TYPEDEFS' is not defined, then the "Inferred Typedefs"
++ * section of this file makes inferences about the compile environment
++ * based on defined symbols and possibly compiler pragmas.
++ *
++ * Following these two sections is the "Default Typedefs"
++ * section. This section is only prcessed if 'USE_TYPEDEF_DEFAULTS' is
++ * defined. This section has a default set of typedefs and a few
++ * proprocessor symbols (TRUE, FALSE, NULL, ...).
++ */
++
++#ifdef SITE_TYPEDEFS
++
++/*******************************************************************************
++ * Site Specific Typedefs
++ *******************************************************************************/
++
++#include "site_typedefs.h"
++
++#else
++
++/*******************************************************************************
++ * Inferred Typedefs
++ *******************************************************************************/
++
++/* Infer the compile environment based on preprocessor symbols and pramas.
++ * Override type definitions as needed, and include configuration dependent
++ * header files to define types.
++ */
++
++#ifdef __cplusplus
++
++#define TYPEDEF_BOOL
++#ifndef FALSE
++#define FALSE	false
++#endif
++#ifndef TRUE
++#define TRUE	true
++#endif
++
++#else	/* ! __cplusplus */
++
++#if defined(_WIN32)
++
++#define TYPEDEF_BOOL
++typedef	unsigned char	bool;			/* consistent w/BOOL */
++
++#endif /* _WIN32 */
++
++#endif	/* ! __cplusplus */
++
++/* use the Windows ULONG_PTR type when compiling for 64 bit */
++#if defined(_WIN64)
++#include <basetsd.h>
++#define TYPEDEF_UINTPTR
++typedef ULONG_PTR	uintptr;
++#endif
++
++#ifdef _MSC_VER	    /* Microsoft C */
++#define TYPEDEF_INT64
++#define TYPEDEF_UINT64
++typedef signed __int64	int64;
++typedef unsigned __int64 uint64;
++#endif
++
++#if defined(MACOSX) && defined(KERNEL)
++#define TYPEDEF_BOOL
++#endif
++
++
++#if defined(linux)
++#define TYPEDEF_UINT
++#define TYPEDEF_USHORT
++#define TYPEDEF_ULONG
++#endif
++
++#if !defined(linux) && !defined(_WIN32) && !defined(PMON) && !defined(_CFE_) && !defined(_HNDRTE_) && !defined(_MINOSL_)
++#define TYPEDEF_UINT
++#define TYPEDEF_USHORT
++#endif
++
++
++/* Do not support the (u)int64 types with strict ansi for GNU C */
++#if defined(__GNUC__) && defined(__STRICT_ANSI__)
++#define TYPEDEF_INT64
++#define TYPEDEF_UINT64
++#endif
++
++/* ICL accepts unsigned 64 bit type only, and complains in ANSI mode
++ * for singned or unsigned */
++#if defined(__ICL)
++
++#define TYPEDEF_INT64
++
++#if defined(__STDC__)
++#define TYPEDEF_UINT64
++#endif
++
++#endif /* __ICL */
++
++
++#if !defined(_WIN32) && !defined(PMON) && !defined(_CFE_) && !defined(_HNDRTE_) && !defined(_MINOSL_)
++
++/* pick up ushort & uint from standard types.h */
++#if defined(linux) && defined(__KERNEL__)
++
++#include <linux/types.h>	/* sys/types.h and linux/types.h are oil and water */
++
++#else
++
++#include <sys/types.h>	
++
++#endif
++
++#endif /* !_WIN32 && !PMON && !_CFE_ && !_HNDRTE_  && !_MINOSL_ */
++
++#if defined(MACOSX) && defined(KERNEL)
++#include <IOKit/IOTypes.h>
++#endif
++
++
++/* use the default typedefs in the next section of this file */
++#define USE_TYPEDEF_DEFAULTS
++
++#endif /* SITE_TYPEDEFS */
++
++
++/*******************************************************************************
++ * Default Typedefs
++ *******************************************************************************/
++
++#ifdef USE_TYPEDEF_DEFAULTS
++#undef USE_TYPEDEF_DEFAULTS
++
++#if 0
++#ifndef TYPEDEF_BOOL
++typedef	/*@abstract@*/ unsigned char	bool;
++#endif
++#endif
++
++/*----------------------- define uchar, ushort, uint, ulong ------------------*/
++
++#ifndef TYPEDEF_UCHAR
++typedef unsigned char	uchar;
++#endif
++
++#ifndef TYPEDEF_USHORT
++typedef unsigned short	ushort;
++#endif
++
++#ifndef TYPEDEF_UINT
++typedef unsigned int	uint;
++#endif
++
++#ifndef TYPEDEF_ULONG
++typedef unsigned long	ulong;
++#endif
++
++/*----------------------- define [u]int8/16/32/64, uintptr --------------------*/
++
++#ifndef TYPEDEF_UINT8
++typedef unsigned char	uint8;
++#endif
++
++#ifndef TYPEDEF_UINT16
++typedef unsigned short	uint16;
++#endif
++
++#ifndef TYPEDEF_UINT32
++typedef unsigned int	uint32;
++#endif
++
++#ifndef TYPEDEF_UINT64
++typedef unsigned long long uint64;
++#endif
++
++#ifndef TYPEDEF_UINTPTR
++typedef unsigned int	uintptr;
++#endif
++
++#ifndef TYPEDEF_INT8
++typedef signed char	int8;
++#endif
++
++#ifndef TYPEDEF_INT16
++typedef signed short	int16;
++#endif
++
++#ifndef TYPEDEF_INT32
++typedef signed int	int32;
++#endif
++
++#ifndef TYPEDEF_INT64
++typedef signed long long int64;
++#endif
++
++/*----------------------- define float32/64, float_t -----------------------*/
++
++#ifndef TYPEDEF_FLOAT32
++typedef float		float32;
++#endif
++
++#ifndef TYPEDEF_FLOAT64
++typedef double		float64;
++#endif
++
++/*
++ * abstracted floating point type allows for compile time selection of
++ * single or double precision arithmetic.  Compiling with -DFLOAT32
++ * selects single precision; the default is double precision.
++ */
++
++#ifndef TYPEDEF_FLOAT_T
++
++#if defined(FLOAT32)
++typedef float32 float_t;
++#else /* default to double precision floating point */
++typedef float64 float_t;
++#endif
++
++#endif /* TYPEDEF_FLOAT_T */
++
++/*----------------------- define macro values -----------------------------*/
++
++#ifndef FALSE
++#define FALSE	0
++#endif
++
++#ifndef TRUE
++#define TRUE	1
++#endif
++
++#ifndef NULL
++#define	NULL	0
++#endif
++
++#ifndef OFF
++#define	OFF	0
++#endif
++
++#ifndef ON
++#define	ON	1
++#endif
++
++#define	AUTO	(-1)
++
++/* Reclaiming text and data :
++   The following macros specify special linker sections that can be reclaimed
++   after a system is considered 'up'.
++ */ 
++#if defined(__GNUC__) && defined(BCMRECLAIM)
++extern bool	bcmreclaimed;
++#define BCMINITDATA(_data)	__attribute__ ((__section__ (".dataini." #_data))) _data##_ini		
++#define BCMINITFN(_fn)		__attribute__ ((__section__ (".textini." #_fn))) _fn##_ini
++#define BCMINIT(_id)		_id##_ini
++#else 
++#define BCMINITDATA(_data)	_data		
++#define BCMINITFN(_fn)		_fn
++#define BCMINIT(_id)		_id
++#define bcmreclaimed		0
++#endif
++
++/*----------------------- define PTRSZ, INLINE ----------------------------*/
++
++#ifndef PTRSZ
++#define	PTRSZ	sizeof (char*)
++#endif
++
++#ifndef INLINE
++
++#ifdef _MSC_VER
++
++#define INLINE __inline
++
++#elif __GNUC__
++
++#define INLINE __inline__
++
++#else
++
++#define INLINE
++
++#endif /* _MSC_VER */
++
++#endif /* INLINE */
++
++#undef TYPEDEF_BOOL
++#undef TYPEDEF_UCHAR
++#undef TYPEDEF_USHORT
++#undef TYPEDEF_UINT
++#undef TYPEDEF_ULONG
++#undef TYPEDEF_UINT8
++#undef TYPEDEF_UINT16
++#undef TYPEDEF_UINT32
++#undef TYPEDEF_UINT64
++#undef TYPEDEF_UINTPTR
++#undef TYPEDEF_INT8
++#undef TYPEDEF_INT16
++#undef TYPEDEF_INT32
++#undef TYPEDEF_INT64
++#undef TYPEDEF_FLOAT32
++#undef TYPEDEF_FLOAT64
++#undef TYPEDEF_FLOAT_T
++
++#endif /* USE_TYPEDEF_DEFAULTS */
++
++#endif /* _TYPEDEFS_H_ */
